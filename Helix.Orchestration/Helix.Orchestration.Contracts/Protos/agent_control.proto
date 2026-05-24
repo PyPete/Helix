@@ -1,0 +1,19 @@
+﻿syntax = "proto3";
+
+option csharp_namespace = "Helix.Orchestration.Contracts.Control";
+
+package helix.control;
+
+message ExperimentSubmission { string runspace_definition_json = 1; }
+
+message SubmissionAck { bool accepted = 1; string runspace_id = 2; string message = 3; }
+
+message RunspaceCommand { string runspace_id = 1; }
+
+message CommandAck { bool success = 1; string message = 2; }
+
+message RunspaceQuery { string runspace_id = 1; }
+
+message RunspaceStatusResponse { string runspace_id = 1; string status = 2; string message = 3; }
+
+service AgentControl { rpc SubmitExperiment (ExperimentSubmission) returns (SubmissionAck); rpc PauseRunspace (RunspaceCommand) returns (CommandAck); rpc ResumeRunspace (RunspaceCommand) returns (CommandAck); rpc AbortRunspace (RunspaceCommand) returns (CommandAck); rpc GetRunspaceStatus (RunspaceQuery) returns (RunspaceStatusResponse); }

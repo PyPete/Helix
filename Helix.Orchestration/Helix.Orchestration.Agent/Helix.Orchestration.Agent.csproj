@@ -24,13 +24,5 @@
 	<ProjectReference Include="..\Helix.Orchestration.Core\Helix.Orchestration.Core.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-	<Content Include="Configuration\agent-config.json">
-	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	</Content>
-	<Content Include="Configuration\device-registry.json">
-	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	</Content>
-  </ItemGroup>
 
 </Project>
