@@ -1,0 +1,10 @@
+{
+  "devices": [
+    {
+      "deviceId": "pump-01",
+      "deviceName": "Simulated Pump",
+      "adapterId": "pump-sim-py",
+      "capabilities": ["SetFlowRate", "GetFlowRate", "Start", "Stop"]
+    }
+  ]
+}

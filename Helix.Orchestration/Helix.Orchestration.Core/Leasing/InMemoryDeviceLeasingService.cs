@@ -98,6 +98,25 @@ public sealed class InMemoryDeviceLeasingService : IDeviceLeasingService
         return Task.CompletedTask;
     }
 
+    /// <summary>
+    /// Purges all expired leases across tracked devices.
+    /// </summary>
+    /// <returns>Number of removed expired leases.</returns>
+    public Task<int> PurgeExpiredAsync(CancellationToken cancellationToken = default)
+    {
+        lock (_lock)
+        {
+            var removed = 0;
+
+            foreach (var (_, leases) in _leases)
+            {
+                removed += leases.RemoveAll(l => l.ExpiresAt.HasValue && l.ExpiresAt.Value <= DateTimeOffset.UtcNow);
+            }
+
+            return Task.FromResult(removed);
+        }
+    }
+
     private static bool IsActive(DeviceLease l) =>
         !l.ExpiresAt.HasValue || l.ExpiresAt.Value > DateTimeOffset.UtcNow;
 }

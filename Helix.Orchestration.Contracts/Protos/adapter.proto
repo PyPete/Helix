@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+option csharp_namespace = "Helix.Orchestration.Contracts.Adapters";
+
+package helix.adapter;
+
+message Empty {}
+
+message CapabilitiesResponse {
+  repeated string capabilities = 1;
+}
+
+message CapabilityRequest {
+  string capability_name = 1;
+  string parameters_json = 2;
+  string lease_id = 3;
+}
+
+message CapabilityResponse {
+  bool success = 1;
+  string result_json = 2;
+  string error_message = 3;
+}
+
+message TrendValue {
+  string trend_id = 1;
+  string trend_kind = 2;
+  string value_json = 3;
+  int64 timestamp = 4;
+}
+
+message HealthStatus {
+  bool healthy = 1;
+  string message = 2;
+}
+
+service DeviceAdapter {
+  rpc GetCapabilities(Empty) returns (CapabilitiesResponse);
+  rpc InvokeCapability(CapabilityRequest) returns (CapabilityResponse);
+  rpc StreamTrends(Empty) returns (stream TrendValue);
+  rpc HealthCheck(Empty) returns (HealthStatus);
+}

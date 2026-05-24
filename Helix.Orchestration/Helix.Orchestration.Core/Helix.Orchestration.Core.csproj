@@ -17,6 +17,9 @@
     <None Include="..\docs\HANDOVER.md" Link="docs\HANDOVER.md" />
     <None Include="..\docs\CONCEPT.md" Link="docs\CONCEPT.md" />
     <None Include="..\docs\PHASE1-CORE-DOMAIN-HANDOVER.md" Link="docs\PHASE1-CORE-DOMAIN-HANDOVER.md" />
+    <None Include="..\docs\PHASE2-AGENT-RUNTIME-HANDOVER.md" Link="docs\PHASE2-AGENT-RUNTIME-HANDOVER.md" />
+    <None Include="..\docs\PHASE3-EXECUTION-PATH-HANDOVER.md" Link="docs\PHASE3-EXECUTION-PATH-HANDOVER.md" />
+    <None Include="..\docs\CI.md" Link="docs\CI.md" />
   </ItemGroup>
 
 </Project>
