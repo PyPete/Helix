@@ -1,0 +1,533 @@
+🎯 Phase 2 — Agent Runtime with Language-Agnostic Adapter Discovery
+Context & Architectural Decisions
+Phase 1 delivered the core domain contracts (trends, leasing, WSL, runspace, TestContext) with 56 passing tests.
+
+Phase 2 builds the Agent runtime that executes workflows with production-grade durability and discovers language-agnostic device adapters managed by the operating system.
+
+Key Architectural Decisions (User-Confirmed)
+Adapter IPC: gRPC with .proto contracts
+Adapter Lifecycle: OS-managed (systemd/Windows Service Manager); Agent discovers via mDNS/registry/config
+Device Registry: Local JSON file with Site Server sync (offline-first for safety)
+Trend Routing: Agent as MQTT gateway (adapters → gRPC → agent → MQTT)
+Cleipnir Integration: Wrap Cleipnir Workflow inside IRunspace abstraction
+Phase 2 Adapter Scope: Build one real Python adapter (simulated pump); defer Node.js/C++ to later phases
+Why This Architecture Matters
+This is the industrial IoT model used by:
+
+OPC UA servers (always-on system services)
+SiLA 2 devices (independent HTTP/gRPC endpoints)
+PLC gateways (dedicated controllers)
+Robotics controllers (ROS nodes)
+Instrument control daemons (vendor-supplied services)
+Benefits:
+
+Adapters auto-start on boot, auto-restart on crash
+Agent stays stateless and simple
+Adapters can run on same machine, USB Bridge Agent, remote device, or container
+Crash isolation: adapter crash ≠ agent crash
+Language freedom: Python, Node.js, C++, Rust all equal
+Deliverables
+1. gRPC Contracts (Language-Agnostic Boundaries)
+File: Helix.Orchestration.Contracts/Protos/adapter.proto
+
+Define the device adapter service contract:
+
+syntax = "proto3";
+
+service DeviceAdapter {
+  rpc GetCapabilities(Empty) returns (CapabilitiesResponse);
+  rpc InvokeCapability(CapabilityRequest) returns (CapabilityResponse);
+  rpc StreamTrends(Empty) returns (stream TrendValue);
+  rpc HealthCheck(Empty) returns (HealthStatus);
+}
+
+message CapabilityRequest {
+  string capability_name = 1;
+  string parameters_json = 2;  // JSON-serialized object
+  string lease_id = 3;
+}
+
+message CapabilityResponse {
+  bool success = 1;
+  string result_json = 2;
+  string error_message = 3;
+}
+
+message TrendValue {
+  string trend_id = 1;
+  string trend_kind = 2;  // "Scalar", "Spectral", etc.
+  string value_json = 3;
+  int64 timestamp = 4;
+}
+File: Helix.Orchestration.Contracts/Protos/agent_control.proto
+
+Site Server → Agent control plane:
+
+service AgentControl {
+  rpc SubmitExperiment(ExperimentSubmission) returns (SubmissionAck);
+  rpc PauseRunspace(RunspaceCommand) returns (CommandAck);
+  rpc ResumeRunspace(RunspaceCommand) returns (CommandAck);
+  rpc AbortRunspace(RunspaceCommand) returns (CommandAck);
+  rpc GetRunspaceStatus(RunspaceQuery) returns (RunspaceStatusResponse);
+}
+2. Helix.Orchestration.Agent Project
+Project: Helix.Orchestration.Agent (.NET 10 console app / Windows service)
+
+Folder Structure:
+
+Helix.Orchestration.Agent/
+├── Program.cs                          # Host bootstrap with DI
+├── AgentService.cs                     # Main service loop
+├── Configuration/
+│   ├── AgentConfiguration.cs           # Agent config model
+│   ├── DeviceRegistry.cs               # Device → adapter map
+│   └── agent-config.json               # Local config file
+├── Adapters/
+│   ├── IAdapterDiscovery.cs            # mDNS/registry/config discovery
+│   ├── AdapterDiscoveryService.cs      # Implementation
+│   ├── AdapterProxy.cs                 # gRPC client wrapper per adapter
+│   ├── AdapterHealthMonitor.cs         # Periodic health check loop
+│   └── AdapterRegistry.cs              # In-memory adapter → gRPC channel map
+├── Runspaces/
+│   ├── DurableRunspace.cs              # Cleipnir-backed IRunspace implementation
+│   ├── RunspaceManager.cs              # Runspace pool, lifecycle
+│   ├── DefinitionCompiler.cs           # RunspaceDefinition → executable delegate
+│   └── RunspaceExecutionContext.cs     # Per-runspace DI scope
+├── Streaming/
+│   ├── MqttTrendPublisher.cs           # Agent → MQTT publisher
+│   ├── TrendAggregator.cs              # Adapter gRPC streams → MQTT batching
+│   └── TrendBuffer.cs                  # Offline buffering (SQLite)
+├── gRPC/
+│   ├── AgentControlService.cs          # Implements agent_control.proto
+│   └── Server/
+│       └── GrpcServerHost.cs           # gRPC server bootstrap
+└── HealthChecks/
+    ├── AgentHealthCheck.cs             # Agent self-health
+    └── AdapterHealthCheck.cs           # Aggregate adapter health
+Key Components:
+
+AgentService.cs — Main orchestrator:
+
+On startup: load agent-config.json, sync device registry from Site Server (fallback to local)
+Start adapter discovery (mDNS + config file)
+Start gRPC server for Site Server control plane
+Start MQTT publisher
+Start adapter health monitor loop
+On shutdown: gracefully stop runspaces, close gRPC channels, disconnect MQTT
+AdapterDiscoveryService.cs — OS-independent adapter discovery:
+
+Config-based: Read adapters array from agent-config.json:
+{
+  "adapters": [
+    {
+      "adapterId": "pump-sim-py",
+      "endpoint": "http://localhost:50051",
+      "deviceIds": ["pump-01"]
+    }
+  ]
+}
+mDNS-based (future): Scan for _helix-adapter._tcp.local
+For each discovered adapter: connect gRPC, call GetCapabilities(), register in AdapterRegistry
+AdapterProxy.cs — Per-adapter gRPC client:
+
+public class AdapterProxy
+{
+    private readonly GrpcChannel _channel;
+    private readonly DeviceAdapter.DeviceAdapterClient _client;
+    
+    public async Task<CapabilityResponse> InvokeAsync(
+        string capabilityName, 
+        object? parameters, 
+        string leaseId,
+        CancellationToken ct)
+    {
+        var request = new CapabilityRequest
+        {
+            CapabilityName = capabilityName,
+            ParametersJson = JsonSerializer.Serialize(parameters),
+            LeaseId = leaseId
+        };
+        return await _client.InvokeCapabilityAsync(request, cancellationToken: ct);
+    }
+    
+    public IAsyncEnumerable<TrendValue> StreamTrendsAsync(CancellationToken ct)
+    {
+        var call = _client.StreamTrends(new Empty(), cancellationToken: ct);
+        return call.ResponseStream.ReadAllAsync(ct);
+    }
+}
+DurableRunspace.cs — Production runspace:
+
+public class DurableRunspace : IRunspace
+{
+    private readonly FunctionsRegistry _registry;
+    private readonly IExperimentContext _experimentContext;
+    private readonly IDeviceLeasingService _leasingService;
+    private readonly ICapabilityInvoker _capabilities;
+    private Workflow? _workflow;
+    
+    public async Task StartAsync(RunspaceDefinition definition, CancellationToken ct)
+    {
+        // Compile definition into executable delegate
+        var workflowDelegate = CompileDefinition(definition);
+        
+        // Register with Cleipnir
+        var registration = _registry.RegisterAction<string>(definition.Name);
+        
+        // Invoke (creates durable instance)
+        _workflow = await registration.Invoke(definition.DefinitionId, workflowDelegate);
+    }
+    
+    private Func<string, Task> CompileDefinition(RunspaceDefinition definition)
+    {
+        // Transform WSL nodes/edges into executable workflow
+        return async (instanceId) =>
+        {
+            foreach (var node in definition.Nodes)
+            {
+                // Execute node via CapabilityInvoker
+                await _capabilities.InvokeAsync(node.NodeType, node.Parameters);
+                
+                // Record to ExperimentContext
+                await _experimentContext.RecordDataAsync(node.NodeId, node.Parameters);
+            }
+        };
+    }
+}
+MqttTrendPublisher.cs — Agent → MQTT gateway:
+
+public class MqttTrendPublisher : IHostedService
+{
+    private readonly IMqttClient _client;
+    private readonly TrendAggregator _aggregator;
+    
+    public async Task StartAsync(CancellationToken ct)
+    {
+        // Connect to MQTT broker
+        await _client.ConnectAsync(new MqttClientOptionsBuilder()
+            .WithTcpServer(_config.BrokerHost, _config.BrokerPort)
+            .WithTls()
+            .Build(), ct);
+        
+        // Subscribe to adapter trend streams
+        await _aggregator.StartAsync(ct);
+    }
+    
+    public async Task PublishAsync(string experimentId, TrendValue value, CancellationToken ct)
+    {
+        var topic = $"helix/{_config.SiteId}/{_config.FumehoodId}/{experimentId}/trends/{value.TrendId}";
+        var payload = JsonSerializer.SerializeToUtf8Bytes(value);
+        
+        await _client.PublishAsync(new MqttApplicationMessageBuilder()
+            .WithTopic(topic)
+            .WithPayload(payload)
+            .WithQualityOfServiceLevel(MqttQualityOfServiceLevel.AtLeastOnce)
+            .Build(), ct);
+    }
+}
+3. Python Adapter (Real, OS-Managed)
+File: adapters/python/pump_simulator/pump_adapter.py
+
+Purpose: Simulated peristaltic pump adapter as a gRPC server.
+
+Implementation:
+
+#!/usr/bin/env python3
+import grpc
+from concurrent import futures
+import json
+import time
+import logging
+from generated import adapter_pb2, adapter_pb2_grpc
+
+class PumpSimulatorAdapter(adapter_pb2_grpc.DeviceAdapterServicer):
+    def __init__(self):
+        self.flow_rate = 0.0
+        self.is_running = False
+        self.capabilities = ["SetFlowRate", "GetFlowRate", "Start", "Stop"]
+    
+    def GetCapabilities(self, request, context):
+        return adapter_pb2.CapabilitiesResponse(capabilities=self.capabilities)
+    
+    def InvokeCapability(self, request, context):
+        cap_name = request.capability_name
+        params = json.loads(request.parameters_json) if request.parameters_json else {}
+        
+        if cap_name == "SetFlowRate":
+            self.flow_rate = params.get("flowRate", 0.0)
+            return adapter_pb2.CapabilityResponse(
+                success=True,
+                result_json=json.dumps({"flowRate": self.flow_rate})
+            )
+        elif cap_name == "Start":
+            self.is_running = True
+            return adapter_pb2.CapabilityResponse(success=True)
+        elif cap_name == "Stop":
+            self.is_running = False
+            return adapter_pb2.CapabilityResponse(success=True)
+        elif cap_name == "GetFlowRate":
+            return adapter_pb2.CapabilityResponse(
+                success=True,
+                result_json=json.dumps({"flowRate": self.flow_rate, "running": self.is_running})
+            )
+        else:
+            return adapter_pb2.CapabilityResponse(
+                success=False,
+                error_message=f"Unknown capability: {cap_name}"
+            )
+    
+    def StreamTrends(self, request, context):
+        """Simulate flow rate trend."""
+        while True:
+            if self.is_running:
+                yield adapter_pb2.TrendValue(
+                    trend_id="pump-01-flow",
+                    trend_kind="Scalar",
+                    value_json=json.dumps({"value": self.flow_rate, "units": "mL/min"}),
+                    timestamp=int(time.time() * 1000)
+                )
+            time.sleep(1.0)
+    
+    def HealthCheck(self, request, context):
+        return adapter_pb2.HealthStatus(healthy=True, message="Pump simulator online")
+
+def serve():
+    server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
+    adapter_pb2_grpc.add_DeviceAdapterServicer_to_server(PumpSimulatorAdapter(), server)
+    server.add_insecure_port('[::]:50051')
+    logging.info("Pump Simulator Adapter listening on port 50051")
+    server.start()
+    server.wait_for_termination()
+
+if __name__ == '__main__':
+    logging.basicConfig(level=logging.INFO)
+    serve()
+Systemd Service File: adapters/python/pump_simulator/pump-adapter.service
+
+[Unit]
+Description=Helix Pump Simulator Adapter
+After=network.target
+
+[Service]
+Type=simple
+User=helix
+WorkingDirectory=/opt/helix/adapters/python/pump_simulator
+ExecStart=/usr/bin/python3 /opt/helix/adapters/python/pump_simulator/pump_adapter.py
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
+Windows Service Wrapper (NSSM or sc.exe):
+
+nssm install HelixPumpAdapter "C:\Python310\python.exe" "C:\Helix\Adapters\Python\pump_simulator\pump_adapter.py"
+nssm set HelixPumpAdapter AppDirectory "C:\Helix\Adapters\Python\pump_simulator"
+nssm set HelixPumpAdapter DisplayName "Helix Pump Simulator Adapter"
+nssm set HelixPumpAdapter Start SERVICE_AUTO_START
+nssm start HelixPumpAdapter
+4. Device Registry & Configuration
+File: Helix.Orchestration.Agent/Configuration/agent-config.json
+
+{
+  "agentId": "agent-fh-01",
+  "siteId": "lab-cambridge",
+  "fumehoodId": "fh-01",
+  "siteServerEndpoint": "https://helix-site.lab.local:5000",
+  "mqtt": {
+    "brokerHost": "mqtt.lab.local",
+    "brokerPort": 8883,
+    "useTls": true,
+    "clientId": "agent-fh-01"
+  },
+  "cleipnir": {
+    "connectionString": "Data Source=agent.db",
+    "storeType": "SQLite"
+  },
+  "adapters": [
+    {
+      "adapterId": "pump-sim-py",
+      "endpoint": "http://localhost:50051",
+      "deviceIds": ["pump-01"],
+      "healthCheckIntervalSeconds": 30
+    }
+  ],
+  "deviceRegistry": {
+    "syncFromSiteServer": true,
+    "localFallbackPath": "device-registry.json"
+  }
+}
+File: Helix.Orchestration.Agent/Configuration/device-registry.json (local fallback)
+
+{
+  "devices": [
+    {
+      "deviceId": "pump-01",
+      "deviceName": "Simulated Pump",
+      "adapterId": "pump-sim-py",
+      "capabilities": ["SetFlowRate", "GetFlowRate", "Start", "Stop"]
+    }
+  ]
+}
+5. Integration Tests
+Project: Helix.Orchestration.Agent.Tests (xUnit)
+
+Test: AgentIntegrationTests.cs
+
+public class AgentIntegrationTests : IAsyncLifetime
+{
+    private Process? _pythonAdapterProcess;
+    private AgentService? _agentService;
+    
+    public async Task InitializeAsync()
+    {
+        // Start Python adapter as subprocess
+        _pythonAdapterProcess = Process.Start(new ProcessStartInfo
+        {
+            FileName = "python3",
+            Arguments = "adapters/python/pump_simulator/pump_adapter.py",
+            UseShellExecute = false
+        });
+        
+        // Wait for gRPC server to be ready
+        await Task.Delay(2000);
+        
+        // Start agent
+        _agentService = new AgentService(/* config */);
+        await _agentService.StartAsync(CancellationToken.None);
+    }
+    
+    [Fact]
+    public async Task SubmitExperiment_ExecutesWorkflow_PublishesTrends()
+    {
+        // Arrange
+        var wslDoc = new WslDocument
+        {
+            Name = "Pump Test",
+            Nodes = [
+                new WslNode("n1", "SetFlowRate", "SetFlowRate", new { flowRate = 5.0 }),
+                new WslNode("n2", "Start", "Start", null)
+            ],
+            Edges = [new WslEdge("n1", "n2")]
+        };
+        var definition = wslDoc.Compile();
+        
+        // Act
+        var runspace = await _agentService.SubmitExperimentAsync(definition);
+        await runspace.WaitAsync(CancellationToken.None);
+        
+        // Assert
+        Assert.Equal(RunspaceStatus.Completed, runspace.Status);
+        // Verify MQTT messages published (use in-memory MQTT broker for tests)
+    }
+    
+    public async Task DisposeAsync()
+    {
+        await _agentService?.StopAsync(CancellationToken.None)!;
+        _pythonAdapterProcess?.Kill();
+        _pythonAdapterProcess?.Dispose();
+    }
+}
+6. Cleipnir Store Configuration
+Update: Helix.Orchestration.Agent/Program.cs
+
+Add PostgreSQL or SQLite store for production durability:
+
+services.AddSingleton<IFunctionStore>(sp =>
+{
+    var config = sp.GetRequiredService<AgentConfiguration>();
+    return config.Cleipnir.StoreType switch
+    {
+        "SQLite" => new SqliteFunctionStore(config.Cleipnir.ConnectionString),
+        "PostgreSQL" => new PostgreSqlFunctionStore(config.Cleipnir.ConnectionString),
+        _ => throw new InvalidOperationException($"Unknown store type: {config.Cleipnir.StoreType}")
+    };
+});
+
+services.AddSingleton<FunctionsRegistry>(sp =>
+{
+    var store = sp.GetRequiredService<IFunctionStore>();
+    return new FunctionsRegistry(store, new Settings(
+        UnhandledExceptionHandler: (ex) => Console.WriteLine($"Workflow exception: {ex}")
+    ));
+});
+7. Documentation Updates
+File: Helix.Orchestration/docs/PHASE2-AGENT-RUNTIME-HANDOVER.md
+
+Create handover document covering:
+
+Architecture decisions (OS-managed adapters, gRPC contracts)
+Agent project structure and DI setup
+Adapter discovery flow (config + mDNS)
+Cleipnir integration patterns
+Python adapter implementation guide
+Testing strategy (integration tests with real adapter)
+Deployment guide (systemd/Windows Service setup)
+Known limitations and next-phase items
+Technology Stack
+Component	Technology	Version
+Agent Runtime	.NET 10	Latest
+gRPC	Grpc.AspNetCore	Latest
+Protocol Buffers	Google.Protobuf	Latest
+Durable Execution	Cleipnir.ResilientFunctions	4.0.0
+MQTT Client	MQTTnet	4.x
+Python Runtime	Python 3.10+	—
+Python gRPC	grpcio, grpcio-tools	Latest
+Local Storage	SQLite	via Microsoft.Data.Sqlite
+Production Storage	PostgreSQL	via Npgsql
+Health Checks	Microsoft.Extensions.Diagnostics.HealthChecks	Built-in
+Logging	Serilog	Latest
+Configuration	Microsoft.Extensions.Configuration	Built-in
+DI Container	Microsoft.Extensions.DependencyInjection	Built-in
+Out of Scope for Phase 2
+❌ Site Server (Campaign Manager, WSL compiler API) — Phase 3
+❌ Production device adapters (OPC UA, SiLA 2) — Phase 4
+❌ Node.js adapters — Phase 5
+❌ C++ adapters — Phase 6
+❌ USB Bridge Agent with mDNS discovery — Phase 7
+❌ Node-Flow UI — Separate project track
+❌ ML Optimiser integration — Phase 8
+❌ Multi-site aggregation — Phase 9
+Success Criteria
+✅ Agent starts, discovers Python pump adapter via config
+✅ Agent connects to adapter via gRPC, retrieves capabilities
+✅ Agent submits RunspaceDefinition with "SetFlowRate" + "Start" nodes
+✅ DurableRunspace executes workflow via Cleipnir
+✅ Workflow invokes capabilities on adapter via gRPC
+✅ Adapter streams simulated flow rate trends → Agent → MQTT
+✅ Agent reconnects to adapter after adapter restart
+✅ Agent resumes workflow after agent crash (Cleipnir durability)
+✅ Device leases acquired/released correctly
+✅ Integration tests pass with real Python adapter
+✅ 30+ new tests (unit + integration)
+✅ Phase 2 handover document complete
+Last Updated: 2026-05-23 21:06:25
+
+📝 Plan Steps
+Create Helix.Orchestration.Contracts project — Add gRPC .proto files for adapter.proto and agent_control.proto; generate C# and Python stubs.
+Create Helix.Orchestration.Agent project — Bootstrap .NET 10 console app with DI, configuration, logging, and health checks.
+Implement AdapterDiscoveryService — Read agent-config.json, connect to configured adapter endpoints via gRPC, call GetCapabilities(), populate AdapterRegistry.
+Implement AdapterProxy — gRPC client wrapper for InvokeCapability and StreamTrends; add connection retry logic and health monitoring.
+Implement DurableRunspace — Wrap Cleipnir FunctionsRegistry; compile RunspaceDefinition into executable delegate; wire IExperimentContext, IDeviceLeasingService, and ICapabilityInvoker.
+Implement DefinitionCompiler — Transform WSL nodes/edges into sequential/branching/looping workflow logic; map node types to capability invocations.
+Implement RunspaceManager — Maintain in-memory pool of active runspaces; expose SubmitAsync, PauseAsync, ResumeAsync, AbortAsync, GetStatusAsync.
+Implement MqttTrendPublisher — Connect to MQTT broker with TLS; subscribe to adapter trend streams via gRPC; publish to experiment-scoped MQTT topics with QoS 1.
+Implement TrendAggregator — Subscribe to all active adapter StreamTrends() calls; deserialize JSON payloads into TrendValue; route to MqttTrendPublisher.
+Implement AgentControlService — gRPC service for Site Server control plane; implement SubmitExperiment, PauseRunspace, ResumeRunspace, AbortRunspace, GetRunspaceStatus.
+Wire Cleipnir SQLite store — Add SqliteFunctionStore configuration; initialize schema on first run; configure Cleipnir Settings with exception handler and retry policies.
+Implement device registry sync — On startup, fetch device registry from Site Server API; fallback to local device-registry.json if unreachable; merge and cache locally.
+Implement adapter health monitor — Background loop calling HealthCheck() on all adapters every 30s; log failures; attempt reconnect after 3 failures.
+Build Python pump adapter — Implement adapter.proto server in Python; simulate flow rate control and trend streaming; add graceful shutdown handler.
+Create systemd service file — Write .service file for Linux deployment; add install/start instructions to docs.
+Create Windows service wrapper — Document NSSM or sc.exe setup for Windows deployment; add PowerShell install script.
+Add integration test harness — Test that starts Python adapter as subprocess, launches agent, submits experiment, verifies completion and MQTT messages.
+Add crash-and-resume test — Kill agent mid-workflow, restart, verify Cleipnir resumes from last checkpoint; assert workflow completes.
+Add adapter reconnect test — Kill Python adapter mid-workflow, restart, verify agent reconnects and workflow continues.
+Add device lease conflict test — Submit two concurrent runspaces both requesting exclusive lease on "pump-01"; assert second fails with DeviceAlreadyLeasedException.
+Update CapabilityRegistry — Extend to route capability invocations to AdapterProxy based on device registry; add device → adapter lookup.
+Update DeviceLeasingService — Extend to validate leases before capability invocation; add lease renewal via gRPC KeepAlive (future extension point).
+Add logging and telemetry — Wire Serilog with structured logging; log adapter discovery, runspace lifecycle, capability invocations, health check results.
+Create Phase 2 handover doc — Document architecture, agent structure, adapter contract, deployment guide, testing results, known limitations.
+Update docs index — Add PHASE2-AGENT-RUNTIME-HANDOVER.md to docs/README.md.
+Commit and tag — Commit all Phase 2 work; tag as v0.2.0-agent-runtime.
