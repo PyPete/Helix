@@ -151,7 +151,7 @@ public class SafetyEngineTests
 
         // Assert
         Assert.False(engine.IsEmergencyStopActive);
-        Assert.NotSame(oldToken, engine.EmergencyStopToken);
+        Assert.NotEqual(oldToken, engine.EmergencyStopToken);
         Assert.False(engine.EmergencyStopToken.IsCancellationRequested);
     }
 

@@ -64,8 +64,11 @@ jobs:
         with:
           dotnet-version: 10.0.x
 
+      - name: Restore
+        run: dotnet restore Helix.Orchestration/Helix.Orchestration.slnx
+
       - name: Verify formatting
-        run: dotnet format Helix.Orchestration/Helix.Orchestration.slnx --verify-no-changes
+        run: dotnet format Helix.Orchestration/Helix.Orchestration.slnx --verify-no-changes --no-restore
 
   publish:
     name: Publish Artifact
