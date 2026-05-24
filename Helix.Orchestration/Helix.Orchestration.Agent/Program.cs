@@ -1,7 +1,18 @@
-﻿using Helix.Orchestration.Agent;
+﻿using Cleipnir.ResilientFunctions;
+using Cleipnir.ResilientFunctions.Storage;
+using Helix.Orchestration.Agent;
+using Helix.Orchestration.Agent.Execution;
 using Helix.Orchestration.Agent.Leasing;
+using Helix.Orchestration.Agent.Streaming;
+using Helix.Orchestration.Agent.Trends;
 using Helix.Orchestration.Core.Capabilities;
+using Helix.Orchestration.Core.Execution;
 using Helix.Orchestration.Core.Leasing;
+using Helix.Orchestration.Core.Runspace;
+using Helix.Orchestration.Core.Safety;
+using Helix.Orchestration.Core.State;
+using Helix.Orchestration.Core.Trends;
+using Helix.Orchestration.Core.WorkflowEngine;
 using Microsoft.AspNetCore.Builder;
 using Serilog;
 using Serilog.Formatting.Compact;
@@ -39,6 +50,29 @@ try
 
     // Capability invoker
     builder.Services.AddSingleton<ICapabilityInvoker, NoOpCapabilityInvoker>();
+
+    // Durable workflow execution
+    builder.Services.AddSingleton(new InMemoryFunctionStore());
+    builder.Services.AddSingleton<FunctionsRegistry>(sp =>
+        new FunctionsRegistry(sp.GetRequiredService<InMemoryFunctionStore>()));
+    builder.Services.AddSingleton<WorkflowRegistry>();
+    builder.Services.AddSingleton<IWorkflowStateStore, WorkflowStateStore>();
+    builder.Services.AddSingleton<ISafetyEngine, SafetyEngine>();
+    builder.Services.AddSingleton<InMemoryTrendProvider>();
+    builder.Services.AddSingleton<ITrendProvider>(sp => sp.GetRequiredService<InMemoryTrendProvider>());
+    builder.Services.AddSingleton<TrendAggregator>();
+    builder.Services.AddSingleton<IRunspaceManager, RunspaceManager>();
+    builder.Services.AddSingleton<Func<string, WorkflowContext>>(sp => workflowId => new WorkflowContext
+    {
+        WorkflowId = workflowId,
+        Capabilities = sp.GetRequiredService<ICapabilityInvoker>(),
+        Trends = sp.GetRequiredService<ITrendProvider>(),
+        Safety = sp.GetRequiredService<ISafetyEngine>(),
+        State = sp.GetRequiredService<IWorkflowStateStore>(),
+        Leasing = sp.GetRequiredService<IDeviceLeasingService>()
+    });
+    builder.Services.AddSingleton<IWorkflowExecutor, WorkflowExecutor>();
+    builder.Services.AddSingleton<WslExecutionAdapter>();
 
     // Hosted services
     builder.Services.AddHostedService<AgentService>();

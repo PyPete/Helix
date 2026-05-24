@@ -88,6 +88,59 @@ public sealed class InMemoryDeviceLeasingService : IDeviceLeasingService
     }
 
     /// <inheritdoc/>
+    public Task<DeviceLease> RenewAsync(
+        string deviceId,
+        string leaseId,
+        TimeSpan extension,
+        CancellationToken cancellationToken = default)
+    {
+        if (extension <= TimeSpan.Zero)
+            throw new ArgumentOutOfRangeException(nameof(extension), "Lease extension must be greater than zero.");
+
+        lock (_lock)
+        {
+            if (!_leases.TryGetValue(deviceId, out var list))
+                throw new InvalidOperationException($"No active leases found for device '{deviceId}'.");
+
+            list.RemoveAll(l => l.ExpiresAt.HasValue && l.ExpiresAt.Value <= DateTimeOffset.UtcNow);
+
+            var index = list.FindIndex(l => l.LeaseId == leaseId);
+            if (index < 0)
+                throw new InvalidOperationException($"Lease '{leaseId}' was not found for device '{deviceId}'.");
+
+            var existing = list[index];
+            if (!existing.ExpiresAt.HasValue)
+                throw new InvalidOperationException($"Lease '{leaseId}' cannot be renewed because it does not expire.");
+
+            var now = DateTimeOffset.UtcNow;
+            if (existing.ExpiresAt.Value <= now)
+                throw new InvalidOperationException($"Lease '{leaseId}' is expired and cannot be renewed.");
+
+            var baseTime = existing.ExpiresAt.Value > now ? existing.ExpiresAt.Value : now;
+            var renewed = new DeviceLease(
+                leaseId: existing.LeaseId,
+                deviceId: existing.DeviceId,
+                mode: existing.Mode,
+                holderName: existing.HolderName,
+                acquiredAt: existing.AcquiredAt,
+                expiresAt: baseTime + extension,
+                release: () =>
+                {
+                    lock (_lock)
+                    {
+                        if (_leases.TryGetValue(deviceId, out var leases))
+                            leases.RemoveAll(l => l.LeaseId == leaseId);
+                    }
+
+                    return Task.CompletedTask;
+                });
+
+            list[index] = renewed;
+            return Task.FromResult(renewed);
+        }
+    }
+
+    /// <inheritdoc/>
     public Task ForceReleaseAsync(string deviceId, CancellationToken cancellationToken = default)
     {
         lock (_lock)

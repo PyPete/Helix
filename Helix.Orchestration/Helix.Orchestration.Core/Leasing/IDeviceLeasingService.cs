@@ -35,6 +35,23 @@ public interface IDeviceLeasingService
     bool IsHeldBy(string deviceId, string holderName);
 
     /// <summary>
+    /// Renews an active lease by extending its expiration.
+    /// </summary>
+    /// <param name="deviceId">The leased device identifier.</param>
+    /// <param name="leaseId">The lease identifier to renew.</param>
+    /// <param name="extension">How much to extend the lease expiration.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The renewed lease snapshot.</returns>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown when the lease does not exist, is expired, or has no expiration configured.
+    /// </exception>
+    Task<DeviceLease> RenewAsync(
+        string deviceId,
+        string leaseId,
+        TimeSpan extension,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Forcibly releases all leases held on <paramref name="deviceId"/>.
     /// Used by safety/emergency-stop paths.
     /// </summary>

@@ -13,6 +13,8 @@ This folder contains project documentation for Helix.Orchestration.
 - [`PHASE1-CORE-DOMAIN-HANDOVER.md`](PHASE1-CORE-DOMAIN-HANDOVER.md) — Phase 1 complete. Covers: stratified trend model, MS/MS and NMR spectral analytics, device leasing, WSL authoring + RunspaceDefinition, Runspace abstraction, TestContext. 56 tests passing.
 - [`PHASE2-AGENT-RUNTIME-HANDOVER.md`](PHASE2-AGENT-RUNTIME-HANDOVER.md) — Phase 2 foundation. Covers: contracts protos, agent scaffolding, adapter discovery/proxy layer, runspace manager, streaming skeleton, control-plane scaffolding, and Python pump adapter assets.
 - [`PHASE3-EXECUTION-PATH-HANDOVER.md`](PHASE3-EXECUTION-PATH-HANDOVER.md) — Phase 3 completion. Covers: WSL compiler path closure, adapter capability routing, gRPC host wiring, lease expiry background cleanup, and remaining production gaps.
+- [`PHASE4-DURABLE-EXECUTION-TREND-FOUNDATION-HANDOVER.md`](PHASE4-DURABLE-EXECUTION-TREND-FOUNDATION-HANDOVER.md) — Phase 4 foundation. Covers: durable runspace delegation via `IWorkflowExecutor`, Agent DI wiring for Cleipnir runtime dependencies, in-memory spectral and diode-array trend providers, trend aggregation routing, and scalar trend helper additions.
+- [`PHASE5-RUNSPACE-LIFECYCLE-HANDOVER.md`](PHASE5-RUNSPACE-LIFECYCLE-HANDOVER.md) — Phase 5 lifecycle wiring. Covers: lease renewal API, runspace manager implementation, workflow leasing context extension, and WSL-to-durable-runspace execution adapter integration.
 
 ## Notes
 - Keep long-form project decisions and handovers here.

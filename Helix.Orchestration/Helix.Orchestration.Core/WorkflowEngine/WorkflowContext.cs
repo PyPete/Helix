@@ -1,5 +1,6 @@
 using Helix.Orchestration.Core.Capabilities;
 using Helix.Orchestration.Core.Experiment;
+using Helix.Orchestration.Core.Leasing;
 using Helix.Orchestration.Core.Safety;
 using Helix.Orchestration.Core.State;
 using Helix.Orchestration.Core.Trends;
@@ -36,6 +37,11 @@ public sealed class WorkflowContext
     /// Durable workflow state store for persistence across crashes and resumption.
     /// </summary>
     public required IWorkflowStateStore State { get; init; }
+
+    /// <summary>
+    /// Optional lease service for workflows that coordinate exclusive/shared access to devices.
+    /// </summary>
+    public IDeviceLeasingService? Leasing { get; init; }
 
     /// <summary>
     /// Optional experiment context for experiment-centric workflows.

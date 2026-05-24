@@ -10,6 +10,7 @@
     <PackageReference Include="Cleipnir.ResilientFunctions" Version="4.0.0" />
     <PackageReference Include="MQTTnet" Version="4.*" />
     <PackageReference Include="NATS.Net" Version="2.*" />
+    <PackageReference Include="System.Reactive" Version="6.*" />
   </ItemGroup>
 
   <ItemGroup>
@@ -19,6 +20,8 @@
     <None Include="..\docs\PHASE1-CORE-DOMAIN-HANDOVER.md" Link="docs\PHASE1-CORE-DOMAIN-HANDOVER.md" />
     <None Include="..\docs\PHASE2-AGENT-RUNTIME-HANDOVER.md" Link="docs\PHASE2-AGENT-RUNTIME-HANDOVER.md" />
     <None Include="..\docs\PHASE3-EXECUTION-PATH-HANDOVER.md" Link="docs\PHASE3-EXECUTION-PATH-HANDOVER.md" />
+    <None Include="..\docs\PHASE4-DURABLE-EXECUTION-TREND-FOUNDATION-HANDOVER.md" Link="docs\PHASE4-DURABLE-EXECUTION-TREND-FOUNDATION-HANDOVER.md" />
+    <None Include="..\docs\PHASE5-RUNSPACE-LIFECYCLE-HANDOVER.md" Link="docs\PHASE5-RUNSPACE-LIFECYCLE-HANDOVER.md" />
     <None Include="..\docs\CI.md" Link="docs\CI.md" />
   </ItemGroup>
 
