@@ -17,8 +17,8 @@ public sealed class SimCapabilityInvoker : ICapabilityInvoker
     }
 
     public Task<CapabilityInvocationResult> InvokeAsync(
-        string capabilityName, 
-        object? parameters = null, 
+        string capabilityName,
+        object? parameters = null,
         CancellationToken cancellationToken = default)
     {
         var startTime = DateTimeOffset.UtcNow;

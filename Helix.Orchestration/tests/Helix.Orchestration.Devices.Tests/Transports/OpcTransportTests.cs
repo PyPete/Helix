@@ -85,12 +85,14 @@ public sealed class OpcTransportTests
     public async Task ConnectAsync_WhenSessionInitiallyDisconnected_WatchdogTransitionsToReconnecting()
     {
         var session = Substitute.For<IOpcSession>();
-        session.IsConnected.Returns(true, false);
+        // First call returns true (connected), subsequent calls return false (disconnected)
+        session.IsConnected.Returns(x => true, x => false);
 
-        var transport = CreateTransport(session, reconnectPeriodMs: 10);
+        var transport = CreateTransport(session, reconnectPeriodMs: 50);
         await transport.ConnectAsync();
 
-        await Task.Delay(10_500);
+        // Wait for watchdog to detect disconnection (50ms reconnect period + margin)
+        await Task.Delay(200);
 
         Assert.Equal(TransportStatus.Reconnecting, transport.Status);
     }

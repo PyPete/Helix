@@ -23,10 +23,10 @@ public sealed class SimSpectrometer : BackgroundService
     {
         // Register spectral trend
         _trendProvider.RegisterTrend(
-            "spectrometer.mir", 
-            "spectrometer.mir", 
-            TrendKind.Spectral, 
-            units: "Absorbance", 
+            "spectrometer.mir",
+            "spectrometer.mir",
+            TrendKind.Spectral,
+            units: "Absorbance",
             experimentId: "sim-experiment-1");
 
         _logger.LogInformation("SimSpectrometer: Started. Emitting MidIr Spectrum1D every 5 seconds.");

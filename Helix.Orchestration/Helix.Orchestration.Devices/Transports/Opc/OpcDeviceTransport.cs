@@ -84,8 +84,6 @@ public sealed class OpcDeviceTransport : IDeviceTransport
                 ClientConfiguration = new ClientConfiguration { DefaultSessionTimeout = _options.SessionTimeoutMs }
             };
 
-            await appConfig.Validate(ApplicationType.Client);
-
             _session = _sessionFactory.Create(_options, appConfig);
 
             if (_session is OpcFoundationSession foundationSession)

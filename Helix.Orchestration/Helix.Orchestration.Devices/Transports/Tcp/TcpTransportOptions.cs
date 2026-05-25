@@ -49,6 +49,11 @@ public sealed class TcpTransportOptions
     public bool UseLengthPrefix { get; init; } = false;
 
     /// <summary>
+    /// Whether to enable background read loop for unsolicited data (default: true).
+    /// </summary>
+    public bool EnableBackgroundRead { get; init; } = true;
+
+    /// <summary>
     /// Reconnection policy for handling disconnections.
     /// </summary>
     public ReconnectPolicy? ReconnectPolicy { get; init; }

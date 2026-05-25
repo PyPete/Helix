@@ -71,7 +71,7 @@ public sealed class SimReactor : BackgroundService
             _trendProvider.PublishValue("reactor.pressure", new ScalarValue<double>(pressure));
             pressureTime += 0.1;
 
-            _logger.LogTrace("SimReactor: Temp={Temp:F2}°C (setpoint={Setpoint}°C), Pressure={Pressure:F3}bar", 
+            _logger.LogTrace("SimReactor: Temp={Temp:F2}°C (setpoint={Setpoint}°C), Pressure={Pressure:F3}bar",
                 currentTemp, setpoint, pressure);
 
             await Task.Delay(tickInterval, stoppingToken);

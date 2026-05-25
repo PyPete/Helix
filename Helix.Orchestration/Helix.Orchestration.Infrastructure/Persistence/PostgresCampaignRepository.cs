@@ -1,4 +1,6 @@
 using Dapper;
+using Npgsql;
+using NpgsqlTypes;
 
 namespace Helix.Orchestration.Infrastructure.Persistence;
 
@@ -25,7 +27,7 @@ public sealed class PostgresCampaignRepository(DbConnectionFactory connectionFac
                 status, message, created_at, started_at, ended_at
             )
             VALUES (
-                @CampaignId, @IterationIndex, @ParametersJson, @RunspaceId,
+                @CampaignId, @IterationIndex, @ParametersJson::jsonb, @RunspaceId,
                 @Status, @Message, @CreatedAt, @StartedAt, @EndedAt
             );
             """;

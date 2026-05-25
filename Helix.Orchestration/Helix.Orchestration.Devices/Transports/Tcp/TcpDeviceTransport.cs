@@ -1,5 +1,6 @@
 using System.Net.Sockets;
 using System.Reactive.Subjects;
+using System.Threading.Channels;
 using Helix.Orchestration.Devices.Abstractions;
 using Microsoft.Extensions.Logging;
 
@@ -20,6 +21,7 @@ public sealed class TcpDeviceTransport : IDeviceTransport
     private NetworkStream? _stream;
     private Task? _readLoopTask;
     private CancellationTokenSource? _readLoopCts;
+    private Channel<byte[]>? _messageChannel;
     private TransportStatus _status = TransportStatus.Disconnected;
     private bool _disposed;
 
@@ -71,9 +73,15 @@ public sealed class TcpDeviceTransport : IDeviceTransport
 
             _logger.LogInformation("TCP connected to {Host}:{Port}", _options.Host, _options.Port);
 
-            // Start background read loop for unsolicited data
-            _readLoopCts = new CancellationTokenSource();
-            _readLoopTask = Task.Run(() => ReadLoopAsync(_readLoopCts.Token), _readLoopCts.Token);
+            // Create message channel for coordinating reads between background loop and SendReceiveAsync
+            _messageChannel = Channel.CreateUnbounded<byte[]>();
+
+            // Start background read loop for unsolicited data (only if requested)
+            if (_options.EnableBackgroundRead != false)
+            {
+                _readLoopCts = new CancellationTokenSource();
+                _readLoopTask = Task.Run(() => ReadLoopAsync(_readLoopCts.Token), _readLoopCts.Token);
+            }
 
             SetStatus(TransportStatus.Connected);
         }
@@ -129,21 +137,22 @@ public sealed class TcpDeviceTransport : IDeviceTransport
     /// <inheritdoc/>
     public async Task<byte[]> SendReceiveAsync(byte[] command, CancellationToken cancellationToken = default)
     {
-        if (_stream == null || _status != TransportStatus.Connected)
+        if (_stream == null || _status != TransportStatus.Connected || _messageChannel == null)
             throw new TransportFaultException("TCP transport is not connected", "TCP", _status);
 
         try
         {
             // Send command
             await _stream.WriteAsync(command, cancellationToken);
+            await _stream.FlushAsync(cancellationToken);
             _logger.LogTrace("Sent {ByteCount} bytes via TCP", command.Length);
 
-            // Read response based on framing mode
+            // Read response from channel (populated by background read loop)
             var response = _options.FramingMode switch
             {
-                TcpFramingMode.Delimiter => await ReadUntilDelimiterAsync(cancellationToken),
-                TcpFramingMode.LengthPrefix => await ReadLengthPrefixedAsync(cancellationToken),
-                TcpFramingMode.Raw => await ReadRawAsync(cancellationToken),
+                TcpFramingMode.Delimiter => await ReadUntilDelimiterFromChannelAsync(cancellationToken),
+                TcpFramingMode.LengthPrefix => await ReadLengthPrefixedFromChannelAsync(cancellationToken),
+                TcpFramingMode.Raw => await ReadRawFromChannelAsync(cancellationToken),
                 _ => throw new NotSupportedException($"Framing mode {_options.FramingMode} not supported")
             };
 
@@ -162,53 +171,105 @@ public sealed class TcpDeviceTransport : IDeviceTransport
             SetStatus(TransportStatus.Faulted);
             throw new TransportFaultException("TCP socket error", "TCP", TransportStatus.Connected, ex);
         }
+        catch (OperationCanceledException ex)
+        {
+            _logger.LogError(ex, "TCP read timeout");
+            SetStatus(TransportStatus.Faulted);
+            throw new TransportFaultException("TCP read timeout", "TCP", TransportStatus.Connected, ex);
+        }
     }
 
-    private async Task<byte[]> ReadUntilDelimiterAsync(CancellationToken cancellationToken)
+    private async Task<byte[]> ReadUntilDelimiterFromChannelAsync(CancellationToken cancellationToken)
     {
         var buffer = new List<byte>();
-        var readBuffer = new byte[1];
 
         while (true)
         {
-            var bytesRead = await _stream!.ReadAsync(readBuffer, cancellationToken);
-            if (bytesRead == 0)
+            // Use timeout for receive
+            using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            cts.CancelAfter(_options.ReceiveTimeoutMs);
+
+            if (!await _messageChannel!.Reader.WaitToReadAsync(cts.Token))
                 throw new IOException("Connection closed by remote host");
 
-            buffer.Add(readBuffer[0]);
+            if (_messageChannel.Reader.TryRead(out var data))
+            {
+                buffer.AddRange(data);
 
-            if (readBuffer[0] == _options.DelimiterByte)
-                break;
+                // Check if we have the delimiter
+                if (data.Length > 0 && data[^1] == _options.DelimiterByte)
+                    break;
+            }
         }
 
         return buffer.ToArray();
     }
 
-    private async Task<byte[]> ReadLengthPrefixedAsync(CancellationToken cancellationToken)
+    private async Task<byte[]> ReadLengthPrefixedFromChannelAsync(CancellationToken cancellationToken)
     {
-        // Read 4-byte length prefix
         var lengthBuffer = new byte[4];
-        await _stream!.ReadExactlyAsync(lengthBuffer, cancellationToken);
-        var length = BitConverter.ToInt32(lengthBuffer, 0);
+        var bytesNeeded = 4;
 
-        if (length <= 0 || length > 10_000_000) // 10MB sanity check
+        // Read length prefix
+        using (var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken))
+        {
+            cts.CancelAfter(_options.ReceiveTimeoutMs);
+
+            while (bytesNeeded > 0 && await _messageChannel!.Reader.WaitToReadAsync(cts.Token))
+            {
+                if (_messageChannel.Reader.TryRead(out var data))
+                {
+                    var toCopy = Math.Min(bytesNeeded, data.Length);
+                    Array.Copy(data, 0, lengthBuffer, 4 - bytesNeeded, toCopy);
+                    bytesNeeded -= toCopy;
+                }
+            }
+        }
+
+        if (bytesNeeded > 0)
+            throw new IOException("Failed to read length prefix");
+
+        var length = BitConverter.ToInt32(lengthBuffer, 0);
+        if (length <= 0 || length > 10_000_000)
             throw new InvalidOperationException($"Invalid length prefix: {length}");
 
         // Read message body
         var messageBuffer = new byte[length];
-        await _stream.ReadExactlyAsync(messageBuffer, cancellationToken);
+        bytesNeeded = length;
+
+        using (var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken))
+        {
+            cts.CancelAfter(_options.ReceiveTimeoutMs);
+
+            while (bytesNeeded > 0 && await _messageChannel!.Reader.WaitToReadAsync(cts.Token))
+            {
+                if (_messageChannel.Reader.TryRead(out var data))
+                {
+                    var toCopy = Math.Min(bytesNeeded, data.Length);
+                    Array.Copy(data, 0, messageBuffer, length - bytesNeeded, toCopy);
+                    bytesNeeded -= toCopy;
+                }
+            }
+        }
+
+        if (bytesNeeded > 0)
+            throw new IOException("Failed to read message body");
+
         return messageBuffer;
     }
 
-    private async Task<byte[]> ReadRawAsync(CancellationToken cancellationToken)
+    private async Task<byte[]> ReadRawFromChannelAsync(CancellationToken cancellationToken)
     {
-        var buffer = new byte[4096];
-        var bytesRead = await _stream!.ReadAsync(buffer, cancellationToken);
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        cts.CancelAfter(_options.ReceiveTimeoutMs);
 
-        if (bytesRead == 0)
+        if (!await _messageChannel!.Reader.WaitToReadAsync(cts.Token))
             throw new IOException("Connection closed by remote host");
 
-        return buffer.Take(bytesRead).ToArray();
+        if (_messageChannel.Reader.TryRead(out var data))
+            return data;
+
+        throw new IOException("Failed to read data");
     }
 
     private async Task ReadLoopAsync(CancellationToken cancellationToken)
@@ -217,30 +278,43 @@ public sealed class TcpDeviceTransport : IDeviceTransport
 
         try
         {
-            while (!cancellationToken.IsCancellationRequested && _stream != null)
+            while (!cancellationToken.IsCancellationRequested && _stream != null && _messageChannel != null)
             {
-                var buffer = new byte[4096];
-                var bytesRead = await _stream.ReadAsync(buffer, cancellationToken);
-
-                if (bytesRead == 0)
+                try
                 {
-                    _logger.LogWarning("TCP connection closed by remote host");
-                    SetStatus(TransportStatus.Faulted);
+                    var buffer = new byte[4096];
+                    var bytesRead = await _stream.ReadAsync(buffer, cancellationToken);
+
+                    if (bytesRead == 0)
+                    {
+                        _logger.LogWarning("TCP connection closed by remote host");
+                        SetStatus(TransportStatus.Faulted);
+                        _messageChannel.Writer.TryComplete();
+                        break;
+                    }
+
+                    var data = buffer.Take(bytesRead).ToArray();
+
+                    // Write to channel for SendReceiveAsync to consume
+                    await _messageChannel.Writer.WriteAsync(data, cancellationToken);
+
+                    // Also publish via DataReceived observable for subscribers
+                    _dataReceivedSubject.OnNext(data);
+                }
+                catch (OperationCanceledException)
+                {
                     break;
                 }
-
-                var data = buffer.Take(bytesRead).ToArray();
-                _dataReceivedSubject.OnNext(data);
             }
-        }
-        catch (OperationCanceledException)
-        {
-            _logger.LogDebug("TCP read loop cancelled");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error in TCP read loop");
             SetStatus(TransportStatus.Faulted);
+        }
+        finally
+        {
+            _messageChannel?.Writer.TryComplete();
         }
     }
 
@@ -265,6 +339,7 @@ public sealed class TcpDeviceTransport : IDeviceTransport
         _statusSubject.Dispose();
         _dataReceivedSubject.Dispose();
         _readLoopCts?.Dispose();
+        _messageChannel?.Writer.TryComplete();
         GC.SuppressFinalize(this);
     }
 }

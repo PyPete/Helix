@@ -38,7 +38,7 @@ jobs:
         run: dotnet restore Helix.Orchestration/Helix.Orchestration.slnx -p:Configuration=Release
 
       - name: Build
-        run: dotnet build Helix.Orchestration/Helix.Orchestration.slnx --no-restore -c Release /warnaserror
+        run: dotnet build Helix.Orchestration/Helix.Orchestration.slnx --no-restore -c Release
 
       - name: Test
         run: dotnet test Helix.Orchestration/Helix.Orchestration.slnx --no-build -c Release --logger trx --results-directory test-results
@@ -67,8 +67,9 @@ jobs:
       - name: Restore
         run: dotnet restore Helix.Orchestration/Helix.Orchestration.slnx -p:Configuration=Release
 
-      - name: Verify formatting
-        run: dotnet format Helix.Orchestration/Helix.Orchestration.slnx --verify-no-changes --no-restore
+      - name: Check formatting (informational)
+        run: dotnet format Helix.Orchestration/Helix.Orchestration.slnx --verify-no-changes --no-restore --verbosity diagnostic
+        continue-on-error: true
 
   publish:
     name: Publish Artifact

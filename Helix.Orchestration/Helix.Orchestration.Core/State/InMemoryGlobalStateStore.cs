@@ -171,7 +171,7 @@ public class InMemoryGlobalStateStore : IGlobalStateStore
         var type = typeof(T);
 
         // Primitives and strings can be stored directly
-        if (type.IsPrimitive || type == typeof(string) || type == typeof(decimal) || 
+        if (type.IsPrimitive || type == typeof(string) || type == typeof(decimal) ||
             type == typeof(DateTime) || type == typeof(DateTimeOffset))
             return value;
 

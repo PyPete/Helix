@@ -13,7 +13,7 @@ public sealed class PostgresExperimentRepository(DbConnectionFactory connectionF
             )
             VALUES (
                 @RunspaceId, @CampaignId, @DefinitionId, @Name, @Status,
-                @CreatedAt, @StartedAt, @EndedAt, @FaultMessage, @DefinitionJson
+                @CreatedAt, @StartedAt, @EndedAt, @FaultMessage, @DefinitionJson::jsonb
             )
             ON CONFLICT (runspace_id) DO UPDATE SET
                 campaign_id = EXCLUDED.campaign_id,

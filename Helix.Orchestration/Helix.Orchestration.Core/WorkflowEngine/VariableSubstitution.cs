@@ -53,7 +53,7 @@ public static class VariableSubstitution
             {
                 "workflow" => await workflowState.GetVariableAsync<object>(workflowId, key, cancellationToken),
                 "global" => await globalState.GetVariableAsync<object>("global", key, cancellationToken),
-                "campaign" when !string.IsNullOrWhiteSpace(campaignId) => 
+                "campaign" when !string.IsNullOrWhiteSpace(campaignId) =>
                     await globalState.GetVariableAsync<object>(campaignId, key, cancellationToken),
                 "device" => await ResolveDeviceVariable(capabilities, key, cancellationToken),
                 _ => null
