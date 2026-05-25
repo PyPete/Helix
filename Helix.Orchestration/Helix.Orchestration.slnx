@@ -1,5 +1,8 @@
 <Solution>
   <Folder Name="/tests/">
+    <Project Path="tests/Helix.Orchestration.Devices.Tests/Helix.Orchestration.Devices.Tests.csproj">
+      <Build Solution="Debug|*" Project="false" />
+    </Project>
     <Project Path="tests/Helix.Orchestration.Infrastructure.Tests/Helix.Orchestration.Infrastructure.Tests.csproj">
       <Build Solution="Debug|*" Project="false" />
     </Project>

@@ -174,6 +174,10 @@ They only call:
 await ctx.Capabilities.InvokeAsync("SetTemperature", new { Value = 75 });
 ```
 
+### Device Integration Layer — `Helix.Orchestration.Devices`
+
+See [`PHASE13-DEVICE-INTEGRATION-LAYER-HANDOVER.md`](PHASE13-DEVICE-INTEGRATION-LAYER-HANDOVER.md) for full architecture, transport hierarchy, fault tolerance design, OPC UA swap path, and test coverage summary.
+
 ---
 
 ## 7. Data Layer

@@ -6,7 +6,7 @@ This folder contains project documentation for Helix.Orchestration.
 
 ### Architecture & Concepts
 - [`CONCEPT.md`](CONCEPT.md) — Project concept, architecture principles, two-tier design (Agent / Site Server), execution and data-flow diagrams, technology stack, and roadmap.
-- [`HANDOVER.md`](HANDOVER.md) — Full infrastructure handover: architecture direction, technology choices, WSL/Runspace/Campaign design decisions, and captured learnings.
+- [`HANDOVER.md`](HANDOVER.md) — Full infrastructure handover: architecture direction, technology choices, WSL/Runspace/Campaign design decisions, device integration layer architecture (`Helix.Orchestration.Devices`), transport fault-tolerance model, OPC UA swap path, and captured learnings.
 - [`CI.md`](CI.md) — CI/CD workflow behavior, branch model (`dev`/`stage`/`main`), and recommended GitHub branch protection checks.
 
 ### Phase Handovers
@@ -22,6 +22,7 @@ This folder contains project documentation for Helix.Orchestration.
 - [`PHASE10-GRPC-AGENT-TRANSPORT-HANDOVER.md`](PHASE10-GRPC-AGENT-TRANSPORT-HANDOVER.md) — Phase 10 complete. Covers: config-driven Site Server agent transport selection (`sim`/`grpc`), gRPC control-plane proxy implementation (`GrpcAgentProxy`), generated gRPC client enablement in Contracts, `IAgentControlClient` adapter for testability, and SiteServer xUnit coverage uplift (35 tests passing).
 - [`PHASE11-CAMPAIGN-MANAGER-HANDOVER.md`](PHASE11-CAMPAIGN-MANAGER-HANDOVER.md) — Phase 11 complete. Covers: Site Server-owned campaign orchestration (`CampaignManager`), sequential iteration strategy seam, campaign REST endpoints (`/api/campaigns`), in-memory lifecycle tracking, and expanded SiteServer xUnit coverage (44 tests passing).
 - [`PHASE12-POSTGRESQL-PERSISTENCE-HANDOVER.md`](PHASE12-POSTGRESQL-PERSISTENCE-HANDOVER.md) — Phase 12 complete. Covers: dedicated Infrastructure project (`Helix.Orchestration.Infrastructure`), PostgreSQL repositories for experiments/campaigns, initial SQL migration (`campaigns`, `campaign_iterations`, `experiments`), docker-compose postgres service wiring, and container-backed integration test scaffolding.
+- [`PHASE13-DEVICE-INTEGRATION-LAYER-HANDOVER.md`](PHASE13-DEVICE-INTEGRATION-LAYER-HANDOVER.md) — Phase 13 foundation. Covers: shared transport and adapter host layer (`Helix.Orchestration.Devices`), transport abstraction (`IDeviceTransport`), fault tolerance design (ReconnectPolicy, CircuitBreaker, TransportWatchdog), serial/Modbus/TCP/OPC/C-DLL protocol implementations, composition-based adapter architecture, OPC UA library swap path, test seams for hardware-free validation, and 54 xUnit tests passing.
 
 ### Migration Handovers
 - [`DEVICE-MIGRATION-HANDOVER.md`](DEVICE-MIGRATION-HANDOVER.md) — POP.DeviceCore → Helix.Orchestration.Devices migration. Covers: two-layer split rationale (pure device vs. Agent transport), transport contract design, domain model replacements, base class hierarchy, wave-1 driver scaffold status, known parity gaps per driver (`VapourtecR4`, `KnauerAzura`, `SystagOpcUaClient`), capability adapter wiring, DI lifetime considerations, and recommended next steps.

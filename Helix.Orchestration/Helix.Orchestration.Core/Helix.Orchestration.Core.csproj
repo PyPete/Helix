@@ -29,6 +29,7 @@
     <None Include="..\docs\PHASE10-GRPC-AGENT-TRANSPORT-HANDOVER.md" Link="docs\PHASE10-GRPC-AGENT-TRANSPORT-HANDOVER.md" />
     <None Include="..\docs\PHASE11-CAMPAIGN-MANAGER-HANDOVER.md" Link="docs\PHASE11-CAMPAIGN-MANAGER-HANDOVER.md" />
     <None Include="..\docs\PHASE12-POSTGRESQL-PERSISTENCE-HANDOVER.md" Link="docs\PHASE12-POSTGRESQL-PERSISTENCE-HANDOVER.md" />
+    <None Include="..\docs\PHASE13-DEVICE-INTEGRATION-LAYER-HANDOVER.md" Link="docs\PHASE13-DEVICE-INTEGRATION-LAYER-HANDOVER.md" />
     <None Include="..\docs\DEVICE-MIGRATION-HANDOVER.md" Link="docs\DEVICE-MIGRATION-HANDOVER.md" />
     <None Include="..\docs\CI.md" Link="docs\CI.md" />
   </ItemGroup>
