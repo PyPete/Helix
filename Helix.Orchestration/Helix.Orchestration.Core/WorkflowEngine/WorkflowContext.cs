@@ -48,4 +48,10 @@ public sealed class WorkflowContext
     /// Null for non-experiment automation tasks.
     /// </summary>
     public IExperimentContext? Experiment { get; init; }
+
+    /// <summary>
+    /// Global state store for campaign-scoped and globally-shared variables.
+    /// Enables workflows to read/write variables that persist across workflow instances.
+    /// </summary>
+    public required IGlobalStateStore GlobalState { get; init; }
 }

@@ -1,6 +1,7 @@
 ﻿using Cleipnir.ResilientFunctions;
 using Cleipnir.ResilientFunctions.Storage;
 using Helix.Orchestration.Agent;
+using Helix.Orchestration.Agent.Adapters.Devices;
 using Helix.Orchestration.Agent.Execution;
 using Helix.Orchestration.Agent.Leasing;
 using Helix.Orchestration.Agent.Streaming;
@@ -48,8 +49,8 @@ try
     builder.Services.AddSingleton<IDeviceLeasingService>(sp =>
         sp.GetRequiredService<InMemoryDeviceLeasingService>());
 
-    // Capability invoker
-    builder.Services.AddSingleton<ICapabilityInvoker, NoOpCapabilityInvoker>();
+    // Capability invoker + migrated device adapters
+    builder.Services.AddMigratedDeviceAdapters();
 
     // Durable workflow execution
     builder.Services.AddSingleton(new InMemoryFunctionStore());
@@ -57,6 +58,7 @@ try
         new FunctionsRegistry(sp.GetRequiredService<InMemoryFunctionStore>()));
     builder.Services.AddSingleton<WorkflowRegistry>();
     builder.Services.AddSingleton<IWorkflowStateStore, WorkflowStateStore>();
+    builder.Services.AddSingleton<IGlobalStateStore, InMemoryGlobalStateStore>();
     builder.Services.AddSingleton<ISafetyEngine, SafetyEngine>();
     builder.Services.AddSingleton<InMemoryTrendProvider>();
     builder.Services.AddSingleton<ITrendProvider>(sp => sp.GetRequiredService<InMemoryTrendProvider>());
@@ -69,7 +71,8 @@ try
         Trends = sp.GetRequiredService<ITrendProvider>(),
         Safety = sp.GetRequiredService<ISafetyEngine>(),
         State = sp.GetRequiredService<IWorkflowStateStore>(),
-        Leasing = sp.GetRequiredService<IDeviceLeasingService>()
+        Leasing = sp.GetRequiredService<IDeviceLeasingService>(),
+        GlobalState = sp.GetRequiredService<IGlobalStateStore>()
     });
     builder.Services.AddSingleton<IWorkflowExecutor, WorkflowExecutor>();
     builder.Services.AddSingleton<WslExecutionAdapter>();
@@ -77,6 +80,7 @@ try
     // Hosted services
     builder.Services.AddHostedService<AgentService>();
     builder.Services.AddHostedService<LeaseExpiryWorker>();
+    builder.Services.AddHostedService<MqttTrendIngestionService>();
 
     // Health checks
     builder.Services.AddHealthChecks();

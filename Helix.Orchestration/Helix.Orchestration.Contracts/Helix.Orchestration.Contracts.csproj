@@ -18,7 +18,7 @@
 
   <ItemGroup>
 	<Protobuf Include="Protos\adapter.proto" GrpcServices="Both" />
-	<Protobuf Include="Protos\agent_control.proto" GrpcServices="Server" />
+	<Protobuf Include="Protos\agent_control.proto" GrpcServices="Both" />
   </ItemGroup>
 
 </Project>

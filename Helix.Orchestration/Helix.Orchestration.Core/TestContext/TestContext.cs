@@ -65,13 +65,13 @@ public sealed class TestContext : ITestContext
     }
 
     /// <inheritdoc/>
-    public void InjectSpectralScan(string trendId, SpectralScan scan)
+    public void InjectSpectralScan(string trendId, Spectrum1D scan)
     {
         RecordEvent(TestEventKind.SpectralScanInjected, trendId, $"Type={scan.SpectralType}");
     }
 
     /// <inheritdoc/>
-    public void InjectSpectralMatrix(string trendId, SpectralMatrix matrix)
+    public void InjectSpectralMatrix(string trendId, Spectrum2D matrix)
     {
         RecordEvent(TestEventKind.SpectralMatrixInjected, trendId, $"Type={matrix.SpectralType}");
     }

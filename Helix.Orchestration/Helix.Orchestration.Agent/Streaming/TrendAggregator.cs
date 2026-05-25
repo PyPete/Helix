@@ -23,12 +23,12 @@ public sealed class TrendAggregator(
         switch (value)
         {
             case SpectralValue spectral:
-                trendProvider.PushSpectralScan(trendName, spectral.Scan);
+                trendProvider.Push1D(trendName, spectral.Scan);
                 logger.LogDebug("Published spectral scan for trend {TrendName}", trendName);
                 break;
 
             case SpectralMatrixValue matrix:
-                trendProvider.PushSpectralMatrix(trendName, matrix.Matrix);
+                trendProvider.Push2D(trendName, matrix.Matrix);
                 logger.LogDebug("Published spectral matrix for trend {TrendName}", trendName);
                 break;
 

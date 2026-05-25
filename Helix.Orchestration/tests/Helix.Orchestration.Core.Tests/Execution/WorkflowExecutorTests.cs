@@ -32,6 +32,7 @@ public class WorkflowExecutorTests
             Trends = new TestTrendProvider(),
             Safety = new SafetyEngine(),
             State = stateStore,
+            GlobalState = new InMemoryGlobalStateStore(),
             Experiment = null
         };
 
@@ -62,6 +63,7 @@ public class WorkflowExecutorTests
             Trends = new TestTrendProvider(),
             Safety = new SafetyEngine(),
             State = stateStore,
+            GlobalState = new InMemoryGlobalStateStore(),
             Experiment = null
         };
 
@@ -160,12 +162,12 @@ public class WorkflowExecutorTests
 
     private sealed class EmptySpectralTrend(string trendName) : EmptyTrendBase(trendName, TrendKind.Spectral), ISpectralTrend
     {
-        public SpectralScan? LatestScan => null;
-        public SpectralMatrix? LatestMatrix => null;
-        public IObservable<SpectralScan> Scans => EmptyObservable<SpectralScan>.Instance;
-        public IObservable<SpectralMatrix> Matrices => EmptyObservable<SpectralMatrix>.Instance;
-        public IReadOnlyList<SpectralScan> GetRecentScans(int count) => [];
-        public IReadOnlyList<SpectralMatrix> GetRecentMatrices(int count) => [];
+        public Spectrum1D? LatestScan => null;
+        public Spectrum2D? LatestMatrix => null;
+        public IObservable<Spectrum1D> Scans => EmptyObservable<Spectrum1D>.Instance;
+        public IObservable<Spectrum2D> Matrices => EmptyObservable<Spectrum2D>.Instance;
+        public IReadOnlyList<Spectrum1D> GetRecentScans(int count) => [];
+        public IReadOnlyList<Spectrum2D> GetRecentMatrices(int count) => [];
     }
 
     private sealed class EmptyDiodeArrayTrend(string trendName) : EmptyTrendBase(trendName, TrendKind.DiodeArray), IDiodeArrayTrend
@@ -173,7 +175,7 @@ public class WorkflowExecutorTests
         public IObservable<DiodeArraySlice> Slices => EmptyObservable<DiodeArraySlice>.Instance;
         public IReadOnlyList<DiodeArraySlice> GetSnapshot() => [];
         public IScalarTrend<double> ExtractChromatogram(double wavelengthNm) => new EmptyScalarTrend<double>("chromatogram");
-        public SpectralScan? GetSpectrumAt(DateTimeOffset timestamp) => null;
+        public Spectrum1D? GetSpectrumAt(DateTimeOffset timestamp) => null;
     }
 
     private sealed class EmptyImageTrend(string trendName) : EmptyTrendBase(trendName, TrendKind.Image), IImageTrend

@@ -18,12 +18,12 @@ public interface ITestContext : IExperimentContext
     /// <summary>
     /// Injects a simulated spectral scan for a trend.
     /// </summary>
-    void InjectSpectralScan(string trendId, SpectralScan scan);
+    void InjectSpectralScan(string trendId, Spectrum1D scan);
 
     /// <summary>
     /// Injects a simulated spectral matrix for a trend.
     /// </summary>
-    void InjectSpectralMatrix(string trendId, SpectralMatrix matrix);
+    void InjectSpectralMatrix(string trendId, Spectrum2D matrix);
 
     /// <summary>
     /// Registers a virtual device identifier so leasing and capability

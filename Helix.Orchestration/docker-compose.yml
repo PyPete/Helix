@@ -1,0 +1,47 @@
+version: "3.9"
+
+# ─── Helix Orchestration — local dev services ────────────────────────────────
+# Usage:
+#   docker compose up -d          start all services
+#   docker compose down           stop and remove containers
+#
+# Services:
+#   mosquitto   MQTT broker — plain TCP on 1883, MQTT-over-WebSocket on 9001
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+  mosquitto:
+    image: eclipse-mosquitto:2
+    container_name: helix-mosquitto
+    restart: unless-stopped
+    ports:
+      - "1883:1883"   # MQTT / TCP — used by MqttTrendBridge (server-side)
+      - "9001:9001"   # MQTT over WebSocket — used by browser / Tauri / React clients
+    volumes:
+      - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - mosquitto_data:/mosquitto/data
+      - mosquitto_log:/mosquitto/log
+
+  postgres:
+    image: postgres:16
+    container_name: helix-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: helix_orchestration
+      POSTGRES_USER: helix
+      POSTGRES_PASSWORD: helix_dev_password
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U helix -d helix_orchestration"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres/migrations:/docker-entrypoint-initdb.d:ro
+
+volumes:
+  mosquitto_data:
+  mosquitto_log:
+  postgres_data:

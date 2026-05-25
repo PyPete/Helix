@@ -6,9 +6,9 @@ public sealed record ScalarValue<T>(T Value) : TrendValue where T : struct, ICom
 
 public sealed record DoubleArrayValue(double[] XData, double[] YData) : TrendValue;
 
-public sealed record SpectralValue(SpectralScan Scan) : TrendValue;
+public sealed record SpectralValue(Spectrum1D Scan) : TrendValue;
 
-public sealed record SpectralMatrixValue(SpectralMatrix Matrix) : TrendValue;
+public sealed record SpectralMatrixValue(Spectrum2D Matrix) : TrendValue;
 
 public sealed record ImageValue(ImageFrame Frame) : TrendValue;
 

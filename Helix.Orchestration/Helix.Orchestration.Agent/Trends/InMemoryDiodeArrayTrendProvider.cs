@@ -75,7 +75,7 @@ public sealed class InMemoryDiodeArrayTrendProvider : IDiodeArrayTrend, IDisposa
     public IScalarTrend<double> ExtractChromatogram(double wavelengthNm)
         => _chromatograms.GetOrAdd(wavelengthNm, key => new InMemoryScalarTrend<double>($"{TrendName}:{key:F2}nm", capacity: Capacity));
 
-    public SpectralScan? GetSpectrumAt(DateTimeOffset timestamp)
+    public Spectrum1D? GetSpectrumAt(DateTimeOffset timestamp)
     {
         DiodeArraySlice? match;
 
@@ -87,17 +87,17 @@ public sealed class InMemoryDiodeArrayTrendProvider : IDiodeArrayTrend, IDisposa
         if (match is null)
             return null;
 
-        return new SpectralScan(
+        return new Spectrum1D(
             TrendId: TrendId,
-            XData: match.Wavelengths,
-            YData: match.Absorbances,
+            X: match.Wavelengths,
+            Y: match.Absorbances,
             SpectralType: SpectralType.UV,
-            SampleId: null,
-            Timestamp: match.Timestamp,
-            Metadata: new Dictionary<string, object?>
+            Metadata: new GenericSpectralMetadata(new Dictionary<string, object?>
             {
                 ["source"] = "diode-array"
-            });
+            }),
+            SampleId: null,
+            Timestamp: match.Timestamp);
     }
 
     private static double ExtractAbsorbance(DiodeArraySlice slice, double wavelengthNm)

@@ -8,22 +8,25 @@
 
   <ItemGroup>
 	<PackageReference Include="Cleipnir.ResilientFunctions" Version="4.0.0" />
+	<PackageReference Include="FluentModbus" Version="5.0.3" />
 	<PackageReference Include="Grpc.AspNetCore" Version="2.*" />
 	<PackageReference Include="Grpc.Net.Client" Version="2.*" />
 	<PackageReference Include="MQTTnet" Version="4.*" />
 	<PackageReference Include="OpenTelemetry" Version="1.*" />
 	<PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.*" />
+	<PackageReference Include="Opc.UaFx.Advanced" Version="2.9.1" />
 	<PackageReference Include="Serilog.Extensions.Hosting" Version="8.*" />
 	<PackageReference Include="Serilog.Formatting.Compact" Version="2.*" />
 	<PackageReference Include="Serilog.Sinks.Console" Version="5.*" />
 	<PackageReference Include="Serilog.Sinks.File" Version="5.*" />
+	<PackageReference Include="System.IO.Ports" Version="9.0.5" />
 	<PackageReference Include="System.Reactive" Version="6.*" />
   </ItemGroup>
 
   <ItemGroup>
 	<ProjectReference Include="..\Helix.Orchestration.Contracts\Helix.Orchestration.Contracts.csproj" />
 	<ProjectReference Include="..\Helix.Orchestration.Core\Helix.Orchestration.Core.csproj" />
+	<ProjectReference Include="..\Helix.Orchestration.Devices\Helix.Orchestration.Devices.csproj" />
   </ItemGroup>
-
 
 </Project>

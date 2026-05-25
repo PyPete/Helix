@@ -25,7 +25,7 @@ public sealed class RunspaceManagerTests
         var definition = CreateDefinition("wf-abort");
         var runspace = await manager.CreateAsync(definition);
 
-        await manager.AbortAsync(runspace.RunspaceId);
+        await manager.AbortAsync(runspace.RunspaceId).WaitAsync(TimeSpan.FromSeconds(5));
 
         Assert.Null(manager.Get(runspace.RunspaceId));
         Assert.Empty(manager.ListActive());

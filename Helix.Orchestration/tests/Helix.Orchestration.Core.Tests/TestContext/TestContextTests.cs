@@ -41,14 +41,14 @@ public sealed class TestContextTests
     public void InjectSpectralScan_RecordsEvent()
     {
         var ctx = Create();
-        var scan = new SpectralScan(
-            "sp-01",
-            [400, 500, 600],
-            [0.1, 0.5, 0.3],
-            SpectralType.NMR1D,
-            "smp-1",
-            DateTimeOffset.UtcNow,
-            new Dictionary<string, object?>());
+        var scan = new Spectrum1D(
+            TrendId: "sp-01",
+            X: [400, 500, 600],
+            Y: [0.1, 0.5, 0.3],
+            SpectralType: SpectralType.NMR1D,
+            Metadata: new NmrMetadata("1H", 400, "DMSO-d6", 8, 8000, 400_130_000),
+            SampleId: "smp-1",
+            Timestamp: DateTimeOffset.UtcNow);
 
         ctx.InjectSpectralScan("nmr-01", scan);
 
@@ -62,14 +62,14 @@ public sealed class TestContextTests
     {
         var ctx = Create();
         var intensity = new double[2, 2] { { 0.1, 0.2 }, { 0.3, 0.4 } };
-        var matrix = new SpectralMatrix(
-            "ms-01",
-            [100.0, 200.0],
-            [50.0, 60.0],
-            intensity,
-            SpectralType.MSMS,
-            DateTimeOffset.UtcNow,
-            new Dictionary<string, object?>());
+        var matrix = new Spectrum2D(
+            TrendId: "ms-01",
+            Axis1: [100.0, 200.0],
+            Axis2: [50.0, 60.0],
+            Intensity: intensity,
+            SpectralType: SpectralType.MSMS,
+            Metadata: new MsMsMetadata(2, 150.0, 1, 10.5, "CID", 30, 1234, 150.0, 1.0, 1200),
+            Timestamp: DateTimeOffset.UtcNow);
 
         ctx.InjectSpectralMatrix("ms-01", matrix);
 

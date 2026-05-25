@@ -19,6 +19,7 @@
 
   <ItemGroup>
 	<ProjectReference Include="..\..\Helix.Orchestration.Core\Helix.Orchestration.Core.csproj" />
+	<ProjectReference Include="..\..\Helix.Orchestration.Agent\Helix.Orchestration.Agent.csproj" />
   </ItemGroup>
 
 </Project>

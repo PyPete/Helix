@@ -5,5 +5,5 @@ public interface IDiodeArrayTrend : ITrend
     IObservable<DiodeArraySlice> Slices { get; }
     IReadOnlyList<DiodeArraySlice> GetSnapshot();
     IScalarTrend<double> ExtractChromatogram(double wavelengthNm);
-    SpectralScan? GetSpectrumAt(DateTimeOffset timestamp);
+    Spectrum1D? GetSpectrumAt(DateTimeOffset timestamp);
 }

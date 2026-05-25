@@ -56,21 +56,21 @@ public sealed class InMemoryTrendProvider : ITrendProvider, IDisposable
         => throw new NotSupportedException("TODO: Derived trend registration is not implemented in this phase.");
 
     /// <summary>
-    /// Pushes a spectral scan to the named trend stream.
+    /// Pushes a one-dimensional spectrum to the named trend stream.
     /// </summary>
-    public void PushSpectralScan(string trendName, SpectralScan scan)
+    public void Push1D(string trendName, Spectrum1D spectrum)
     {
         var trend = _spectral.GetOrAdd(trendName, name => new InMemorySpectralTrendProvider(name));
-        trend.Push(scan);
+        trend.Push(spectrum);
     }
 
     /// <summary>
-    /// Pushes a spectral matrix to the named trend stream.
+    /// Pushes a two-dimensional spectrum to the named trend stream.
     /// </summary>
-    public void PushSpectralMatrix(string trendName, SpectralMatrix matrix)
+    public void Push2D(string trendName, Spectrum2D spectrum)
     {
         var trend = _spectral.GetOrAdd(trendName, name => new InMemorySpectralTrendProvider(name));
-        trend.Push(matrix);
+        trend.Push(spectrum);
     }
 
     /// <summary>

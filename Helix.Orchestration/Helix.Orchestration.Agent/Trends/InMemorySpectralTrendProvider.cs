@@ -11,11 +11,11 @@ public sealed class InMemorySpectralTrendProvider : ISpectralTrend, IDisposable
     private const int Capacity = 100;
 
     private readonly object _sync = new();
-    private readonly Subject<SpectralScan> _scans = new();
-    private readonly Subject<SpectralMatrix> _matrices = new();
+    private readonly Subject<Spectrum1D> _scans = new();
+    private readonly Subject<Spectrum2D> _matrices = new();
     private readonly Subject<TrendValue> _values = new();
-    private readonly List<SpectralScan> _recentScans = [];
-    private readonly List<SpectralMatrix> _recentMatrices = [];
+    private readonly List<Spectrum1D> _recentScans = [];
+    private readonly List<Spectrum2D> _recentMatrices = [];
 
     public string TrendId { get; }
     public string TrendName { get; }
@@ -26,10 +26,10 @@ public sealed class InMemorySpectralTrendProvider : ISpectralTrend, IDisposable
     public bool IsOnline { get; private set; } = true;
     public DateTimeOffset LastUpdatedAt { get; private set; } = DateTimeOffset.UtcNow;
 
-    public SpectralScan? LatestScan { get; private set; }
-    public SpectralMatrix? LatestMatrix { get; private set; }
-    public IObservable<SpectralScan> Scans => _scans;
-    public IObservable<SpectralMatrix> Matrices => _matrices;
+    public Spectrum1D? LatestScan { get; private set; }
+    public Spectrum2D? LatestMatrix { get; private set; }
+    public IObservable<Spectrum1D> Scans => _scans;
+    public IObservable<Spectrum2D> Matrices => _matrices;
     public IObservable<TrendValue> Values => _values;
 
     public InMemorySpectralTrendProvider(
@@ -49,7 +49,7 @@ public sealed class InMemorySpectralTrendProvider : ISpectralTrend, IDisposable
     /// <summary>
     /// Pushes a spectral scan into the provider.
     /// </summary>
-    public void Push(SpectralScan scan)
+    public void Push(Spectrum1D scan)
     {
         ArgumentNullException.ThrowIfNull(scan);
 
@@ -67,7 +67,7 @@ public sealed class InMemorySpectralTrendProvider : ISpectralTrend, IDisposable
     /// <summary>
     /// Pushes a spectral matrix into the provider.
     /// </summary>
-    public void Push(SpectralMatrix matrix)
+    public void Push(Spectrum2D matrix)
     {
         ArgumentNullException.ThrowIfNull(matrix);
 
@@ -82,7 +82,7 @@ public sealed class InMemorySpectralTrendProvider : ISpectralTrend, IDisposable
         _values.OnNext(new SpectralMatrixValue(matrix));
     }
 
-    public IReadOnlyList<SpectralScan> GetRecentScans(int count)
+    public IReadOnlyList<Spectrum1D> GetRecentScans(int count)
     {
         if (count <= 0)
             return [];
@@ -94,7 +94,7 @@ public sealed class InMemorySpectralTrendProvider : ISpectralTrend, IDisposable
         }
     }
 
-    public IReadOnlyList<SpectralMatrix> GetRecentMatrices(int count)
+    public IReadOnlyList<Spectrum2D> GetRecentMatrices(int count)
     {
         if (count <= 0)
             return [];

@@ -2,10 +2,10 @@ namespace Helix.Orchestration.Core.Trends;
 
 public interface ISpectralTrend : ITrend
 {
-    SpectralScan? LatestScan { get; }
-    SpectralMatrix? LatestMatrix { get; }
-    IObservable<SpectralScan> Scans { get; }
-    IObservable<SpectralMatrix> Matrices { get; }
-    IReadOnlyList<SpectralScan> GetRecentScans(int count);
-    IReadOnlyList<SpectralMatrix> GetRecentMatrices(int count);
+    Spectrum1D? LatestScan { get; }
+    Spectrum2D? LatestMatrix { get; }
+    IObservable<Spectrum1D> Scans { get; }
+    IObservable<Spectrum2D> Matrices { get; }
+    IReadOnlyList<Spectrum1D> GetRecentScans(int count);
+    IReadOnlyList<Spectrum2D> GetRecentMatrices(int count);
 }

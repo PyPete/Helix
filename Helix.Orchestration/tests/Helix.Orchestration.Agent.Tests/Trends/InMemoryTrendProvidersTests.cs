@@ -15,14 +15,14 @@ public sealed class InMemoryTrendProvidersTests
 
         for (var i = 0; i < 105; i++)
         {
-            provider.Push(new SpectralScan(
+            provider.Push(new Spectrum1D(
                 TrendId: "spec-1",
-                XData: [200 + i],
-                YData: [0.1 + i],
+                X: [200 + i],
+                Y: [0.1 + i],
                 SpectralType: SpectralType.UV,
+                Metadata: new GenericSpectralMetadata(new Dictionary<string, object?>()),
                 SampleId: $"sample-{i}",
-                Timestamp: DateTimeOffset.UtcNow.AddSeconds(i),
-                Metadata: new Dictionary<string, object?>()));
+                Timestamp: DateTimeOffset.UtcNow.AddSeconds(i)));
         }
 
         Assert.NotNull(provider.LatestScan);
@@ -35,14 +35,14 @@ public sealed class InMemoryTrendProvidersTests
         using var trendProvider = new InMemoryTrendProvider();
         var aggregator = new TrendAggregator(trendProvider, NullLogger<TrendAggregator>.Instance);
 
-        var scan = new SpectralScan(
+        var scan = new Spectrum1D(
             TrendId: "spec-agg",
-            XData: [210d, 220d],
-            YData: [1.0d, 2.0d],
+            X: [210d, 220d],
+            Y: [1.0d, 2.0d],
             SpectralType: SpectralType.UV,
+            Metadata: new GenericSpectralMetadata(new Dictionary<string, object?>()),
             SampleId: "s-1",
-            Timestamp: DateTimeOffset.UtcNow,
-            Metadata: new Dictionary<string, object?>());
+            Timestamp: DateTimeOffset.UtcNow);
 
         var slice = new DiodeArraySlice(
             Wavelengths: [210d, 220d],

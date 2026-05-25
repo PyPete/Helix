@@ -93,6 +93,17 @@ public sealed class InMemoryRunspace : IRunspace
     /// <inheritdoc/>
     public async Task AbortAsync(CancellationToken cancellationToken = default)
     {
+        // If the runspace was never started there is no background task to await;
+        // resolve the completion immediately so WaitAsync does not block forever.
+        if (Status == RunspaceStatus.Idle)
+        {
+            Status = RunspaceStatus.Faulted;
+            EndedAt = DateTimeOffset.UtcNow;
+            Fault = new OperationCanceledException("Runspace aborted before start.");
+            _completion.TrySetResult();
+            return;
+        }
+
         if (_cts is not null)
             await _cts.CancelAsync();
         await WaitAsync(cancellationToken);

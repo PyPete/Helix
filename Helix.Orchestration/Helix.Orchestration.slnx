@@ -1,5 +1,10 @@
 <Solution>
-  <Folder Name="/Solution Items/" />
+  <Folder Name="/tests/">
+    <Project Path="tests/Helix.Orchestration.Infrastructure.Tests/Helix.Orchestration.Infrastructure.Tests.csproj">
+      <Build Solution="Debug|*" Project="false" />
+    </Project>
+    <Project Path="tests/Helix.Orchestration.SiteServer.Tests/Helix.Orchestration.SiteServer.Tests.csproj" />
+  </Folder>
   <Project Path="Helix.Orchestration.Agent/Helix.Orchestration.Agent.csproj">
     <Build Solution="Debug|*" Project="false" />
   </Project>
@@ -7,8 +12,19 @@
     <Build Solution="Debug|*" Project="false" />
   </Project>
   <Project Path="Helix.Orchestration.Core/Helix.Orchestration.Core.csproj" />
+  <Project Path="Helix.Orchestration.Devices/Helix.Orchestration.Devices.csproj" />
+  <Project Path="Helix.Orchestration.Infrastructure/Helix.Orchestration.Infrastructure.csproj">
+    <Build Solution="Debug|*" Project="false" />
+  </Project>
+  <Project Path="Helix.Orchestration.Simulation/Helix.Orchestration.Simulation.csproj">
+    <Build Solution="Debug|*" Project="false" />
+  </Project>
+  <Project Path="Helix.Orchestration.SiteServer/Helix.Orchestration.SiteServer.csproj">
+    <Build Solution="Debug|*" Project="false" />
+  </Project>
   <Project Path="tests/Helix.Orchestration.Agent.Tests/Helix.Orchestration.Agent.Tests.csproj">
     <Build Solution="Debug|*" Project="false" />
   </Project>
   <Project Path="tests/Helix.Orchestration.Core.Tests/Helix.Orchestration.Core.Tests.csproj" />
 </Solution>
+
