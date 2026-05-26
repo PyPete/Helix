@@ -77,7 +77,7 @@ public sealed class OpcDeviceTransport : IDeviceTransport
                 ApplicationType = ApplicationType.Client,
                 SecurityConfiguration = new SecurityConfiguration
                 {
-                    AutoAcceptUntrustedCertificates = true
+                    AutoAcceptUntrustedCertificates = _options.AutoAcceptUntrustedCertificates
                 },
                 TransportConfigurations = new TransportConfigurationCollection(),
                 TransportQuotas = new TransportQuotas { OperationTimeout = _options.SessionTimeoutMs },

@@ -49,6 +49,12 @@ public sealed class OpcTransportOptions
     /// Password for authentication (optional).
     /// </summary>
     public string? Password { get; init; }
+
+    /// <summary>
+    /// Whether to auto-accept untrusted OPC UA server certificates.
+    /// Default: false (secure). Set true only for dev/test against self-signed certs.
+    /// </summary>
+    public bool AutoAcceptUntrustedCertificates { get; init; } = false;
 }
 
 /// <summary>
