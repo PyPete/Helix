@@ -1,6 +1,4 @@
-using Helix.Orchestration.Agent.Transport;
 using Helix.Orchestration.Core.Capabilities;
-using Helix.Orchestration.Devices.Transport;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -10,10 +8,6 @@ public static class DeviceAdapterExtensions
 {
     public static IServiceCollection AddMigratedDeviceAdapters(this IServiceCollection services)
     {
-        services.AddTransient<ISerialTransport, SerialTransport>();
-        services.AddTransient<IModbusTransport, ModbusTransport>();
-        services.AddTransient<ITcpTransport, TcpTransport>();
-
         services.AddSingleton<CapabilityRegistry>(sp =>
         {
             var registry = new CapabilityRegistry();

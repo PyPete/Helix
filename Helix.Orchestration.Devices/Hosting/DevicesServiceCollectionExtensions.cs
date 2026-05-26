@@ -9,6 +9,12 @@ using Helix.Orchestration.Devices.Transports.Tcp;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
+// DI Lifetime Note (B7):
+// CapabilityRegistry is registered as Singleton in DeviceAdapterExtensions.AddMigratedDeviceAdapters().
+// Transports and adapters registered via these extension methods must also be Singleton.
+// Scoped or Transient transports captured inside a Singleton would produce a captive dependency.
+// Hot-reconnect is handled by TransportWatchdog at the transport level, not by DI re-creation.
+
 namespace Helix.Orchestration.Devices.Hosting;
 
 /// <summary>
@@ -27,10 +33,10 @@ public static class DevicesServiceCollectionExtensions
         var options = BuildOptions(configureOptions);
         services.TryAddSingleton(ReconnectPolicy.Default);
         services.AddSingleton(options);
-        services.AddScoped<IDeviceTransport, SerialDeviceTransport>();
-        services.AddScoped<TAdapter>();
-        services.AddScoped<IHelixAdapter>(sp => sp.GetRequiredService<TAdapter>());
-        services.AddScoped<TransportWatchdog>();
+        services.AddSingleton<IDeviceTransport, SerialDeviceTransport>();
+        services.AddSingleton<TAdapter>();
+        services.AddSingleton<IHelixAdapter>(sp => sp.GetRequiredService<TAdapter>());
+        services.AddSingleton<TransportWatchdog>();
         return services;
     }
 
@@ -45,10 +51,10 @@ public static class DevicesServiceCollectionExtensions
         var options = BuildOptions(configureOptions);
         services.TryAddSingleton(options.ReconnectPolicy ?? ReconnectPolicy.Default);
         services.AddSingleton(options);
-        services.AddScoped<IDeviceTransport, TcpDeviceTransport>();
-        services.AddScoped<TAdapter>();
-        services.AddScoped<IHelixAdapter>(sp => sp.GetRequiredService<TAdapter>());
-        services.AddScoped<TransportWatchdog>();
+        services.AddSingleton<IDeviceTransport, TcpDeviceTransport>();
+        services.AddSingleton<TAdapter>();
+        services.AddSingleton<IHelixAdapter>(sp => sp.GetRequiredService<TAdapter>());
+        services.AddSingleton<TransportWatchdog>();
         return services;
     }
 
@@ -63,10 +69,10 @@ public static class DevicesServiceCollectionExtensions
         var options = BuildOptions(configureOptions);
         services.TryAddSingleton(ReconnectPolicy.Default);
         services.AddSingleton(options);
-        services.AddScoped<IDeviceTransport, ModbusDeviceTransport>();
-        services.AddScoped<TAdapter>();
-        services.AddScoped<IHelixAdapter>(sp => sp.GetRequiredService<TAdapter>());
-        services.AddScoped<TransportWatchdog>();
+        services.AddSingleton<IDeviceTransport, ModbusDeviceTransport>();
+        services.AddSingleton<TAdapter>();
+        services.AddSingleton<IHelixAdapter>(sp => sp.GetRequiredService<TAdapter>());
+        services.AddSingleton<TransportWatchdog>();
         return services;
     }
 
@@ -81,10 +87,10 @@ public static class DevicesServiceCollectionExtensions
         var options = BuildOptions(configureOptions);
         services.TryAddSingleton(ReconnectPolicy.Default);
         services.AddSingleton(options);
-        services.AddScoped<IDeviceTransport, OpcDeviceTransport>();
-        services.AddScoped<TAdapter>();
-        services.AddScoped<IHelixAdapter>(sp => sp.GetRequiredService<TAdapter>());
-        services.AddScoped<TransportWatchdog>();
+        services.AddSingleton<IDeviceTransport, OpcDeviceTransport>();
+        services.AddSingleton<TAdapter>();
+        services.AddSingleton<IHelixAdapter>(sp => sp.GetRequiredService<TAdapter>());
+        services.AddSingleton<TransportWatchdog>();
         return services;
     }
 
@@ -99,10 +105,10 @@ public static class DevicesServiceCollectionExtensions
         var options = BuildOptions(configureOptions);
         services.TryAddSingleton(ReconnectPolicy.Default);
         services.AddSingleton(options);
-        services.AddScoped<IDeviceTransport, CDllDeviceTransport>();
-        services.AddScoped<TAdapter>();
-        services.AddScoped<IHelixAdapter>(sp => sp.GetRequiredService<TAdapter>());
-        services.AddScoped<TransportWatchdog>();
+        services.AddSingleton<IDeviceTransport, CDllDeviceTransport>();
+        services.AddSingleton<TAdapter>();
+        services.AddSingleton<IHelixAdapter>(sp => sp.GetRequiredService<TAdapter>());
+        services.AddSingleton<TransportWatchdog>();
         return services;
     }
 

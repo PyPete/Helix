@@ -9,7 +9,7 @@ public interface ISerialTransport
     bool IsOpen { get; }
 
     /// <summary>Opens the port at the given COM path with an optional baud rate (defaults to 9600).</summary>
-    void Open(string portName, int baudRate = 9600);
+    void Open(string portName, int baudRate = 9600); // baudRate parameter added; see B6.
 
     void Close();
 
