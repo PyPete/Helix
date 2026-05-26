@@ -1,57 +1,54 @@
-using System.Threading.Channels;
-using Helix.Orchestration.Infrastructure.Persistence;
+﻿using System.Threading.Channels;
+using Helix.Orchestration.Infrastructure.Storage;
 using Helix.Orchestration.Recorder.Configuration;
 using Helix.Orchestration.Recorder.Models;
 using Helix.Orchestration.Recorder.Services;
 using Serilog;
+using Serilog.Formatting.Compact;
 
-var builder = Host.CreateApplicationBuilder(args);
-
-// Configure Serilog
 Log.Logger = new LoggerConfiguration()
-    .ReadFrom.Configuration(builder.Configuration)
-    .Enrich.FromLogContext()
-    .WriteTo.Console(new Serilog.Formatting.Compact.CompactJsonFormatter())
-    .CreateLogger();
-
-builder.Services.AddSerilog();
-
-// Bind RecorderOptions from configuration
-builder.Services.Configure<RecorderOptions>(builder.Configuration.GetSection("Recorder"));
-
-var recorderOptions = builder.Configuration.GetSection("Recorder").Get<RecorderOptions>()
-    ?? new RecorderOptions();
-
-// Register bounded Channel<RecordedEvent> as singleton
-var channel = Channel.CreateBounded<RecordedEvent>(new BoundedChannelOptions(recorderOptions.ChannelCapacity)
-{
-    FullMode = BoundedChannelFullMode.DropWrite
-});
-builder.Services.AddSingleton(channel);
-
-// Register MinIO storage
-builder.Services.AddMinioStorage(builder.Configuration);
-
-// Register background services
-builder.Services.AddHostedService<MqttRecorderService>();
-builder.Services.AddHostedService<RecorderWriterService>();
-
-var host = builder.Build();
+    .WriteTo.Console(new RenderedCompactJsonFormatter())
+    .CreateBootstrapLogger();
 
 try
 {
-    Log.Information("Starting Helix Orchestration Recorder...");
-    await host.RunAsync();
-    Log.Information("Helix Orchestration Recorder stopped cleanly.");
+    var builder = Host.CreateApplicationBuilder(args);
+
+    builder.Services.Configure<RecorderOptions>(
+        builder.Configuration.GetSection(RecorderOptions.SectionName));
+
+    builder.Services.Configure<MinioOptions>(
+        builder.Configuration.GetSection("Minio"));
+
+    var channel = Channel.CreateBounded<RecordedEvent>(new BoundedChannelOptions(10_000)
+    {
+        FullMode = BoundedChannelFullMode.DropOldest,
+        SingleWriter = false,
+        SingleReader = true
+    });
+
+    builder.Services.AddSingleton(channel);
+    builder.Services.AddSingleton<IObjectStorageSink>(sp =>
+    {
+        var opts = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<MinioOptions>>().Value;
+        return new MinioObjectStorageSink(opts);
+    });
+
+    builder.Services.AddHostedService<MqttRecorderService>();
+    builder.Services.AddHostedService<RecorderWriterService>();
+
+    builder.Services.AddSerilog((_, lc) => lc
+        .WriteTo.Console(new RenderedCompactJsonFormatter()));
+
+    await builder.Build().RunAsync();
+    return 0;
 }
 catch (Exception ex)
 {
-    Log.Fatal(ex, "Helix Orchestration Recorder terminated unexpectedly.");
+    Log.Fatal(ex, "Recorder service terminated unexpectedly");
     return 1;
 }
 finally
 {
     await Log.CloseAndFlushAsync();
 }
-
-return 0;

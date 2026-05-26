@@ -1,199 +1,200 @@
-using System.Diagnostics;
 using Helix.Orchestration.Agent.Telemetry;
-using Helix.Orchestration.Core.Capabilities;
-using Helix.Orchestration.Core.Experiment;
-using Helix.Orchestration.Core.Leasing;
+using Helix.Orchestration.Core.Execution;
 using Helix.Orchestration.Core.Runspace;
 using Helix.Orchestration.Core.WSL;
-using Microsoft.Extensions.Logging;
 
 namespace Helix.Orchestration.Agent.Runspaces;
 
 /// <summary>
-/// Runtime runspace implementation that executes a compiled runspace definition against an experiment context.
+/// Durable <see cref="IRunspace"/> implementation that delegates execution to <see cref="IWorkflowExecutor"/>.
 /// </summary>
 public sealed class DurableRunspace : IRunspace
 {
-    private readonly IExperimentContext _experimentContext;
-    private readonly ICapabilityInvoker _capabilityInvoker;
-    private readonly ILogger<DefinitionCompiler> _definitionCompilerLogger;
-    private readonly ILogger<DurableRunspace> _logger;
+    private readonly IWorkflowExecutor _workflowExecutor;
+    private readonly SemaphoreSlim _gate = new(1, 1);
     private readonly TaskCompletionSource _completion = new(TaskCreationOptions.RunContinuationsAsynchronously);
-    private CancellationTokenSource? _cts;
 
-    private static class LogEvents
-    {
-        public static readonly EventId RunspaceStarting = new(2300, nameof(RunspaceStarting));
-        public static readonly EventId RunspaceCompleted = new(2301, nameof(RunspaceCompleted));
-        public static readonly EventId RunspaceCanceled = new(2302, nameof(RunspaceCanceled));
-        public static readonly EventId RunspaceFaulted = new(2303, nameof(RunspaceFaulted));
-        public static readonly EventId RunspacePaused = new(2304, nameof(RunspacePaused));
-        public static readonly EventId RunspaceResumed = new(2305, nameof(RunspaceResumed));
-        public static readonly EventId RunspaceAborting = new(2306, nameof(RunspaceAborting));
-    }
+    private CancellationTokenSource? _executionCts;
+    private Task? _executionTask;
 
-    /// <summary>Unique runspace identifier.</summary>
+    /// <inheritdoc/>
     public string RunspaceId { get; } = Guid.NewGuid().ToString("N");
 
-    /// <summary>Compiled runspace definition being executed.</summary>
+    /// <inheritdoc/>
     public RunspaceDefinition Definition { get; }
 
-    /// <summary>Current runspace status.</summary>
+    /// <inheritdoc/>
     public RunspaceStatus Status { get; private set; } = RunspaceStatus.Idle;
 
-    /// <summary>Creation timestamp.</summary>
+    /// <inheritdoc/>
     public DateTimeOffset CreatedAt { get; } = DateTimeOffset.UtcNow;
 
-    /// <summary>Execution start timestamp.</summary>
+    /// <inheritdoc/>
     public DateTimeOffset? StartedAt { get; private set; }
 
-    /// <summary>Execution end timestamp.</summary>
+    /// <inheritdoc/>
     public DateTimeOffset? EndedAt { get; private set; }
 
-    /// <summary>Terminal fault captured during execution, if any.</summary>
+    /// <inheritdoc/>
     public Exception? Fault { get; private set; }
 
-    /// <summary>
-    /// Creates a durable runspace runtime instance.
-    /// </summary>
-    public DurableRunspace(
-        RunspaceDefinition definition,
-        IExperimentContext experimentContext,
-        IDeviceLeasingService leasingService,
-        ICapabilityInvoker capabilityInvoker,
-        ILogger<DefinitionCompiler> definitionCompilerLogger,
-        ILogger<DurableRunspace> logger)
+    public DurableRunspace(RunspaceDefinition definition, IWorkflowExecutor workflowExecutor)
     {
-        Definition = definition;
-        _experimentContext = experimentContext;
-        _capabilityInvoker = capabilityInvoker;
-        _definitionCompilerLogger = definitionCompilerLogger;
-        _logger = logger;
+        Definition = definition ?? throw new ArgumentNullException(nameof(definition));
+        _workflowExecutor = workflowExecutor ?? throw new ArgumentNullException(nameof(workflowExecutor));
     }
 
-    /// <summary>
-    /// Starts runspace execution.
-    /// </summary>
-    public Task StartAsync(CancellationToken cancellationToken = default)
+    /// <inheritdoc/>
+    public async Task StartAsync(CancellationToken cancellationToken = default)
     {
-        if (Status != RunspaceStatus.Idle)
-            throw new InvalidOperationException($"Cannot start runspace in state {Status}.");
-
-        _cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        Status = RunspaceStatus.Running;
-        StartedAt = DateTimeOffset.UtcNow;
-
-        _logger.LogInformation(LogEvents.RunspaceStarting, "Starting runspace {RunspaceId} for definition {DefinitionId}", RunspaceId, Definition.DefinitionId);
-
-        _ = ExecuteAsync(_cts.Token);
-        return Task.CompletedTask;
-    }
-
-    private async Task ExecuteAsync(CancellationToken cancellationToken)
-    {
-        using var activity = HelixTelemetry.AgentActivitySource.StartActivity("runspace.execute", ActivityKind.Internal);
-        activity?.SetTag("helix.runspace.id", RunspaceId);
-        activity?.SetTag("helix.definition.id", Definition.DefinitionId);
-
+        await _gate.WaitAsync(cancellationToken);
         try
         {
-            await _experimentContext.TransitionToAsync(ExperimentLifecycle.Running);
-            var compiler = new DefinitionCompiler(_capabilityInvoker, _experimentContext, _definitionCompilerLogger);
-            var executor = compiler.Compile(Definition);
-            await executor(cancellationToken);
-            await _experimentContext.TransitionToAsync(ExperimentLifecycle.Completed);
-            Status = RunspaceStatus.Completed;
+            if (Status is not RunspaceStatus.Idle and not RunspaceStatus.Paused)
+                throw new InvalidOperationException($"Cannot start runspace in state {Status}.");
 
-            HelixTelemetry.RunspaceCompletions.Add(1,
-                KeyValuePair.Create<string, object?>("runspace.id", RunspaceId));
+            _executionCts?.Dispose();
+            _executionCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
 
-            _logger.LogInformation(LogEvents.RunspaceCompleted, "Runspace {RunspaceId} completed successfully", RunspaceId);
-        }
-        catch (OperationCanceledException oce)
-        {
-            Fault = oce;
-            await _experimentContext.TransitionToAsync(ExperimentLifecycle.Failed);
-            Status = RunspaceStatus.Faulted;
+            Status = RunspaceStatus.Running;
+            StartedAt ??= DateTimeOffset.UtcNow;
 
-            HelixTelemetry.RunspaceFaults.Add(1,
-                KeyValuePair.Create<string, object?>("runspace.id", RunspaceId),
-                KeyValuePair.Create<string, object?>("fault.kind", "canceled"));
-
-            _logger.LogError(LogEvents.RunspaceCanceled, oce, "Runspace {RunspaceId} canceled", RunspaceId);
-        }
-        catch (Exception ex)
-        {
-            Fault = ex;
-            await _experimentContext.TransitionToAsync(ExperimentLifecycle.Failed);
-            Status = RunspaceStatus.Faulted;
-
-            HelixTelemetry.RunspaceFaults.Add(1,
-                KeyValuePair.Create<string, object?>("runspace.id", RunspaceId),
-                KeyValuePair.Create<string, object?>("fault.kind", "exception"));
-
-            _logger.LogError(LogEvents.RunspaceFaulted, ex, "Runspace {RunspaceId} faulted", RunspaceId);
+            _executionTask = ExecuteAsync(_executionCts.Token);
         }
         finally
         {
-            EndedAt = DateTimeOffset.UtcNow;
-            _completion.TrySetResult();
+            _gate.Release();
         }
     }
 
-    /// <summary>
-    /// Pauses runspace execution.
-    /// </summary>
-    public Task PauseAsync(CancellationToken cancellationToken = default)
+    /// <inheritdoc/>
+    public async Task PauseAsync(CancellationToken cancellationToken = default)
     {
-        if (Status == RunspaceStatus.Running)
+        await _gate.WaitAsync(cancellationToken);
+        try
         {
+            if (Status != RunspaceStatus.Running)
+                return;
+
+            await _workflowExecutor.CancelAsync(RunspaceId);
+            _executionCts?.Cancel();
             Status = RunspaceStatus.Paused;
-            _logger.LogInformation(LogEvents.RunspacePaused, "Runspace {RunspaceId} paused", RunspaceId);
         }
-
-        return Task.CompletedTask;
-    }
-
-    /// <summary>
-    /// Resumes runspace execution.
-    /// </summary>
-    public Task ResumeAsync(CancellationToken cancellationToken = default)
-    {
-        if (Status == RunspaceStatus.Paused)
+        finally
         {
-            Status = RunspaceStatus.Running;
-            _logger.LogInformation(LogEvents.RunspaceResumed, "Runspace {RunspaceId} resumed", RunspaceId);
+            _gate.Release();
         }
-
-        return Task.CompletedTask;
     }
 
-    /// <summary>
-    /// Aborts runspace execution and waits for terminal completion.
-    /// </summary>
+    /// <inheritdoc/>
+    public Task ResumeAsync(CancellationToken cancellationToken = default)
+        => StartAsync(cancellationToken);
+
+    /// <inheritdoc/>
     public async Task AbortAsync(CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation(LogEvents.RunspaceAborting, "Aborting runspace {RunspaceId}", RunspaceId);
+        await _gate.WaitAsync(cancellationToken);
+        try
+        {
+            if (Status is RunspaceStatus.Completed or RunspaceStatus.Faulted or RunspaceStatus.Disposed)
+                return;
 
-        if (_cts is not null)
-            await _cts.CancelAsync();
-
-        await WaitAsync(cancellationToken);
+            await _workflowExecutor.CancelAsync(RunspaceId);
+            _executionCts?.Cancel();
+            Fault = new OperationCanceledException($"Runspace '{RunspaceId}' aborted.");
+            Status = RunspaceStatus.Faulted;
+            EndedAt = DateTimeOffset.UtcNow;
+            HelixTelemetry.RunspaceFaults.Add(1);
+            _completion.TrySetResult();
+        }
+        finally
+        {
+            _gate.Release();
+        }
     }
 
-    /// <summary>
-    /// Waits for runspace terminal completion.
-    /// </summary>
-    public Task WaitAsync(CancellationToken cancellationToken = default) => _completion.Task.WaitAsync(cancellationToken);
+    /// <inheritdoc/>
+    public Task WaitAsync(CancellationToken cancellationToken = default)
+        => _completion.Task.WaitAsync(cancellationToken);
 
-    /// <summary>
-    /// Disposes runspace resources.
-    /// </summary>
+    private async Task ExecuteAsync(CancellationToken cancellationToken)
+    {
+        using var activity = HelixTelemetry.AgentActivitySource.StartActivity("runspace.execute");
+        activity?.SetTag("helix.runspace.id", RunspaceId);
+        activity?.SetTag("helix.workflow.name", Definition.Name);
+
+        try
+        {
+            await _workflowExecutor.ExecuteAsync(Definition.Name, RunspaceId, cancellationToken: cancellationToken);
+
+            await _gate.WaitAsync(cancellationToken);
+            try
+            {
+                if (Status == RunspaceStatus.Running)
+                {
+                    Status = RunspaceStatus.Completed;
+                    EndedAt = DateTimeOffset.UtcNow;
+                    HelixTelemetry.RunspaceCompletions.Add(1);
+                    _completion.TrySetResult();
+                }
+            }
+            finally
+            {
+                _gate.Release();
+            }
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            await _gate.WaitAsync();
+            try
+            {
+                if (Status == RunspaceStatus.Running)
+                    Status = RunspaceStatus.Paused;
+            }
+            finally
+            {
+                _gate.Release();
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            await _gate.WaitAsync();
+            try
+            {
+                if (Status == RunspaceStatus.Running)
+                    Status = RunspaceStatus.Paused;
+            }
+            finally
+            {
+                _gate.Release();
+            }
+        }
+        catch (Exception ex)
+        {
+            await _gate.WaitAsync();
+            try
+            {
+                Fault = ex;
+                Status = RunspaceStatus.Faulted;
+                EndedAt = DateTimeOffset.UtcNow;
+                HelixTelemetry.RunspaceFaults.Add(1);
+                _completion.TrySetResult();
+            }
+            finally
+            {
+                _gate.Release();
+            }
+        }
+    }
+
+    /// <inheritdoc/>
     public async ValueTask DisposeAsync()
     {
         if (Status is RunspaceStatus.Running or RunspaceStatus.Paused)
             await AbortAsync();
 
-        _cts?.Dispose();
+        _executionCts?.Dispose();
+        _gate.Dispose();
+        Status = RunspaceStatus.Disposed;
     }
 }

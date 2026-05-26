@@ -1,54 +1,47 @@
-using Helix.Orchestration.Agent.Adapters;
-using Helix.Orchestration.Agent.Telemetry;
-using Microsoft.Extensions.Logging;
+using Helix.Orchestration.Agent.Trends;
+using Helix.Orchestration.Core.Trends;
 
 namespace Helix.Orchestration.Agent.Streaming;
 
 /// <summary>
-/// Aggregates trend streams from registered adapters and forwards them to local buffering and MQTT publishing.
+/// Routes decoded trend values from streaming sources into the in-memory trend provider registry.
 /// </summary>
 public sealed class TrendAggregator(
-    AdapterRegistry adapterRegistry,
-    MqttTrendPublisher publisher,
-    TrendBuffer trendBuffer,
+    InMemoryTrendProvider trendProvider,
     ILogger<TrendAggregator> logger)
 {
-    private static class LogEvents
-    {
-        public static readonly EventId StreamStarted = new(2600, nameof(StreamStarted));
-        public static readonly EventId StreamStopped = new(2601, nameof(StreamStopped));
-    }
-
     /// <summary>
-    /// Starts trend stream fan-in from all currently discovered adapters.
+    /// Processes a decoded trend value and pushes it to the matching provider implementation.
     /// </summary>
-    public async Task StartAsync(CancellationToken cancellationToken)
+    public Task ProcessAsync(string trendName, TrendValue value, CancellationToken cancellationToken = default)
     {
-        foreach (var (adapterId, proxy) in adapterRegistry.GetAll())
+        ArgumentException.ThrowIfNullOrWhiteSpace(trendName);
+        ArgumentNullException.ThrowIfNull(value);
+
+        cancellationToken.ThrowIfCancellationRequested();
+
+        switch (value)
         {
-            _ = Task.Run(async () =>
-            {
-                logger.LogInformation(LogEvents.StreamStarted, "Trend stream started for adapter {AdapterId}", adapterId);
+            case SpectralValue spectral:
+                trendProvider.Push1D(trendName, spectral.Scan);
+                logger.LogDebug("Published spectral scan for trend {TrendName}", trendName);
+                break;
 
-                try
-                {
-                    await foreach (var trend in proxy.StreamTrendsAsync(cancellationToken))
-                    {
-                        trendBuffer.Enqueue(trend);
-                        await publisher.PublishAsync(adapterId, trend, cancellationToken);
+            case SpectralMatrixValue matrix:
+                trendProvider.Push2D(trendName, matrix.Matrix);
+                logger.LogDebug("Published spectral matrix for trend {TrendName}", trendName);
+                break;
 
-                        HelixTelemetry.TrendsPublished.Add(1,
-                            KeyValuePair.Create<string, object?>("adapter.id", adapterId),
-                            KeyValuePair.Create<string, object?>("trend.id", trend.TrendId));
-                    }
-                }
-                catch (Exception ex)
-                {
-                    logger.LogError(LogEvents.StreamStopped, ex, "Trend stream ended for adapter {AdapterId}", adapterId);
-                }
-            }, cancellationToken);
+            case StructuredResultValue { ResultType: "diode-array-slice", Value: DiodeArraySlice slice }:
+                trendProvider.PushDiodeArraySlice(trendName, slice);
+                logger.LogDebug("Published diode-array slice for trend {TrendName}", trendName);
+                break;
+
+            default:
+                logger.LogDebug("Ignoring unsupported trend value type {TrendValueType} for trend {TrendName}", value.GetType().Name, trendName);
+                break;
         }
 
-        await Task.CompletedTask;
+        return Task.CompletedTask;
     }
 }

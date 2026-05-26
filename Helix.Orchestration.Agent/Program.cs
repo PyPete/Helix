@@ -1,74 +1,104 @@
+﻿using Cleipnir.ResilientFunctions;
+using Cleipnir.ResilientFunctions.Storage;
 using Helix.Orchestration.Agent;
-using Helix.Orchestration.Agent.Adapters;
-using Helix.Orchestration.Agent.Configuration;
-using Helix.Orchestration.Agent.gRPC.Server;
-using Helix.Orchestration.Agent.HealthChecks;
+using Helix.Orchestration.Agent.Adapters.Devices;
+using Helix.Orchestration.Agent.Execution;
 using Helix.Orchestration.Agent.Leasing;
-using Helix.Orchestration.Agent.Runspaces;
 using Helix.Orchestration.Agent.Streaming;
-using Helix.Orchestration.Agent.Telemetry;
+using Helix.Orchestration.Agent.Trends;
 using Helix.Orchestration.Core.Capabilities;
+using Helix.Orchestration.Core.Execution;
 using Helix.Orchestration.Core.Leasing;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Options;
-using OpenTelemetry.Metrics;
-using OpenTelemetry.Trace;
+using Helix.Orchestration.Core.Runspace;
+using Helix.Orchestration.Core.Safety;
+using Helix.Orchestration.Core.State;
+using Helix.Orchestration.Core.Trends;
+using Helix.Orchestration.Core.WorkflowEngine;
+using Microsoft.AspNetCore.Builder;
 using Serilog;
-using Serilog.Events;
 using Serilog.Formatting.Compact;
 
-var builder = Host.CreateApplicationBuilder(args);
-
 Log.Logger = new LoggerConfiguration()
-    .MinimumLevel.Information()
-    .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
     .Enrich.FromLogContext()
     .WriteTo.Console(new RenderedCompactJsonFormatter())
-    .WriteTo.File(
-        formatter: new RenderedCompactJsonFormatter(),
-        path: "logs/helix-agent-.clef",
-        rollingInterval: RollingInterval.Day,
-        retainedFileCountLimit: 14,
-        shared: true)
-    .CreateLogger();
+    .WriteTo.File(new RenderedCompactJsonFormatter(), "logs/helix-agent-.log", rollingInterval: RollingInterval.Day)
+    .CreateBootstrapLogger();
 
-builder.Services.AddSerilog(Log.Logger, dispose: true);
+try
+{
+    Log.Information("Helix Agent starting up.");
 
-builder.Configuration
-    .SetBasePath(AppContext.BaseDirectory)
-    .AddJsonFile("Configuration/agent-config.json", optional: false, reloadOnChange: true)
-    .AddEnvironmentVariables(prefix: "HELIX_");
+    var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddOpenTelemetry()
-    .WithTracing(tracing => tracing
-        .AddSource(HelixTelemetry.TelemetryName))
-    .WithMetrics(metrics => metrics
-        .AddMeter(HelixTelemetry.TelemetryName)
-        .AddRuntimeInstrumentation());
+    // Serilog
+    builder.Host.UseSerilog((_, services, config) => config
+        .ReadFrom.Services(services)
+        .Enrich.FromLogContext()
+        .WriteTo.Console(new RenderedCompactJsonFormatter())
+        .WriteTo.File(new RenderedCompactJsonFormatter(), "logs/helix-agent-.log", rollingInterval: RollingInterval.Day));
 
-builder.Services.Configure<AgentConfiguration>(builder.Configuration);
-builder.Services.AddSingleton(sp => sp.GetRequiredService<IOptions<AgentConfiguration>>().Value);
+    // OpenTelemetry
+    builder.Services.AddOpenTelemetry()
+        .WithTracing(tracing => tracing
+            .AddSource(Helix.Orchestration.Agent.Telemetry.HelixTelemetry.TelemetryName))
+        .WithMetrics(metrics => metrics
+            .AddMeter(Helix.Orchestration.Agent.Telemetry.HelixTelemetry.TelemetryName));
 
-builder.Services.AddSingleton<IDeviceLeasingService, InMemoryDeviceLeasingService>();
-builder.Services.AddSingleton<ICapabilityInvoker, NoOpCapabilityInvoker>();
+    // Core leasing
+    builder.Services.AddSingleton<InMemoryDeviceLeasingService>();
+    builder.Services.AddSingleton<IDeviceLeasingService>(sp =>
+        sp.GetRequiredService<InMemoryDeviceLeasingService>());
 
-builder.Services.AddSingleton<AdapterRegistry>();
-builder.Services.AddSingleton<IAdapterDiscovery, AdapterDiscoveryService>();
-builder.Services.AddSingleton<RunspaceManager>();
+    // Capability invoker + migrated device adapters
+    builder.Services.AddMigratedDeviceAdapters();
 
-builder.Services.AddSingleton<TrendBuffer>();
-builder.Services.AddSingleton<MqttTrendPublisher>();
-builder.Services.AddSingleton<TrendAggregator>();
+    // Durable workflow execution
+    builder.Services.AddSingleton(new InMemoryFunctionStore());
+    builder.Services.AddSingleton<FunctionsRegistry>(sp =>
+        new FunctionsRegistry(sp.GetRequiredService<InMemoryFunctionStore>()));
+    builder.Services.AddSingleton<WorkflowRegistry>();
+    builder.Services.AddSingleton<IWorkflowStateStore, WorkflowStateStore>();
+    builder.Services.AddSingleton<IGlobalStateStore, InMemoryGlobalStateStore>();
+    builder.Services.AddSingleton<ISafetyEngine, SafetyEngine>();
+    builder.Services.AddSingleton<InMemoryTrendProvider>();
+    builder.Services.AddSingleton<ITrendProvider>(sp => sp.GetRequiredService<InMemoryTrendProvider>());
+    builder.Services.AddSingleton<TrendAggregator>();
+    builder.Services.AddSingleton<IRunspaceManager, RunspaceManager>();
+    builder.Services.AddSingleton<Func<string, WorkflowContext>>(sp => workflowId => new WorkflowContext
+    {
+        WorkflowId = workflowId,
+        Capabilities = sp.GetRequiredService<ICapabilityInvoker>(),
+        Trends = sp.GetRequiredService<ITrendProvider>(),
+        Safety = sp.GetRequiredService<ISafetyEngine>(),
+        State = sp.GetRequiredService<IWorkflowStateStore>(),
+        Leasing = sp.GetRequiredService<IDeviceLeasingService>(),
+        GlobalState = sp.GetRequiredService<IGlobalStateStore>()
+    });
+    builder.Services.AddSingleton<IWorkflowExecutor, WorkflowExecutor>();
+    builder.Services.AddSingleton<WslExecutionAdapter>();
 
-builder.Services.AddHealthChecks()
-    .AddCheck<AgentHealthCheck>("agent")
-    .AddCheck<AdapterHealthCheck>("adapters");
+    // Hosted services
+    builder.Services.AddHostedService<AgentService>();
+    builder.Services.AddHostedService<LeaseExpiryWorker>();
+    builder.Services.AddHostedService<MqttTrendIngestionService>();
 
-builder.Services.AddHostedService<AgentService>();
-builder.Services.AddHostedService<AdapterHealthMonitor>();
-builder.Services.AddHostedService<LeaseExpiryWorker>();
-builder.Services.AddHostedService<GrpcServerHost>();
+    // Health checks
+    builder.Services.AddHealthChecks();
 
-await builder.Build().RunAsync();
+    var app = builder.Build();
+
+    app.MapHealthChecks("/health");
+
+    await app.RunAsync();
+}
+catch (Exception ex)
+{
+    Log.Fatal(ex, "Helix Agent terminated unexpectedly.");
+    return 1;
+}
+finally
+{
+    await Log.CloseAndFlushAsync();
+}
+
+return 0;

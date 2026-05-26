@@ -1,4 +1,4 @@
-namespace Helix.Orchestration.Agent.Adapters;
+﻿namespace Helix.Orchestration.Agent.Adapters;
 
 public interface IAdapterDiscovery
 {

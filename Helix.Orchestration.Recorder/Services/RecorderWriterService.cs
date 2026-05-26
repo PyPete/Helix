@@ -1,16 +1,18 @@
-using System.Text;
+﻿using System.Text;
 using System.Text.Json;
 using System.Threading.Channels;
 using Helix.Orchestration.Infrastructure.Storage;
 using Helix.Orchestration.Recorder.Configuration;
 using Helix.Orchestration.Recorder.Models;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace Helix.Orchestration.Recorder.Services;
 
 /// <summary>
-/// Background service that reads events from the channel, batches them,
-/// and flushes to object storage as JSONL files.
+/// Reads RecordedEvents from an in-process channel, batches them by (experimentId, trendId),
+/// and flushes NDJSON objects to IObjectStorageSink when the count threshold or time interval is reached.
 /// </summary>
 public sealed class RecorderWriterService : BackgroundService
 {
@@ -18,6 +20,9 @@ public sealed class RecorderWriterService : BackgroundService
     private readonly RecorderOptions _options;
     private readonly Channel<RecordedEvent> _channel;
     private readonly IObjectStorageSink _storageSink;
+
+    private readonly Dictionary<(string ExperimentId, string TrendId), List<RecordedEvent>> _buffer = new();
+    private int _totalBuffered;
 
     public RecorderWriterService(
         ILogger<RecorderWriterService> logger,
@@ -33,114 +38,99 @@ public sealed class RecorderWriterService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _logger.LogInformation("RecorderWriterService starting...");
+        using var flushTimer = new PeriodicTimer(TimeSpan.FromSeconds(_options.FlushIntervalSeconds));
+        var timerTask = WaitForTimerAsync(flushTimer, stoppingToken);
 
-        var batch = new List<RecordedEvent>();
-        var lastFlushTime = DateTimeOffset.UtcNow;
-
-        using var flushTimer = new PeriodicTimer(TimeSpan.FromSeconds(1));
-
-        while (!stoppingToken.IsCancellationRequested)
+        try
         {
-            try
+            while (!stoppingToken.IsCancellationRequested)
             {
-                // Try to read from channel with a timeout to check flush conditions periodically
-                var readTask = _channel.Reader.ReadAsync(stoppingToken).AsTask();
-                var timerTask = flushTimer.WaitForNextTickAsync(stoppingToken).AsTask();
+                // Try to drain available events without blocking
+                while (_channel.Reader.TryRead(out var evt))
+                {
+                    var key = (evt.ExperimentId, evt.TrendId);
+                    if (!_buffer.TryGetValue(key, out var list))
+                    {
+                        list = new List<RecordedEvent>();
+                        _buffer[key] = list;
+                    }
+                    list.Add(evt);
+                    _totalBuffered++;
+                }
 
+                if (_totalBuffered >= _options.FlushAfterRecordCount)
+                {
+                    await FlushAsync(stoppingToken);
+                    continue;
+                }
+
+                // Wait for next event or timer tick
+                var readTask = _channel.Reader.WaitToReadAsync(stoppingToken).AsTask();
                 var completedTask = await Task.WhenAny(readTask, timerTask);
 
-                if (completedTask == readTask && readTask.IsCompletedSuccessfully)
+                if (completedTask == timerTask)
                 {
-                    var recordedEvent = await readTask;
-                    batch.Add(recordedEvent);
+                    if (_totalBuffered > 0)
+                        await FlushAsync(stoppingToken);
 
-                    _logger.LogDebug("Batched event for {ExperimentId}/{TrendId}. Current batch size: {BatchSize}",
-                        recordedEvent.ExperimentId, recordedEvent.TrendId, batch.Count);
+                    // Restart timer task
+                    timerTask = WaitForTimerAsync(flushTimer, stoppingToken);
                 }
-
-                // Check flush conditions: record count OR time interval
-                var timeSinceLastFlush = DateTimeOffset.UtcNow - lastFlushTime;
-                var shouldFlushByCount = batch.Count >= _options.FlushAfterRecordCount;
-                var shouldFlushByTime = timeSinceLastFlush.TotalSeconds >= _options.FlushIntervalSeconds && batch.Count > 0;
-
-                if (shouldFlushByCount || shouldFlushByTime)
-                {
-                    await FlushBatchAsync(batch, stoppingToken);
-                    batch.Clear();
-                    lastFlushTime = DateTimeOffset.UtcNow;
-                }
-            }
-            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
-            {
-                _logger.LogInformation("RecorderWriterService stopping. Flushing remaining {Count} events...", batch.Count);
-                if (batch.Count > 0)
-                {
-                    await FlushBatchAsync(batch, CancellationToken.None);
-                }
-                break;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error in RecorderWriterService");
-                await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
             }
         }
-
-        _logger.LogInformation("RecorderWriterService stopped.");
+        catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+        {
+            // Normal shutdown — flush remaining
+        }
+        finally
+        {
+            if (_totalBuffered > 0)
+            {
+                try { await FlushAsync(CancellationToken.None); }
+                catch (Exception ex) { _logger.LogError(ex, "Final flush failed during shutdown"); }
+            }
+        }
     }
 
-    private async Task FlushBatchAsync(List<RecordedEvent> batch, CancellationToken ct)
+    private async Task FlushAsync(CancellationToken cancellationToken)
     {
-        if (batch.Count == 0)
-            return;
+        if (_buffer.Count == 0) return;
 
-        // Group by (experimentId, trendId) so each group gets its own object
-        var groups = batch
-            .GroupBy(e => (e.ExperimentId, e.TrendId))
-            .ToList();
+        var snapshot = new Dictionary<(string, string), List<RecordedEvent>>(_buffer);
+        _buffer.Clear();
+        _totalBuffered = 0;
 
-        _logger.LogInformation("Flushing {BatchCount} events across {GroupCount} groups to storage...", 
-            batch.Count, groups.Count);
-
-        foreach (var group in groups)
+        foreach (var ((experimentId, trendId), events) in snapshot)
         {
+            var timestamp = events[0].ReceivedAt.UtcDateTime.ToString("yyyyMMddHHmmss");
+            var objectKey = $"{experimentId}/{trendId}/{timestamp}.ndjson";
+
             try
             {
-                var (experimentId, trendId) = group.Key;
-                var records = group.ToList();
+                using var ms = new MemoryStream();
+                await using var writer = new StreamWriter(ms, Encoding.UTF8, leaveOpen: true);
 
-                // Serialize to JSONL (one JSON object per line)
-                var jsonlBuilder = new StringBuilder();
-                foreach (var record in records)
+                foreach (var evt in events)
                 {
-                    var json = JsonSerializer.Serialize(record, new JsonSerializerOptions 
-                    { 
-                        WriteIndented = false 
-                    });
-                    jsonlBuilder.AppendLine(json);
+                    await writer.WriteLineAsync(JsonSerializer.Serialize(evt));
                 }
 
-                var jsonlContent = jsonlBuilder.ToString();
-                var jsonlBytes = Encoding.UTF8.GetBytes(jsonlContent);
+                await writer.FlushAsync(cancellationToken);
+                ms.Position = 0;
 
-                // Object key pattern: experiments/{experimentId}/trends/{date:yyyy-MM-dd}/{trendId}/{batchTimestampUtc:yyyyMMddTHHmmssfffZ}.jsonl
-                var now = DateTimeOffset.UtcNow;
-                var dateSegment = now.ToString("yyyy-MM-dd");
-                var timestampSegment = now.ToString("yyyyMMddTHHmmssfffZ");
-                var objectKey = $"experiments/{experimentId}/trends/{dateSegment}/{trendId}/{timestampSegment}.jsonl";
-
-                // Write to object storage
-                using var stream = new MemoryStream(jsonlBytes);
-                await _storageSink.WriteAsync(objectKey, stream, "application/x-ndjson", ct);
-
-                _logger.LogInformation("Flushed {RecordCount} records to {ObjectKey}", records.Count, objectKey);
+                await _storageSink.WriteAsync(objectKey, ms, "application/x-ndjson", cancellationToken);
+                _logger.LogInformation("Flushed {Count} records to {Key}", events.Count, objectKey);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to flush batch for experiment {ExperimentId}, trend {TrendId}",
-                    group.Key.ExperimentId, group.Key.TrendId);
+                _logger.LogError(ex, "Failed to flush {Count} records for {Key}", events.Count, objectKey);
             }
         }
+    }
+
+    private static async Task WaitForTimerAsync(PeriodicTimer timer, CancellationToken cancellationToken)
+    {
+        try { await timer.WaitForNextTickAsync(cancellationToken); }
+        catch (OperationCanceledException) { /* expected on shutdown */ }
     }
 }

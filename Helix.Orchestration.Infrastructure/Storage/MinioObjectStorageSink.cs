@@ -1,83 +1,119 @@
-using Minio;
-using Minio.DataModel.Args;
+﻿using System;
+using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
+using Amazon.S3;
+using Amazon.S3.Model;
+using Amazon.Runtime;
 
 namespace Helix.Orchestration.Infrastructure.Storage;
 
-/// <summary>
-/// MinIO implementation of <see cref="IObjectStorageSink"/>.
-/// Writes objects to a MinIO (S3-compatible) bucket.
-/// </summary>
-public sealed class MinioObjectStorageSink : IObjectStorageSink
+public class MinioObjectStorageSink : IObjectStorageSink
 {
-    private readonly IMinioClient _minioClient;
-    private readonly string _bucketName;
-    private bool _bucketChecked;
-    private readonly SemaphoreSlim _bucketCheckLock = new(1, 1);
+    private readonly IAmazonS3 _client;
+    private readonly MinioOptions _options;
 
     public MinioObjectStorageSink(MinioOptions options)
     {
-        ArgumentNullException.ThrowIfNull(options);
+        if (options == null) throw new ArgumentNullException(nameof(options));
+        if (string.IsNullOrWhiteSpace(options.ServiceUrl)) throw new ArgumentException("Service URL must be configured.", nameof(options));
+        if (string.IsNullOrWhiteSpace(options.AccessKey)) throw new ArgumentException("Access key must be configured.", nameof(options));
+        if (string.IsNullOrWhiteSpace(options.SecretKey)) throw new ArgumentException("Secret key must be configured.", nameof(options));
 
-        _bucketName = options.BucketName ?? throw new ArgumentNullException(nameof(options.BucketName));
+        _options = options;
 
-        // Build MinIO client with provided options
-        var builder = new MinioClient()
-            .WithEndpoint(options.Endpoint)
-            .WithCredentials(options.AccessKey, options.SecretKey);
-
-        if (options.UseSsl)
+        var config = new AmazonS3Config
         {
-            builder = builder.WithSSL();
-        }
+            ServiceURL = options.ServiceUrl,
+            ForcePathStyle = options.ForcePathStyle
+        };
 
-        _minioClient = builder.Build();
+        if (!string.IsNullOrWhiteSpace(options.Region))
+            config.AuthenticationRegion = options.Region;
+
+        var credentials = new BasicAWSCredentials(options.AccessKey, options.SecretKey);
+        _client = new AmazonS3Client(credentials, config);
     }
 
-    /// <inheritdoc/>
-    public async Task WriteAsync(string objectKey, Stream data, string contentType, CancellationToken ct)
+    public async Task UploadObjectAsync(string bucketName, string objectName, Stream stream, CancellationToken cancellationToken = default)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(objectKey);
-        ArgumentNullException.ThrowIfNull(data);
+        if (string.IsNullOrWhiteSpace(bucketName)) throw new ArgumentException("Bucket name required.", nameof(bucketName));
+        if (string.IsNullOrWhiteSpace(objectName)) throw new ArgumentException("Object name required.", nameof(objectName));
+        if (stream == null) throw new ArgumentNullException(nameof(stream));
 
-        // Ensure bucket exists (check once per instance lifetime)
-        await EnsureBucketExistsAsync(ct);
+        try { await _client.PutBucketAsync(bucketName, cancellationToken); }
+        catch (AmazonS3Exception ex) when (ex.StatusCode == System.Net.HttpStatusCode.Conflict) { }
 
-        // Upload object to MinIO
-        var putArgs = new PutObjectArgs()
-            .WithBucket(_bucketName)
-            .WithObject(objectKey)
-            .WithStreamData(data)
-            .WithObjectSize(data.Length)
-            .WithContentType(contentType);
-
-        await _minioClient.PutObjectAsync(putArgs, ct);
+        await _client.PutObjectAsync(new PutObjectRequest
+        {
+            BucketName = bucketName,
+            Key = objectName,
+            InputStream = stream
+        }, cancellationToken);
     }
 
-    private async Task EnsureBucketExistsAsync(CancellationToken ct)
+    public async Task DownloadObjectAsync(string bucketName, string objectName, Stream outputStream, CancellationToken cancellationToken = default)
     {
-        if (_bucketChecked)
-            return;
+        if (string.IsNullOrWhiteSpace(bucketName)) throw new ArgumentException("Bucket name required.", nameof(bucketName));
+        if (string.IsNullOrWhiteSpace(objectName)) throw new ArgumentException("Object name required.", nameof(objectName));
+        if (outputStream == null) throw new ArgumentNullException(nameof(outputStream));
 
-        await _bucketCheckLock.WaitAsync(ct);
+        using var response = await _client.GetObjectAsync(new GetObjectRequest
+        {
+            BucketName = bucketName,
+            Key = objectName
+        }, cancellationToken);
+        await response.ResponseStream.CopyToAsync(outputStream, cancellationToken);
+    }
+
+    public async Task<bool> ObjectExistsAsync(string bucketName, string objectName, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(bucketName)) throw new ArgumentException("Bucket name required.", nameof(bucketName));
+        if (string.IsNullOrWhiteSpace(objectName)) throw new ArgumentException("Object name required.", nameof(objectName));
+
         try
         {
-            if (_bucketChecked)
-                return;
-
-            var bucketExistsArgs = new BucketExistsArgs().WithBucket(_bucketName);
-            var exists = await _minioClient.BucketExistsAsync(bucketExistsArgs, ct);
-
-            if (!exists)
+            await _client.GetObjectMetadataAsync(new GetObjectMetadataRequest
             {
-                var makeBucketArgs = new MakeBucketArgs().WithBucket(_bucketName);
-                await _minioClient.MakeBucketAsync(makeBucketArgs, ct);
-            }
-
-            _bucketChecked = true;
+                BucketName = bucketName,
+                Key = objectName
+            }, cancellationToken);
+            return true;
         }
-        finally
+        catch (AmazonS3Exception ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
         {
-            _bucketCheckLock.Release();
+            return false;
         }
+    }
+
+    public async Task DeleteObjectAsync(string bucketName, string objectName, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(bucketName)) throw new ArgumentException("Bucket name required.", nameof(bucketName));
+        if (string.IsNullOrWhiteSpace(objectName)) throw new ArgumentException("Object name required.", nameof(objectName));
+
+        await _client.DeleteObjectAsync(new DeleteObjectRequest
+        {
+            BucketName = bucketName,
+            Key = objectName
+        }, cancellationToken);
+    }
+
+    public async Task WriteAsync(string key, Stream stream, string contentType, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(key)) throw new ArgumentException("Key required.", nameof(key));
+        if (stream == null) throw new ArgumentNullException(nameof(stream));
+
+        var bucket = _options.DefaultBucket ?? "helix-recordings";
+
+        try { await _client.PutBucketAsync(bucket, cancellationToken); }
+        catch (AmazonS3Exception ex) when (ex.StatusCode == System.Net.HttpStatusCode.Conflict) { }
+
+        await _client.PutObjectAsync(new PutObjectRequest
+        {
+            BucketName = bucket,
+            Key = key,
+            InputStream = stream,
+            ContentType = contentType
+        }, cancellationToken);
     }
 }
