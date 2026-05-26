@@ -46,23 +46,36 @@ public class SimReactorTests
         var logger = NullLogger<SimReactor>.Instance;
         var reactor = new SimReactor(provider, logger);
 
-        using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(1500));
+        // Use a TCS so the test completes as soon as the first value arrives,
+        // rather than relying on a fixed-duration observation window.
+        var tcs = new TaskCompletionSource<TrendValue>(TaskCreationOptions.RunContinuationsAsynchronously);
 
-        TrendValue? received = null;
+        // Run the reactor in the background; cancel after 5 s to bound the test.
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
 
-        try { await reactor.StartAsync(cts.Token); } catch { }
+        _ = reactor.StartAsync(cts.Token);
 
-        // Subscribe after start so trend is registered
-        await Task.Delay(100, CancellationToken.None);
+        // Wait until the trend is registered (ExecuteAsync registers it before its first tick)
+        var deadline = Task.Delay(TimeSpan.FromSeconds(4), CancellationToken.None);
+        while (!provider.GetAllTrendNames().Contains("reactor.temp"))
+        {
+            if (deadline.IsCompleted)
+                throw new TimeoutException("reactor.temp trend was never registered.");
+            await Task.Delay(10, CancellationToken.None);
+        }
+
         using var sub = provider.GetAllTrends()
             .First(t => t.TrendId == "reactor.temp")
             .Values
-            .Subscribe(v => received = v);
+            .Subscribe(v => tcs.TrySetResult(v));
 
-        await Task.Delay(1200, CancellationToken.None);
+        // Wait for first value with a generous timeout
+        var winner = await Task.WhenAny(tcs.Task, Task.Delay(TimeSpan.FromSeconds(4), CancellationToken.None));
 
-        Assert.NotNull(received);
-        var scalar = Assert.IsType<ScalarValue<double>>(received);
+        await cts.CancelAsync();
+
+        Assert.True(tcs.Task.IsCompletedSuccessfully, "No temperature value published within 4 seconds.");
+        var scalar = Assert.IsType<ScalarValue<double>>(await tcs.Task);
         Assert.InRange(scalar.Value, -100.0, 500.0);
     }
 }
