@@ -1,4 +1,4 @@
-using Helix.Orchestration.Infrastructure.Storage;
+﻿using Helix.Orchestration.Infrastructure.Storage;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -8,10 +8,10 @@ public static class InfrastructureServiceExtensions
 {
     public static IServiceCollection AddHelixInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
-        var connectionString = configuration.GetConnectionString("HelixOrchestration")
-            ?? throw new InvalidOperationException("Connection string 'HelixOrchestration' is not configured.");
-
-        services.AddSingleton(new DbConnectionFactory(connectionString));
+        services.AddSingleton<DbConnectionFactory>(sp =>
+            new DbConnectionFactory(
+                configuration.GetConnectionString("HelixOrchestration")
+                ?? throw new InvalidOperationException("Connection string 'HelixOrchestration' is not configured.")));
         services.AddScoped<IExperimentRepository, PostgresExperimentRepository>();
         services.AddScoped<ICampaignRepository, PostgresCampaignRepository>();
 
