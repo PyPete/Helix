@@ -27,6 +27,7 @@
 	<ProjectReference Include="..\Helix.Orchestration.Contracts\Helix.Orchestration.Contracts.csproj" />
 	<ProjectReference Include="..\Helix.Orchestration.Core\Helix.Orchestration.Core.csproj" />
 	<ProjectReference Include="..\Helix.Orchestration.Devices\Helix.Orchestration.Devices.csproj" />
+	<ProjectReference Include="..\Helix.Orchestration.Infrastructure\Helix.Orchestration.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>
