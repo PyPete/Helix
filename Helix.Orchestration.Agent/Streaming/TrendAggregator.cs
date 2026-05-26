@@ -1,4 +1,4 @@
-using Helix.Orchestration.Agent.Trends;
+﻿using Helix.Orchestration.Agent.Trends;
 using Helix.Orchestration.Core.Trends;
 
 namespace Helix.Orchestration.Agent.Streaming;
