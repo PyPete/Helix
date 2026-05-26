@@ -14,7 +14,6 @@
 	<PackageReference Include="MQTTnet" Version="4.*" />
 	<PackageReference Include="OpenTelemetry" Version="1.*" />
 	<PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.*" />
-	<PackageReference Include="Opc.UaFx.Advanced" Version="2.9.1" />
 	<PackageReference Include="Serilog.Extensions.Hosting" Version="8.*" />
 	<PackageReference Include="Serilog.Formatting.Compact" Version="2.*" />
 	<PackageReference Include="Serilog.Sinks.Console" Version="5.*" />

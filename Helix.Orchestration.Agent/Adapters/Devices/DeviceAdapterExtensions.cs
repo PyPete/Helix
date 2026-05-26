@@ -12,7 +12,6 @@ public static class DeviceAdapterExtensions
         services.AddTransient<ISerialTransport, SerialTransport>();
         services.AddTransient<IModbusTransport, ModbusTransport>();
         services.AddTransient<ITcpTransport, TcpTransport>();
-        services.AddTransient<IOpcTransport, OpcTransport>();
 
         services.AddSingleton<CapabilityRegistry>(sp =>
         {
