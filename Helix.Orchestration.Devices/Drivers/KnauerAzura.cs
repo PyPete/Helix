@@ -146,7 +146,7 @@ public sealed class KnauerAzura : DeviceAdapterBase
                     var percB = double.Parse(fields[6]);
                     var percC = double.Parse(fields[7]);
                     var percD = double.Parse(fields[8]);
-                    var pressureBar = int.Parse(fields[17]) / 100.0;
+                    var pressureBar = int.Parse(fields[17]) / 1000.0;
 
                     return CapabilityInvocationResult.Successful(JsonSerializer.SerializeToElement(new
                     {
@@ -215,6 +215,7 @@ public sealed class KnauerAzura : DeviceAdapterBase
 
             double flowRateMlMin;
             double pressureBar;
+            double percA, percB, percC, percD;
             string stateName;
 
             try
@@ -239,7 +240,11 @@ public sealed class KnauerAzura : DeviceAdapterBase
                 };
 
                 flowRateMlMin = int.Parse(fields[4]) / 1000.0;
-                pressureBar = int.Parse(fields[17]) / 100.0;
+                percA = double.Parse(fields[5]);
+                percB = double.Parse(fields[6]);
+                percC = double.Parse(fields[7]);
+                percD = double.Parse(fields[8]);
+                pressureBar = int.Parse(fields[17]) / 1000.0;
             }
             catch (Exception ex)
             {
@@ -247,29 +252,13 @@ public sealed class KnauerAzura : DeviceAdapterBase
                 continue;
             }
 
-            yield return new TrendSample
-            {
-                TrendName = "knauer.pump.flowrate",
-                Value = flowRateMlMin,
-                Timestamp = now,
-                Unit = "ml/min"
-            };
-
-            yield return new TrendSample
-            {
-                TrendName = "knauer.pump.pressure",
-                Value = pressureBar,
-                Timestamp = now,
-                Unit = "bar"
-            };
-
-            yield return new TrendSample
-            {
-                TrendName = "knauer.pump.state",
-                Value = stateName,
-                Timestamp = now,
-                Unit = null
-            };
+            yield return new TrendSample { TrendName = "knauer.pump.flowrate",    Value = flowRateMlMin, Timestamp = now, Unit = "ml/min" };
+            yield return new TrendSample { TrendName = "knauer.pump.pressure",    Value = pressureBar,   Timestamp = now, Unit = "bar" };
+            yield return new TrendSample { TrendName = "knauer.pump.state",       Value = stateName,     Timestamp = now, Unit = null };
+            yield return new TrendSample { TrendName = "knauer.pump.composition_a", Value = percA,       Timestamp = now, Unit = "%" };
+            yield return new TrendSample { TrendName = "knauer.pump.composition_b", Value = percB,       Timestamp = now, Unit = "%" };
+            yield return new TrendSample { TrendName = "knauer.pump.composition_c", Value = percC,       Timestamp = now, Unit = "%" };
+            yield return new TrendSample { TrendName = "knauer.pump.composition_d", Value = percD,       Timestamp = now, Unit = "%" };
         }
     }
 }
