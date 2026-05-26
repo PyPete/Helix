@@ -1,4 +1,4 @@
-using System.Runtime.Serialization;
+using System.Runtime.CompilerServices;
 using Helix.Orchestration.Devices.Abstractions;
 using Helix.Orchestration.Devices.FaultTolerance;
 using Helix.Orchestration.Devices.Transports.CDll;
@@ -109,7 +109,7 @@ public static class DevicesServiceCollectionExtensions
     private static TOptions BuildOptions<TOptions>(Action<TOptions> configureOptions)
         where TOptions : class
     {
-        var options = (TOptions)FormatterServices.GetUninitializedObject(typeof(TOptions));
+        var options = (TOptions)RuntimeHelpers.GetUninitializedObject(typeof(TOptions));
         configureOptions(options);
         return options;
     }
