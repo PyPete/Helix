@@ -1,0 +1,31 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(ls \"$env:USERPROFILE\\\\.claude\\\\get-shit-done\\\\workflows\\\\\")",
+      "PowerShell(Get-Content \"$env:USERPROFILE\\\\.claude\\\\get-shit-done\\\\workflows\\\\execute-phase.md\" -TotalCount 150)",
+      "PowerShell(Get-Content \"$env:USERPROFILE\\\\.claude\\\\get-shit-done\\\\workflows\\\\execute-phase.md\" -TotalCount 300 | Select-Object -Skip 150)",
+      "PowerShell(Get-Content \"$env:USERPROFILE\\\\.claude\\\\get-shit-done\\\\workflows\\\\execute-phase.md\" -TotalCount 500 | Select-Object -Skip 300)",
+      "PowerShell(Get-Content \"$env:USERPROFILE\\\\.claude\\\\get-shit-done\\\\workflows\\\\execute-phase.md\" -TotalCount 700 | Select-Object -Skip 500)",
+      "PowerShell(Get-Content \"$env:USERPROFILE\\\\source\\\\repos\\\\CSharpGitLab\\\\Helix\\\\.planning\\\\STATE.md\")",
+      "PowerShell(ls \"$env:USERPROFILE\\\\source\\\\repos\\\\CSharpGitLab\\\\Helix\\\\.planning\\\\phases\\\\phase-2\\\\\")",
+      "PowerShell(Get-Content \"$env:USERPROFILE\\\\source\\\\repos\\\\CSharpGitLab\\\\Helix\\\\.planning\\\\phases\\\\phase-2\\\\PLAN.md\")",
+      "PowerShell(Get-Content \"$env:USERPROFILE\\\\.claude\\\\projects\\\\c--Users-u643664-source-repos-CSharpGitLab-Helix\\\\22beb882-6d9b-4c11-9342-94d7e95a98a0\\\\tool-results\\\\b8d9etyhz.txt\" -TotalCount 300)",
+      "PowerShell(Get-Content \"$env:USERPROFILE\\\\.claude\\\\projects\\\\c--Users-u643664-source-repos-CSharpGitLab-Helix\\\\22beb882-6d9b-4c11-9342-94d7e95a98a0\\\\tool-results\\\\b8d9etyhz.txt\" -TotalCount 600 | Select-Object -Skip 300)",
+      "PowerShell(Get-Content \"$env:USERPROFILE\\\\source\\\\repos\\\\CSharpGitLab\\\\Helix\\\\.planning\\\\phases\\\\phase-2\\\\wave1-SUMMARY.md\")",
+      "PowerShell(Get-Content \"$env:USERPROFILE\\\\source\\\\repos\\\\CSharpGitLab\\\\Helix\\\\.planning\\\\config.json\")",
+      "PowerShell(ls \"$env:USERPROFILE\\\\source\\\\repos\\\\CSharpGitLab\\\\Helix\\\\Helix.Orchestration.Devices\\\\\")",
+      "PowerShell(Get-Content \"$env:USERPROFILE\\\\source\\\\repos\\\\CSharpGitLab\\\\Helix\\\\Helix.Orchestration.Devices\\\\Abstractions\\\\DeviceAdapterBase.cs\")",
+      "PowerShell(Get-Content \"$env:USERPROFILE\\\\source\\\\repos\\\\CSharpGitLab\\\\Helix\\\\Helix.Orchestration.Devices\\\\Transports\\\\Serial\\\\SerialDeviceTransport.cs\")",
+      "PowerShell(ls \"$env:USERPROFILE\\\\source\\\\repos\\\\CSharpGitLab\\\\Helix\\\\Helix.Orchestration.Devices\\\\Transports\\\\Serial\\\\\")",
+      "PowerShell(Get-Content \"$env:USERPROFILE\\\\source\\\\repos\\\\CSharpGitLab\\\\Helix\\\\Helix.Orchestration.Devices\\\\Abstractions\\\\IHelixAdapter.cs\")",
+      "PowerShell(ls \"$env:USERPROFILE\\\\source\\\\repos\\\\CSharpGitLab\\\\Helix\\\\Helix.Orchestration.Devices\\\\Drivers\\\\\")",
+      "PowerShell(Get-Content \"$env:USERPROFILE\\\\source\\\\repos\\\\CSharpGitLab\\\\Helix\\\\Helix.Orchestration.Devices\\\\Abstractions\\\\CapabilityDescriptor.cs\")",
+      "PowerShell(Get-Content \"$env:USERPROFILE\\\\source\\\\repos\\\\CSharpGitLab\\\\Helix\\\\Helix.Orchestration.Devices\\\\Transports\\\\Serial\\\\SerialTransportOptions.cs\")",
+      "PowerShell(Get-Content \"$env:USERPROFILE\\\\source\\\\repos\\\\CSharpGitLab\\\\Helix\\\\Helix.Orchestration.Agent\\\\Trends\\\\InMemoryTrendProvider.cs\")",
+      "PowerShell(Get-Content \"$env:USERPROFILE\\\\source\\\\repos\\\\CSharpGitLab\\\\Helix\\\\Helix.Orchestration.Agent\\\\Streaming\\\\TrendAggregator.cs\")",
+      "PowerShell(Get-Content \"$env:USERPROFILE\\\\source\\\\repos\\\\CSharpGitLab\\\\Helix\\\\Helix.Orchestration.Core\\\\Trends\\\\TrendValue.cs\" -TotalCount 30 2>$null; if \\(!$?\\) { ls \"$env:USERPROFILE\\\\source\\\\repos\\\\CSharpGitLab\\\\Helix\\\\Helix.Orchestration.Core\\\\Trends\\\\\" })",
+      "PowerShell(cd \"$env:USERPROFILE\\\\source\\\\repos\\\\CSharpGitLab\\\\Helix\"; dotnet build Helix.Orchestration.slnx -c Debug --no-incremental 2>&1 | Select-Object -Last 30)",
+      "PowerShell(cd \"$env:USERPROFILE\\\\source\\\\repos\\\\CSharpGitLab\\\\Helix\"; dotnet build Helix.Orchestration.slnx -c Debug 2>&1 | Where-Object { $_ -match 'error|warning CS|Build succeeded|Error' } | Select-Object -Last 20)"
+    ]
+  }
+}
