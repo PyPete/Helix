@@ -37,8 +37,23 @@ public sealed class TrendAggregator(
                 logger.LogDebug("Published diode-array slice for trend {TrendName}", trendName);
                 break;
 
+            case ScalarValue<double> scalar:
+                trendProvider.PushScalar(trendName, scalar.Value);
+                logger.LogDebug("Published scalar (double) for trend {TrendName}: {Value}", trendName, scalar.Value);
+                break;
+
+            case ScalarValue<float> scalarF:
+                trendProvider.PushScalar(trendName, scalarF.Value);
+                logger.LogDebug("Published scalar (float) for trend {TrendName}: {Value}", trendName, scalarF.Value);
+                break;
+
+            case ScalarValue<int> scalarI:
+                trendProvider.PushScalar(trendName, scalarI.Value);
+                logger.LogDebug("Published scalar (int) for trend {TrendName}: {Value}", trendName, scalarI.Value);
+                break;
+
             default:
-                logger.LogDebug("Ignoring unsupported trend value type {TrendValueType} for trend {TrendName}", value.GetType().Name, trendName);
+                logger.LogWarning("Ignoring unsupported trend value type {TrendValueType} for trend {TrendName}", value.GetType().Name, trendName);
                 break;
         }
 

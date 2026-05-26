@@ -10,6 +10,7 @@ public sealed class InMemoryTrendProvider : ITrendProvider, IDisposable
 {
     private readonly ConcurrentDictionary<string, InMemorySpectralTrendProvider> _spectral = new(StringComparer.OrdinalIgnoreCase);
     private readonly ConcurrentDictionary<string, InMemoryDiodeArrayTrendProvider> _diodeArray = new(StringComparer.OrdinalIgnoreCase);
+    private readonly ConcurrentDictionary<string, object> _scalarLatest = new(StringComparer.OrdinalIgnoreCase);
 
     public TrendWindow<T> GetTrend<T>(string trendName) where T : struct, IComparable<T>
         => throw new NotSupportedException("TODO: Scalar trend windows are not implemented in this phase.");
@@ -33,10 +34,10 @@ public sealed class InMemoryTrendProvider : ITrendProvider, IDisposable
         => throw new NotSupportedException("TODO: Derived trends are not implemented in this phase.");
 
     public Task<bool> IsTrendAvailableAsync(string trendName)
-        => Task.FromResult(_spectral.ContainsKey(trendName) || _diodeArray.ContainsKey(trendName));
+        => Task.FromResult(_spectral.ContainsKey(trendName) || _diodeArray.ContainsKey(trendName) || _scalarLatest.ContainsKey(trendName));
 
     public IEnumerable<string> GetAllTrendNames()
-        => _spectral.Keys.Concat(_diodeArray.Keys).Distinct(StringComparer.OrdinalIgnoreCase);
+        => _spectral.Keys.Concat(_diodeArray.Keys).Concat(_scalarLatest.Keys).Distinct(StringComparer.OrdinalIgnoreCase);
 
     public IEnumerable<ITrend> GetAllTrends()
         => _spectral.Values.Cast<ITrend>().Concat(_diodeArray.Values);
@@ -81,6 +82,20 @@ public sealed class InMemoryTrendProvider : ITrendProvider, IDisposable
         var trend = _diodeArray.GetOrAdd(trendName, name => new InMemoryDiodeArrayTrendProvider(name));
         trend.Push(slice);
     }
+
+    /// <summary>
+    /// Pushes a scalar value to the named trend (latest-value store).
+    /// </summary>
+    public void PushScalar<T>(string trendName, T value) where T : struct, IComparable<T>
+    {
+        _scalarLatest[trendName] = value;
+    }
+
+    /// <summary>
+    /// Reads the latest scalar value for the named trend. Returns false if not present.
+    /// </summary>
+    public bool TryGetScalar(string trendName, out object? value)
+        => _scalarLatest.TryGetValue(trendName, out value);
 
     public void Dispose()
     {
