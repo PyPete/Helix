@@ -35,13 +35,13 @@ jobs:
             ${{ runner.os }}-nuget-
 
       - name: Restore
-        run: dotnet restore Helix.Orchestration/Helix.Orchestration.slnx -p:Configuration=Release
+        run: dotnet restore Helix.Orchestration.slnx -p:Configuration=Release
 
       - name: Build
-        run: dotnet build Helix.Orchestration/Helix.Orchestration.slnx --no-restore -c Release
+        run: dotnet build Helix.Orchestration.slnx --no-restore -c Release
 
       - name: Test
-        run: dotnet test Helix.Orchestration/Helix.Orchestration.slnx --no-build -c Release --logger trx --results-directory test-results
+        run: dotnet test Helix.Orchestration.slnx --no-build -c Release --logger trx --results-directory test-results
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
@@ -65,10 +65,10 @@ jobs:
           dotnet-version: 10.0.x
 
       - name: Restore
-        run: dotnet restore Helix.Orchestration/Helix.Orchestration.slnx -p:Configuration=Release
+        run: dotnet restore Helix.Orchestration.slnx -p:Configuration=Release
 
       - name: Check formatting (informational)
-        run: dotnet format Helix.Orchestration/Helix.Orchestration.slnx --verify-no-changes --no-restore --verbosity diagnostic
+        run: dotnet format Helix.Orchestration.slnx --verify-no-changes --no-restore --verbosity diagnostic
         continue-on-error: true
 
   publish:
@@ -87,7 +87,7 @@ jobs:
           dotnet-version: 10.0.x
 
       - name: Publish core project
-        run: dotnet publish Helix.Orchestration/Helix.Orchestration.Core/Helix.Orchestration.Core.csproj -c Release -o publish/
+        run: dotnet publish Helix.Orchestration.Core/Helix.Orchestration.Core.csproj -c Release -o publish/
 
       - name: Upload publish artifact
         uses: actions/upload-artifact@v4
