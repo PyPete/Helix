@@ -1,4 +1,5 @@
-﻿using Cleipnir.ResilientFunctions;
+using Cleipnir.ResilientFunctions;
+using Cleipnir.ResilientFunctions.PostgreSQL;
 using Cleipnir.ResilientFunctions.Storage;
 using Helix.Orchestration.Agent;
 using Helix.Orchestration.Agent.Adapters.Devices;
@@ -52,10 +53,18 @@ try
     // Capability invoker + migrated device adapters
     builder.Services.AddMigratedDeviceAdapters();
 
-    // Durable workflow execution
-    builder.Services.AddSingleton(new InMemoryFunctionStore());
+    // Durable workflow execution — PostgreSQL-backed (survives process restart)
+    var connectionString = builder.Configuration.GetConnectionString("HelixOrchestration")
+        ?? throw new InvalidOperationException(
+            "Connection string 'HelixOrchestration' is required for Cleipnir PostgreSQL store. " +
+            "Ensure docker compose is running: docker compose up -d");
+
+    var postgresFunctionStore = new PostgreSqlFunctionStore(connectionString);
+    await postgresFunctionStore.Initialize();
+
+    builder.Services.AddSingleton<IFunctionStore>(postgresFunctionStore);
     builder.Services.AddSingleton<FunctionsRegistry>(sp =>
-        new FunctionsRegistry(sp.GetRequiredService<InMemoryFunctionStore>()));
+        new FunctionsRegistry(sp.GetRequiredService<IFunctionStore>()));
     builder.Services.AddSingleton<WorkflowRegistry>();
     builder.Services.AddSingleton<IWorkflowStateStore, WorkflowStateStore>();
     builder.Services.AddSingleton<IGlobalStateStore, InMemoryGlobalStateStore>();

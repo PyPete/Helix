@@ -1,3 +1,4 @@
+using Helix.Orchestration.Infrastructure.Persistence;
 using Helix.Orchestration.Simulation;
 using Helix.Orchestration.SiteServer.Agent;
 using Helix.Orchestration.SiteServer.Campaigns;
@@ -32,7 +33,10 @@ builder.Services.AddSingleton<ICampaignManager, CampaignManager>();
 builder.Services.Configure<MqttBridgeOptions>(builder.Configuration.GetSection("MqttBridge"));
 builder.Services.AddHostedService<MqttTrendBridge>();
 
-var app = builder.Build();
+// Register PostgreSQL repositories for campaigns and experiments
+    builder.Services.AddHelixInfrastructure(builder.Configuration);
+
+    var app = builder.Build();
 
 // Configure middleware
 if (app.Environment.IsDevelopment())
