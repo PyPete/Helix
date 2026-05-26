@@ -2,7 +2,7 @@
 
 Audit of device drivers migrated from `POP.DeviceCore` into the Helix platform.
 
-Last updated: 2026-05-26 (Phase 2 Wave 1)
+Last updated: 2026-05-26 (Phase 3)
 
 ---
 
@@ -11,8 +11,8 @@ Last updated: 2026-05-26 (Phase 2 Wave 1)
 | Driver name | Protocol | Transport interface | Connection type | Full POP vocabulary (from source) | Phase 2 implemented | POP.DeviceCore source file | Phase 2 status |
 |---|---|---|---|---|---|---|---|
 | VapourtecR4 | Serial | ISerialTransport | RS-232 @ 19200 baud | PN, PF, FW, KP, FR, PL, HT, HF, HP, GA, ST, GV, SV | PN, PF, FW, KP, FR, HT, HF, ST, GV | `POP.DeviceCore/Drivers/VapourtecR4.cs` | Phase 2 (this plan) |
-| KnauerAzura | TCP | ITcpTransport | TCP | ACK/NAK command protocol, gradient config, UV config, run state polling | N/A | `POP.DeviceCore/Drivers/KnauerAzura.cs` | Phase 3 |
-| SystagOpcUaClient | OPC UA | IOpcTransport → OpcDeviceTransport | OPC UA endpoint | Setpoint writes via OPC UA node IDs, change subscriptions for live updates | N/A | `POP.DeviceCore/Drivers/SystagOpcUaClient.cs` | Phase 3 |
+| KnauerAzura | TCP | ITcpTransport | TCP | ACK/NAK command protocol, gradient config, UV config, run state polling | N/A | `POP.DeviceCore/Drivers/KnauerAzura.cs` | Phase 3 ✓ (pump-only; DAD + Thermostat deferred) |
+| SystagOpcUaClient | OPC UA | IOpcTransport → OpcDeviceTransport | OPC UA endpoint | Setpoint writes via OPC UA node IDs, change subscriptions for live updates | N/A | `POP.DeviceCore/Drivers/SystagOpcUaClient.cs` | Phase 3 ✓ (browse-and-subscribe; node IDs caller-supplied) |
 | ModbusDeviceBase subclasses | Modbus | IModbusTransport | RS-485 | Register read/write | N/A | `POP.DeviceCore/Comm/` | Phase 3 (audit pending) |
 | SetPointDeviceBase subclasses (StirrerDeviceBase, VacPumpDeviceBase) | Serial or TCP | — | Start/Stop/SetPoint/Limits | Start/Stop/SetPoint/Limits | N/A | documented in DEVICE-MIGRATION-HANDOVER.md | Phase 3 |
 

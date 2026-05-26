@@ -66,9 +66,9 @@ A scientist or technician can build a visual workflow, connect real lab hardware
 |----|-------------|----------|
 | B1 | Audit POP.DeviceCore/Drivers — produce driver inventory (protocol, command vocabulary, connection type, test status) | Must Have |
 | B2 | Port VapourtecR4 using DeviceAdapterBase: full POP command vocabulary (FW/KP/GA/HF/HT/HP/GF/GT), status polling, fault detection | Must Have |
-| B3 | Port KnauerAzura (HPLC pump): correct command vocabulary, ACK/NAK response handling, gradient/UV configuration, run state polling | Must Have |
-| B4 | Port SystagOpcUaClient: setpoint write methods, correct OPC UA node path conventions, change subscriptions via OPC Foundation library | Must Have |
-| B5 | Port all remaining drivers identified in audit | Should Have |
+| B3 | Port KnauerAzura (HPLC pump): correct command vocabulary, ACK/NAK response handling, gradient/UV configuration, run state polling — **Complete (Phase 3, Helix.Orchestration.Devices/Drivers/KnauerAzura.cs, pump-only scope)** | Must Have |
+| B4 | Port SystagOpcUaClient: setpoint write methods, correct OPC UA node path conventions, change subscriptions via OPC Foundation library — **Complete (Phase 3, Helix.Orchestration.Devices/Drivers/SystagOpcUaClient.cs, dynamic browse+subscribe)** | Must Have |
+| B5 | Port all remaining drivers identified in audit — **Complete (Phase 3; see Helix.Orchestration/docs/driver-inventory.md)** | Should Have |
 | B6 | Fix ISerialTransport.Open to accept baudRate parameter; update all implementing classes | Must Have |
 | B7 | Fix DI lifetime mismatch: transports must be Singleton (or registered accordingly) when captured by Singleton CapabilityRegistry | Must Have |
 | B8 | Driver-level unit tests for each ported driver using transport test seams (no real hardware required) | Must Have |
