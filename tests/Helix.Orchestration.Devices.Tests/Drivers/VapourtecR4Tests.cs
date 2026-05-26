@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 using System.Text.Json;
 using Helix.Orchestration.Devices.Abstractions;
 using Helix.Orchestration.Devices.Drivers;
@@ -10,233 +10,344 @@ namespace Helix.Orchestration.Devices.Tests.Drivers;
 
 public sealed class VapourtecR4Tests
 {
-    // ── Helper ────────────────────────────────────────────────────────────────
-
-    private static async Task<(VapourtecR4 driver, FakeSerialPortConnection port)> CreateDriverAsync(
-        params string[] responses)
+    private static VapourtecR4 CreateDriver(params string[] responses)
     {
         var port = new FakeSerialPortConnection();
         foreach (var r in responses)
-        {
-            port.EnqueueRead(r.EndsWith("\r\n") ? r : r + "\r\n");
-        }
-
+            port.EnqueueRead(r + "\r\n");
+        var factory = new FakeSerialPortConnectionFactory(port);
         var transport = new SerialDeviceTransport(
-            new SerialTransportOptions { PortName = "COM_FAKE", CommandTerminator = "\r\n" },
+            new SerialTransportOptions { PortName = "COM1", BaudRate = 19200, CommandTerminator = "\r\n" },
             NullLogger<SerialDeviceTransport>.Instance,
-            new FakeSerialPortConnectionFactory(port));
-
-        await transport.ConnectAsync();
-
+            factory);
         var driver = new VapourtecR4(transport, NullLogger<VapourtecR4>.Instance);
-        return (driver, port);
+        transport.ConnectAsync().GetAwaiter().GetResult();
+        return driver;
     }
 
-    private static JsonElement EmptyElement()
+    private static JsonElement Json(string json)
     {
-        using var doc = JsonDocument.Parse("{}");
+        using var doc = JsonDocument.Parse(json);
         return doc.RootElement.Clone();
     }
 
-    private static JsonElement ElementFor(object obj)
-        => JsonSerializer.SerializeToElement(obj);
+    private static byte[] Ascii(string s) => Encoding.ASCII.GetBytes(s);
 
-    // ── Tests ─────────────────────────────────────────────────────────────────
+    // ---- Start capability ----
 
     [Fact]
     public async Task Start_SendsPnCommand_ReturnsSuccess()
     {
-        var (driver, port) = await CreateDriverAsync("OK\r\n", "OK\r\n");
+        var port = new FakeSerialPortConnection();
+        port.EnqueueRead("OK\r\n");
+        port.EnqueueRead("OK\r\n");
+        var transport = MakeTransport(port);
+        await transport.ConnectAsync();
+        var driver = new VapourtecR4(transport, NullLogger<VapourtecR4>.Instance);
 
-        var result = await driver.InvokeCapabilityAsync("Start", EmptyElement(), null, CancellationToken.None);
+        var result = await driver.InvokeCapabilityAsync("Start", Json("{}"));
 
         Assert.True(result.Success);
-        Assert.Equal(Encoding.ASCII.GetBytes("PN \r\n"), port.Writes.First());
+        Assert.Equal(Ascii("PN \r\n"), port.Writes[0]);
     }
 
     [Fact]
     public async Task Start_ErrResponse_ReturnsFailure()
     {
-        var (driver, port) = await CreateDriverAsync("ERR ER103\r\n");
+        var port = new FakeSerialPortConnection();
+        port.EnqueueRead("ERR ER103\r\n");
+        var transport = MakeTransport(port);
+        await transport.ConnectAsync();
+        var driver = new VapourtecR4(transport, NullLogger<VapourtecR4>.Instance);
 
-        var result = await driver.InvokeCapabilityAsync("Start", EmptyElement(), null, CancellationToken.None);
+        var result = await driver.InvokeCapabilityAsync("Start", Json("{}"));
 
         Assert.False(result.Success);
         Assert.Contains("ERR", result.ErrorMessage);
     }
 
+    // ---- Stop capability ----
+
     [Fact]
     public async Task Stop_SendsPfCommand_ReturnsSuccess()
     {
-        var (driver, port) = await CreateDriverAsync("OK\r\n", "OK\r\n");
+        var port = new FakeSerialPortConnection();
+        port.EnqueueRead("OK\r\n");
+        port.EnqueueRead("OK\r\n");
+        var transport = MakeTransport(port);
+        await transport.ConnectAsync();
+        var driver = new VapourtecR4(transport, NullLogger<VapourtecR4>.Instance);
 
-        var result = await driver.InvokeCapabilityAsync("Stop", EmptyElement(), null, CancellationToken.None);
+        var result = await driver.InvokeCapabilityAsync("Stop", Json("{}"));
 
         Assert.True(result.Success);
-        Assert.Equal(Encoding.ASCII.GetBytes("PF\r\n"), port.Writes.First());
+        Assert.Equal(Ascii("PF\r\n"), port.Writes[0]);
     }
 
-    [Fact]
-    public async Task SetFlowRate_PumpA_SendsFrCommand_WithCorrectRate()
-    {
-        var (driver, port) = await CreateDriverAsync("OK\r\n");
-        var parameters = ElementFor(new { pump = 0, rateMlMin = 1.5 });
+    // ---- SetFlowRate capability ----
 
-        var result = await driver.InvokeCapabilityAsync("SetFlowRate", parameters, null, CancellationToken.None);
+    [Fact]
+    public async Task SetFlowRate_PumpA_SendsFrCommandWithCorrectRate()
+    {
+        var port = new FakeSerialPortConnection();
+        port.EnqueueRead("OK\r\n");
+        var transport = MakeTransport(port);
+        await transport.ConnectAsync();
+        var driver = new VapourtecR4(transport, NullLogger<VapourtecR4>.Instance);
+
+        var result = await driver.InvokeCapabilityAsync("SetFlowRate", Json(@"{""pump"":0,""rateMlMin"":1.5}"));
 
         Assert.True(result.Success);
-        Assert.Equal(Encoding.ASCII.GetBytes("FR 0 1500 \r\n"), port.Writes.First());
+        Assert.Equal(Ascii("FR 0 1500 \r\n"), port.Writes[0]);
     }
 
     [Fact]
     public async Task SetFlowRate_PumpC_SendsFwFrCommand()
     {
-        var (driver, port) = await CreateDriverAsync("OK\r\n");
-        var parameters = ElementFor(new { pump = 2, rateMlMin = 0.5 });
+        var port = new FakeSerialPortConnection();
+        port.EnqueueRead("OK\r\n");
+        var transport = MakeTransport(port);
+        await transport.ConnectAsync();
+        var driver = new VapourtecR4(transport, NullLogger<VapourtecR4>.Instance);
 
-        var result = await driver.InvokeCapabilityAsync("SetFlowRate", parameters, null, CancellationToken.None);
+        var result = await driver.InvokeCapabilityAsync("SetFlowRate", Json(@"{""pump"":2,""rateMlMin"":0.5}"));
 
-        var written = Encoding.ASCII.GetString(port.Writes.First());
-        Assert.StartsWith("FW FR", written);
+        Assert.True(result.Success);
+        Assert.StartsWith("FW FR", Encoding.ASCII.GetString(port.Writes[0]));
     }
 
     [Fact]
-    public async Task SetTemperature_SendsR4StCommand()
+    public async Task SetFlowRate_InvalidPump_ReturnsFailure()
     {
-        var (driver, port) = await CreateDriverAsync("OK\r\n");
-        var parameters = ElementFor(new { reactor = 1, targetCelsius = 60 });
+        var port = new FakeSerialPortConnection();
+        var transport = MakeTransport(port);
+        await transport.ConnectAsync();
+        var driver = new VapourtecR4(transport, NullLogger<VapourtecR4>.Instance);
 
-        var result = await driver.InvokeCapabilityAsync("SetTemperature", parameters, null, CancellationToken.None);
+        var result = await driver.InvokeCapabilityAsync("SetFlowRate", Json(@"{""pump"":5,""rateMlMin"":1.0}"));
+
+        Assert.False(result.Success);
+        Assert.Contains("out of range", result.ErrorMessage);
+    }
+
+    // ---- SetTemperature capability ----
+
+    [Fact]
+    public async Task SetTemperature_SendsR4StCommandWithCorrectParams()
+    {
+        var port = new FakeSerialPortConnection();
+        port.EnqueueRead("OK\r\n");
+        var transport = MakeTransport(port);
+        await transport.ConnectAsync();
+        var driver = new VapourtecR4(transport, NullLogger<VapourtecR4>.Instance);
+
+        var result = await driver.InvokeCapabilityAsync("SetTemperature", Json(@"{""reactor"":1,""targetCelsius"":60}"));
 
         Assert.True(result.Success);
-        Assert.Equal(Encoding.ASCII.GetBytes("R4 ST 1 60 \r\n"), port.Writes.First());
+        Assert.Equal(Ascii("R4 ST 1 60 \r\n"), port.Writes[0]);
     }
+
+    // ---- SelectReagent capability ----
 
     [Fact]
     public async Task SelectReagent_ChannelA_SendsKp1Command()
     {
-        var (driver, port) = await CreateDriverAsync("OK\r\n");
-        var parameters = ElementFor(new { channel = 0 });
+        var port = new FakeSerialPortConnection();
+        port.EnqueueRead("OK\r\n");
+        var transport = MakeTransport(port);
+        await transport.ConnectAsync();
+        var driver = new VapourtecR4(transport, NullLogger<VapourtecR4>.Instance);
 
-        var result = await driver.InvokeCapabilityAsync("SelectReagent", parameters, null, CancellationToken.None);
+        var result = await driver.InvokeCapabilityAsync("SelectReagent", Json(@"{""channel"":0}"));
 
-        Assert.Equal(Encoding.ASCII.GetBytes("KP 1\r\n"), port.Writes.First());
+        Assert.True(result.Success);
+        Assert.Equal(Ascii("KP 1\r\n"), port.Writes[0]);
     }
 
     [Fact]
     public async Task SelectReagent_ChannelC_SendsFwKp1Command()
     {
-        var (driver, port) = await CreateDriverAsync("OK\r\n");
-        var parameters = ElementFor(new { channel = 2 });
+        var port = new FakeSerialPortConnection();
+        port.EnqueueRead("OK\r\n");
+        var transport = MakeTransport(port);
+        await transport.ConnectAsync();
+        var driver = new VapourtecR4(transport, NullLogger<VapourtecR4>.Instance);
 
-        var result = await driver.InvokeCapabilityAsync("SelectReagent", parameters, null, CancellationToken.None);
+        var result = await driver.InvokeCapabilityAsync("SelectReagent", Json(@"{""channel"":2}"));
 
-        Assert.Equal(Encoding.ASCII.GetBytes("FW KP 1\r\n"), port.Writes.First());
+        Assert.True(result.Success);
+        Assert.Equal(Ascii("FW KP 1\r\n"), port.Writes[0]);
     }
+
+    // ---- SelectSolvent capability ----
 
     [Fact]
     public async Task SelectSolvent_ChannelA_SendsKp0Command()
     {
-        var (driver, port) = await CreateDriverAsync("OK\r\n");
-        var parameters = ElementFor(new { channel = 0 });
+        var port = new FakeSerialPortConnection();
+        port.EnqueueRead("OK\r\n");
+        var transport = MakeTransport(port);
+        await transport.ConnectAsync();
+        var driver = new VapourtecR4(transport, NullLogger<VapourtecR4>.Instance);
 
-        var result = await driver.InvokeCapabilityAsync("SelectSolvent", parameters, null, CancellationToken.None);
+        var result = await driver.InvokeCapabilityAsync("SelectSolvent", Json(@"{""channel"":0}"));
 
-        Assert.Equal(Encoding.ASCII.GetBytes("KP 0\r\n"), port.Writes.First());
+        Assert.True(result.Success);
+        Assert.Equal(Ascii("KP 0\r\n"), port.Writes[0]);
     }
+
+    // ---- SelectLoopFill capability ----
 
     [Fact]
     public async Task SelectLoopFill_LoopA_SendsKp4Command()
     {
-        var (driver, port) = await CreateDriverAsync("OK\r\n");
-        var parameters = ElementFor(new { loop = 0 });
+        var port = new FakeSerialPortConnection();
+        port.EnqueueRead("OK\r\n");
+        var transport = MakeTransport(port);
+        await transport.ConnectAsync();
+        var driver = new VapourtecR4(transport, NullLogger<VapourtecR4>.Instance);
 
-        var result = await driver.InvokeCapabilityAsync("SelectLoopFill", parameters, null, CancellationToken.None);
+        var result = await driver.InvokeCapabilityAsync("SelectLoopFill", Json(@"{""loop"":0}"));
 
         Assert.True(result.Success);
-        Assert.Equal(Encoding.ASCII.GetBytes("KP 4\r\n"), port.Writes.First());
+        Assert.Equal(Ascii("KP 4\r\n"), port.Writes[0]);
     }
 
     [Fact]
     public async Task SelectLoopFill_LoopC_SendsFwKp4Command()
     {
-        var (driver, port) = await CreateDriverAsync("OK\r\n");
-        var parameters = ElementFor(new { loop = 2 });
+        var port = new FakeSerialPortConnection();
+        port.EnqueueRead("OK\r\n");
+        var transport = MakeTransport(port);
+        await transport.ConnectAsync();
+        var driver = new VapourtecR4(transport, NullLogger<VapourtecR4>.Instance);
 
-        var result = await driver.InvokeCapabilityAsync("SelectLoopFill", parameters, null, CancellationToken.None);
+        var result = await driver.InvokeCapabilityAsync("SelectLoopFill", Json(@"{""loop"":2}"));
 
-        Assert.Equal(Encoding.ASCII.GetBytes("FW KP 4\r\n"), port.Writes.First());
+        Assert.True(result.Success);
+        Assert.Equal(Ascii("FW KP 4\r\n"), port.Writes[0]);
     }
+
+    // ---- SelectLoopInject capability ----
 
     [Fact]
     public async Task SelectLoopInject_LoopA_SendsKp5Command()
     {
-        var (driver, port) = await CreateDriverAsync("OK\r\n");
-        var parameters = ElementFor(new { loop = 0 });
+        var port = new FakeSerialPortConnection();
+        port.EnqueueRead("OK\r\n");
+        var transport = MakeTransport(port);
+        await transport.ConnectAsync();
+        var driver = new VapourtecR4(transport, NullLogger<VapourtecR4>.Instance);
 
-        var result = await driver.InvokeCapabilityAsync("SelectLoopInject", parameters, null, CancellationToken.None);
+        var result = await driver.InvokeCapabilityAsync("SelectLoopInject", Json(@"{""loop"":0}"));
 
         Assert.True(result.Success);
-        Assert.Equal(Encoding.ASCII.GetBytes("KP 5\r\n"), port.Writes.First());
+        Assert.Equal(Ascii("KP 5\r\n"), port.Writes[0]);
     }
 
-    [Fact]
-    public async Task GetFirmwareVersion_ReturnsVersionString()
-    {
-        var (driver, port) = await CreateDriverAsync("v1.64 8-Jan-2010\r\n");
+    // ---- GetFirmwareVersion capability ----
 
-        var result = await driver.InvokeCapabilityAsync("GetFirmwareVersion", EmptyElement(), null, CancellationToken.None);
+    [Fact]
+    public async Task GetFirmwareVersion_SendsGvCommand_ReturnsVersionString()
+    {
+        var port = new FakeSerialPortConnection();
+        port.EnqueueRead("v1.64 8-Jan-2010\r\n");
+        var transport = MakeTransport(port);
+        await transport.ConnectAsync();
+        var driver = new VapourtecR4(transport, NullLogger<VapourtecR4>.Instance);
+
+        var result = await driver.InvokeCapabilityAsync("GetFirmwareVersion", Json("{}"));
+
+        Assert.True(result.Success);
+        Assert.Equal(Ascii("GV\r\n"), port.Writes[0]);
+        Assert.NotNull(result.ReturnValue);
+        Assert.Contains("v1.64", result.ReturnValue.ToString());
+    }
+
+    // ---- GetTemperatures capability ----
+
+    [Fact]
+    public async Task GetTemperatures_ParsesHtResponse_ReturnsNonNullReactors()
+    {
+        // field[0]=4913 (timestamp), field[2]=-1000 (no probe A), field[4]=-1000 (no probe B),
+        // field[6]=201 (reactor C = 20.1 C), field[8]=-1000 (no probe D)
+        var port = new FakeSerialPortConnection();
+        port.EnqueueRead("4913,U,-1000,U,-1000,U,201,U,-1000\r\n");
+        var transport = MakeTransport(port);
+        await transport.ConnectAsync();
+        var driver = new VapourtecR4(transport, NullLogger<VapourtecR4>.Instance);
+
+        var result = await driver.InvokeCapabilityAsync("GetTemperatures", Json("{}"));
 
         Assert.True(result.Success);
         Assert.NotNull(result.ReturnValue);
-        Assert.Contains("v1.64", result.ReturnValue.Value.ToString());
-        Assert.Equal(Encoding.ASCII.GetBytes("GV\r\n"), port.Writes.First());
+        var json = result.ReturnValue!.Value.ToString();
+        Assert.DoesNotContain("\"A\"", json);
+        Assert.DoesNotContain("\"B\"", json);
+        Assert.Contains("\"C\"", json);
+        Assert.DoesNotContain("\"D\"", json);
+        // Verify value is approximately 20.1
+        var parsed = JsonDocument.Parse(json);
+        Assert.Equal(20.1, parsed.RootElement.GetProperty("C").GetDouble(), 1);
     }
 
-    [Fact]
-    public async Task GetTemperatures_ParsesHtResponse_ReturnsValidReactors()
-    {
-        // Fields: 0=timestamp, 2=A(-1000), 4=B(-1000), 6=C(201=20.1), 8=D(-1000)
-        var (driver, port) = await CreateDriverAsync("4913,U,-1000,U,-1000,U,201,U,-1000\r\n");
-
-        var result = await driver.InvokeCapabilityAsync("GetTemperatures", EmptyElement(), null, CancellationToken.None);
-
-        Assert.True(result.Success);
-        Assert.NotNull(result.ReturnValue);
-
-        var json = result.ReturnValue.Value;
-        // Reactor C (field index 6 = 201 / 10.0 = 20.1) should be present
-        Assert.True(json.TryGetProperty("C", out var cTemp));
-        Assert.Equal(20.1, cTemp.GetDouble(), precision: 5);
-
-        // A, B, D are -1000 and should be absent
-        Assert.False(json.TryGetProperty("A", out _));
-        Assert.False(json.TryGetProperty("B", out _));
-        Assert.False(json.TryGetProperty("D", out _));
-    }
+    // ---- ERR response handling ----
 
     [Fact]
     public async Task InvokeCapabilityAsync_ErrResponse_ReturnsFailure()
     {
-        var (driver, port) = await CreateDriverAsync("ERR INVALID_COMMAND\r\n");
+        var port = new FakeSerialPortConnection();
+        port.EnqueueRead("ERR INVALID_COMMAND\r\n");
+        var transport = MakeTransport(port);
+        await transport.ConnectAsync();
+        var driver = new VapourtecR4(transport, NullLogger<VapourtecR4>.Instance);
 
-        var result = await driver.InvokeCapabilityAsync("Start", EmptyElement(), null, CancellationToken.None);
+        var result = await driver.InvokeCapabilityAsync("Start", Json("{}"));
 
         Assert.False(result.Success);
         Assert.Contains("ERR", result.ErrorMessage);
     }
 
-    // ── Fakes ─────────────────────────────────────────────────────────────────
+    // ---- StreamTrendsAsync ----
+
+    [Fact]
+    public async Task StreamTrendsAsync_EmitsTemperatureTrendSamples()
+    {
+        var port = new FakeSerialPortConnection();
+        // Each poll cycle reads HT then HF; enqueue enough for 2 HT responses
+        port.EnqueueRead("4913,U,-1000,U,-1000,U,201,U,-1000\r\n");
+        port.EnqueueRead("19911,0,0\r\n"); // HF
+        port.EnqueueRead("4913,U,-1000,U,-1000,U,201,U,-1000\r\n");
+        port.EnqueueRead("19911,0,0\r\n");
+        var transport = MakeTransport(port);
+        await transport.ConnectAsync();
+        var driver = new VapourtecR4(transport, NullLogger<VapourtecR4>.Instance);
+
+        var samples = new List<TrendSample>();
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+        await foreach (var s in driver.StreamTrendsAsync(cts.Token))
+        {
+            samples.Add(s);
+            if (samples.Count >= 2)
+                break;
+        }
+
+        Assert.True(samples.Count >= 1);
+        Assert.Contains(samples, s => s.TrendName.StartsWith("vapourtec.temperature."));
+    }
+
+    // ---- Helpers ----
+
+    private static SerialDeviceTransport MakeTransport(FakeSerialPortConnection port)
+        => new SerialDeviceTransport(
+            new SerialTransportOptions { PortName = "COM1", BaudRate = 19200, CommandTerminator = "\r\n" },
+            NullLogger<SerialDeviceTransport>.Instance,
+            new FakeSerialPortConnectionFactory(port));
 
     private sealed class FakeSerialPortConnectionFactory : ISerialPortConnectionFactory
     {
         private readonly FakeSerialPortConnection _connection;
-
-        public FakeSerialPortConnectionFactory(FakeSerialPortConnection connection)
-        {
-            _connection = connection;
-        }
-
+        public FakeSerialPortConnectionFactory(FakeSerialPortConnection connection) => _connection = connection;
         public ISerialPortConnection Create(SerialTransportOptions options) => _connection;
     }
 
@@ -248,21 +359,18 @@ public sealed class VapourtecR4Tests
 
         public FakeSerialPortConnection()
         {
-            _stream = new FakeSerialStream(_reads, _writes);
+            _stream = new FakeSerialStream(_reads, _writes, () => WriteException, () => ReadDelay);
         }
 
         public bool IsOpen { get; private set; }
-
         public Stream BaseStream => _stream;
-
+        public Exception? WriteException { get; set; }
+        public TimeSpan ReadDelay { get; set; }
         public IReadOnlyList<byte[]> Writes => _writes;
 
         public void EnqueueRead(string payload) => _reads.Enqueue(Encoding.ASCII.GetBytes(payload));
-
         public void Open() => IsOpen = true;
-
         public void Close() => IsOpen = false;
-
         public void Dispose() => IsOpen = false;
     }
 
@@ -270,11 +378,12 @@ public sealed class VapourtecR4Tests
     {
         private readonly Queue<byte[]> _reads;
         private readonly List<byte[]> _writes;
+        private readonly Func<Exception?> _writeException;
+        private readonly Func<TimeSpan> _readDelay;
 
-        public FakeSerialStream(Queue<byte[]> reads, List<byte[]> writes)
+        public FakeSerialStream(Queue<byte[]> reads, List<byte[]> writes, Func<Exception?> writeException, Func<TimeSpan> readDelay)
         {
-            _reads = reads;
-            _writes = writes;
+            _reads = reads; _writes = writes; _writeException = writeException; _readDelay = readDelay;
         }
 
         public override bool CanRead => true;
@@ -282,25 +391,29 @@ public sealed class VapourtecR4Tests
         public override bool CanWrite => true;
         public override long Length => throw new NotSupportedException();
         public override long Position { get => throw new NotSupportedException(); set => throw new NotSupportedException(); }
-
         public override void Flush() { }
         public override int Read(byte[] buffer, int offset, int count) => throw new NotSupportedException();
         public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
         public override void SetLength(long value) => throw new NotSupportedException();
         public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
 
-        public override ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
+        public override async ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
         {
+            var delay = _readDelay();
+            if (delay > TimeSpan.Zero)
+                await Task.Delay(delay, cancellationToken);
             if (_reads.Count == 0)
-                return ValueTask.FromResult(0);
-
+                return 0;
             var next = _reads.Dequeue();
             next.CopyTo(buffer);
-            return ValueTask.FromResult(next.Length);
+            return next.Length;
         }
 
         public override ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default)
         {
+            var exception = _writeException();
+            if (exception is not null)
+                return ValueTask.FromException(exception);
             _writes.Add(buffer.ToArray());
             return ValueTask.CompletedTask;
         }

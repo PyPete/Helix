@@ -1,4 +1,4 @@
-using Helix.Orchestration.Agent.Streaming;
+﻿using Helix.Orchestration.Agent.Streaming;
 using Helix.Orchestration.Agent.Trends;
 using Helix.Orchestration.Core.Trends;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -11,39 +11,60 @@ public sealed class TrendAggregatorScalarTests
     [Fact]
     public async Task ProcessAsync_ScalarDouble_PushesToInMemoryProvider()
     {
-        using var trendProvider = new InMemoryTrendProvider();
-        var aggregator = new TrendAggregator(trendProvider, NullLogger<TrendAggregator>.Instance);
+        var provider = new InMemoryTrendProvider();
+        var aggregator = new TrendAggregator(provider, NullLogger<TrendAggregator>.Instance);
 
-        await aggregator.ProcessAsync("my.temp", new ScalarValue<double>(42.5), CancellationToken.None);
+        await aggregator.ProcessAsync("my.temp", new ScalarValue<double>(42.5));
 
-        Assert.True(trendProvider.TryGetScalar("my.temp", out var v));
-        Assert.Equal(42.5, (double)v!);
+        Assert.True(provider.TryGetScalar("my.temp", out var value));
+        Assert.Equal(42.5, value);
     }
 
     [Fact]
     public async Task ProcessAsync_ScalarFloat_PushesToInMemoryProvider()
     {
-        using var trendProvider = new InMemoryTrendProvider();
-        var aggregator = new TrendAggregator(trendProvider, NullLogger<TrendAggregator>.Instance);
+        var provider = new InMemoryTrendProvider();
+        var aggregator = new TrendAggregator(provider, NullLogger<TrendAggregator>.Instance);
 
-        await aggregator.ProcessAsync("my.pressure", new ScalarValue<float>(3.14f), CancellationToken.None);
+        await aggregator.ProcessAsync("my.pressure", new ScalarValue<float>(3.14f));
 
-        Assert.True(trendProvider.TryGetScalar("my.pressure", out var v));
-        Assert.Equal(3.14f, (float)v!);
+        Assert.True(provider.TryGetScalar("my.pressure", out var value));
+        Assert.Equal(3.14f, value);
+    }
+
+    [Fact]
+    public async Task ProcessAsync_ScalarInt_PushesToInMemoryProvider()
+    {
+        var provider = new InMemoryTrendProvider();
+        var aggregator = new TrendAggregator(provider, NullLogger<TrendAggregator>.Instance);
+
+        await aggregator.ProcessAsync("my.count", new ScalarValue<int>(99));
+
+        Assert.True(provider.TryGetScalar("my.count", out var value));
+        Assert.Equal(99, value);
     }
 
     [Fact]
     public async Task ProcessAsync_UnsupportedType_DoesNotThrow()
     {
-        using var trendProvider = new InMemoryTrendProvider();
-        var aggregator = new TrendAggregator(trendProvider, NullLogger<TrendAggregator>.Instance);
+        var provider = new InMemoryTrendProvider();
+        var aggregator = new TrendAggregator(provider, NullLogger<TrendAggregator>.Instance);
 
-        // DoubleArrayValue is a known TrendValue subtype not handled by the aggregator switch
-        var unsupported = new DoubleArrayValue(XData: [1.0, 2.0], YData: [3.0, 4.0]);
+        // DoubleArrayValue is not handled by the switch and falls to default
+        var exception = await Record.ExceptionAsync(
+            () => aggregator.ProcessAsync("x", new DoubleArrayValue([1.0, 2.0], [3.0, 4.0])));
 
-        var ex = await Record.ExceptionAsync(() =>
-            aggregator.ProcessAsync("my.unsupported", unsupported, CancellationToken.None));
+        Assert.Null(exception);
+    }
 
-        Assert.Null(ex);
+    [Fact]
+    public async Task ProcessAsync_IsTrendAvailable_AfterScalarPush()
+    {
+        var provider = new InMemoryTrendProvider();
+        var aggregator = new TrendAggregator(provider, NullLogger<TrendAggregator>.Instance);
+
+        await aggregator.ProcessAsync("sensor.temp", new ScalarValue<double>(25.0));
+
+        Assert.True(await provider.IsTrendAvailableAsync("sensor.temp"));
     }
 }
