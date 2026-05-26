@@ -24,6 +24,16 @@ public sealed class SystagOpcUaClient : DeviceAdapterBase
     {
     }
 
+    /// <summary>
+    /// Internal constructor for testing with a mock transport.
+    /// </summary>
+    /// <param name="transport">The device transport (may be a test double).</param>
+    /// <param name="logger">Logger instance.</param>
+    internal SystagOpcUaClient(IDeviceTransport transport, ILogger<SystagOpcUaClient> logger)
+        : base(transport, logger)
+    {
+    }
+
     // ── OPC command helpers ───────────────────────────────────────────────────
 
     private static byte[] OpcRead(string nodeId)
