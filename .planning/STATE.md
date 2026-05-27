@@ -1,7 +1,7 @@
-ï»¿# Project State
+# Project State
 
 **Last updated:** 2026-05-26
-**Current phase: Phase 4 â€” (next unplanned phase)
+**Current phase: Phase 5 — (next unplanned phase)
 **Workflow:** YOLO mode, fine granularity, parallel execution enabled
 
 ---
@@ -10,9 +10,9 @@
 
 See: .planning/PROJECT.md (updated 2026-05-26)
 
-**Core value:** A scientist can build a workflow, connect real lab hardware, execute an experiment, and see the results â€” without writing code.
+**Core value:** A scientist can build a workflow, connect real lab hardware, execute an experiment, and see the results — without writing code.
 
-**Current focus: Phase 4 â€” (plan next phase)
+**Current focus: Phase 5 — (plan next phase)
 
 ---
 
@@ -20,14 +20,14 @@ See: .planning/PROJECT.md (updated 2026-05-26)
 
 | Artifact | Status |
 |----------|--------|
-| PROJECT.md | âœ“ Written |
-| REQUIREMENTS.md | âœ“ Written (A-G, 49 requirements) |
-| ROADMAP.md | âœ“ Written (10 phases) |
-| config.json | âœ“ Written |
-| Codebase map | âœ“ Written (.planning/codebase/, 7 documents) |
-| Phase 1 PLAN.md | âœ“ Executed â€” all 8 tasks complete |
-| Phase 2 PLAN.md | âœ“ Executed â€” all 7 tasks complete |
-| Phase 3 PLAN.md | âœ“ Executed â€” all 5 tasks complete |
+| PROJECT.md | ? Written |
+| REQUIREMENTS.md | ? Written (A-G, 49 requirements) |
+| ROADMAP.md | ? Written (10 phases) |
+| config.json | ? Written |
+| Codebase map | ? Written (.planning/codebase/, 7 documents) |
+| Phase 1 PLAN.md | ? Executed — all 8 tasks complete |
+| Phase 2 PLAN.md | ? Executed — all 7 tasks complete |
+| Phase 3 PLAN.md | ? Executed — all 5 tasks complete |
 
 ---
 
@@ -41,22 +41,24 @@ Run `/gsd:plan-phase 4` to plan Phase 4.
 
 | Phase | Status | Completed |
 |-------|--------|-----------|
-| (pre-existing Phases 1-14) | âœ“ Complete | See Helix.Orchestration/docs/ |
-| 1. Technical Debt Resolution | âœ“ Complete | 2026-05-26 |
-| | 2. VapourtecR4 Reference Driver | âœ“ Complete | 2026-05-26 |
-| | 3. Remaining Device Drivers | âœ“ Complete | 2026-05-26 |
+| (pre-existing Phases 1-14) | ? Complete | See Helix.Orchestration/docs/ |
+| 1. Technical Debt Resolution | ? Complete | 2026-05-26 |
+| | 2. VapourtecR4 Reference Driver | ? Complete | 2026-05-26 |
+| | 3. Remaining Device Drivers | ? Complete | 2026-05-26 |
+| 4. Integration Test Coverage | ? Complete | 2026-05-27 |
 
 ---
 
 ## Key Files
 
-- `.planning/PROJECT.md` â€” project context, requirements, constraints, decisions
-- `.planning/REQUIREMENTS.md` â€” detailed requirements A1-G6
-- `.planning/ROADMAP.md` â€” 10-phase roadmap
-- `.planning/config.json` â€” workflow preferences
-- `.planning/codebase/` â€” codebase map (7 documents, produced 2026-05-26)
-- `.planning/phases/phase-1/` â€” Phase 1 plan, patterns, research, summary
-- `.planning/phases/phase-2/PLAN.md` â€” Phase 2 plan (7 tasks, 4 waves)
-- `.planning/phases/phase-3/PLAN.md` â€” Phase 3 plan (5 tasks, 4 waves)
-- `.planning/phases/phase-3/SUMMARY.md` â€” Phase 3 complete summary
-- `Helix.Orchestration/docs/` â€” phase handover docs (Phases 1-14)
+- `.planning/PROJECT.md` — project context, requirements, constraints, decisions
+- `.planning/REQUIREMENTS.md` — detailed requirements A1-G6
+- `.planning/ROADMAP.md` — 10-phase roadmap
+- `.planning/config.json` — workflow preferences
+- `.planning/codebase/` — codebase map (7 documents, produced 2026-05-26)
+- `.planning/phases/phase-1/` — Phase 1 plan, patterns, research, summary
+- `.planning/phases/phase-2/PLAN.md` — Phase 2 plan (7 tasks, 4 waves)
+- `.planning/phases/phase-3/PLAN.md` — Phase 3 plan (5 tasks, 4 waves)
+- `.planning/phases/phase-3/SUMMARY.md` — Phase 3 complete summary
+- `Helix.Orchestration/docs/` — phase handover docs (Phases 1-14)
+
