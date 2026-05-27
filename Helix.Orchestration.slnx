@@ -1,5 +1,7 @@
-<Solution>
+﻿<Solution>
   <Folder Name="/tests/">
+    <Project Path="tests/Helix.Orchestration.Agent.Tests/Helix.Orchestration.Agent.Tests.csproj" />
+    <Project Path="tests/Helix.Orchestration.Core.Tests/Helix.Orchestration.Core.Tests.csproj" />
     <Project Path="tests/Helix.Orchestration.Devices.Tests/Helix.Orchestration.Devices.Tests.csproj" />
     <Project Path="tests/Helix.Orchestration.Infrastructure.Tests/Helix.Orchestration.Infrastructure.Tests.csproj" />
     <Project Path="tests/Helix.Orchestration.Recorder.Tests/Helix.Orchestration.Recorder.Tests.csproj" />
@@ -13,6 +15,4 @@
   <Project Path="Helix.Orchestration.Recorder/Helix.Orchestration.Recorder.csproj" />
   <Project Path="Helix.Orchestration.Simulation/Helix.Orchestration.Simulation.csproj" />
   <Project Path="Helix.Orchestration.SiteServer/Helix.Orchestration.SiteServer.csproj" />
-  <Project Path="tests/Helix.Orchestration.Agent.Tests/Helix.Orchestration.Agent.Tests.csproj" />
-  <Project Path="tests/Helix.Orchestration.Core.Tests/Helix.Orchestration.Core.Tests.csproj" />
 </Solution>

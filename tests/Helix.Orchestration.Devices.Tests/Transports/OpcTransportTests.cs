@@ -97,6 +97,33 @@ public sealed class OpcTransportTests
         Assert.Equal(TransportStatus.Reconnecting, transport.Status);
     }
 
+    [Fact]
+    public async Task SendReceiveAsync_Unsubscribe_DisposesSubscription()
+    {
+        var session = Substitute.For<IOpcSession>();
+        session.IsConnected.Returns(true);
+        var subscription = Substitute.For<IOpcSubscription>();
+        subscription.NodeId.Returns("ns=2;s=Temperature");
+        subscription.IsActive.Returns(true);
+
+        session.SubscribeNodeAsync(
+                "ns=2;s=Temperature",
+                Arg.Any<Action<object?>>(),
+                Arg.Any<int>(),
+                Arg.Any<CancellationToken>())
+            .Returns(subscription);
+
+        var transport = CreateTransport(session);
+        await transport.ConnectAsync();
+
+        var command = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(
+            new { NodeId = "ns=2;s=Temperature", Operation = "subscribe" });
+        await transport.SendReceiveAsync(command);
+
+        await transport.DisconnectAsync();
+
+        subscription.Received(1).Dispose();
+    }
     private static OpcDeviceTransport CreateTransport(IOpcSession session, int reconnectPeriodMs = 5_000)
     {
         return new OpcDeviceTransport(

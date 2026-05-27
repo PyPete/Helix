@@ -58,6 +58,68 @@ public sealed class ModbusTransportTests
         Assert.Equal((byte)42, client.LastSlaveId);
     }
 
+    [Fact]
+    public async Task WriteMultipleRegistersAsync_WritesDataToClient()
+    {
+        var client = new FakeModbusClient();
+        var transport = CreateTransport(client, slaveId: 3);
+
+        await transport.ConnectAsync();
+        await transport.WriteMultipleRegistersAsync(200, [0xAA, 0xBB]);
+
+        Assert.Equal((ushort)200, client.LastAddress);
+        Assert.Equal(new byte[] { 0xAA, 0xBB }, client.LastWriteData);
+        Assert.Equal((byte)3, client.LastSlaveId);
+    }
+
+    [Fact]
+    public async Task WriteMultipleRegistersAsync_WhenIOException_SetsFaulted()
+    {
+        var client = new FakeModbusClient
+        {
+            WriteException = new IOException("write dropped")
+        };
+        var transport = CreateTransport(client);
+
+        await transport.ConnectAsync();
+
+        await Assert.ThrowsAsync<TransportFaultException>(
+            () => transport.WriteMultipleRegistersAsync(100, [0x01]));
+        Assert.Equal(TransportStatus.Faulted, transport.Status);
+    }
+
+    [Fact]
+    public async Task ReadInputRegistersAsync_ReturnsBytesFromClient()
+    {
+        var client = new FakeModbusClient
+        {
+            InputRegistersResult = [0x10, 0x20]
+        };
+        var transport = CreateTransport(client, slaveId: 5);
+
+        await transport.ConnectAsync();
+        var result = await transport.ReadInputRegistersAsync(50, 2);
+
+        Assert.Equal(new byte[] { 0x10, 0x20 }, result);
+        Assert.Equal((ushort)50, client.LastAddress);
+    }
+
+    [Fact]
+    public async Task ReadInputRegistersAsync_WhenIOException_SetsFaulted()
+    {
+        var client = new FakeModbusClient
+        {
+            ReadInputException = new IOException("input register read error")
+        };
+        var transport = CreateTransport(client);
+
+        await transport.ConnectAsync();
+
+        var ex = await Assert.ThrowsAsync<TransportFaultException>(
+            () => transport.ReadInputRegistersAsync(50, 2));
+        Assert.Equal(TransportStatus.Faulted, transport.Status);
+        Assert.Equal("Modbus RTU", ex.TransportType);
+    }
     private static ModbusDeviceTransport CreateTransport(FakeModbusClient client, byte slaveId = 1)
     {
         return new ModbusDeviceTransport(

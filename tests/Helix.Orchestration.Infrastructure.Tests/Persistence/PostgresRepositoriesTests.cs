@@ -70,6 +70,7 @@ public sealed class PostgresFixture : IAsyncLifetime
     }
 }
 
+[CollectionDefinition(nameof(PostgresRepositoriesTestsCollection))]
 public class PostgresRepositoriesTestsCollection : ICollectionFixture<PostgresFixture>
 {
 }
@@ -84,7 +85,7 @@ public sealed class PostgresRepositoriesTests
         _fixture = fixture;
     }
 
-    [Fact(Skip = "Requires Docker. Run with Docker available.")]
+    [Fact]
     public async Task PostgresExperimentRepository_SaveAndGetByRunspaceId_Works()
     {
         if (_fixture.ConnectionFactory == null || !_fixture.IsAvailable)
@@ -112,7 +113,7 @@ public sealed class PostgresRepositoriesTests
         Assert.Equal("Completed", loaded.Status);
     }
 
-    [Fact(Skip = "Requires Docker. Run with Docker available.")]
+    [Fact]
     public async Task PostgresCampaignRepository_SaveAndGetById_Works()
     {
         if (_fixture.ConnectionFactory == null || !_fixture.IsAvailable)

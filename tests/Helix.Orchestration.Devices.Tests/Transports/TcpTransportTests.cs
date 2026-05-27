@@ -121,4 +121,52 @@ public sealed class TcpTransportTests
         Assert.Equal("PUSH", Encoding.ASCII.GetString(payload));
         await serverTask;
     }
+
+    [Fact]
+    public async Task SendReceiveAsync_WithLengthPrefixFraming_ReturnsResponse()
+    {
+        using var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        var port = ((IPEndPoint)listener.LocalEndpoint).Port;
+
+        var responseBytes = Encoding.ASCII.GetBytes("REPLY");
+
+        var serverTask = Task.Run(async () =>
+        {
+            try
+            {
+                using var client = await listener.AcceptTcpClientAsync();
+                using var stream = client.GetStream();
+                var buffer = new byte[64];
+                await stream.ReadAsync(buffer);
+                var prefix = BitConverter.GetBytes(responseBytes.Length);
+                await stream.WriteAsync(prefix);
+                await stream.WriteAsync(responseBytes);
+                await stream.FlushAsync();
+                await Task.Delay(500);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Server error: {ex}");
+            }
+        });
+
+        await Task.Delay(50);
+
+        await using var transport = new TcpDeviceTransport(
+            new TcpTransportOptions
+            {
+                Host = "127.0.0.1",
+                Port = port,
+                FramingMode = TcpFramingMode.LengthPrefix,
+                ReceiveTimeoutMs = 5000
+            },
+            NullLogger<TcpDeviceTransport>.Instance);
+
+        await transport.ConnectAsync();
+        var response = await transport.SendReceiveAsync(Encoding.ASCII.GetBytes("REQUEST"));
+
+        Assert.Equal("REPLY", Encoding.ASCII.GetString(response));
+        await serverTask;
+    }
 }

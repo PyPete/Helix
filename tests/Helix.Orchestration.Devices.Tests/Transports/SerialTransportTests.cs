@@ -88,6 +88,38 @@ public sealed class SerialTransportTests
         Assert.Equal("PART1PART2<END>", Encoding.ASCII.GetString(response));
     }
 
+    [Fact]
+    public async Task ConnectAsync_PropagatesBaudRateThroughFactory()
+    {
+        var port = new FakeSerialPortConnection();
+        port.EnqueueRead("OK\r\n");
+        var factory = new FakeSerialPortConnectionFactory(port);
+        var transport = new SerialDeviceTransport(
+            new SerialTransportOptions { PortName = "COM1", CommandTerminator = "\r\n", BaudRate = 115200 },
+            Microsoft.Extensions.Logging.Abstractions.NullLogger<SerialDeviceTransport>.Instance,
+            factory);
+
+        await transport.ConnectAsync();
+
+        Assert.Equal(115200, factory.LastOptions!.BaudRate);
+    }
+
+    [Fact]
+    public async Task SendReceiveAsync_WriteException_SetsFaulted()
+    {
+        var port = new FakeSerialPortConnection
+        {
+            WriteException = new IOException("serial port closed")
+        };
+        var transport = CreateTransport(port, "\r\n");
+
+        await transport.ConnectAsync();
+
+        await Assert.ThrowsAnyAsync<Exception>(() => transport.SendReceiveAsync(Encoding.ASCII.GetBytes("PING")));
+        await EventuallyAsync(() => transport.Status == TransportStatus.Faulted);
+
+        Assert.Equal(TransportStatus.Faulted, transport.Status);
+    }
     private static SerialDeviceTransport CreateTransport(FakeSerialPortConnection port, string terminator)
     {
         return new SerialDeviceTransport(
@@ -120,7 +152,13 @@ public sealed class SerialTransportTests
             _connection = connection;
         }
 
-        public ISerialPortConnection Create(SerialTransportOptions options) => _connection;
+        public SerialTransportOptions? LastOptions { get; private set; }
+
+        public ISerialPortConnection Create(SerialTransportOptions options)
+        {
+            LastOptions = options;
+            return _connection;
+        }
     }
 
     private sealed class FakeSerialPortConnection : ISerialPortConnection
