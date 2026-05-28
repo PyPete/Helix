@@ -1,4 +1,4 @@
-# Roadmap
+﻿# Roadmap
 
 **Project:** Helix Orchestration Platform
 **Milestone:** 1 -- Hardware-ready platform with local UI, full test coverage, documentation, and deployment scripts
@@ -16,7 +16,7 @@
 | 3 | Remaining Device Drivers | Port KnauerAzura, SystagOpcUaClient, and all audited drivers | 2 | M |
 | 4 | Transport + Execution Integration Tests | Verify transport layer and E2E workflow execution without real hardware | 1, 2, 3 | M |
 | 5 | Tauri Desktop App - Foundation | Scaffold the cross-platform fumehood UI and wire it to Agent | 2 | M |
-| 6 | Tauri Desktop App - Workflow Builder + Execution | Rete.js node editor, execution panel, live trends, safety display | 5 | L |
+| 6 | Tauri Desktop App - Workflow Builder + Execution | Agent REST API + WebSocket layer, WSL compiler completions, Rete.js node editor, execution panel, live trends, safety display | 5 | XL |
 | 7 | Site-Level React Dashboard | Vite + TypeScript SPA with site overview, campaigns, history, and live trends | 2 | M |
 | 8 | CI Hardening + Full Test Coverage | All projects build and test in CI; coverage report; no skipped tests | 1, 4, 6, 7 | M |
 | 9 | Docusaurus Documentation | Scaffold and populate developer + scientist docs; auto-generate API reference | 7, 8 | M |
@@ -158,25 +158,48 @@
 
 ## Phase 6: Tauri Desktop App - Workflow Builder + Execution
 
-**Goal:** A scientist can visually build a workflow using a Rete.js node editor, save it, submit it for execution, monitor live trend data during execution, and see safety interlock status -- all within the desktop app connected directly to the Agent.
+**Goal:** A scientist can visually build a workflow, submit it for compilation and execution, monitor live telemetry, and see safety interlock status -- all within the desktop app connected directly to the Agent. The Agent gains its full REST control API, WebSocket streaming layer, and the remaining WSL compiler features required to make this loop work end-to-end.
 
 **Deliverables:**
+
+Agent-side (Helix.Orchestration.Agent):
+- REST control API endpoints wired in Program.cs:
+  - POST /workflows/compile -- accepts WSL JSON, returns RunspaceDefinition or diagnostics
+  - POST /runspaces -- submits a RunspaceDefinition, returns runspace ID
+  - GET  /runspaces/{id} -- returns runspace status and step-level detail
+  - POST /runspaces/{id}/pause
+  - POST /runspaces/{id}/resume
+  - POST /runspaces/{id}/abort
+  - GET  /devices -- returns registered adapters from CapabilityRegistry with health status
+  - GET  /devices/{id}/capabilities -- returns capability list for one adapter
+- WebSocket endpoint at /ws -- streams RunspaceEvents, SafetyEvents, TrendValues, and VariableUpdates as JSON frames; one connection per client
+- EventEmitter: IRunspaceEventEmitter interface + implementation; publishes step-started, step-completed, step-faulted, runspace-started, runspace-completed, runspace-aborted events; consumed by WebSocket broadcast and optionally by Recorder
+- WslCompiler completions (currently stubbed):
+  - Safety envelope injection: safety interlock rules from ISafetyEngine inserted as guard nodes at compile time
+  - Loop expansion: Loop nodes unrolled into repeated linear node sequences in RunspaceDefinition
+  - Branch and parallel block flattening: Branch/Parallel WSL nodes resolved into conditional edge sets in the execution graph
+- AgentService.cs promoted from stub to real hosted service: subscribes to EventEmitter, forwards events to WebSocket clients, triggers SafetyEngine evaluation on each trend update
+
+Tauri desktop app (helix-desktop):
 - Rete.js workflow builder embedded in the Tauri app:
   - Node types: Step, Condition, Branch, Loop, Parallel, Delay, WaitFor
-  - Device capability picker: fetches registered capabilities from Agent API; node inputs bound to capability parameters
-  - Edge wiring generates valid WSL JSON (round-trippable through the WSL compiler)
-- Workflow library: save, load, duplicate workflow definitions to local filesystem
-- Experiment execution panel: start / pause / abort runspace; step-level status display
-- Live trend charts: scalar trends (temperature, pressure, flow), spectral chart (UV/MIR overlay), device status indicators
-- Safety status panel: interlock rule list, current values per rule, triggered / safe state
-- UI component tests (Playwright or Vitest + Testing Library): node creation, edge wiring, WSL JSON export, execution panel state transitions
+  - Device capability picker: calls GET /devices and GET /devices/{id}/capabilities; node inputs bound to capability parameters
+  - Edge wiring generates valid WSL JSON (round-trippable through POST /workflows/compile)
+- Workflow library: save, load, duplicate workflow definitions to local filesystem via Tauri fs plugin
+- Experiment execution panel: calls POST /runspaces, POST /runspaces/{id}/pause|resume|abort; displays step-level status from WebSocket RunspaceEvents
+- Live trend charts: scalar trends (temperature, pressure, flow), spectral chart (UV/MIR overlay); data from WebSocket TrendValue frames
+- Safety status panel: interlock rule list, current values per rule, triggered / safe state; data from WebSocket SafetyEvents
+- UI component tests (Vitest + Testing Library): node creation, edge wiring, WSL JSON export, execution panel state transitions
 
 **Requirements covered:** C2, C3, C4, C5, C6, C9, D4
 
 **Dependencies:** Phase 5 (Tauri foundation, Agent connection, device registry view)
 
 **Success criteria:**
-- [ ] A scientist can drag two nodes onto the canvas, wire them together, and export WSL JSON that passes schema validation
+- [ ] POST /workflows/compile with a valid WSL JSON document returns a RunspaceDefinition (HTTP 200); an invalid document returns diagnostics (HTTP 422)
+- [ ] POST /runspaces starts execution and GET /runspaces/{id} returns status=Running while the runspace is active
+- [ ] WebSocket /ws delivers at least one RunspaceEvent and one TrendValue frame during a live execution
+- [ ] A scientist can drag two nodes onto the canvas, wire them together, and export WSL JSON that passes POST /workflows/compile
 - [ ] A workflow can be submitted from the desktop app and step-level execution status updates in real time (at least one step visible as running then completed)
 - [ ] Live scalar trend charts update during experiment execution (temperature or flow values change visibly)
 - [ ] Safety panel shows at least one interlock rule with its current value and safe/triggered state
@@ -367,3 +390,4 @@
 | G6 | Phase 10 | Pending |
 
 **Coverage: 49/49 requirements mapped (100%)**
+
