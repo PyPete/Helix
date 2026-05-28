@@ -326,7 +326,7 @@ Tauri desktop app (helix-desktop):
 | 2. VapourtecR4 Reference Driver | 7/7 | Complete | 2026-05-26 |
 | 3. Remaining Device Drivers | 5/5 | Complete | 2026-05-26 |
 | 4. Transport + Execution Integration Tests | 0/4 | Not started | - |
-| 5. Tauri Desktop App - Foundation | 0/3 | Not started | - |
+| 5. Tauri Desktop App - Foundation | 3/3 | Complete | 2026-05-28 |
 | 6. Tauri Desktop App - Workflow Builder + Execution | 0/8 | Not started | - |
 | 7. Site-Level React Dashboard | 0/6 | Not started | - |
 | 8. CI Hardening + Full Test Coverage | 0/5 | Not started | - |
@@ -355,7 +355,7 @@ Tauri desktop app (helix-desktop):
 | B6 | Phase 2 | Pending |
 | B7 | Phase 2 | Pending |
 | B8 | Phase 2 + 3 | Pending |
-| C1 | Phase 5 | Pending |
+| C1 | Phase 5 | Complete |
 | C2 | Phase 6 | Pending |
 | C3 | Phase 6 | Pending |
 | C4 | Phase 6 | Pending |
