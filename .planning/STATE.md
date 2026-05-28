@@ -2,22 +2,23 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
+current_phase: Phase 5 -- Tauri Desktop App Foundation (Plan 02 of 03 complete)
 status: in_progress
 last_updated: "2026-05-28"
 progress:
   total_phases: 10
   completed_phases: 4
   total_plans: 3
-  completed_plans: 1
+  completed_plans: 2
   current_phase: 5
-  current_plan: 2
-  percent: 13
+  current_plan: 3
+  percent: 15
 ---
 
 # Project State
 
 **Last updated:** 2026-05-28
-**Current phase:** Phase 5 -- Tauri Desktop App Foundation (Plan 01 of 03 complete)
+**Current phase:** Phase 5 -- Tauri Desktop App Foundation (Plan 02 of 03 complete)
 **Workflow:** YOLO mode, fine granularity, parallel execution enabled
 
 ---
@@ -28,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-05-26)
 
 **Core value:** A scientist can build a workflow, connect real lab hardware, execute an experiment, and see the results without writing code.
 
-**Current focus:** Phase 5 Plan 02 -- gRPC Proxy Commands
+**Current focus:** Phase 5 Plan 03 -- Tauri Desktop App (next)
 
 ---
 
@@ -46,6 +47,7 @@ See: .planning/PROJECT.md (updated 2026-05-26)
 | Phase 3 PLAN.md | Executed -- all 5 tasks complete |
 | Phase 4 PLAN.md | Executed -- all tasks complete |
 | Phase 5 Plan 01 | Executed -- scaffold + types complete |
+| Phase 5 Plan 02 | Executed -- useAgentHealth + ConnectionConfig + DeviceRegistry + App.tsx + Rust commands complete |
 
 ---
 
@@ -57,12 +59,15 @@ See: .planning/PROJECT.md (updated 2026-05-26)
 - DEFAULT_CONNECTION: localhost:5080 (from AgentProxyOptions.cs)
 - tonic = "0.14" with no explicit prost (transitive resolution avoids version conflict)
 - tsconfig.node.json uses composite:true without allowImportingTsExtensions (incompatible)
+- LazyStore (sync constructor) used instead of Store (private constructor) in @tauri-apps/plugin-store v2.4.3
+- vi.useFakeTimers() removed from hook tests -- conflicts with @testing-library/react waitFor
+- vi.hoisted() required for vitest constructor mocks referencing module-level variables
 
 ---
 
 ## Next Steps
 
-Run Phase 5 Plan 02 -- gRPC Proxy Commands.
+Run Phase 5 Plan 03.
 
 ---
 
@@ -75,7 +80,7 @@ Run Phase 5 Plan 02 -- gRPC Proxy Commands.
 | 2. VapourtecR4 Reference Driver | Complete | 2026-05-26 |
 | 3. Remaining Device Drivers | Complete | 2026-05-26 |
 | 4. Integration Test Coverage | Complete | 2026-05-27 |
-| 5. Tauri Desktop App Foundation | In Progress | Plan 01 complete 2026-05-28 |
+| 5. Tauri Desktop App Foundation | In Progress | Plans 01-02 complete 2026-05-28 |
 
 ---
 
@@ -84,6 +89,7 @@ Run Phase 5 Plan 02 -- gRPC Proxy Commands.
 | Phase | Plan | Duration | Tasks | Files |
 |-------|------|----------|-------|-------|
 | phase-5 | 01 | ~30 min | 2/2 | 18 |
+| phase-5 | 02 | ~20 min | 4/4 | 11 |
 
 ---
 
@@ -95,6 +101,12 @@ Run Phase 5 Plan 02 -- gRPC Proxy Commands.
 - `.planning/config.json` -- workflow preferences
 - `.planning/codebase/` -- codebase map (7 documents, produced 2026-05-26)
 - `.planning/phases/phase-5/01-SUMMARY.md` -- Phase 5 Plan 01 complete summary
+- `.planning/phases/phase-5/02-SUMMARY.md` -- Phase 5 Plan 02 complete summary
 - `helix-desktop/` -- Tauri v2 desktop application scaffold
 - `helix-desktop/src/types/agent.ts` -- TypeScript Agent interface contracts
 - `helix-desktop/src-tauri/Cargo.toml` -- Rust dependencies (tonic 0.14, tauri 2.x)
+- `helix-desktop/src/hooks/useAgentHealth.ts` -- REST health polling hook
+- `helix-desktop/src/components/ConnectionConfig.tsx` -- agent connection form with LazyStore
+- `helix-desktop/src/components/DeviceRegistry.tsx` -- adapter list from /health endpoint
+- `helix-desktop/src/App.tsx` -- composition root
+- `helix-desktop/src-tauri/src/commands/connection.rs` -- load_config/save_config Tauri commands
