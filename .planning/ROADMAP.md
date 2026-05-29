@@ -213,8 +213,8 @@ Plans:
 - [ ] 06-02-PLAN.md -- Agent WebSocket + IRunspaceEventEmitter (AgentService promotion, /ws endpoint)
 - [ ] 06-03-PLAN.md -- WslCompiler Completions (safety envelope, loop expansion, branch/parallel flattening)
 - [x] 06-04-PLAN.md -- Rete.js Workflow Builder + useAgentWebSocket hook (7 node types, WSL export, tests)
-- [ ] 06-05-PLAN.md -- Experiment Execution Panel (start/pause/resume/abort, step status display)
-- [ ] 06-06-PLAN.md -- Live Trend Charts + Safety Panel (recharts ScalarTrendChart/SpectralChart, SafetyPanel)
+- [x] 06-05-PLAN.md -- Experiment Execution Panel (start/pause/resume/abort, step status display)
+- [x] 06-06-PLAN.md -- Live Trend Charts + Safety Panel (recharts ScalarTrendChart/SpectralChart, SafetyPanel)
 - [ ] 06-07-PLAN.md -- Workflow Library (save/load/duplicate via Tauri fs plugin)
 - [ ] 06-08-PLAN.md -- Integration + Full Suite Green (App.tsx complete wiring, all tests pass)
 
@@ -339,7 +339,7 @@ Plans:
 | 3. Remaining Device Drivers | 5/5 | Complete | 2026-05-26 |
 | 4. Transport + Execution Integration Tests | 0/4 | Not started | - |
 | 5. Tauri Desktop App - Foundation | 3/3 | Complete | 2026-05-28 |
-| 6. Tauri Desktop App - Workflow Builder + Execution | 1/8 | In progress | - |
+| 6. Tauri Desktop App - Workflow Builder + Execution | 4/8 | In progress | - |
 | 7. Site-Level React Dashboard | 0/6 | Not started | - |
 | 8. CI Hardening + Full Test Coverage | 0/5 | Not started | - |
 | 9. Docusaurus Documentation | 0/5 | Not started | - |

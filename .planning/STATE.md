@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: Phase 6 -- Tauri Desktop App - Workflow Builder + Execution (Plan 05 of 08 complete)
+current_phase: Phase 6 -- Tauri Desktop App - Workflow Builder + Execution (Plan 06 of 08 complete)
 status: in_progress
-last_updated: "2026-05-29T18:18:00.000Z"
+last_updated: "2026-05-29T18:32:00.000Z"
 progress:
   total_phases: 10
   completed_phases: 1
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-05-26)
 
 **Core value:** A scientist can build a workflow, connect real lab hardware, execute an experiment, and see the results without writing code.
 
-**Current focus:** Phase 6 -- Tauri Desktop App - Workflow Builder + Execution (Plan 05 of 08 complete)
+**Current focus:** Phase 6 -- Tauri Desktop App - Workflow Builder + Execution (Plan 06 of 08 complete)
 
 ---
 
@@ -50,6 +50,7 @@ See: .planning/PROJECT.md (updated 2026-05-26)
 | Phase 6 Plan 01 | Executed -- WorkflowEndpoints, RunspaceEndpoints, DeviceEndpoints + Program.cs wiring complete |
 | Phase 6 Plan 04 | Executed -- WorkflowBuilder Rete.js canvas + 7 node types + useAgentWebSocket hook complete |
 | Phase 6 Plan 05 | Executed -- ExecutionPanel + compile-then-start flow + 6 tests + App.tsx wired complete |
+| Phase 6 Plan 06 | Executed -- ScalarTrendChart + SpectralChart (recharts) + SafetyPanel + 9 tests + App.tsx complete |
 
 ---
 
@@ -70,12 +71,15 @@ See: .planning/PROJECT.md (updated 2026-05-26)
 - ClassicScheme + ReactArea2D imported directly from rete-react-plugin (not as ReactPlugin.* namespace)
 - findLast (ES2023) not available in ES2020 target -- use array[array.length - 1] pattern
 - currentWorkflow state deferred to Plan 08 where WorkflowBuilder.onExport is wired (noUnusedLocals constraint)
+- vi.hoisted() + vi.mock("recharts") required for all recharts tests to avoid SVG renderer errors in jsdom
+- isAnimationActive={false} on Line and Area components prevents animation-related test failures in jsdom
+- SpectralChart mounted with empty arrays in App.tsx -- spectral events not yet emitted by Agent WebSocket; full wiring in Plan 08
 
 ---
 
 ## Next Steps
 
-Phase 6, Plan 05 complete (ExecutionPanel). Run Phase 6 remaining plans next (06, 07, 08).
+Phase 6, Plan 06 complete (Live Trend Charts + Safety Panel). Run Phase 6 remaining plans next (07, 08).
 
 ---
 
@@ -102,6 +106,7 @@ Phase 6, Plan 05 complete (ExecutionPanel). Run Phase 6 remaining plans next (06
 | phase-6 | 01 | ~5 min | 2/2 | 4 |
 | phase-6 | 04 | ~12 min | 2/2 | 9 |
 | phase-6 | 05 | ~15 min | 2/2 | 3 |
+| phase-6 | 06 | ~12 min | 2/2 | 7 |
 
 ---
 
@@ -116,6 +121,7 @@ Phase 6, Plan 05 complete (ExecutionPanel). Run Phase 6 remaining plans next (06
 - `.planning/phases/phase-5/02-SUMMARY.md` -- Phase 5 Plan 02 complete summary
 - `.planning/phases/phase-6/06-04-SUMMARY.md` -- Phase 6 Plan 04 complete summary
 - `.planning/phases/phase-6/06-05-SUMMARY.md` -- Phase 6 Plan 05 complete summary
+- `.planning/phases/phase-6/06-06-SUMMARY.md` -- Phase 6 Plan 06 complete summary
 - `helix-desktop/` -- Tauri v2 desktop application scaffold
 - `helix-desktop/src/types/agent.ts` -- TypeScript Agent interface contracts (includes WSL + WebSocket frame types)
 - `helix-desktop/src-tauri/Cargo.toml` -- Rust dependencies (tonic 0.14, tauri 2.x)
