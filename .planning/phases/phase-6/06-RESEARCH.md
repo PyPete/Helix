@@ -616,22 +616,25 @@ export function exportToWsl(editor: NodeEditor<ClassicPreset.Schemes>): WslDocum
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Should `DeviceRegistry` (Core) be populated from `CapabilityRegistry` at startup?**
    - What we know: `DeviceRegistry` and `CapabilityRegistry` are separate singletons. `WslCompiler.Compile()` takes a `DeviceRegistry`. `CapabilityRegistry.GetAllCapabilityNames()` returns capability names.
    - What's unclear: Is `DeviceRegistry` already populated at Agent startup, or should a bridge populate it from `CapabilityRegistry` during `AddMigratedDeviceAdapters()`?
    - Recommendation: In `DeviceAdapterExtensions.AddMigratedDeviceAdapters()`, register a `DeviceRegistry` singleton populated from the `CapabilityRegistry` after all drivers are registered. Pass it to `IWslCompiler` via DI.
+   - **RESOLVED:** Yes. Bridge via `AddMigratedDeviceAdapters()` as implemented in the 06-01 plan. `DeviceRegistry` is registered as a singleton and populated from device adapter registrations. `WorkflowEndpoints` injects `DeviceRegistry` directly from DI and passes it to `compiler.Compile(document, deviceRegistry, safetyEngine)`.
 
 2. **What JSON frame schema should WebSocket events use?**
    - What we know: Events are `RunspaceEvents`, `SafetyEvents`, `TrendValues`, `VariableUpdates`.
    - What's unclear: Should each use a `{ "type": "...", "payload": {...} }` envelope or individual schemas per type?
    - Recommendation: Use `{ "type": "RunspaceEvent" | "TrendValue" | "SafetyEvent" | "VariableUpdate", "data": {...} }` — consistent with the `frame.type` dispatch pattern in `useAgentWebSocket` hook.
+   - **RESOLVED:** Use a flat schema: `{ "type": "<event-type>", "<field>": <value>, ... }` where event-specific fields are at the top level (not nested under a "payload" key). Examples: `{ "type": "trend-value", "trendName": "temperature", "value": 22.5, "unit": "degC", "timestamp": "..." }`, `{ "type": "safety-event", "ruleId": "r1", "description": "...", "severity": "Critical", "triggered": true, "timestamp": "..." }`. The `useAgentWebSocket` hook dispatches on `frame.type` and reads fields directly from the top-level frame object. Note: 06-02 and 06-04 implement this flat schema by design — more ergonomic for TypeScript consumers than a nested payload wrapper.
 
 3. **WslCompiler loop/branch expansion: flat or recursive?**
    - What we know: `WslNode.NodeType` can be `"Loop"`, `"Branch"`, `"Parallel"`. Current compiler passes these through unchanged.
    - What's unclear: Phase 6 says "loop expansion: Loop nodes unrolled into repeated linear node sequences". Does this require a loop count parameter on the Loop node?
    - Recommendation: For Phase 6 scope, treat Loop as unrolled N times (N from node parameter `"iterations"`), Branch as conditional edge sets (label edges with `"true"`/`"false"` conditions), Parallel as concurrent edge fork-join.
+   - **RESOLVED:** Flat (linear). Loop nodes are unrolled into N sequential copies of their body nodes, where N comes from the `"iterations"` parameter (default 1). Branch nodes produce conditional edge sets (`"true"`/`"false"` labels). Parallel nodes produce fork-join edge structure with `ParallelFork`/`ParallelJoin` synthetic nodes. No recursive expansion in Phase 6.
 
 ---
 
