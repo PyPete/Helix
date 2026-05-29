@@ -31,3 +31,46 @@ export interface RunspaceStatus {
   status: "Running" | "Completed" | "Faulted" | "NotFound";
   message: string;
 }
+
+
+// WSL types -- Workflow Specification Language authoring contracts (Phase 6)
+export interface WslNode {
+  nodeId: string;
+  label: string;
+  nodeType: string;
+  parameters: Record<string, unknown>;
+}
+export interface WslEdge {
+  edgeId: string;
+  sourceNodeId: string;
+  targetNodeId: string;
+}
+export interface WslDocument {
+  documentId: string;
+  name: string;
+  schemaVersion: string;
+  nodes: WslNode[];
+  edges: WslEdge[];
+}
+// WebSocket frame types (Phase 6)
+export interface RunspaceEvent {
+  type: string;
+  runspaceId: string;
+  timestamp: string;
+  [key: string]: unknown;
+}
+export interface TrendValue {
+  type: "trend-value";
+  trendName: string;
+  value: number;
+  unit: string;
+  timestamp: string;
+}
+export interface SafetyEvent {
+  type: "safety-event";
+  ruleId: string;
+  description: string;
+  severity: string;
+  triggered: boolean;
+  timestamp: string;
+}
