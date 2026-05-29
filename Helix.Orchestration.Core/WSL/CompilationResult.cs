@@ -1,34 +1,34 @@
 namespace Helix.Orchestration.Core.WSL;
 
 /// <summary>
-/// Result of compiling a <see cref="WslDocument"/> into a <see cref="RunspaceDefinition"/>.
+/// Outcome of a WSL compilation attempt.
 /// </summary>
-public sealed record CompilationResult
+public sealed class CompilationResult
 {
-    /// <summary>
-    /// Indicates whether compilation succeeded without errors.
-    /// </summary>
-    public bool Success => !Diagnostics.Any(d => d.Severity == DiagnosticSeverity.Error);
+    /// <summary>Whether compilation succeeded (no error-severity diagnostics).</summary>
+    public bool Success { get; }
 
     /// <summary>
-    /// The compiled runspace definition, available only when <see cref="Success"/> is true.
+    /// The produced runspace definition.
+    /// <c>null</c> when <see cref="Success"/> is <c>false</c>.
     /// </summary>
-    public RunspaceDefinition? Definition { get; init; }
+    public RunspaceDefinition? Definition { get; }
 
-    /// <summary>
-    /// All diagnostics produced during compilation (errors, warnings, info).
-    /// </summary>
-    public IReadOnlyList<CompilationDiagnostic> Diagnostics { get; init; } = [];
+    /// <summary>All diagnostics (info, warning, and error) produced during compilation.</summary>
+    public IReadOnlyList<CompilationDiagnostic> Diagnostics { get; }
 
-    /// <summary>
-    /// Creates a successful compilation result.
-    /// </summary>
-    public static CompilationResult Succeeded(RunspaceDefinition definition, IReadOnlyList<CompilationDiagnostic>? diagnostics = null)
-        => new() { Definition = definition, Diagnostics = diagnostics ?? [] };
+    private CompilationResult(bool success, RunspaceDefinition? definition, IReadOnlyList<CompilationDiagnostic> diagnostics)
+    {
+        Success = success;
+        Definition = definition;
+        Diagnostics = diagnostics;
+    }
 
-    /// <summary>
-    /// Creates a failed compilation result.
-    /// </summary>
-    public static CompilationResult Failed(IReadOnlyList<CompilationDiagnostic> diagnostics)
-        => new() { Diagnostics = diagnostics };
+    /// <summary>Creates a successful compilation result.</summary>
+    public static CompilationResult Succeeded(RunspaceDefinition definition, IEnumerable<CompilationDiagnostic> diagnostics)
+        => new(true, definition, diagnostics.ToList());
+
+    /// <summary>Creates a failed compilation result.</summary>
+    public static CompilationResult Failed(IEnumerable<CompilationDiagnostic> diagnostics)
+        => new(false, null, diagnostics.ToList());
 }

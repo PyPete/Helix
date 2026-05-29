@@ -1,18 +1,21 @@
 using Helix.Orchestration.Core.Devices;
+using Helix.Orchestration.Core.Safety;
 
 namespace Helix.Orchestration.Core.WSL;
 
 /// <summary>
-/// Compiles a declarative <see cref="WslDocument"/> into an executable <see cref="RunspaceDefinition"/>.
+/// Contract for WSL document compilation.
 /// </summary>
 public interface IWslCompiler
 {
     /// <summary>
-    /// Compiles the WSL document into a runspace definition, performing schema validation,
-    /// graph validation, device binding, and safety envelope injection.
+    /// Compiles a WSL document into an executable <see cref="RunspaceDefinition"/>.
     /// </summary>
-    /// <param name="document">The WSL document to compile.</param>
-    /// <param name="deviceRegistry">Registry of logical devices for binding resolution.</param>
-    /// <returns>A compilation result containing the definition or diagnostics.</returns>
-    CompilationResult Compile(WslDocument document, DeviceRegistry deviceRegistry);
+    /// <param name="document">The document to compile.</param>
+    /// <param name="deviceRegistry">Registry of devices available for binding validation.</param>
+    /// <param name="safetyEngine">
+    /// Optional safety engine.  When provided, current violations are snapshotted
+    /// (read-only) and injected as guard nodes before execution.
+    /// </param>
+    CompilationResult Compile(WslDocument document, DeviceRegistry deviceRegistry, ISafetyEngine? safetyEngine = null);
 }
