@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import { DEFAULT_CONNECTION } from "./types/agent";
 import type { AgentConnection } from "./types/agent";
 import { useAgentHealth } from "./hooks/useAgentHealth";
@@ -6,13 +6,21 @@ import { useAgentWebSocket } from "./hooks/useAgentWebSocket";
 import ConnectionConfig from "./components/ConnectionConfig";
 import DeviceRegistry from "./components/DeviceRegistry";
 import { ExecutionPanel } from "./components/ExecutionPanel/ExecutionPanel";
+import { ScalarTrendChart } from "./components/TrendCharts/ScalarTrendChart";
+import { SpectralChart } from "./components/TrendCharts/SpectralChart";
+import { SafetyPanel } from "./components/SafetyPanel/SafetyPanel";
 import "./App.css";
 
 export default function App() {
   const [connection, setConnection] = useState<AgentConnection>(DEFAULT_CONNECTION);
   const baseUrl = `${connection.protocol}://${connection.host}:${connection.port}`;
   const health = useAgentHealth(baseUrl);
-  const { runspaceEvents } = useAgentWebSocket(baseUrl);
+  const { runspaceEvents, trendValues, safetyEvents } = useAgentWebSocket(baseUrl);
+
+  // Derive temperature chart data from trendValues
+  const temperatureData = trendValues
+    .filter((t) => t.trendName === "temperature")
+    .map((t) => ({ t: new Date(t.timestamp).getTime(), v: t.value }));
 
   return (
     <div className="app">
@@ -31,6 +39,10 @@ export default function App() {
           definition={null}
           runspaceEvents={runspaceEvents}
         />
+        <ScalarTrendChart trendName="Temperature" data={temperatureData} unit="°C" />
+        {/* SpectralChart: spectral data from specialised events — scaffold with empty state */}
+        <SpectralChart uvData={[]} mirData={[]} />
+        <SafetyPanel safetyEvents={safetyEvents} />
       </main>
     </div>
   );
