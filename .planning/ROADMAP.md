@@ -209,7 +209,7 @@ Tauri desktop app (helix-desktop):
 **Plans:** 8 plans
 
 Plans:
-- [ ] 06-01-PLAN.md -- Agent REST Control API (POST /workflows/compile, POST/GET /runspaces, pause/resume/abort, GET /devices)
+- [x] 06-01-PLAN.md -- Agent REST Control API (POST /workflows/compile, POST/GET /runspaces, pause/resume/abort, GET /devices)
 - [ ] 06-02-PLAN.md -- Agent WebSocket + IRunspaceEventEmitter (AgentService promotion, /ws endpoint)
 - [ ] 06-03-PLAN.md -- WslCompiler Completions (safety envelope, loop expansion, branch/parallel flattening)
 - [ ] 06-04-PLAN.md -- Rete.js Workflow Builder + useAgentWebSocket hook (7 node types, WSL export, tests)
@@ -339,7 +339,7 @@ Plans:
 | 3. Remaining Device Drivers | 5/5 | Complete | 2026-05-26 |
 | 4. Transport + Execution Integration Tests | 0/4 | Not started | - |
 | 5. Tauri Desktop App - Foundation | 3/3 | Complete | 2026-05-28 |
-| 6. Tauri Desktop App - Workflow Builder + Execution | 0/8 | Not started | - |
+| 6. Tauri Desktop App - Workflow Builder + Execution | 1/8 | In progress | - |
 | 7. Site-Level React Dashboard | 0/6 | Not started | - |
 | 8. CI Hardening + Full Test Coverage | 0/5 | Not started | - |
 | 9. Docusaurus Documentation | 0/5 | Not started | - |

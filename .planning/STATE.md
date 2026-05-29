@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: Phase 5 -- Tauri Desktop App Foundation (Plan 03 of 03 complete)
+current_phase: Phase 6 -- Tauri Desktop App - Workflow Builder + Execution (Plan 01 of 08 complete)
 status: in_progress
 last_updated: "2026-05-28T17:30:00.000Z"
 progress:
   total_phases: 10
   completed_phases: 1
   total_plans: 3
-  completed_plans: 4
+  completed_plans: 5
   percent: 10
 ---
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-05-26)
 
 **Core value:** A scientist can build a workflow, connect real lab hardware, execute an experiment, and see the results without writing code.
 
-**Current focus:** Phase 6 -- Agent REST API (next)
+**Current focus:** Phase 6 -- Tauri Desktop App - Workflow Builder + Execution (Plan 01 of 08 complete)
 
 ---
 
@@ -47,6 +47,7 @@ See: .planning/PROJECT.md (updated 2026-05-26)
 | Phase 5 Plan 01 | Executed -- scaffold + types complete |
 | Phase 5 Plan 02 | Executed -- useAgentHealth + ConnectionConfig + DeviceRegistry + App.tsx + Rust commands complete |
 | Phase 5 Plan 03 | Executed -- tauri-build CI job added to .github/workflows/ci.yml |
+| Phase 6 Plan 01 | Executed -- WorkflowEndpoints, RunspaceEndpoints, DeviceEndpoints + Program.cs wiring complete |
 
 ---
 
@@ -61,12 +62,14 @@ See: .planning/PROJECT.md (updated 2026-05-26)
 - LazyStore (sync constructor) used instead of Store (private constructor) in @tauri-apps/plugin-store v2.4.3
 - vi.useFakeTimers() removed from hook tests -- conflicts with @testing-library/react waitFor
 - vi.hoisted() required for vitest constructor mocks referencing module-level variables
+- DeviceRegistry registered as singleton in Agent DI (AddMigratedDeviceAdapters does not register it)
+- IRunspaceEventEmitter injected as nullable in RunspaceEndpoints (emitter?.Publish) for wave-ordering safety
 
 ---
 
 ## Next Steps
 
-Phase 5 complete. Run Phase 6 (Agent REST API).
+Phase 6, Plan 01 complete (Agent REST API). Run Phase 6, Plan 02 (WebSocket + EventEmitter) next.
 
 ---
 
@@ -90,6 +93,7 @@ Phase 5 complete. Run Phase 6 (Agent REST API).
 | phase-5 | 01 | ~30 min | 2/2 | 18 |
 | phase-5 | 02 | ~20 min | 4/4 | 11 |
 | phase-5 | 03 | ~5 min | 1/1 | 1 |
+| phase-6 | 01 | ~5 min | 2/2 | 4 |
 
 ---
 
