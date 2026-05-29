@@ -94,8 +94,20 @@ try
     // Health checks
     builder.Services.AddHealthChecks();
 
+    // CORS — allow Tauri webview origins (dev: Vite on 5173, prod: tauri://localhost)
+    builder.Services.AddCors(options =>
+    {
+        options.AddDefaultPolicy(policy =>
+        {
+            policy.WithOrigins("http://localhost:5173", "tauri://localhost", "https://tauri.localhost")
+                  .AllowAnyMethod()
+                  .AllowAnyHeader();
+        });
+    });
+
     var app = builder.Build();
 
+    app.UseCors();
     app.MapHealthChecks("/health");
 
     await app.RunAsync();

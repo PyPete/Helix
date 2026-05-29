@@ -27,7 +27,8 @@ export default function DeviceRegistry({ agentBaseUrl }: DeviceRegistryProps) {
       try {
         const res = await fetch(`${agentBaseUrl}/health`);
         if (!res.ok) throw new Error(`Agent returned ${res.status}`);
-        const data = await res.json() as { status?: string };
+        const text = await res.text();
+        const data: { status?: string } = { status: text.trim() };
         setDevices(mapHealthToAdapters(data));
         setError(null);
       } catch (e) {

@@ -25,8 +25,8 @@ describe("DeviceRegistry", () => {
         Promise.resolve({
           ok: true,
           status: 200,
-          json: () => Promise.resolve({ status: "Healthy" }),
-        } as Response)
+          text: () => Promise.resolve("Healthy"),
+        } as unknown as Response)
       )
     );
 
@@ -45,8 +45,8 @@ describe("DeviceRegistry", () => {
         Promise.resolve({
           ok: false,
           status: 503,
-          json: () => Promise.resolve({}),
-        } as Response)
+          text: () => Promise.resolve(""),
+        } as unknown as Response)
       )
     );
 
@@ -84,8 +84,8 @@ describe("DeviceRegistry", () => {
         Promise.resolve({
           ok: true,
           status: 200,
-          json: () => Promise.resolve({ status: "Degraded" }),
-        } as Response)
+          text: () => Promise.resolve("Degraded"),
+        } as unknown as Response)
       )
     );
 
