@@ -16,6 +16,9 @@ using Helix.Orchestration.Core.Safety;
 using Helix.Orchestration.Core.State;
 using Helix.Orchestration.Core.Trends;
 using Helix.Orchestration.Core.WorkflowEngine;
+using Helix.Orchestration.Agent.Api;
+using Helix.Orchestration.Core.Devices;
+using Helix.Orchestration.Core.WSL;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.WebSockets;
@@ -90,6 +93,10 @@ try
     builder.Services.AddSingleton<IWorkflowExecutor, WorkflowExecutor>();
     builder.Services.AddSingleton<WslExecutionAdapter>();
 
+    // WSL compilation + device registry
+    builder.Services.AddSingleton<IWslCompiler, WslCompiler>();
+    builder.Services.AddSingleton<DeviceRegistry>();
+
     // Event bus
     builder.Services.AddSingleton<IRunspaceEventEmitter, RunspaceEventEmitter>();
 
@@ -129,6 +136,9 @@ try
     app.UseCors();
     app.UseWebSockets();
     app.MapHealthChecks("/health");
+    app.MapWorkflowEndpoints();
+    app.MapRunspaceEndpoints();
+    app.MapDeviceEndpoints();
 
     // WebSocket /ws endpoint
     var agentService = app.Services.GetRequiredService<AgentService>();
