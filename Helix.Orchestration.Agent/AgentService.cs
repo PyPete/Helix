@@ -3,6 +3,8 @@ using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
 using Helix.Orchestration.Agent.Events;
+using Helix.Orchestration.Agent.Streaming;
+using Helix.Orchestration.Core.Safety;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -11,12 +13,17 @@ namespace Helix.Orchestration.Agent;
 /// <summary>
 /// Hosted service that manages WebSocket client connections and broadcasts
 /// <see cref="RunspaceEvent"/> frames to all connected clients.
+/// Also publishes live trend and safety events sourced from
+/// <see cref="TrendAggregator"/> and <see cref="ISafetyEngine"/>.
 /// </summary>
 public sealed class AgentService(
     IRunspaceEventEmitter emitter,
+    TrendAggregator trendAggregator,
+    ISafetyEngine safetyEngine,
     ILogger<AgentService> logger) : IHostedService
 {
     private readonly ConcurrentDictionary<string, WebSocket> _clients = new();
+    private readonly HashSet<string> _prevViolations = [];
     private CancellationTokenSource _cts = new();
 
     /// <inheritdoc />
@@ -26,6 +33,8 @@ public sealed class AgentService(
         _cts.Dispose();
         _cts = new CancellationTokenSource();
         _ = BroadcastLoopAsync(_cts.Token);
+        _ = TrendForwardLoopAsync(_cts.Token);
+        _ = SafetyPollLoopAsync(_cts.Token);
         logger.LogInformation("Helix Agent service started.");
         return Task.CompletedTask;
     }
@@ -125,6 +134,85 @@ public sealed class AgentService(
         catch (OperationCanceledException)
         {
             // normal shutdown
+        }
+    }
+
+    /// <summary>
+    /// Background loop that reads scalar trend values from <see cref="TrendAggregator"/>
+    /// and publishes them as <see cref="TrendValueEvent"/> frames.
+    /// </summary>
+    private async Task TrendForwardLoopAsync(CancellationToken ct)
+    {
+        try
+        {
+            await foreach (var notification in trendAggregator.ScalarValues.ReadAllAsync(ct))
+            {
+                emitter.Publish(new TrendValueEvent(
+                    notification.TrendName,
+                    notification.Value,
+                    notification.Unit,
+                    DateTimeOffset.UtcNow));
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // normal shutdown
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Trend forward loop terminated unexpectedly.");
+        }
+    }
+
+    /// <summary>
+    /// Background polling loop that checks <see cref="ISafetyEngine"/> for interlock violations
+    /// every 2 seconds and publishes <see cref="SafetyEvent"/> frames when the violation set changes.
+    /// </summary>
+    private async Task SafetyPollLoopAsync(CancellationToken ct)
+    {
+        try
+        {
+            while (!ct.IsCancellationRequested)
+            {
+                await Task.Delay(TimeSpan.FromSeconds(2), ct);
+
+                var violations = (await safetyEngine.GetViolationsAsync()).ToList();
+                var currentIds = violations.Select(v => v.RuleId).ToHashSet();
+
+                // Publish events for newly triggered violations
+                foreach (var violation in violations.Where(v => !_prevViolations.Contains(v.RuleId)))
+                {
+                    emitter.Publish(new SafetyEvent(
+                        violation.RuleId,
+                        violation.Description,
+                        violation.Severity.ToString(),
+                        true,
+                        DateTimeOffset.UtcNow));
+                }
+
+                // Publish cleared events for violations that resolved since last poll
+                foreach (var clearedId in _prevViolations.Where(id => !currentIds.Contains(id)))
+                {
+                    emitter.Publish(new SafetyEvent(
+                        clearedId,
+                        string.Empty,
+                        string.Empty,
+                        false,
+                        DateTimeOffset.UtcNow));
+                }
+
+                _prevViolations.Clear();
+                foreach (var id in currentIds)
+                    _prevViolations.Add(id);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // normal shutdown
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Safety poll loop terminated unexpectedly.");
         }
     }
 }
