@@ -103,16 +103,16 @@ Three new files in `Helix.Orchestration.Agent/Events/`:
 - **Files modified:** `Helix.Orchestration.Agent/Streaming/TrendAggregator.cs`
 - **Commit:** d776c34
 
-**2. [Rule 1 - Bug] Named argument `triggered:` in SafetyEvent record call**
+**2. [Rule 1 - Bug] Named argument in SafetyEvent record positional call**
 - **Found during:** Task 3 build verification
-- **Issue:** `CS1739: The best overload for 'SafetyEvent' does not have a parameter named 'triggered'` — records use positional parameters, named arg label not supported for record constructor calls
+- **Issue:** `CS1739` — records use positional constructors; named argument labels not supported
 - **Fix:** Removed named labels, used positional arguments
 - **Files modified:** `Helix.Orchestration.Agent/AgentService.cs`
 - **Commit:** d776c34
 
 ## Known Stubs
 
-None. All event types are fully defined. `ScalarTrendNotification.Unit` defaults to empty string because the current `TrendValue` model does not carry unit metadata — this is a known data-model gap, not an implementation stub. The empty string is semantically correct (unit not available).
+None. `ScalarTrendNotification.Unit` is empty string by design — unit metadata is not available in the current `TrendValue` model.
 
 ## Threat Flags
 
@@ -120,6 +120,14 @@ None. All event types are fully defined. `ScalarTrendNotification.Unit` defaults
 |------|------|-------------|
 | threat_flag: spoofing-origin | Program.cs | /ws endpoint protected by UseWebSockets AllowedOrigins (T-06-04 mitigated: tauri://localhost, https://tauri.localhost, http://localhost:5173) |
 
-## Self-Check
+## Self-Check: PASSED
 
-Checking files...
+- IRunspaceEventEmitter.cs: FOUND
+- RunspaceEvent.cs: FOUND
+- RunspaceEventEmitter.cs: FOUND
+- AgentService.cs: FOUND (HandleClientAsync, BroadcastLoopAsync, SafetyPollLoopAsync present)
+- Program.cs: FOUND (/ws middleware, AddSingleton<IRunspaceEventEmitter, RunspaceEventEmitter>() present)
+- TrendAggregator.cs: FOUND (ScalarValues channel present)
+- 06-02-SUMMARY.md: FOUND
+- Commits 1261f4b, 93adbef, d776c34: FOUND
+- dotnet build: 0 errors
