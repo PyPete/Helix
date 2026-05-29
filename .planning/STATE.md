@@ -2,21 +2,21 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: Phase 6 -- Tauri Desktop App - Workflow Builder + Execution (Plan 01 of 08 complete)
+current_phase: Phase 6 -- Tauri Desktop App - Workflow Builder + Execution (Plan 04 of 08 complete)
 status: in_progress
-last_updated: "2026-05-28T17:30:00.000Z"
+last_updated: "2026-05-29T17:05:00.000Z"
 progress:
   total_phases: 10
   completed_phases: 1
-  total_plans: 3
-  completed_plans: 5
-  percent: 10
+  total_plans: 8
+  completed_plans: 6
+  percent: 15
 ---
 
 # Project State
 
-**Last updated:** 2026-05-28
-**Current phase:** Phase 5 -- Tauri Desktop App Foundation (Plan 03 of 03 complete)
+**Last updated:** 2026-05-29
+**Current phase:** Phase 6 -- Tauri Desktop App - Workflow Builder + Execution (Plan 04 of 08 complete)
 **Workflow:** YOLO mode, fine granularity, parallel execution enabled
 
 ---
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-05-26)
 
 **Core value:** A scientist can build a workflow, connect real lab hardware, execute an experiment, and see the results without writing code.
 
-**Current focus:** Phase 6 -- Tauri Desktop App - Workflow Builder + Execution (Plan 01 of 08 complete)
+**Current focus:** Phase 6 -- Tauri Desktop App - Workflow Builder + Execution (Plan 04 of 08 complete)
 
 ---
 
@@ -48,6 +48,7 @@ See: .planning/PROJECT.md (updated 2026-05-26)
 | Phase 5 Plan 02 | Executed -- useAgentHealth + ConnectionConfig + DeviceRegistry + App.tsx + Rust commands complete |
 | Phase 5 Plan 03 | Executed -- tauri-build CI job added to .github/workflows/ci.yml |
 | Phase 6 Plan 01 | Executed -- WorkflowEndpoints, RunspaceEndpoints, DeviceEndpoints + Program.cs wiring complete |
+| Phase 6 Plan 04 | Executed -- WorkflowBuilder Rete.js canvas + 7 node types + useAgentWebSocket hook complete |
 
 ---
 
@@ -64,12 +65,14 @@ See: .planning/PROJECT.md (updated 2026-05-26)
 - vi.hoisted() required for vitest constructor mocks referencing module-level variables
 - DeviceRegistry registered as singleton in Agent DI (AddMigratedDeviceAdapters does not register it)
 - IRunspaceEventEmitter injected as nullable in RunspaceEndpoints (emitter?.Publish) for wave-ordering safety
+- Use BaseSchemes (not ClassicPreset.Schemes) as NodeEditor type parameter -- ClassicPreset.Schemes does not exist in rete@2.0.6
+- ClassicScheme + ReactArea2D imported directly from rete-react-plugin (not as ReactPlugin.* namespace)
 
 ---
 
 ## Next Steps
 
-Phase 6, Plan 01 complete (Agent REST API). Run Phase 6, Plan 02 (WebSocket + EventEmitter) next.
+Phase 6, Plan 04 complete (WorkflowBuilder + useAgentWebSocket). Run Phase 6 remaining plans next.
 
 ---
 
@@ -94,6 +97,7 @@ Phase 6, Plan 01 complete (Agent REST API). Run Phase 6, Plan 02 (WebSocket + Ev
 | phase-5 | 02 | ~20 min | 4/4 | 11 |
 | phase-5 | 03 | ~5 min | 1/1 | 1 |
 | phase-6 | 01 | ~5 min | 2/2 | 4 |
+| phase-6 | 04 | ~12 min | 2/2 | 9 |
 
 ---
 
@@ -106,11 +110,15 @@ Phase 6, Plan 01 complete (Agent REST API). Run Phase 6, Plan 02 (WebSocket + Ev
 - `.planning/codebase/` -- codebase map (7 documents, produced 2026-05-26)
 - `.planning/phases/phase-5/01-SUMMARY.md` -- Phase 5 Plan 01 complete summary
 - `.planning/phases/phase-5/02-SUMMARY.md` -- Phase 5 Plan 02 complete summary
+- `.planning/phases/phase-6/06-04-SUMMARY.md` -- Phase 6 Plan 04 complete summary
 - `helix-desktop/` -- Tauri v2 desktop application scaffold
-- `helix-desktop/src/types/agent.ts` -- TypeScript Agent interface contracts
+- `helix-desktop/src/types/agent.ts` -- TypeScript Agent interface contracts (includes WSL + WebSocket frame types)
 - `helix-desktop/src-tauri/Cargo.toml` -- Rust dependencies (tonic 0.14, tauri 2.x)
 - `helix-desktop/src/hooks/useAgentHealth.ts` -- REST health polling hook
+- `helix-desktop/src/hooks/useAgentWebSocket.ts` -- WebSocket hook dispatching RunspaceEvent/TrendValue/SafetyEvent
 - `helix-desktop/src/components/ConnectionConfig.tsx` -- agent connection form with LazyStore
 - `helix-desktop/src/components/DeviceRegistry.tsx` -- adapter list from /health endpoint
+- `helix-desktop/src/components/WorkflowBuilder/WorkflowBuilder.tsx` -- Rete.js canvas + export button
+- `helix-desktop/src/components/WorkflowBuilder/nodes/HelixNodes.ts` -- 7 Rete.js node types + exportToWsl
 - `helix-desktop/src/App.tsx` -- composition root
 - `helix-desktop/src-tauri/src/commands/connection.rs` -- load_config/save_config Tauri commands
