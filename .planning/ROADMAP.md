@@ -206,6 +206,18 @@ Tauri desktop app (helix-desktop):
 - [ ] Workflow save/load round-trip works: save a workflow, reload the app, re-open -- all nodes and edges present
 - [ ] UI component tests pass in CI
 
+**Plans:** 8 plans
+
+Plans:
+- [ ] 06-01-PLAN.md -- Agent REST Control API (POST /workflows/compile, POST/GET /runspaces, pause/resume/abort, GET /devices)
+- [ ] 06-02-PLAN.md -- Agent WebSocket + IRunspaceEventEmitter (AgentService promotion, /ws endpoint)
+- [ ] 06-03-PLAN.md -- WslCompiler Completions (safety envelope, loop expansion, branch/parallel flattening)
+- [ ] 06-04-PLAN.md -- Rete.js Workflow Builder + useAgentWebSocket hook (7 node types, WSL export, tests)
+- [ ] 06-05-PLAN.md -- Experiment Execution Panel (start/pause/resume/abort, step status display)
+- [ ] 06-06-PLAN.md -- Live Trend Charts + Safety Panel (recharts ScalarTrendChart/SpectralChart, SafetyPanel)
+- [ ] 06-07-PLAN.md -- Workflow Library (save/load/duplicate via Tauri fs plugin)
+- [ ] 06-08-PLAN.md -- Integration + Full Suite Green (App.tsx complete wiring, all tests pass)
+
 **UI hint**: yes
 
 ---
