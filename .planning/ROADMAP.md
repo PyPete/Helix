@@ -1,4 +1,4 @@
-# Roadmap
+﻿# Roadmap
 
 **Project:** Helix Orchestration Platform
 **Milestone:** 1 -- Hardware-ready platform with local UI, full test coverage, documentation, and deployment scripts
@@ -370,7 +370,7 @@ Plans:
 | C1 | Phase 5 | Complete |
 | C2 | Phase 6 | Pending |
 | C3 | Phase 6 | Pending |
-| C4 | Phase 6 | Pending |
+| C4 | Phase 6 | Complete |
 | C5 | Phase 6 | Pending |
 | C6 | Phase 6 | Pending |
 | C7 | Phase 5 | Complete |
@@ -379,7 +379,7 @@ Plans:
 | D1 | Phase 8 | Pending |
 | D2 | Phase 4 | Pending |
 | D3 | Phase 4 | Pending |
-| D4 | Phase 6 | Pending |
+| D4 | Phase 6 | Complete |
 | D5 | Phase 4 | Pending |
 | D6 | Phase 8 | Pending |
 | D7 | Phase 8 | Pending |
