@@ -3,6 +3,7 @@ using Cleipnir.ResilientFunctions.PostgreSQL;
 using Cleipnir.ResilientFunctions.Storage;
 using Helix.Orchestration.Agent;
 using Helix.Orchestration.Agent.Adapters.Devices;
+using Helix.Orchestration.Agent.Events;
 using Helix.Orchestration.Agent.Execution;
 using Helix.Orchestration.Agent.Leasing;
 using Helix.Orchestration.Agent.Streaming;
@@ -16,6 +17,9 @@ using Helix.Orchestration.Core.State;
 using Helix.Orchestration.Core.Trends;
 using Helix.Orchestration.Core.WorkflowEngine;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.WebSockets;
+using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using Serilog.Formatting.Compact;
 
@@ -86,8 +90,15 @@ try
     builder.Services.AddSingleton<IWorkflowExecutor, WorkflowExecutor>();
     builder.Services.AddSingleton<WslExecutionAdapter>();
 
+    // Event bus
+    builder.Services.AddSingleton<IRunspaceEventEmitter, RunspaceEventEmitter>();
+
+    // AgentService registered as singleton so it is resolvable as the concrete type
+    // (AddHostedService<T> only registers as IHostedService, which prevents GetRequiredService<AgentService>())
+    builder.Services.AddSingleton<AgentService>();
+    builder.Services.AddHostedService(sp => sp.GetRequiredService<AgentService>());
+
     // Hosted services
-    builder.Services.AddHostedService<AgentService>();
     builder.Services.AddHostedService<LeaseExpiryWorker>();
     builder.Services.AddHostedService<MqttTrendIngestionService>();
 
@@ -105,10 +116,41 @@ try
         });
     });
 
+    // WebSocket support
+    builder.Services.AddWebSockets(options =>
+    {
+        options.AllowedOrigins.Add("http://localhost:5173");
+        options.AllowedOrigins.Add("tauri://localhost");
+        options.AllowedOrigins.Add("https://tauri.localhost");
+    });
+
     var app = builder.Build();
 
     app.UseCors();
+    app.UseWebSockets();
     app.MapHealthChecks("/health");
+
+    // WebSocket /ws endpoint
+    var agentService = app.Services.GetRequiredService<AgentService>();
+    app.Use(async (context, next) =>
+    {
+        if (context.Request.Path == "/ws")
+        {
+            if (context.WebSockets.IsWebSocketRequest)
+            {
+                using var ws = await context.WebSockets.AcceptWebSocketAsync();
+                await agentService.HandleClientAsync(ws, context.RequestAborted);
+            }
+            else
+            {
+                context.Response.StatusCode = StatusCodes.Status400BadRequest;
+            }
+        }
+        else
+        {
+            await next(context);
+        }
+    });
 
     await app.RunAsync();
 }
