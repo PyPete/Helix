@@ -5,6 +5,7 @@ area: ui
 files:
   - helix-desktop/src/components/TrendCharts/ScalarTrendChart.tsx
   - helix-desktop/src/components/TrendCharts/SpectralChart.tsx
+  - helix-desktop/src/components/charts/ (new wrapper layer)
   - helix-desktop/src/hooks/useAgentWebSocket.ts
   - helix-desktop/package.json
   - helix-desktop/src/App.tsx
@@ -66,18 +67,68 @@ helix-site/public/scichart2d.data
 
 ---
 
+### React Integration — `scichart-react`
+
+The official React wrapper is **`scichart-react`** ([github.com/ABTSoftware/scichart-react](https://github.com/ABTSoftware/scichart-react)), an official ABT Software package that handles `SciChartSurface` lifecycle (init, WASM loading, memory cleanup) as a React component. Use this instead of managing the canvas lifecycle manually.
+
+**Install:**
+```bash
+npm install scichart scichart-react
+```
+
+**Core API — `SciChartReact`:**
+```typescript
+import { SciChartReact } from "scichart-react";
+
+<SciChartReact
+  style={{ width: "100%", height: 300 }}
+  initChart={async (rootElement) => {
+    const { sciChartSurface, wasmContext } = await SciChartSurface.create(rootElement);
+    // configure axes, series, modifiers...
+    return { sciChartSurface };  // returned to onInit
+  }}
+/>
+```
+
+**Key props:**
+- `initChart` — async function receiving the root DOM element; creates and configures the `SciChartSurface`; returns `{ sciChartSurface }`. **Must be stable** (defined outside render or via `useCallback` with no deps) — changing it re-initialises the chart.
+- `config` — declarative Builder API alternative to `initChart`; mutually exclusive with `initChart`
+- `style` — CSS for the container div
+
+**`onInit` pattern for getting refs to data series:**
+```typescript
+const dataSeries = useRef<XyDataSeries | null>(null);
+
+<SciChartReact
+  initChart={async (rootElement) => {
+    const { sciChartSurface, wasmContext } = await SciChartSurface.create(rootElement);
+    const ds = new XyDataSeries(wasmContext);
+    dataSeries.current = ds;  // store ref for real-time appends
+    sciChartSurface.renderableSeries.add(
+      new FastLineRenderableSeries(wasmContext, { dataSeries: ds })
+    );
+    return { sciChartSurface };
+  }}
+  style={{ width: "100%", height: 300 }}
+/>
+```
+
+After init, `dataSeries.current` is available for direct appends — no React state involved.
+
+---
+
 ### Wrapper Architecture
 
-A thin abstraction layer prevents SciChart API from leaking into application components. Application code depends only on the wrapper interface; SciChart is an implementation detail.
+A thin abstraction layer prevents `scichart-react` / SciChart API from leaking into application components. Application code depends only on the wrapper interface; SciChart is an implementation detail.
 
 **Wrapper interface (TypeScript):**
 ```typescript
-// helix-desktop/src/components/charts/ChartProvider.tsx
+// helix-desktop/src/components/charts/types.ts
 export interface ScalarChartProps {
   trendName: string;
   data: TrendSample[];           // { timestamp: number, value: number }[]
   unit: string;
-  realtimeSource?: Observable<TrendSample>;  // for live updates
+  realtimeSource?: Observable<TrendSample>;  // for live appends
   dataSource?: "live" | "replay";
   stale?: boolean;
 }
@@ -96,7 +147,7 @@ export interface TimelineScrubberProps {
 }
 ```
 
-**SciChart implementation:**
+**SciChart implementation (uses `scichart-react`):**
 ```typescript
 // helix-desktop/src/components/charts/SciScalarChart.tsx
 // helix-desktop/src/components/charts/SciSpectralChart.tsx
@@ -120,7 +171,7 @@ const SCICHART_ENABLED = import.meta.env.VITE_SCICHART_ENABLED !== "false"
   && Boolean(import.meta.env.VITE_SCICHART_LICENSE_KEY);
 
 export const ScalarTrendChart = SCICHART_ENABLED ? SciScalarChart : PlaceholderChart;
-export const SpectralChart = SCICHART_ENABLED ? SciSpectralChart : PlaceholderChart;
+export const SpectralChart    = SCICHART_ENABLED ? SciSpectralChart : PlaceholderChart;
 export const TimelineScrubber = SCICHART_ENABLED ? SciTimelineScrubber : PlaceholderScrubber;
 ```
 
@@ -130,25 +181,45 @@ Existing components (`ScalarTrendChart.tsx`, `SpectralChart.tsx`) import from `c
 
 ### Real-Time Update Architecture
 
-SciChart's high-frequency update path differs from recharts' React re-render model. Updates must bypass React's reconciler to avoid unnecessary re-renders.
+`scichart-react` handles WASM init and surface cleanup. Real-time data updates bypass React's reconciler entirely — direct appends to a `useRef`-held `XyDataSeries`.
 
-**Pattern: direct series append, no state update**
+**Pattern: `useRef` data series + `initChart` stable reference**
 ```typescript
-// In SciScalarChart.tsx
+// helix-desktop/src/components/charts/SciScalarChart.tsx
+const dataSeries = useRef<XyDataSeries | null>(null);
+
+// initChart is defined outside the component or via useCallback with [] deps
+// so it never changes between renders — SciChartReact constraint
+const initScalarChart = useCallback(async (rootElement: HTMLDivElement) => {
+  const { sciChartSurface, wasmContext } = await SciChartSurface.create(rootElement);
+  const ds = new XyDataSeries(wasmContext, { fifoCapacity: MAX_POINTS });
+  dataSeries.current = ds;
+  sciChartSurface.xAxes.add(new NumericAxis(wasmContext));
+  sciChartSurface.yAxes.add(new NumericAxis(wasmContext));
+  sciChartSurface.renderableSeries.add(
+    new FastLineRenderableSeries(wasmContext, { dataSeries: ds })
+  );
+  sciChartSurface.chartModifiers.add(new RolloverModifier(), new ZoomPanModifier());
+  return { sciChartSurface };
+}, []);  // stable — no deps
+
+// Subscribe to real-time source outside initChart
 useEffect(() => {
-  const sub = realtimeSource?.subscribe(sample => {
-    // Direct append to SciChart data series — no React setState
+  if (!realtimeSource) return;
+  const sub = realtimeSource.subscribe(sample => {
+    // Direct append — no React setState, no re-render
     dataSeries.current?.append(sample.timestamp, sample.value);
-    // SciChart handles its own render loop via requestAnimationFrame
   });
-  return () => sub?.unsubscribe();
+  return () => sub.unsubscribe();
 }, [realtimeSource]);
+
+return <SciChartReact initChart={initScalarChart} style={{ width: "100%", height: 300 }} />;
 ```
 
 **FIFO buffer for memory management:**
-- Rolling window: keep last N data points in the series (configurable, default 10,000)
-- Older points evicted automatically: `dataSeries.current?.removeRange(0, dataSeries.count - MAX_POINTS)`
-- For replay: load full dataset in chunks using SciChart's `appendRange()` batch API
+- `fifoCapacity: MAX_POINTS` (default 10,000) on `XyDataSeries` — SciChart evicts oldest points automatically; no manual `removeRange` call needed
+- For replay: use `dataSeries.appendRange(xValues, yValues)` batch insert (much faster than N individual `append()` calls)
+- For replay seek: clear series with `dataSeries.clear()` then `appendRange()` up to the seek timestamp
 
 ---
 
@@ -200,9 +271,9 @@ SciChart's WebGL canvas cannot be unit-tested in jsdom (no GPU context). The wra
 - All tests still pass (placeholder mode)
 
 **Step 2 — SciChart scalar implementation:**
-- `SciScalarChart.tsx`: replaces recharts `LineChart` with `SciChartSurface` + `FastLineRenderableSeries`
-- FIFO buffer, real-time `realtimeSource` subscription, stale state visual
-- Update vitest tests to assert `data-testid="chart-unavailable"` in placeholder mode
+- `npm install scichart scichart-react`
+- `SciScalarChart.tsx`: uses `SciChartReact` with `initChart`; `FastLineRenderableSeries` with `fifoCapacity`; stable `useCallback` init; `useEffect` real-time subscription
+- Update vitest tests to assert `data-testid="chart-unavailable"` in placeholder mode (no WebGL in jsdom)
 
 **Step 3 — SciChart spectral implementation:**
 - `SciSpectralChart.tsx`: UV/MIR `FastMountainRenderableSeries` on shared X-axis
