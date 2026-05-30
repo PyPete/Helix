@@ -73,4 +73,5 @@ export interface SafetyEvent {
   severity: string;
   triggered: boolean;
   timestamp: string;
+  currentValue?: number;
 }

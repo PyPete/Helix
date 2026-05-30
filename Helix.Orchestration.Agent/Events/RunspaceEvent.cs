@@ -74,5 +74,12 @@ public sealed record TrendValueEvent(string TrendName, double Value, string Unit
 /// <param name="Severity">Severity level of the violation (e.g. "Critical", "Warning").</param>
 /// <param name="Triggered">True if the rule is now violated; false if it has cleared.</param>
 /// <param name="Timestamp">UTC timestamp when the change was detected.</param>
-public sealed record SafetyEvent(string RuleId, string Description, string Severity, bool Triggered, DateTimeOffset Timestamp)
+/// <param name="CurrentValue">Current measured value that triggered (or is being monitored by) this rule. Null if not available.</param>
+public sealed record SafetyEvent(
+    string RuleId,
+    string Description,
+    string Severity,
+    bool Triggered,
+    DateTimeOffset Timestamp,
+    double? CurrentValue = null)
     : RunspaceEvent("safety-event", "", Timestamp);
