@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { DEFAULT_CONNECTION } from "./types/agent";
-import type { AgentConnection } from "./types/agent";
+import type { AgentConnection, WslDocument } from "./types/agent";
 import { useAgentHealth } from "./hooks/useAgentHealth";
 import { useAgentWebSocket } from "./hooks/useAgentWebSocket";
 import ConnectionConfig from "./components/ConnectionConfig";
 import DeviceRegistry from "./components/DeviceRegistry";
+import { WorkflowBuilder } from "./components/WorkflowBuilder/WorkflowBuilder";
 import { ExecutionPanel } from "./components/ExecutionPanel/ExecutionPanel";
 import { ScalarTrendChart } from "./components/TrendCharts/ScalarTrendChart";
 import { SpectralChart } from "./components/TrendCharts/SpectralChart";
@@ -16,6 +17,7 @@ export default function App() {
   const baseUrl = `${connection.protocol}://${connection.host}:${connection.port}`;
   const health = useAgentHealth(baseUrl);
   const { runspaceEvents, trendValues, safetyEvents } = useAgentWebSocket(baseUrl);
+  const [currentWorkflow, setCurrentWorkflow] = useState<WslDocument | null>(null);
 
   // Derive temperature chart data from trendValues
   const temperatureData = trendValues
@@ -33,14 +35,14 @@ export default function App() {
       <main>
         <ConnectionConfig connection={connection} onSave={setConnection} />
         <DeviceRegistry agentBaseUrl={baseUrl} />
-        {/* ExecutionPanel: definition wired to WorkflowBuilder.onExport in Plan 08 */}
+        <WorkflowBuilder baseUrl={baseUrl} onExport={setCurrentWorkflow} />
         <ExecutionPanel
           baseUrl={baseUrl}
-          definition={null}
+          definition={currentWorkflow}
           runspaceEvents={runspaceEvents}
         />
         <ScalarTrendChart trendName="Temperature" data={temperatureData} unit="°C" />
-        {/* SpectralChart: spectral data from specialised events — scaffold with empty state */}
+        {/* SpectralChart: spectral data from specialised events -- scaffold with empty state */}
         <SpectralChart uvData={[]} mirData={[]} />
         <SafetyPanel safetyEvents={safetyEvents} />
       </main>
