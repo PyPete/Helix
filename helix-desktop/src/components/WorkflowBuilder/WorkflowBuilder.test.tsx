@@ -76,6 +76,18 @@ vi.mock("react-dom/client", () => ({
   createRoot: vi.fn(),
 }));
 
+vi.mock("rete-context-menu-plugin", () => {
+  function ContextMenuPluginMock(this: Record<string, unknown>) {
+    this.use = vi.fn();
+  }
+  return {
+    ContextMenuPlugin: ContextMenuPluginMock,
+    Presets: {
+      classic: { setup: vi.fn(() => vi.fn()) },
+    },
+  };
+});
+
 // Mock workflowLibrary using vi.hoisted() pattern (required for constructor mocks)
 const { mockSave, mockList } = vi.hoisted(() => ({
   mockSave: vi.fn().mockResolvedValue(undefined),
@@ -196,5 +208,35 @@ describe("WorkflowBuilder", () => {
     );
     fireEvent.click(screen.getByTestId("list-workflows-btn"));
     await waitFor(() => expect(mockList).toHaveBeenCalled());
+  });
+
+  it("capability-picker has onChange handler", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() =>
+        Promise.resolve({
+          ok: true,
+          json: () =>
+            Promise.resolve([
+              {
+                adapterId: "VapourtecR4",
+                healthy: true,
+                message: "OK",
+                capabilities: ["SetTemperature"],
+              },
+            ]),
+        } as unknown as Response)
+      )
+    );
+    render(<WorkflowBuilder baseUrl="http://localhost:5080" onExport={vi.fn()} />);
+    await waitFor(() =>
+      expect(screen.getByTestId("capability-picker")).toBeInTheDocument()
+    );
+    // Verify the select has an onChange -- changing it should not throw
+    expect(() =>
+      fireEvent.change(screen.getByTestId("capability-picker"), {
+        target: { value: "SetTemperature" },
+      })
+    ).not.toThrow();
   });
 });

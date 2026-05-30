@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
+import type { ClassicPreset } from "rete";
 import type { DeviceAdapter, WslDocument } from "../../types/agent";
-import { exportToWsl } from "./nodes/HelixNodes";
+import { exportToWsl, StepNode } from "./nodes/HelixNodes";
 import { useReteEditor } from "./useReteEditor";
 import { saveWorkflow, loadWorkflow, listWorkflows } from "../../lib/workflowLibrary";
 
@@ -17,6 +18,7 @@ export function WorkflowBuilder({ baseUrl, onExport }: WorkflowBuilderProps) {
   const [workflowName, setWorkflowName] = useState("Untitled Workflow");
   const [savedWorkflows, setSavedWorkflows] = useState<string[]>([]);
   const [saveStatus, setSaveStatus] = useState<string | null>(null);
+  const [selectedCapability, setSelectedCapability] = useState<string>("");
 
   useEffect(() => {
     let cancelled = false;
@@ -70,6 +72,17 @@ export function WorkflowBuilder({ baseUrl, onExport }: WorkflowBuilderProps) {
     onExport(doc);
   };
 
+  const handleCapabilityChange = (cap: string) => {
+    setSelectedCapability(cap);
+    if (!editor) return;
+    const nodes = editor.getNodes();
+    const stepNode = nodes.find((n) => n instanceof StepNode) as StepNode | undefined;
+    if (stepNode) {
+      const ctrl = stepNode.controls["capability"] as ClassicPreset.InputControl<"text">;
+      ctrl.setValue(cap);
+    }
+  };
+
   return (
     <section aria-label="Workflow Builder" data-testid="workflow-builder">
       {error && <p role="alert" className="error">{error}</p>}
@@ -94,7 +107,7 @@ export function WorkflowBuilder({ baseUrl, onExport }: WorkflowBuilderProps) {
           </select>
         )}
         {devices.length > 0 && (
-          <select aria-label="Device capabilities" data-testid="capability-picker">
+          <select aria-label="Device capabilities" data-testid="capability-picker" value={selectedCapability} onChange={(e) => handleCapabilityChange(e.target.value)}>
             {devices.flatMap((d) =>
               d.capabilities.map((cap) => (
                 <option key={d.adapterId + "-" + cap} value={cap}>
