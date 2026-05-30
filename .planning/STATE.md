@@ -1,15 +1,15 @@
----
+﻿---
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: Phase 6 -- Tauri Desktop App - Workflow Builder + Execution (Plan 07 of 08 complete)
+current_phase: Phase 6 -- Tauri Desktop App - Workflow Builder + Execution (Plan 08 of 08 complete)
 status: in_progress
-last_updated: "2026-05-30T06:46:00.000Z"
+last_updated: "2026-05-30T07:55:00.000Z"
 progress:
   total_phases: 10
   completed_phases: 1
   total_plans: 8
-  completed_plans: 7
+  completed_plans: 8
   percent: 17
 ---
 
@@ -51,7 +51,8 @@ See: .planning/PROJECT.md (updated 2026-05-26)
 | Phase 6 Plan 04 | Executed -- WorkflowBuilder Rete.js canvas + 7 node types + useAgentWebSocket hook complete |
 | Phase 6 Plan 05 | Executed -- ExecutionPanel + compile-then-start flow + 6 tests + App.tsx wired complete |
 | Phase 6 Plan 06 | Executed -- ScalarTrendChart + SpectralChart (recharts) + SafetyPanel + 9 tests + App.tsx complete |
-| Phase 6 Plan 07 | Executed -- tauri-plugin-fs 3-part wiring + workflowLibrary save/load/list/duplicate + 5 tests complete |
+| Phase 6 Plan 07 | Executed -- tauri-plugin-fs 3-part wiring + workflowLibrary save/load/list/duplicate + 5 tests complete
+| Phase 6 Plan 08 | Executed -- WorkflowBuilder save/load UI + App.tsx final wiring + 47/47 tests + build green complete |
 
 ---
 
@@ -77,13 +78,15 @@ See: .planning/PROJECT.md (updated 2026-05-26)
 - SpectralChart mounted with empty arrays in App.tsx -- spectral events not yet emitted by Agent WebSocket; full wiring in Plan 08
 - sanitizeName throws when no alphanumeric chars remain after replacement (not just empty string) -- "!!!" becomes "___" which is truthy but has no letters/digits
 - vi.clearAllMocks() required alongside vi.restoreAllMocks() in afterEach to reset call history between tests
+- Phase 6 scope for handleLoad: fires onExport with loaded doc; editor re-population deferred to Phase 7
+- Python used to write files with JSX template literals to avoid PowerShell backtick escaping
 - JSON.stringify uses 2-space indent (pretty-print) for human-readable workflow files; test assertions must use "key": "value" format (with space after colon)
 
 ---
 
 ## Next Steps
 
-Phase 6, Plan 07 complete (Workflow Library). Run Phase 6 remaining plan next (08).
+Phase 6 COMPLETE (all 8 plans executed). Phase 7 (Site-Level React Dashboard) is next.
 
 ---
 
@@ -111,7 +114,8 @@ Phase 6, Plan 07 complete (Workflow Library). Run Phase 6 remaining plan next (0
 | phase-6 | 04 | ~12 min | 2/2 | 9 |
 | phase-6 | 05 | ~15 min | 2/2 | 3 |
 | phase-6 | 06 | ~12 min | 2/2 | 7 |
-| phase-6 | 07 | ~10 min | 2/2 | 9 |
+| phase-6 | 07 | ~10 min | 2/2 | 9
+| phase-6 | 08 | ~15 min | 2/2 | 3 |
 
 ---
 

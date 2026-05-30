@@ -156,7 +156,7 @@
 
 ---
 
-## Phase 6: Tauri Desktop App - Workflow Builder + Execution
+## Phase 6: Tauri Desktop App - Workflow Builder + Execution [COMPLETE - 2026-05-30]
 
 **Goal:** A scientist can visually build a workflow, submit it for compilation and execution, monitor live telemetry, and see safety interlock status -- all within the desktop app connected directly to the Agent. The Agent gains its full REST control API, WebSocket streaming layer, and the remaining WSL compiler features required to make this loop work end-to-end.
 
