@@ -76,9 +76,29 @@ vi.mock("react-dom/client", () => ({
   createRoot: vi.fn(),
 }));
 
+// Mock workflowLibrary using vi.hoisted() pattern (required for constructor mocks)
+const { mockSave, mockList } = vi.hoisted(() => ({
+  mockSave: vi.fn().mockResolvedValue(undefined),
+  mockList: vi.fn().mockResolvedValue(["test-workflow"]),
+}));
+
+vi.mock("../../lib/workflowLibrary", () => ({
+  saveWorkflow: mockSave,
+  loadWorkflow: vi.fn().mockResolvedValue({
+    documentId: "x",
+    name: "test-workflow",
+    schemaVersion: "1.0",
+    nodes: [],
+    edges: [],
+  }),
+  listWorkflows: mockList,
+  duplicateWorkflow: vi.fn(),
+}));
+
 describe("WorkflowBuilder", () => {
   afterEach(() => {
     vi.restoreAllMocks();
+    vi.clearAllMocks();
   });
 
   it("renders workflow builder canvas container", () => {
@@ -150,5 +170,31 @@ describe("WorkflowBuilder", () => {
     await waitFor(() =>
       expect(fetch).toHaveBeenCalledWith("http://localhost:5080/devices")
     );
+  });
+
+  it("renders workflow name input", () => {
+    vi.stubGlobal("fetch", vi.fn(() => new Promise(() => {})));
+    render(
+      <WorkflowBuilder baseUrl="http://localhost:5080" onExport={vi.fn()} />
+    );
+    expect(screen.getByTestId("workflow-name-input")).toBeInTheDocument();
+  });
+
+  it("calls saveWorkflow on Save button click", async () => {
+    vi.stubGlobal("fetch", vi.fn(() => new Promise(() => {})));
+    render(
+      <WorkflowBuilder baseUrl="http://localhost:5080" onExport={vi.fn()} />
+    );
+    fireEvent.click(screen.getByTestId("save-workflow-btn"));
+    await waitFor(() => expect(mockSave).toHaveBeenCalled());
+  });
+
+  it("calls listWorkflows on Load button click", async () => {
+    vi.stubGlobal("fetch", vi.fn(() => new Promise(() => {})));
+    render(
+      <WorkflowBuilder baseUrl="http://localhost:5080" onExport={vi.fn()} />
+    );
+    fireEvent.click(screen.getByTestId("list-workflows-btn"));
+    await waitFor(() => expect(mockList).toHaveBeenCalled());
   });
 });
