@@ -24,6 +24,30 @@ export default function App() {
     .filter((t) => t.trendName === "temperature")
     .map((t) => ({ t: new Date(t.timestamp).getTime(), v: t.value }));
 
+  // Derive spectral chart data from trendValues using UV: and MIR: trendName prefix
+  // e.g. trendName "UV:300" -> wavelength 300 nm; value is absorbance
+  const uvMap = new Map<number, number>();
+  trendValues
+    .filter((t) => t.trendName.startsWith("UV:"))
+    .forEach((t) => {
+      const wavelength = parseInt(t.trendName.slice(3), 10);
+      if (!isNaN(wavelength)) uvMap.set(wavelength, t.value);
+    });
+  const uvData = Array.from(uvMap.entries())
+    .sort(([a], [b]) => a - b)
+    .map(([wavelength, absorbance]) => ({ wavelength, absorbance }));
+
+  const mirMap = new Map<number, number>();
+  trendValues
+    .filter((t) => t.trendName.startsWith("MIR:"))
+    .forEach((t) => {
+      const wavelength = parseInt(t.trendName.slice(4), 10);
+      if (!isNaN(wavelength)) mirMap.set(wavelength, t.value);
+    });
+  const mirData = Array.from(mirMap.entries())
+    .sort(([a], [b]) => a - b)
+    .map(([wavelength, absorbance]) => ({ wavelength, absorbance }));
+
   return (
     <div className="app">
       <header>
@@ -42,8 +66,7 @@ export default function App() {
           runspaceEvents={runspaceEvents}
         />
         <ScalarTrendChart trendName="Temperature" data={temperatureData} unit="°C" />
-        {/* SpectralChart: spectral data from specialised events -- scaffold with empty state */}
-        <SpectralChart uvData={[]} mirData={[]} />
+        <SpectralChart uvData={uvData} mirData={mirData} />
         <SafetyPanel safetyEvents={safetyEvents} />
       </main>
     </div>

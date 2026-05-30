@@ -93,4 +93,21 @@ describe("SafetyPanel", () => {
       screen.getByTestId("rule-r2")
     );
   });
+
+  it("displays currentValue when present in safety event", () => {
+    const events: SafetyEvent[] = [
+      {
+        type: "safety-event",
+        ruleId: "r1",
+        description: "Temp High",
+        severity: "Critical",
+        triggered: true,
+        timestamp: "",
+        currentValue: 95.5,
+      },
+    ];
+    render(<SafetyPanel safetyEvents={events} />);
+    expect(screen.getByTestId("rule-value-r1")).toBeInTheDocument();
+    expect(screen.getByTestId("rule-value-r1")).toHaveTextContent("95.50");
+  });
 });

@@ -37,6 +37,9 @@ export function SafetyPanel({ safetyEvents }: SafetyPanelProps) {
           >
             <strong>{rule.description}</strong> — {rule.severity} —{" "}
             {rule.triggered ? "TRIGGERED" : "Safe"}
+            {rule.currentValue !== undefined && (
+              <span data-testid={`rule-value-${rule.ruleId}`}> — {rule.currentValue.toFixed(2)}</span>
+            )}
           </li>
         ))}
       </ul>
