@@ -4,6 +4,7 @@ using System.Text;
 using System.Text.Json;
 using Helix.Orchestration.Agent.Events;
 using Helix.Orchestration.Agent.Streaming;
+using Helix.Orchestration.Core.Capabilities;
 using Helix.Orchestration.Core.Safety;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -20,10 +21,12 @@ public sealed class AgentService(
     IRunspaceEventEmitter emitter,
     TrendAggregator trendAggregator,
     ISafetyEngine safetyEngine,
+    CapabilityRegistry registry,
     ILogger<AgentService> logger) : IHostedService
 {
     private readonly ConcurrentDictionary<string, WebSocket> _clients = new();
     private readonly HashSet<string> _prevViolations = [];
+    private readonly Dictionary<string, string> _adapterStatus = new();
     private CancellationTokenSource _cts = new();
 
     /// <inheritdoc />
@@ -35,6 +38,7 @@ public sealed class AgentService(
         _ = BroadcastLoopAsync(_cts.Token);
         _ = TrendForwardLoopAsync(_cts.Token);
         _ = SafetyPollLoopAsync(_cts.Token);
+        _ = DeviceHealthPollLoopAsync(_cts.Token);
         logger.LogInformation("Helix Agent service started.");
         return Task.CompletedTask;
     }
@@ -213,6 +217,44 @@ public sealed class AgentService(
         catch (Exception ex)
         {
             logger.LogError(ex, "Safety poll loop terminated unexpectedly.");
+        }
+    }
+
+    /// <summary>
+    /// Background polling loop that checks adapter availability every 5 seconds via
+    /// CapabilityRegistry.IsAvailableAsync and publishes a DeviceStatusEvent
+    /// whenever an adapter availability changes.
+    /// </summary>
+    private async Task DeviceHealthPollLoopAsync(CancellationToken ct)
+    {
+        try
+        {
+            while (!ct.IsCancellationRequested)
+            {
+                await Task.Delay(TimeSpan.FromSeconds(5), ct);
+
+                var adapterNames = registry.GetAllCapabilityNames().ToList();
+
+                foreach (var adapterName in adapterNames)
+                {
+                    bool available = await registry.IsAvailableAsync(adapterName);
+                    string status = available ? "online" : "offline";
+
+                    if (!_adapterStatus.TryGetValue(adapterName, out var lastStatus) || lastStatus != status)
+                    {
+                        emitter.Publish(new DeviceStatusEvent(adapterName, status, new[] { adapterName }));
+                        _adapterStatus[adapterName] = status;
+                    }
+                }
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // normal shutdown
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Device health poll loop terminated unexpectedly.");
         }
     }
 }
