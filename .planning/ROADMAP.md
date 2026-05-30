@@ -254,6 +254,12 @@ Tauri desktop app:
 - [ ] `src/components/charts/index.ts` exports `ScalarTrendChart` and `SpectralChart` via the wrapper (grep confirms)
 - [ ] `dotnet build` exits 0 after `CapabilityDescriptor` addition to Core
 
+**Plans:** 2 plans
+
+Plans:
+- [ ] 6.1-01-PLAN.md -- Agent: CapabilityDescriptor types + POST /devices/{id}/execute + DeviceStatusEvent + ManualActionEvent
+- [ ] 6.1-02-PLAN.md -- Desktop: DeviceManualControl panel + device-status hook dispatch + SciChart Step 1 wrapper
+
 **UI hint**: yes
 
 ---
@@ -376,7 +382,7 @@ Tauri desktop app:
 | 4. Transport + Execution Integration Tests | 0/4 | Not started | - |
 | 5. Tauri Desktop App - Foundation | 3/3 | Complete | 2026-05-28 |
 | 6. Tauri Desktop App - Workflow Builder + Execution | 10/10 | Complete | 2026-05-30 |
-| 6.1. Desktop App Polish — Device Controls, Status Events & Chart Foundation | 0/3 | Not started | - |
+| 6.1. Desktop App Polish — Device Controls, Status Events & Chart Foundation | 0/2 | Not started | - |
 | 7. Site-Level React Dashboard | 0/6 | Not started | - |
 | 8. CI Hardening + Full Test Coverage | 0/5 | Not started | - |
 | 9. Docusaurus Documentation | 0/5 | Not started | - |
