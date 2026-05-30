@@ -1,22 +1,22 @@
-﻿---
+---
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: Phase 6 -- Tauri Desktop App - Workflow Builder + Execution (Plan 09 of 10 complete)
-status: in_progress
-last_updated: "2026-05-30T09:36:00.000Z"
+current_phase: Phase 6 -- Tauri Desktop App - Workflow Builder + Execution (Plan 10 of 10 complete)
+status: unknown
+last_updated: "2026-05-30T08:43:52.444Z"
 progress:
   total_phases: 10
-  completed_phases: 1
-  total_plans: 10
-  completed_plans: 9
-  percent: 17
+  completed_phases: 2
+  total_plans: 13
+  completed_plans: 14
+  percent: 20
 ---
 
 # Project State
 
 **Last updated:** 2026-05-30
-**Current phase:** Phase 6 -- Tauri Desktop App - Workflow Builder + Execution (Plan 09 of 10 complete)
+**Current phase:** Phase 6 -- Tauri Desktop App - Workflow Builder + Execution (Plan 10 of 10 complete)
 **Workflow:** YOLO mode, fine granularity, parallel execution enabled
 
 ---
@@ -54,6 +54,7 @@ See: .planning/PROJECT.md (updated 2026-05-26)
 | Phase 6 Plan 07 | Executed -- tauri-plugin-fs 3-part wiring + workflowLibrary save/load/list/duplicate + 5 tests complete
 | Phase 6 Plan 08 | Executed -- WorkflowBuilder save/load UI + App.tsx final wiring + 47/47 tests + build green complete |
 | Phase 6 Plan 09 | Executed -- ContextMenuPlugin wired (C2 BLOCKER closed) + capability-picker onChange (C3 WARNING closed) + 48/48 tests complete |
+| Phase 6 Plan 10 | Executed -- SpectralChart wired to UV:/MIR: TrendValue prefix (C5 BLOCKER closed) + SafetyEvent CurrentValue (C6 WARNING closed) + 49/49 tests complete |
 
 ---
 
@@ -85,12 +86,15 @@ See: .planning/PROJECT.md (updated 2026-05-26)
 - ContextMenuPlugin registered via area.use() (not editor.use()) -- matches rete-area-plugin pattern for area-level signals
 - handleCapabilityChange targets first StepNode by instanceof -- no public selected-node API in rete-area-plugin v2.0.6 without selectableNodes extension
 - rete-context-menu-plugin test mock uses regular function (not arrow) to be new-able -- consistent with NodeEditorMock/AreaPluginMock pattern
+- SpectralChart data sourced from UV:/MIR: prefixed TrendValue frames (no new event type needed)
+- Wavelength parsed from trendName suffix with parseInt(..., 10) + isNaN guard; invalid wavelengths silently discarded
+- SafetyEvent.CurrentValue added as optional C# record parameter with default null (backward-compatible positional call sites)
 
 ---
 
 ## Next Steps
 
-Phase 6 Plan 09 complete. Plan 10 (SpectralChart data wiring C5 + SafetyEvent currentValue C6) is next.
+Phase 6 Plan 10 complete. Phase 6 all 10 plans complete. Phase 7 (Site-Level React Dashboard) is next.
 
 ---
 
@@ -121,6 +125,7 @@ Phase 6 Plan 09 complete. Plan 10 (SpectralChart data wiring C5 + SafetyEvent cu
 | phase-6 | 07 | ~10 min | 2/2 | 9
 | phase-6 | 08 | ~15 min | 2/2 | 3 |
 | phase-6 | 09 | ~15 min | 2/2 | 3 |
+| phase-6 | 10 | ~4 min | 2/2 | 5 |
 
 ---
 
