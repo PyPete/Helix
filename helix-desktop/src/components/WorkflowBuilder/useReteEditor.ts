@@ -6,10 +6,12 @@ import { ConnectionPlugin, Presets as ConnectionPresets } from "rete-connection-
 import { ReactPlugin, Presets as ReactPresets } from "rete-react-plugin";
 import type { ClassicScheme, ReactArea2D } from "rete-react-plugin";
 import { createRoot } from "react-dom/client";
+import { ContextMenuPlugin, Presets as ContextMenuPresets } from "rete-context-menu-plugin";
+import type { ContextMenuExtra } from "rete-context-menu-plugin";
 import type { WslDocument } from "../../types/agent";
-import { exportToWsl } from "./nodes/HelixNodes";
+import { exportToWsl, StepNode, ConditionNode, BranchNode, LoopNode, ParallelNode, DelayNode, WaitForNode } from "./nodes/HelixNodes";
 
-type AreaExtra = ReactArea2D<ClassicScheme>;
+type AreaExtra = ReactArea2D<ClassicScheme> | ContextMenuExtra;
 
 export interface UseReteEditorResult {
   editor: NodeEditor<ClassicScheme> | null;
@@ -35,9 +37,22 @@ export function useReteEditor(
     render.addPreset(ReactPresets.classic.setup());
     connection.addPreset(ConnectionPresets.classic.setup());
 
+    const contextMenu = new ContextMenuPlugin<ClassicScheme>({
+      items: ContextMenuPresets.classic.setup([
+        ["Step", () => new StepNode()],
+        ["Condition", () => new ConditionNode()],
+        ["Branch", () => new BranchNode()],
+        ["Loop", () => new LoopNode()],
+        ["Parallel", () => new ParallelNode()],
+        ["Delay", () => new DelayNode()],
+        ["WaitFor", () => new WaitForNode()],
+      ]),
+    });
+
     editor.use(area);
     area.use(connection);
     area.use(render);
+    area.use(contextMenu);
 
     AreaExtensions.zoomAt(area, editor.getNodes());
 
