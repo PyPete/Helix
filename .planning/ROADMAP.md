@@ -215,7 +215,7 @@ Plans:
 - [x] 06-04-PLAN.md -- Rete.js Workflow Builder + useAgentWebSocket hook (7 node types, WSL export, tests)
 - [x] 06-05-PLAN.md -- Experiment Execution Panel (start/pause/resume/abort, step status display)
 - [x] 06-06-PLAN.md -- Live Trend Charts + Safety Panel (recharts ScalarTrendChart/SpectralChart, SafetyPanel)
-- [ ] 06-07-PLAN.md -- Workflow Library (save/load/duplicate via Tauri fs plugin)
+- [x] 06-07-PLAN.md -- Workflow Library (save/load/duplicate via Tauri fs plugin)
 - [ ] 06-08-PLAN.md -- Integration + Full Suite Green (App.tsx complete wiring, all tests pass)
 
 **UI hint**: yes

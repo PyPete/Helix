@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: Phase 6 -- Tauri Desktop App - Workflow Builder + Execution (Plan 06 of 08 complete)
+current_phase: Phase 6 -- Tauri Desktop App - Workflow Builder + Execution (Plan 07 of 08 complete)
 status: in_progress
-last_updated: "2026-05-29T18:32:00.000Z"
+last_updated: "2026-05-30T06:46:00.000Z"
 progress:
   total_phases: 10
   completed_phases: 1
@@ -16,7 +16,7 @@ progress:
 # Project State
 
 **Last updated:** 2026-05-29
-**Current phase:** Phase 6 -- Tauri Desktop App - Workflow Builder + Execution (Plan 05 of 08 complete)
+**Current phase:** Phase 6 -- Tauri Desktop App - Workflow Builder + Execution (Plan 07 of 08 complete)
 **Workflow:** YOLO mode, fine granularity, parallel execution enabled
 
 ---
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-05-26)
 
 **Core value:** A scientist can build a workflow, connect real lab hardware, execute an experiment, and see the results without writing code.
 
-**Current focus:** Phase 6 -- Tauri Desktop App - Workflow Builder + Execution (Plan 06 of 08 complete)
+**Current focus:** Phase 6 -- Tauri Desktop App - Workflow Builder + Execution (Plan 07 of 08 complete)
 
 ---
 
@@ -51,6 +51,7 @@ See: .planning/PROJECT.md (updated 2026-05-26)
 | Phase 6 Plan 04 | Executed -- WorkflowBuilder Rete.js canvas + 7 node types + useAgentWebSocket hook complete |
 | Phase 6 Plan 05 | Executed -- ExecutionPanel + compile-then-start flow + 6 tests + App.tsx wired complete |
 | Phase 6 Plan 06 | Executed -- ScalarTrendChart + SpectralChart (recharts) + SafetyPanel + 9 tests + App.tsx complete |
+| Phase 6 Plan 07 | Executed -- tauri-plugin-fs 3-part wiring + workflowLibrary save/load/list/duplicate + 5 tests complete |
 
 ---
 
@@ -74,12 +75,15 @@ See: .planning/PROJECT.md (updated 2026-05-26)
 - vi.hoisted() + vi.mock("recharts") required for all recharts tests to avoid SVG renderer errors in jsdom
 - isAnimationActive={false} on Line and Area components prevents animation-related test failures in jsdom
 - SpectralChart mounted with empty arrays in App.tsx -- spectral events not yet emitted by Agent WebSocket; full wiring in Plan 08
+- sanitizeName throws when no alphanumeric chars remain after replacement (not just empty string) -- "!!!" becomes "___" which is truthy but has no letters/digits
+- vi.clearAllMocks() required alongside vi.restoreAllMocks() in afterEach to reset call history between tests
+- JSON.stringify uses 2-space indent (pretty-print) for human-readable workflow files; test assertions must use "key": "value" format (with space after colon)
 
 ---
 
 ## Next Steps
 
-Phase 6, Plan 06 complete (Live Trend Charts + Safety Panel). Run Phase 6 remaining plans next (07, 08).
+Phase 6, Plan 07 complete (Workflow Library). Run Phase 6 remaining plan next (08).
 
 ---
 
@@ -107,6 +111,7 @@ Phase 6, Plan 06 complete (Live Trend Charts + Safety Panel). Run Phase 6 remain
 | phase-6 | 04 | ~12 min | 2/2 | 9 |
 | phase-6 | 05 | ~15 min | 2/2 | 3 |
 | phase-6 | 06 | ~12 min | 2/2 | 7 |
+| phase-6 | 07 | ~10 min | 2/2 | 9 |
 
 ---
 
@@ -122,6 +127,8 @@ Phase 6, Plan 06 complete (Live Trend Charts + Safety Panel). Run Phase 6 remain
 - `.planning/phases/phase-6/06-04-SUMMARY.md` -- Phase 6 Plan 04 complete summary
 - `.planning/phases/phase-6/06-05-SUMMARY.md` -- Phase 6 Plan 05 complete summary
 - `.planning/phases/phase-6/06-06-SUMMARY.md` -- Phase 6 Plan 06 complete summary
+- `.planning/phases/phase-6/06-07-SUMMARY.md` -- Phase 6 Plan 07 complete summary
+- `helix-desktop/src/lib/workflowLibrary.ts` -- Workflow save/load/list/duplicate via tauri-plugin-fs
 - `helix-desktop/` -- Tauri v2 desktop application scaffold
 - `helix-desktop/src/types/agent.ts` -- TypeScript Agent interface contracts (includes WSL + WebSocket frame types)
 - `helix-desktop/src-tauri/Cargo.toml` -- Rust dependencies (tonic 0.14, tauri 2.x)
