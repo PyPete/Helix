@@ -17,6 +17,7 @@
 | 4 | Transport + Execution Integration Tests | Verify transport layer and E2E workflow execution without real hardware | 1, 2, 3 | M |
 | 5 | Tauri Desktop App - Foundation | Scaffold the cross-platform fumehood UI and wire it to Agent | 2 | M |
 | 6 | Tauri Desktop App - Workflow Builder + Execution | Agent REST API + WebSocket layer, WSL compiler completions, Rete.js node editor, execution panel, live trends, safety display | 5 | XL |
+| 6.1 | Desktop App Polish — Device Controls, Status Events & Chart Foundation | CapabilityDescriptor schema, manual control endpoint, DeviceStatusEvent, SciChart wrapper layer | 6 | S |
 | 7 | Site-Level React Dashboard | Vite + TypeScript SPA with site overview, campaigns, history, and live trends | 2 | M |
 | 8 | CI Hardening + Full Test Coverage | All projects build and test in CI; coverage report; no skipped tests | 1, 4, 6, 7 | M |
 | 9 | Docusaurus Documentation | Scaffold and populate developer + scientist docs; auto-generate API reference | 7, 8 | M |
