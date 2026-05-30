@@ -83,3 +83,34 @@ public sealed record SafetyEvent(
     DateTimeOffset Timestamp,
     double? CurrentValue = null)
     : RunspaceEvent("safety-event", "", Timestamp);
+
+// ─── Device and manual action events ──────────────────────────────────────────
+
+/// <summary>
+/// Emitted when an adapter's availability status changes (online/offline).
+/// Not scoped to any runspace — RunspaceId is empty string.
+/// </summary>
+/// <param name="DeviceId">The adapter/capability name that changed status.</param>
+/// <param name="Status">New status: "online" or "offline".</param>
+/// <param name="Capabilities">List of capability names available on this device.</param>
+public sealed record DeviceStatusEvent(string DeviceId, string Status, string[] Capabilities)
+    : RunspaceEvent("device-status", "", DateTimeOffset.UtcNow);
+
+/// <summary>
+/// Emitted when a scientist manually invokes a capability outside of a workflow.
+/// Not scoped to any runspace — RunspaceId is empty string.
+/// </summary>
+/// <param name="DeviceId">The adapter/capability name that was invoked.</param>
+/// <param name="Capability">The capability verb name that was executed.</param>
+/// <param name="Parameters">Parameters passed to the capability invocation.</param>
+/// <param name="Success">Whether the invocation succeeded.</param>
+/// <param name="Result">Return value from the invocation. Null if no return value or failed.</param>
+/// <param name="Error">Error message if invocation failed. Null on success.</param>
+public sealed record ManualActionEvent(
+    string DeviceId,
+    string Capability,
+    Dictionary<string, object> Parameters,
+    bool Success,
+    object? Result,
+    string? Error)
+    : RunspaceEvent("manual-action", "", DateTimeOffset.UtcNow);
