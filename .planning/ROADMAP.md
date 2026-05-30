@@ -206,7 +206,7 @@ Tauri desktop app (helix-desktop):
 - [ ] Workflow save/load round-trip works: save a workflow, reload the app, re-open -- all nodes and edges present
 - [ ] UI component tests pass in CI
 
-**Plans:** 8 plans
+**Plans:** 10 plans
 
 Plans:
 - [x] 06-01-PLAN.md -- Agent REST Control API (POST /workflows/compile, POST/GET /runspaces, pause/resume/abort, GET /devices)
@@ -217,6 +217,8 @@ Plans:
 - [x] 06-06-PLAN.md -- Live Trend Charts + Safety Panel (recharts ScalarTrendChart/SpectralChart, SafetyPanel)
 - [x] 06-07-PLAN.md -- Workflow Library (save/load/duplicate via Tauri fs plugin)
 - [ ] 06-08-PLAN.md -- Integration + Full Suite Green (App.tsx complete wiring, all tests pass)
+- [ ] 06-09-PLAN.md -- Gap closure: WorkflowBuilder gaps (C2 context menu, C3 capability-picker onChange)
+- [ ] 06-10-PLAN.md -- Gap closure: SpectralChart data wiring (C5 UV/MIR prefix filter) + SafetyEvent currentValue (C6)
 
 **UI hint**: yes
 
