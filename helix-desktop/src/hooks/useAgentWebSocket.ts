@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
-import type { RunspaceEvent, TrendValue, SafetyEvent } from "../types/agent";
+import type { RunspaceEvent, TrendValue, SafetyEvent, DeviceStatusEvent } from "../types/agent";
 
 export interface AgentWebSocketState {
   runspaceEvents: RunspaceEvent[];
   trendValues: TrendValue[];
   safetyEvents: SafetyEvent[];
+  deviceStatusEvents: DeviceStatusEvent[];
   connected: boolean;
 }
 
@@ -12,6 +13,7 @@ export function useAgentWebSocket(baseUrl: string): AgentWebSocketState {
   const [runspaceEvents, setRunspaceEvents] = useState<RunspaceEvent[]>([]);
   const [trendValues, setTrendValues] = useState<TrendValue[]>([]);
   const [safetyEvents, setSafetyEvents] = useState<SafetyEvent[]>([]);
+  const [deviceStatusEvents, setDeviceStatusEvents] = useState<DeviceStatusEvent[]>([]);
   const [connected, setConnected] = useState(false);
 
   useEffect(() => {
@@ -28,6 +30,8 @@ export function useAgentWebSocket(baseUrl: string): AgentWebSocketState {
           setTrendValues((prev) => [...prev.slice(-200), frame as TrendValue]);
         } else if (frame.type === "safety-event") {
           setSafetyEvents((prev) => [...prev.slice(-50), frame as SafetyEvent]);
+        } else if (frame.type === "device-status") {
+          setDeviceStatusEvents((prev) => [...prev.slice(-50), frame as DeviceStatusEvent]);
         } else {
           setRunspaceEvents((prev) => [
             ...prev.slice(-100),
@@ -42,5 +46,5 @@ export function useAgentWebSocket(baseUrl: string): AgentWebSocketState {
     return () => ws.close();
   }, [baseUrl]);
 
-  return { runspaceEvents, trendValues, safetyEvents, connected };
+  return { runspaceEvents, trendValues, safetyEvents, deviceStatusEvents, connected };
 }

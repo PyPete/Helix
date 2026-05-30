@@ -75,3 +75,36 @@ export interface SafetyEvent {
   timestamp: string;
   currentValue?: number;
 }
+
+// Phase 6.1 additions — CapabilityDescriptor schema + DeviceStatusEvent
+export type ParameterType = "Numeric" | "Boolean" | "Enum" | "String" | "Duration";
+export type CapabilityCategory = "Control" | "Measurement" | "Status" | "Utility";
+
+export interface ParameterSchema {
+  name: string;
+  displayName: string;
+  type: ParameterType;
+  unit: string;
+  min?: number;
+  max?: number;
+  step?: number;
+  options?: string[];
+  defaultValue?: unknown;
+}
+
+export interface CapabilityDescriptor {
+  verbName: string;
+  displayName: string;
+  description: string;
+  category: CapabilityCategory;
+  parameters: ParameterSchema[];
+  isDestructive: boolean;
+  requiresActiveRunspace: boolean;
+}
+
+export interface DeviceStatusEvent {
+  type: "device-status";
+  deviceId: string;
+  status: "online" | "offline";
+  capabilities: string[];
+}

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import type { DeviceAdapter } from "../types/agent";
+import DeviceManualControl from "./DeviceManualControl/DeviceManualControl";
 
 interface DeviceRegistryProps {
   agentBaseUrl: string;
@@ -20,6 +21,7 @@ export default function DeviceRegistry({ agentBaseUrl }: DeviceRegistryProps) {
   const [devices, setDevices] = useState<DeviceAdapter[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedDevice, setSelectedDevice] = useState<string | null>(null);
 
   useEffect(() => {
     const poll = async () => {
@@ -53,9 +55,11 @@ export default function DeviceRegistry({ agentBaseUrl }: DeviceRegistryProps) {
         {devices.map(d => (
           <li key={d.adapterId}>
             <strong>{d.adapterId}</strong> — {d.healthy ? "Healthy" : "Unhealthy"}: {d.message}
+            <button onClick={() => setSelectedDevice(d.adapterId)}>Manual Control</button>
           </li>
         ))}
       </ul>
+      {selectedDevice && <DeviceManualControl deviceId={selectedDevice} baseUrl={agentBaseUrl} />}
     </section>
   );
 }
