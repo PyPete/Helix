@@ -12,16 +12,17 @@
   },
   "dependencies": {
     "@tauri-apps/api": "^2.0.0",
+    "@tauri-apps/plugin-fs": "^2.5.1",
     "@tauri-apps/plugin-store": "^2.0.0",
     "react": "^18.3.0",
     "react-dom": "^18.3.0",
+    "recharts": "3.8.1",
     "rete": "2.0.6",
-    "rete-react-plugin": "2.1.0",
     "rete-area-plugin": "2.1.5",
     "rete-connection-plugin": "2.0.5",
-    "rete-render-utils": "2.0.3",
     "rete-context-menu-plugin": "2.0.6",
-    "recharts": "3.8.1"
+    "rete-react-plugin": "2.1.0",
+    "rete-render-utils": "2.0.3"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2.0.0",
