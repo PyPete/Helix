@@ -1,4 +1,4 @@
-using Helix.Orchestration.Core.Capabilities;
+﻿using Helix.Orchestration.Core.Capabilities;
 using Helix.Orchestration.Devices.Drivers;
 using Helix.Orchestration.Devices.Transports.Opc;
 using Helix.Orchestration.Devices.Transports.Serial;
@@ -49,7 +49,9 @@ public static class DeviceAdapterExtensions
             sp.GetRequiredService<OpcDeviceTransport>(),
             sp.GetRequiredService<ILogger<SystagOpcUaClient>>()));
 
-        // Populate CapabilityRegistry with all device capabilities via the bridge
+        // Populate CapabilityRegistry with all device capabilities via the bridge.
+        // Each adapter's capabilities are prefixed with a device namespace (e.g. "vapourtec.Start")
+        // to avoid collisions when multiple adapters register identically-named capabilities.
         services.AddSingleton<CapabilityRegistry>(sp =>
         {
             var registry = new CapabilityRegistry();
@@ -59,9 +61,9 @@ public static class DeviceAdapterExtensions
             var adapter = sp.GetRequiredService<VapourtecR4>();
             foreach (var capability in adapter.GetCapabilities())
             {
-                var bridge = new HelixAdapterCapabilityBridge(adapter);
-                registry.Register(capability.Name, bridge);
-                logger.LogInformation("Registered capability: {CapabilityName}", capability.Name);
+                var key = $"vapourtec.{capability.Name}";
+                registry.Register(key, new HelixAdapterCapabilityBridge(adapter));
+                logger.LogInformation("Registered capability: {CapabilityName}", key);
             }
 
             logger.LogInformation(
@@ -72,16 +74,18 @@ public static class DeviceAdapterExtensions
             var knauer = sp.GetRequiredService<KnauerAzura>();
             foreach (var cap in knauer.GetCapabilities())
             {
-                registry.Register(cap.Name, new HelixAdapterCapabilityBridge(knauer));
-                logger.LogInformation("Registered capability: {CapabilityName}", cap.Name);
+                var key = $"knauer.{cap.Name}";
+                registry.Register(key, new HelixAdapterCapabilityBridge(knauer));
+                logger.LogInformation("Registered capability: {CapabilityName}", key);
             }
 
             // SystagOpcUaClient (Phase 3)
             var systag = sp.GetRequiredService<SystagOpcUaClient>();
             foreach (var cap in systag.GetCapabilities())
             {
-                registry.Register(cap.Name, new HelixAdapterCapabilityBridge(systag));
-                logger.LogInformation("Registered capability: {CapabilityName}", cap.Name);
+                var key = $"systag.{cap.Name}";
+                registry.Register(key, new HelixAdapterCapabilityBridge(systag));
+                logger.LogInformation("Registered capability: {CapabilityName}", key);
             }
 
             return registry;
