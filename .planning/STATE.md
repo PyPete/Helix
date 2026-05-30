@@ -2,21 +2,21 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: Phase 6 -- Tauri Desktop App - Workflow Builder + Execution (Plan 10 of 10 complete)
-status: unknown
-last_updated: "2026-05-30T08:43:52.444Z"
+current_phase: Phase 6.1 -- Desktop App Polish — Device Controls, Status Events & Chart Foundation (Plan 2 of 2 complete)
+status: complete
+last_updated: "2026-05-30T00:00:00.000Z"
 progress:
   total_phases: 10
   completed_phases: 2
   total_plans: 13
-  completed_plans: 14
+  completed_plans: 16
   percent: 20
 ---
 
 # Project State
 
 **Last updated:** 2026-05-30
-**Current phase:** Phase 6 -- Tauri Desktop App - Workflow Builder + Execution (Plan 10 of 10 complete)
+**Current phase:** Phase 6.1 -- Desktop App Polish — Device Controls, Status Events & Chart Foundation (Plan 2 of 2 complete)
 **Workflow:** YOLO mode, fine granularity, parallel execution enabled
 
 ---
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-05-26)
 
 **Core value:** A scientist can build a workflow, connect real lab hardware, execute an experiment, and see the results without writing code.
 
-**Current focus:** Phase 6 -- Tauri Desktop App - Workflow Builder + Execution (Plan 07 of 08 complete)
+**Current focus:** Phase 6.1 complete — Phase 7 (Site-Level React Dashboard) is next
 
 ---
 
@@ -55,6 +55,8 @@ See: .planning/PROJECT.md (updated 2026-05-26)
 | Phase 6 Plan 08 | Executed -- WorkflowBuilder save/load UI + App.tsx final wiring + 47/47 tests + build green complete |
 | Phase 6 Plan 09 | Executed -- ContextMenuPlugin wired (C2 BLOCKER closed) + capability-picker onChange (C3 WARNING closed) + 48/48 tests complete |
 | Phase 6 Plan 10 | Executed -- SpectralChart wired to UV:/MIR: TrendValue prefix (C5 BLOCKER closed) + SafetyEvent CurrentValue (C6 WARNING closed) + 49/49 tests complete |
+| Phase 6.1 Plan 01 | Executed -- CapabilityDescriptor types, DeviceStatusEvent + ManualActionEvent records, POST /devices/{id}/execute, AgentService DeviceHealthPollLoopAsync complete |
+| Phase 6.1 Plan 02 | Executed -- TS CapabilityDescriptor types, device-status WebSocket dispatch, DeviceManualControl panel (53/53 tests), SciChart wrapper placeholder complete |
 
 ---
 
@@ -89,12 +91,15 @@ See: .planning/PROJECT.md (updated 2026-05-26)
 - SpectralChart data sourced from UV:/MIR: prefixed TrendValue frames (no new event type needed)
 - Wavelength parsed from trendName suffix with parseInt(..., 10) + isNaN guard; invalid wavelengths silently discarded
 - SafetyEvent.CurrentValue added as optional C# record parameter with default null (backward-compatible positional call sites)
+- IRunspaceEventEmitter namespace is Helix.Orchestration.Agent.Events (not Streaming) -- confirmed by build
+- CapabilityRegistry.GetAllCapabilityNames() used to enumerate adapters in DeviceHealthPollLoopAsync (no per-adapter registry needed)
+- SciChart wrapper layer (charts/index.ts) is pure re-export in Step 1 -- no npm install scichart, no App.tsx changes
 
 ---
 
 ## Next Steps
 
-Phase 6 Plan 10 complete. Phase 6 all 10 plans complete. Phase 7 (Site-Level React Dashboard) is next.
+Phase 6.1 Plan 02 complete. Phase 6.1 all 2 plans complete. Phase 7 (Site-Level React Dashboard) is next.
 
 ---
 
@@ -108,6 +113,8 @@ Phase 6 Plan 10 complete. Phase 6 all 10 plans complete. Phase 7 (Site-Level Rea
 | 3. Remaining Device Drivers | Complete | 2026-05-26 |
 | 4. Integration Test Coverage | Complete | 2026-05-27 |
 | 5. Tauri Desktop App Foundation | Complete | 2026-05-28 |
+| 6. Tauri Desktop App - Workflow Builder + Execution | Complete | 2026-05-30 |
+| 6.1. Desktop App Polish — Device Controls, Status Events & Chart Foundation | Complete | 2026-05-30 |
 
 ---
 
@@ -126,6 +133,8 @@ Phase 6 Plan 10 complete. Phase 6 all 10 plans complete. Phase 7 (Site-Level Rea
 | phase-6 | 08 | ~15 min | 2/2 | 3 |
 | phase-6 | 09 | ~15 min | 2/2 | 3 |
 | phase-6 | 10 | ~4 min | 2/2 | 5 |
+| phase-6.1 | 01 | ~15 min | 3/3 | 4 |
+| phase-6.1 | 02 | ~20 min | 2/2 | 8 |
 
 ---
 
@@ -155,3 +164,6 @@ Phase 6 Plan 10 complete. Phase 6 all 10 plans complete. Phase 7 (Site-Level Rea
 - `helix-desktop/src/components/ExecutionPanel/ExecutionPanel.tsx` -- execution control panel with REST compile+start flow
 - `helix-desktop/src/App.tsx` -- composition root
 - `helix-desktop/src-tauri/src/commands/connection.rs` -- load_config/save_config Tauri commands
+- `Helix.Orchestration.Core/Capabilities/CapabilityDescriptor.cs` -- CapabilityDescriptor schema types (Phase 6.1)
+- `helix-desktop/src/components/DeviceManualControl/DeviceManualControl.tsx` -- schema-driven manual control panel (Phase 6.1)
+- `helix-desktop/src/components/charts/index.ts` -- SciChart wrapper re-export layer (Phase 6.1)
