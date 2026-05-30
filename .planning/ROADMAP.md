@@ -216,8 +216,8 @@ Plans:
 - [x] 06-05-PLAN.md -- Experiment Execution Panel (start/pause/resume/abort, step status display)
 - [x] 06-06-PLAN.md -- Live Trend Charts + Safety Panel (recharts ScalarTrendChart/SpectralChart, SafetyPanel)
 - [x] 06-07-PLAN.md -- Workflow Library (save/load/duplicate via Tauri fs plugin)
-- [ ] 06-08-PLAN.md -- Integration + Full Suite Green (App.tsx complete wiring, all tests pass)
-- [ ] 06-09-PLAN.md -- Gap closure: WorkflowBuilder gaps (C2 context menu, C3 capability-picker onChange)
+- [x] 06-08-PLAN.md -- Integration + Full Suite Green (App.tsx complete wiring, all tests pass)
+- [x] 06-09-PLAN.md -- Gap closure: WorkflowBuilder gaps (C2 context menu, C3 capability-picker onChange)
 - [ ] 06-10-PLAN.md -- Gap closure: SpectralChart data wiring (C5 UV/MIR prefix filter) + SafetyEvent currentValue (C6)
 
 **UI hint**: yes
@@ -341,7 +341,7 @@ Plans:
 | 3. Remaining Device Drivers | 5/5 | Complete | 2026-05-26 |
 | 4. Transport + Execution Integration Tests | 0/4 | Not started | - |
 | 5. Tauri Desktop App - Foundation | 3/3 | Complete | 2026-05-28 |
-| 6. Tauri Desktop App - Workflow Builder + Execution | 4/8 | In progress | - |
+| 6. Tauri Desktop App - Workflow Builder + Execution | 5/10 | In progress | - |
 | 7. Site-Level React Dashboard | 0/6 | Not started | - |
 | 8. CI Hardening + Full Test Coverage | 0/5 | Not started | - |
 | 9. Docusaurus Documentation | 0/5 | Not started | - |
@@ -370,8 +370,8 @@ Plans:
 | B7 | Phase 2 | Pending |
 | B8 | Phase 2 + 3 | Pending |
 | C1 | Phase 5 | Complete |
-| C2 | Phase 6 | Pending |
-| C3 | Phase 6 | Pending |
+| C2 | Phase 6 | Complete |
+| C3 | Phase 6 | Complete |
 | C4 | Phase 6 | Complete |
 | C5 | Phase 6 | Pending |
 | C6 | Phase 6 | Pending |

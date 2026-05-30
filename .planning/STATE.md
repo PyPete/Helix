@@ -2,21 +2,21 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: Phase 6 -- Tauri Desktop App - Workflow Builder + Execution (Plan 08 of 08 complete)
+current_phase: Phase 6 -- Tauri Desktop App - Workflow Builder + Execution (Plan 09 of 10 complete)
 status: in_progress
-last_updated: "2026-05-30T07:55:00.000Z"
+last_updated: "2026-05-30T09:36:00.000Z"
 progress:
   total_phases: 10
   completed_phases: 1
-  total_plans: 8
-  completed_plans: 8
+  total_plans: 10
+  completed_plans: 9
   percent: 17
 ---
 
 # Project State
 
-**Last updated:** 2026-05-29
-**Current phase:** Phase 6 -- Tauri Desktop App - Workflow Builder + Execution (Plan 07 of 08 complete)
+**Last updated:** 2026-05-30
+**Current phase:** Phase 6 -- Tauri Desktop App - Workflow Builder + Execution (Plan 09 of 10 complete)
 **Workflow:** YOLO mode, fine granularity, parallel execution enabled
 
 ---
@@ -53,6 +53,7 @@ See: .planning/PROJECT.md (updated 2026-05-26)
 | Phase 6 Plan 06 | Executed -- ScalarTrendChart + SpectralChart (recharts) + SafetyPanel + 9 tests + App.tsx complete |
 | Phase 6 Plan 07 | Executed -- tauri-plugin-fs 3-part wiring + workflowLibrary save/load/list/duplicate + 5 tests complete
 | Phase 6 Plan 08 | Executed -- WorkflowBuilder save/load UI + App.tsx final wiring + 47/47 tests + build green complete |
+| Phase 6 Plan 09 | Executed -- ContextMenuPlugin wired (C2 BLOCKER closed) + capability-picker onChange (C3 WARNING closed) + 48/48 tests complete |
 
 ---
 
@@ -81,12 +82,15 @@ See: .planning/PROJECT.md (updated 2026-05-26)
 - Phase 6 scope for handleLoad: fires onExport with loaded doc; editor re-population deferred to Phase 7
 - Python used to write files with JSX template literals to avoid PowerShell backtick escaping
 - JSON.stringify uses 2-space indent (pretty-print) for human-readable workflow files; test assertions must use "key": "value" format (with space after colon)
+- ContextMenuPlugin registered via area.use() (not editor.use()) -- matches rete-area-plugin pattern for area-level signals
+- handleCapabilityChange targets first StepNode by instanceof -- no public selected-node API in rete-area-plugin v2.0.6 without selectableNodes extension
+- rete-context-menu-plugin test mock uses regular function (not arrow) to be new-able -- consistent with NodeEditorMock/AreaPluginMock pattern
 
 ---
 
 ## Next Steps
 
-Phase 6 COMPLETE (all 8 plans executed). Phase 7 (Site-Level React Dashboard) is next.
+Phase 6 Plan 09 complete. Plan 10 (SpectralChart data wiring C5 + SafetyEvent currentValue C6) is next.
 
 ---
 
@@ -116,6 +120,7 @@ Phase 6 COMPLETE (all 8 plans executed). Phase 7 (Site-Level React Dashboard) is
 | phase-6 | 06 | ~12 min | 2/2 | 7 |
 | phase-6 | 07 | ~10 min | 2/2 | 9
 | phase-6 | 08 | ~15 min | 2/2 | 3 |
+| phase-6 | 09 | ~15 min | 2/2 | 3 |
 
 ---
 
