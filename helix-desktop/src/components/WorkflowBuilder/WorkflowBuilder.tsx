@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+﻿import { useState, useEffect, useRef } from "react";
 import type { ClassicPreset } from "rete";
 import type { DeviceAdapter, WslDocument } from "../../types/agent";
 import { exportToWsl, StepNode } from "./nodes/HelixNodes";
@@ -19,6 +19,7 @@ export function WorkflowBuilder({ baseUrl, onExport }: WorkflowBuilderProps) {
   const [savedWorkflows, setSavedWorkflows] = useState<string[]>([]);
   const [saveStatus, setSaveStatus] = useState<string | null>(null);
   const [selectedCapability, setSelectedCapability] = useState<string>("");
+  const [nodeCount, setNodeCount] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -40,7 +41,6 @@ export function WorkflowBuilder({ baseUrl, onExport }: WorkflowBuilderProps) {
 
   const handleExport = () => {
     if (!editor) {
-      // Editor not yet initialised -- export empty WSL document
       const wsl = exportToWsl(
         { getNodes: () => [], getConnections: () => [] } as never,
         "My Workflow"
@@ -48,12 +48,14 @@ export function WorkflowBuilder({ baseUrl, onExport }: WorkflowBuilderProps) {
       onExport(wsl);
       return;
     }
+    setNodeCount(editor.getNodes().length);
     const wsl = exportToWsl(editor, "My Workflow");
     onExport(wsl);
   };
 
   const handleSave = async () => {
     if (!editor) return;
+    setNodeCount(editor.getNodes().length);
     const wsl = exportToWsl(editor, workflowName);
     await saveWorkflow(workflowName, wsl);
     setSaveStatus("Saved");
@@ -67,8 +69,6 @@ export function WorkflowBuilder({ baseUrl, onExport }: WorkflowBuilderProps) {
 
   const handleLoad = async (name: string) => {
     const doc = await loadWorkflow(name);
-    // Phase 6 scope: load triggers onExport callback with loaded doc
-    // (editor re-population is Phase 7 polish)
     onExport(doc);
   };
 
@@ -118,11 +118,30 @@ export function WorkflowBuilder({ baseUrl, onExport }: WorkflowBuilderProps) {
           </select>
         )}
       </div>
-      <div
-        ref={containerRef}
-        style={{ width: "100%", height: "600px" }}
-        data-testid="rete-canvas"
-      />
+      <div style={{ position: "relative", width: "100%", height: "600px" }}>
+        <div
+          ref={containerRef}
+          style={{ width: "100%", height: "100%" }}
+          data-testid="rete-canvas"
+        />
+        {nodeCount === 0 && (
+          <span
+            data-testid="canvas-empty-hint"
+            style={{
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              color: "#888",
+              pointerEvents: "none",
+              userSelect: "none",
+              fontSize: "0.9rem",
+            }}
+          >
+            Right-click to add nodes
+          </span>
+        )}
+      </div>
     </section>
   );
 }

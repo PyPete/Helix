@@ -1,7 +1,36 @@
-.logo.vite:hover {
+﻿.logo.vite:hover {
   filter: drop-shadow(0 0 2em #747bff);
 }
 
 .logo.react:hover {
   filter: drop-shadow(0 0 2em #61dafb);
 }
+
+.app-always-visible { padding: 0 1rem; }
+
+.app-tabs {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid #444;
+}
+
+.tab-btn {
+  padding: 0.4rem 1.2rem;
+  background: transparent;
+  border: 1px solid #666;
+  border-radius: 4px 4px 0 0;
+  color: inherit;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.tab-btn--active {
+  background: #1a1a2e;
+  border-bottom-color: #1a1a2e;
+  color: #9d7fff;
+  font-weight: 600;
+}
+
+.tab-panel { display: none; padding: 0.5rem 1rem; }
+.tab-panel--active { display: block; }
