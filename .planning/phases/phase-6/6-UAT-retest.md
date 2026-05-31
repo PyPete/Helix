@@ -3,7 +3,7 @@ status: complete
 phase: phase-6
 source: 06-11-SUMMARY.md (gap closure re-test)
 started: 2026-05-30T22:00:00Z
-updated: 2026-05-30T22:13:00Z
+updated: 2026-05-30T22:45:00Z
 note: "Re-test session targeting gap fixes from plan 06-11. Prior session (status: diagnosed) validated tests 1-4 pass, 10-14 skipped/blocked. This session focuses on tests 5,6,7 (WorkflowBuilder now behind Builder tab) and the new tab navigation."
 ---
 
@@ -33,9 +33,8 @@ result: pass
 
 ### 4. WorkflowBuilder — right-click context menu
 expected: Right-clicking the canvas opens a context menu with node types (Step, Condition, Branch, Loop, Parallel, Delay, WaitFor). Clicking one adds a node.
-result: issue
-reported: "fail"
-severity: major
+result: pass
+note: "Fixed: ReactPresets.contextMenu.setup() was missing from render.addPreset()"
 
 ### 5. Workflow save and load (Tauri runtime)
 expected: Type a workflow name, click Save. Click Load... — saved name appears in dropdown. Selecting it triggers the onExport callback with the loaded document.
@@ -44,8 +43,8 @@ result: [pending]
 ## Summary
 
 total: 5
-passed: 3
-issues: 1
+passed: 4
+issues: 0
 pending: 0
 skipped: 1
 blocked: 0
