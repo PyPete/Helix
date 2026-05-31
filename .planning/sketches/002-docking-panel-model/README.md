@@ -2,7 +2,7 @@
 sketch: "002"
 name: docking-panel-model
 question: "How should dockable panels be arranged and interacted with?"
-winner: null
+winner: "A"
 tags: [layout, docking, panels, ide]
 ---
 
@@ -24,3 +24,4 @@ Open `.planning/sketches/002-docking-panel-model/index.html` in a browser.
 - Do tabbed dock groups (B) feel more flexible for power users who want Device Explorer + Safety in the same slot?
 - Do floating panels (C) feel too chaotic for a data-dense scientific tool, or liberating?
 - Which gives the workflow canvas (center) the most usable real estate?
+

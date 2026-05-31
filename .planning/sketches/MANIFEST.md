@@ -12,6 +12,7 @@ Visual Studio / JetBrains–style IDE layout for a lab automation desktop app. D
 
 | # | Name | Design Question | Winner | Tags |
 |---|------|----------------|--------|------|
-| 001 | ribbon-workspace-shell | Does the Ribbon + workspace chrome feel right? | null | layout, ribbon, shell |
-| 002 | docking-panel-model | How should dockable panels be arranged? | null | layout, docking, panels |
-| 003 | manual-control-dialog | How should auto-generated capability controls be presented? | null | manual-control, forms, ux |
+| 001 | ribbon-workspace-shell | Does the Ribbon + workspace chrome feel right? | A | layout, ribbon, shell |
+| 002 | docking-panel-model | How should dockable panels be arranged? | A | layout, docking, panels |
+| 003 | manual-control-dialog | How should auto-generated capability controls be presented? | B | manual-control, forms, ux |
+

@@ -1,0 +1,209 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>003 — Manual Control Dialog</title>
+<link rel="stylesheet" href="../themes/default.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-sans);font-size:var(--text-base);background:var(--color-bg);color:var(--color-text);min-height:100vh;display:flex;flex-direction:column}
+#vn{position:fixed;top:0;left:0;right:0;z-index:9999;background:#111118;border-bottom:2px solid var(--color-primary);padding:6px 12px;display:flex;gap:8px;align-items:center;font-size:var(--text-sm)}
+.vt{padding:4px 14px;background:transparent;border:1px solid var(--color-border);border-radius:var(--radius-sm);color:var(--color-text-muted);cursor:pointer;transition:all .15s;font-size:var(--text-sm);font-family:var(--font-sans)}
+.vt:hover{border-color:var(--color-primary);color:var(--color-text)}
+.vt.active{background:var(--color-primary-dim);border-color:var(--color-primary);color:var(--color-primary)}
+#sk-label{margin-left:auto;color:var(--color-text-dim);font-size:var(--text-xs)}
+.variant{display:none;flex-direction:column;padding:16px;margin-top:36px;overflow-y:auto;min-height:calc(100vh - 36px)}
+.variant.active{display:flex}
+.dev-header{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:10px 14px;display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-shrink:0}
+.dev-icon{width:36px;height:36px;background:var(--color-primary-dim);border:1px solid var(--color-primary);border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.dev-name{font-size:var(--text-lg);font-weight:600}
+.dev-meta{font-size:var(--text-xs);color:var(--color-text-muted);margin-top:2px}
+.online-dot{width:8px;height:8px;border-radius:50%;background:var(--color-online);display:inline-block;margin-right:4px}
+label{font-size:var(--text-xs);color:var(--color-text-muted);display:block;margin-bottom:3px;text-transform:uppercase;letter-spacing:.05em}
+input[type=number],input[type=text],select{background:var(--color-surface-raised);border:1px solid var(--color-border);border-radius:var(--radius-sm);color:var(--color-text);padding:5px 8px;font-size:var(--text-sm);font-family:var(--font-sans);width:100%;transition:border-color .15s;outline:none}
+input[type=number]:focus,select:focus{border-color:var(--color-primary)}
+input[type=range]{width:100%;accent-color:var(--color-primary);cursor:pointer}
+.field{margin-bottom:10px}
+.field-row{display:flex;gap:8px;align-items:flex-end}
+.field-row .field{flex:1;margin-bottom:0}
+.unit{font-size:var(--text-xs);color:var(--color-text-dim);white-space:nowrap;padding-bottom:6px}
+.btn{padding:6px 16px;border-radius:var(--radius-sm);font-size:var(--text-sm);cursor:pointer;border:1px solid var(--color-border);background:var(--color-surface-raised);color:var(--color-text-muted);transition:all .15s;font-family:var(--font-sans)}
+.btn:hover{border-color:var(--color-text-muted);color:var(--color-text)}
+.btn.primary{background:var(--color-primary-dim);border-color:var(--color-primary);color:var(--color-primary)}
+.btn.primary:hover{background:var(--color-primary);color:#fff}
+.btn.danger{border-color:var(--color-danger);color:var(--color-danger)}
+.btn.danger:hover{background:var(--color-danger);color:#fff}
+.btn.sm{padding:4px 10px;font-size:var(--text-xs)}
+.btn.loading{opacity:.6;pointer-events:none}
+.btn-row{display:flex;gap:8px;margin-top:8px;align-items:center}
+.rbadge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:var(--radius-full);font-size:var(--text-xs);font-weight:600;opacity:0;transition:opacity .2s}
+.rbadge.ok{background:#1a3d2a;color:var(--color-success);opacity:1}
+.rbadge.err{background:#3d1a1a;color:var(--color-danger);opacity:1}
+
+/* Variant A */
+.ap{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-md);overflow:hidden;max-width:520px;width:100%}
+.cshdr{padding:8px 14px;background:var(--color-surface-raised);border-bottom:1px solid var(--color-border);display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;transition:background .12s}
+.cshdr:hover{background:var(--color-surface-overlay)}
+.csname{font-size:var(--text-sm);font-weight:600;flex:1}
+.csdesc{font-size:var(--text-xs);color:var(--color-text-muted)}
+.cschev{color:var(--color-text-dim);font-size:11px;transition:transform .18s}
+.cshdr.open .cschev{transform:rotate(90deg)}
+.csbody{padding:12px 14px;display:none;border-bottom:1px solid var(--color-border)}
+.csbody.open{display:block}
+.dbadge{font-size:10px;padding:2px 6px;border-radius:var(--radius-full);background:#3d1a1a;color:var(--color-danger)}
+
+/* Variant B */
+.cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;width:100%}
+.ccard{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-md);overflow:hidden;transition:border-color .15s}
+.ccard:hover{border-color:var(--color-border-strong)}
+.ccard.exp{border-color:var(--color-primary)}
+.cchead{padding:9px 12px;border-bottom:1px solid var(--color-border);display:flex;align-items:center;gap:8px;cursor:pointer}
+.ccicon{width:26px;height:26px;background:var(--color-surface-raised);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.cctitle{font-size:var(--text-sm);font-weight:600;flex:1}
+.ccquick{padding:6px 12px;display:flex;align-items:center;justify-content:space-between}
+.ccbody{padding:10px 12px;display:none}
+.ccbody.open{display:block}
+
+/* Variant C */
+.ctbar{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-md);overflow:hidden;width:100%}
+.ctstrip{display:flex;gap:2px;padding:6px;border-bottom:1px solid var(--color-border);flex-wrap:wrap}
+.ctbtn{display:flex;align-items:center;gap:5px;padding:4px 10px;border-radius:var(--radius-sm);border:1px solid transparent;background:transparent;color:var(--color-text-muted);cursor:pointer;font-size:var(--text-sm);font-family:var(--font-sans);transition:all .12s;white-space:nowrap}
+.ctbtn:hover{background:var(--color-surface-raised);color:var(--color-text);border-color:var(--color-border)}
+.ctbtn.active{background:var(--color-primary-dim);border-color:var(--color-primary);color:var(--color-primary)}
+.ctbtn.danger{color:var(--color-danger)}
+.ctbtn.danger:hover{background:#3d1a1a;border-color:var(--color-danger)}
+.ctsep{width:1px;background:var(--color-border);margin:4px 2px;align-self:stretch}
+.ctdet{padding:14px;min-height:110px}
+.ctdet-title{font-size:var(--text-sm);font-weight:600;margin-bottom:6px}
+.ctdet-desc{font-size:var(--text-xs);color:var(--color-text-muted);margin-bottom:12px}
+.ctparams{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+.ctparams .field{min-width:90px;margin-bottom:0}
+</style>
+</head>
+<body>
+<div id="vn">
+  <button class="vt active" onclick="sv('a',this)">A: Stacked Form</button>
+  <button class="vt" onclick="sv('b',this)">B: Card Grid</button>
+  <button class="vt" onclick="sv('c',this)">C: Inline Toolbar</button>
+  <span id="sk-label">003 — Manual Control Dialog (VapourtecR4)</span>
+</div>
+
+<!-- VARIANT A: Stacked accordion form -->
+<div id="variant-a" class="variant active" style="align-items:flex-start">
+  <div class="dev-header" style="max-width:520px">
+    <div class="dev-icon">⚗</div>
+    <div style="flex:1"><div class="dev-name">VapourtecR4</div><div class="dev-meta">vapourtec.* · COM3 · 19200 baud</div></div>
+    <div style="font-size:var(--text-sm)"><span class="online-dot"></span>Online</div>
+  </div>
+  <div class="ap">
+    <div class="cshdr open" onclick="toggleA(this)"><span class="cschev">▶</span><span class="csname">Start</span><span class="csdesc">Start R4 pumps running</span></div>
+    <div class="csbody open"><p style="font-size:var(--text-xs);color:var(--color-text-muted);margin-bottom:10px">No parameters required. Sends PN and FW PN to both pumps.</p><div class="btn-row"><button class="btn primary" onclick="execBtn(this,'vapourtec.Start','{}')">▶ Execute</button><span class="rbadge"></span></div></div>
+    <div class="cshdr" onclick="toggleA(this)"><span class="cschev">▶</span><span class="csname">Stop</span><span class="csdesc">Stop all pumps</span></div>
+    <div class="csbody"><div class="btn-row"><button class="btn" onclick="execBtn(this,'vapourtec.Stop','{}')">⏹ Execute</button><span class="rbadge"></span></div></div>
+    <div class="cshdr" onclick="toggleA(this)"><span class="cschev">▶</span><span class="csname">SetFlowRate</span><span class="csdesc">Set pump flow rate</span></div>
+    <div class="csbody">
+      <div class="field-row">
+        <div class="field"><label>Pump</label><select id="a-pump"><option>A</option><option>B</option></select></div>
+        <div class="field"><label>Flow Rate</label><input type="number" id="a-fr" value="1.0" min="0.1" max="10" step="0.1"></div>
+        <div class="unit">mL/min</div>
+      </div>
+      <input type="range" min="0.1" max="10" step="0.1" value="1.0" style="margin-bottom:8px" oninput="document.getElementById('a-fr').value=this.value">
+      <div class="btn-row"><button class="btn primary" onclick="execBtn(this,'vapourtec.SetFlowRate',JSON.stringify({pump:document.getElementById('a-pump').value,flowRate:+document.getElementById('a-fr').value}))">▶ Execute</button><span class="rbadge"></span></div>
+    </div>
+    <div class="cshdr" onclick="toggleA(this)"><span class="cschev">▶</span><span class="csname">SetTemperature</span><span class="csdesc">Set reactor temperature</span></div>
+    <div class="csbody">
+      <div class="field-row">
+        <div class="field"><label>Reactor</label><select id="a-rc"><option>R1</option><option>R2</option></select></div>
+        <div class="field"><label>Temperature</label><input type="number" id="a-tmp" value="25" min="0" max="150" step="1"></div>
+        <div class="unit">°C</div>
+      </div>
+      <input type="range" min="0" max="150" value="25" style="margin-bottom:8px" oninput="document.getElementById('a-tmp').value=this.value">
+      <div class="btn-row"><button class="btn primary" onclick="execBtn(this,'vapourtec.SetTemperature',JSON.stringify({reactor:document.getElementById('a-rc').value,temperature:+document.getElementById('a-tmp').value}))">▶ Execute</button><span class="rbadge"></span></div>
+    </div>
+    <div class="cshdr" onclick="toggleA(this)"><span class="cschev">▶</span><span class="csname">Collect</span><span class="csdesc">Collect product fraction</span></div>
+    <div class="csbody">
+      <div class="field-row"><div class="field"><label>Volume</label><input type="number" id="a-vol" value="1.0" min="0.1" max="50" step="0.1"></div><div class="unit">mL</div></div>
+      <div class="btn-row"><button class="btn primary" onclick="execBtn(this,'vapourtec.Collect',JSON.stringify({volume:+document.getElementById('a-vol').value}))">▶ Execute</button><span class="rbadge"></span></div>
+    </div>
+    <div class="cshdr" onclick="toggleA(this)"><span class="cschev">▶</span><span class="csname">EmergencyStop</span><span class="dbadge">⚠ Destructive</span></div>
+    <div class="csbody" style="border-bottom:none"><p style="font-size:var(--text-xs);color:var(--color-danger);margin-bottom:10px">⚠ Immediately cuts all pump power. Recorded in event log.</p><div class="btn-row"><button class="btn danger" onclick="execDestructive(this,'vapourtec.EmergencyStop','{}')">⚡ Execute</button><span class="rbadge"></span></div></div>
+  </div>
+</div>
+
+<!-- VARIANT B: Card grid -->
+<div id="variant-b" class="variant" style="align-items:flex-start">
+  <div class="dev-header"><div class="dev-icon">⚗</div><div style="flex:1"><div class="dev-name">VapourtecR4</div><div class="dev-meta">vapourtec.* · 10 capabilities</div></div><div style="font-size:var(--text-sm)"><span class="online-dot"></span>Online</div></div>
+  <div class="cgrid">
+    <div class="ccard"><div class="cchead" onclick="toggleCard(this)"><div class="ccicon">▶</div><span class="cctitle">Start</span></div><div class="ccquick"><span style="font-size:var(--text-xs);color:var(--color-text-muted)">No parameters</span><button class="btn primary sm" onclick="execBtn(this,'vapourtec.Start','{}')">Execute</button></div><div style="padding:0 12px 6px"><span class="rbadge"></span></div></div>
+    <div class="ccard"><div class="cchead" onclick="toggleCard(this)"><div class="ccicon">⏹</div><span class="cctitle">Stop</span></div><div class="ccquick"><span style="font-size:var(--text-xs);color:var(--color-text-muted)">No parameters</span><button class="btn sm" onclick="execBtn(this,'vapourtec.Stop','{}')">Execute</button></div><div style="padding:0 12px 6px"><span class="rbadge"></span></div></div>
+    <div class="ccard exp"><div class="cchead" onclick="toggleCard(this)"><div class="ccicon">💧</div><span class="cctitle">SetFlowRate</span><span style="font-size:10px;color:var(--color-text-dim)">▾</span></div><div class="ccbody open"><div class="field-row"><div class="field"><label>Pump</label><select id="b-pump"><option>A</option><option>B</option></select></div><div class="field"><label>mL/min</label><input type="number" id="b-fr" value="1.0" min="0.1" max="10" step="0.1"></div></div><input type="range" min="0.1" max="10" step="0.1" value="1.0" style="margin:5px 0" oninput="document.getElementById('b-fr').value=this.value"><div class="btn-row"><button class="btn primary sm" onclick="execBtn(this,'vapourtec.SetFlowRate',JSON.stringify({pump:document.getElementById('b-pump').value,flowRate:+document.getElementById('b-fr').value}))">Execute</button><span class="rbadge"></span></div></div></div>
+    <div class="ccard exp"><div class="cchead" onclick="toggleCard(this)"><div class="ccicon">🌡</div><span class="cctitle">SetTemperature</span><span style="font-size:10px;color:var(--color-text-dim)">▾</span></div><div class="ccbody open"><div class="field-row"><div class="field"><label>Reactor</label><select id="b-rc"><option>R1</option><option>R2</option></select></div><div class="field"><label>°C</label><input type="number" id="b-tmp" value="25" min="0" max="150"></div></div><input type="range" min="0" max="150" value="25" style="margin:5px 0" oninput="document.getElementById('b-tmp').value=this.value"><div class="btn-row"><button class="btn primary sm" onclick="execBtn(this,'vapourtec.SetTemperature',JSON.stringify({reactor:document.getElementById('b-rc').value,temperature:+document.getElementById('b-tmp').value}))">Execute</button><span class="rbadge"></span></div></div></div>
+    <div class="ccard exp"><div class="cchead" onclick="toggleCard(this)"><div class="ccicon">🧪</div><span class="cctitle">Collect</span><span style="font-size:10px;color:var(--color-text-dim)">▾</span></div><div class="ccbody open"><div class="field"><label>Volume (mL)</label><input type="number" id="b-vol" value="1.0" min="0.1" max="50" step="0.1"></div><div class="btn-row"><button class="btn primary sm" onclick="execBtn(this,'vapourtec.Collect',JSON.stringify({volume:+document.getElementById('b-vol').value}))">Execute</button><span class="rbadge"></span></div></div></div>
+    <div class="ccard" style="border-color:#5a2020"><div class="cchead" onclick="toggleCard(this)" style="background:#2a1a1a"><div class="ccicon" style="background:#3d1a1a">⚡</div><span class="cctitle" style="color:var(--color-danger)">EmergencyStop</span><span style="font-size:10px;color:var(--color-danger)">⚠</span></div><div class="ccquick"><span style="font-size:var(--text-xs);color:var(--color-danger)">Cuts all power</span><button class="btn danger sm" onclick="execDestructive(this,'vapourtec.EmergencyStop','{}')">Execute</button></div><div style="padding:0 12px 6px"><span class="rbadge"></span></div></div>
+  </div>
+</div>
+
+<!-- VARIANT C: Inline toolbar -->
+<div id="variant-c" class="variant" style="align-items:flex-start">
+  <div class="dev-header"><div class="dev-icon">⚗</div><div style="flex:1"><div class="dev-name">VapourtecR4</div><div class="dev-meta">vapourtec.* · 10 capabilities</div></div><div style="font-size:var(--text-sm)"><span class="online-dot"></span>Online</div></div>
+  <div class="ctbar">
+    <div class="ctstrip">
+      <button class="ctbtn active" onclick="selCtb(this,'cd-start')">▶ Start</button>
+      <button class="ctbtn" onclick="selCtb(this,'cd-stop')">⏹ Stop</button>
+      <div class="ctsep"></div>
+      <button class="ctbtn" onclick="selCtb(this,'cd-flow')">💧 SetFlowRate</button>
+      <button class="ctbtn" onclick="selCtb(this,'cd-temp')">🌡 SetTemperature</button>
+      <button class="ctbtn" onclick="selCtb(this,'cd-inject')">💉 Inject</button>
+      <button class="ctbtn" onclick="selCtb(this,'cd-collect')">🧪 Collect</button>
+      <div class="ctsep"></div>
+      <button class="ctbtn" onclick="selCtb(this,'cd-prime')">🔃 PrimeLoop</button>
+      <button class="ctbtn" onclick="selCtb(this,'cd-rinse')">🫧 Rinse</button>
+      <div class="ctsep"></div>
+      <button class="ctbtn danger" onclick="selCtb(this,'cd-estop')">⚡ EmergencyStop</button>
+    </div>
+    <div id="cd-start" class="ctdet"><div class="ctdet-title">▶ Start</div><div class="ctdet-desc">Start the Vapourtec R4 pumps. No parameters required.</div><div class="btn-row"><button class="btn primary" onclick="execBtn(this,'vapourtec.Start','{}')">▶ Execute</button><span class="rbadge"></span></div></div>
+    <div id="cd-stop" class="ctdet" style="display:none"><div class="ctdet-title">⏹ Stop</div><div class="ctdet-desc">Stop all R4 pumps.</div><div class="btn-row"><button class="btn" onclick="execBtn(this,'vapourtec.Stop','{}')">⏹ Execute</button><span class="rbadge"></span></div></div>
+    <div id="cd-flow" class="ctdet" style="display:none"><div class="ctdet-title">💧 SetFlowRate</div><div class="ctdet-desc">Set the flow rate on Pump A or B.</div><div class="ctparams"><div class="field"><label>Pump</label><select id="c-pump" style="width:80px"><option>A</option><option>B</option></select></div><div class="field"><label>mL/min</label><input type="number" id="c-fr" value="1.0" min="0.1" max="10" step="0.1" style="width:90px"></div><div style="padding-bottom:1px"><button class="btn primary" onclick="execBtn(this,'vapourtec.SetFlowRate',JSON.stringify({pump:document.getElementById('c-pump').value,flowRate:+document.getElementById('c-fr').value}))">▶ Execute</button></div><span class="rbadge"></span></div></div>
+    <div id="cd-temp" class="ctdet" style="display:none"><div class="ctdet-title">🌡 SetTemperature</div><div class="ctdet-desc">Set reactor temperature setpoint.</div><div class="ctparams"><div class="field"><label>Reactor</label><select id="c-rc" style="width:80px"><option>R1</option><option>R2</option></select></div><div class="field"><label>°C</label><input type="number" id="c-tmp" value="25" min="0" max="150" style="width:90px"></div><div style="padding-bottom:1px"><button class="btn primary" onclick="execBtn(this,'vapourtec.SetTemperature',JSON.stringify({reactor:document.getElementById('c-rc').value,temperature:+document.getElementById('c-tmp').value}))">▶ Execute</button></div><span class="rbadge"></span></div></div>
+    <div id="cd-inject" class="ctdet" style="display:none"><div class="ctdet-title">💉 Inject</div><div class="ctdet-desc">Trigger injection valve switch.</div><div class="btn-row"><button class="btn primary" onclick="execBtn(this,'vapourtec.Inject','{}')">▶ Execute</button><span class="rbadge"></span></div></div>
+    <div id="cd-collect" class="ctdet" style="display:none"><div class="ctdet-title">🧪 Collect</div><div class="ctdet-desc">Collect product into fraction collector.</div><div class="ctparams"><div class="field"><label>Volume (mL)</label><input type="number" id="c-vol" value="1.0" min="0.1" max="50" step="0.1" style="width:90px"></div><div style="padding-bottom:1px"><button class="btn primary" onclick="execBtn(this,'vapourtec.Collect',JSON.stringify({volume:+document.getElementById('c-vol').value}))">▶ Execute</button></div><span class="rbadge"></span></div></div>
+    <div id="cd-prime" class="ctdet" style="display:none"><div class="ctdet-title">🔃 PrimeLoop</div><div class="ctdet-desc">Prime the sample loop with solvent.</div><div class="btn-row"><button class="btn primary" onclick="execBtn(this,'vapourtec.PrimeLoop','{}')">▶ Execute</button><span class="rbadge"></span></div></div>
+    <div id="cd-rinse" class="ctdet" style="display:none"><div class="ctdet-title">🫧 Rinse</div><div class="ctdet-desc">Flush all lines with cleaning solvent.</div><div class="btn-row"><button class="btn primary" onclick="execBtn(this,'vapourtec.Rinse','{}')">▶ Execute</button><span class="rbadge"></span></div></div>
+    <div id="cd-estop" class="ctdet" style="display:none"><div class="ctdet-title" style="color:var(--color-danger)">⚡ EmergencyStop</div><div class="ctdet-desc" style="color:var(--color-danger)">⚠ Immediately cuts all pump power. Recorded in event log.</div><div class="btn-row" style="margin-top:12px"><button class="btn danger" onclick="execDestructive(this,'vapourtec.EmergencyStop','{}')">⚡ Execute</button><span class="rbadge"></span></div></div>
+  </div>
+
+  <div style="margin-top:12px;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-md);overflow:hidden;width:100%">
+    <div style="background:var(--color-surface-raised);border-bottom:1px solid var(--color-border);padding:5px 10px;font-size:var(--text-xs);color:var(--color-text-muted);text-transform:uppercase;letter-spacing:.06em">Manual Action Log</div>
+    <div id="c-log" style="padding:6px 10px;font-size:var(--text-xs);font-family:var(--font-mono);color:var(--color-text-muted);min-height:44px;max-height:90px;overflow-y:auto"><div style="color:var(--color-text-dim)">[waiting for actions...]</div></div>
+  </div>
+</div>
+
+<!-- Confirm dialog -->
+<div id="confirm-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:99998;align-items:center;justify-content:center;backdrop-filter:blur(2px)">
+  <div style="background:var(--color-surface);border:1px solid var(--color-danger);border-radius:var(--radius-lg);padding:24px;max-width:340px;width:90%">
+    <div style="font-size:var(--text-lg);font-weight:600;color:var(--color-danger);margin-bottom:8px">⚠ Confirm Destructive Action</div>
+    <div id="confirm-msg" style="font-size:var(--text-sm);color:var(--color-text-muted);margin-bottom:20px"></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn" onclick="document.getElementById('confirm-overlay').style.display='none'">Cancel</button>
+      <button class="btn danger" id="confirm-ok">Confirm Execute</button>
+    </div>
+  </div>
+</div>
+<div id="_toast" style="position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(16px);background:var(--color-surface-overlay);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:7px 18px;font-size:var(--text-sm);color:var(--color-text);opacity:0;transition:all .22s;z-index:99999;pointer-events:none"></div>
+
+<script>
+function sv(id,btn){document.querySelectorAll('.variant').forEach(v=>v.classList.remove('active'));document.querySelectorAll('.vt').forEach(t=>t.classList.remove('active'));document.getElementById('variant-'+id).classList.add('active');btn.classList.add('active')}
+function toggleA(hdr){hdr.classList.toggle('open');const b=hdr.nextElementSibling;b.classList.toggle('open')}
+function toggleCard(hdr){const b=hdr.nextElementSibling;if(!b.classList.contains('ccbody'))return;b.classList.toggle('open');hdr.closest('.ccard').classList.toggle('exp')}
+function selCtb(btn,id){document.querySelectorAll('.ctbtn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');document.querySelectorAll('.ctdet').forEach(d=>d.style.display='none');document.getElementById(id).style.display='block'}
+function fakeExec(cap,params,cb){setTimeout(()=>{const ok=Math.random()>.12;cb(ok);logAction(cap,params,ok)},500+Math.random()*500)}
+function showR(badge,ok){badge.className='rbadge '+(ok?'ok':'err');badge.textContent=ok?'✓ Success':'✗ Error';setTimeout(()=>{badge.className='rbadge';badge.textContent=''},4000)}
+function getBadge(btn){return btn.parentNode.querySelector('.rbadge')||btn.closest('.ccard,.cshdr')?.nextElementSibling?.querySelector('.rbadge')||btn.closest('.ctdet,.csbody,.ccbody,.ccquick')?.querySelector('.rbadge')}
+function execBtn(btn,cap,params){const b=getBadge(btn);const orig=btn.textContent;btn.classList.add('loading');btn.textContent='Running...';fakeExec(cap,params,ok=>{btn.classList.remove('loading');btn.textContent=orig;if(b)showR(b,ok)})}
+function execDestructive(btn,cap,params){const ov=document.getElementById('confirm-overlay');document.getElementById('confirm-msg').textContent='Execute '+cap+'? This will be recorded in the event log.';ov.style.display='flex';document.getElementById('confirm-ok').onclick=()=>{ov.style.display='none';execBtn(btn,cap,params)}}
+function logAction(cap,params,ok){const log=document.getElementById('c-log');if(!log)return;const p=JSON.parse(params||'{}');const ps=Object.keys(p).length?JSON.stringify(p):'';const d=document.createElement('div');d.style.color=ok?'var(--color-success)':'var(--color-danger)';const ts=new Date().toLocaleTimeString();d.textContent=`[${ts}] ${ok?'✓':'✗'} ${cap} ${ps}`;if(log.querySelector('[style*="waiting"]'))log.innerHTML='';log.appendChild(d);log.scrollTop=log.scrollHeight}
+function toast(m){const t=document.getElementById('_toast');t.textContent=m;t.style.opacity='1';t.style.transform='translateX(-50%) translateY(0)';clearTimeout(window._tt);window._tt=setTimeout(()=>{t.style.opacity='0';t.style.transform='translateX(-50%) translateY(16px)'},1800)}
+</script>
+</body>
+</html>

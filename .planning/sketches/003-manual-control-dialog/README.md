@@ -2,7 +2,7 @@
 sketch: "003"
 name: manual-control-dialog
 question: "How should auto-generated capability controls be presented?"
-winner: null
+winner: "B"
 tags: [manual-control, capabilities, forms, ux]
 ---
 
@@ -26,3 +26,4 @@ Uses VapourtecR4 capabilities as real data: Start, Stop, SetFlowRate, SetTempera
 - Does C (toolbar) feel natural, or does it hide too much from new users?
 - All variants fake-execute with 600ms delay + success/failure badge — does the feedback feel right?
 - Destructive actions (EmergencyStop) use a confirm dialog — does this friction feel appropriate?
+
