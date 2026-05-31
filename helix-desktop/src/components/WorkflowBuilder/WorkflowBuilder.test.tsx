@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+﻿import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { WorkflowBuilder } from "./WorkflowBuilder";
 
@@ -68,6 +68,7 @@ vi.mock("rete-react-plugin", () => {
     ReactPlugin: ReactPluginMock,
     Presets: {
       classic: { setup: vi.fn(() => ({})) },
+      contextMenu: { setup: vi.fn(() => ({})) },
     },
   };
 });

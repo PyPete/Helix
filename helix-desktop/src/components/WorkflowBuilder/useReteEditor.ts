@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+﻿import { useEffect, useRef, useState } from "react";
 import type React from "react";
 import { NodeEditor } from "rete";
 import { AreaPlugin, AreaExtensions } from "rete-area-plugin";
@@ -35,6 +35,7 @@ export function useReteEditor(
     const render = new ReactPlugin<ClassicScheme, AreaExtra>({ createRoot });
 
     render.addPreset(ReactPresets.classic.setup());
+    render.addPreset(ReactPresets.contextMenu.setup());
     connection.addPreset(ConnectionPresets.classic.setup());
 
     const contextMenu = new ContextMenuPlugin<ClassicScheme>({
