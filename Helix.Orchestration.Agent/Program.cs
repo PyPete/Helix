@@ -132,8 +132,23 @@ try
 
                     if (isStep)
                     {
-                        node.Parameters.TryGetValue("capability", out var capForEta);
-                        int? eta = capForEta is string capKey && estimatedDurations.TryGetValue(capKey, out var d) ? d : null;
+                        int? eta = null;
+                        if (node.NodeType.Equals("Delay", StringComparison.OrdinalIgnoreCase))
+                        {
+                            // Delay nodes carry durationMin; convert to ms for the ETA hint.
+                            if (node.Parameters.TryGetValue("durationMin", out var dv) &&
+                                dv is System.Text.Json.JsonElement jd &&
+                                jd.ValueKind == System.Text.Json.JsonValueKind.Number)
+                                eta = (int)(jd.GetDouble() * 60_000);
+                            else
+                                eta = 60_000; // default 1 minute
+                        }
+                        else if (node.Parameters.TryGetValue("capability", out var capForEta) &&
+                                 capForEta is string capKey &&
+                                 estimatedDurations.TryGetValue(capKey, out var d))
+                        {
+                            eta = d;
+                        }
                         emitter?.Publish(new StepStartedEvent(runspaceId, node.NodeId, node.Label, eta));
                     }
 

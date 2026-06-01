@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { renderHook } from "@testing-library/react";
 import { useNodeExecutionState } from "./useNodeExecutionState";
 import type { RunspaceEvent } from "../types/agent";
-import type { Edge } from "reactflow";
+import type { Edge } from "@xyflow/react";
 
 // Helper to build a RunspaceEvent
 function makeEvent(overrides: Partial<RunspaceEvent> & { type: string }): RunspaceEvent {
@@ -55,14 +55,15 @@ describe("useNodeExecutionState", () => {
     expect(result.current.nodeStates["node_1"].estimatedCompletionAt).toBeUndefined();
   });
 
-  it("step-completed sets node to succeeded with finishedAt", () => {
+  it("step-completed sets node to succeeded with finishedAt and preserves startedAt", () => {
     const events: RunspaceEvent[] = [
-      makeEvent({ type: "step-started", stepId: "node_1", stepLabel: "A" }),
-      makeEvent({ type: "step-completed", stepId: "node_1" }),
+      makeEvent({ type: "step-started", stepId: "node_1", stepLabel: "A", timestamp: "2026-01-01T00:00:00.000Z" }),
+      makeEvent({ type: "step-completed", stepId: "node_1", timestamp: "2026-01-01T00:00:05.000Z" }),
     ];
     const { result } = renderHook(() => useNodeExecutionState(events));
     expect(result.current.nodeStates["node_1"].executionState).toBe("succeeded");
     expect(result.current.nodeStates["node_1"].finishedAt).toBeInstanceOf(Date);
+    expect(result.current.nodeStates["node_1"].startedAt).toBeInstanceOf(Date);
   });
 
   it("step-faulted sets node to failed with faultMessage", () => {

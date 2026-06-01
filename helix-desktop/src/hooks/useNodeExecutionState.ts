@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import type { RunspaceEvent } from "../types/agent";
 import type { ExecutionState } from "../components/WorkflowBuilder/nodes/HelixNodes";
-import type { Edge } from "reactflow";
+import type { Edge } from "@xyflow/react";
 
 export interface NodeExecutionState {
   executionState: ExecutionState;
@@ -39,11 +39,13 @@ export function useNodeExecutionState(
         };
       } else if (event.type === "step-completed" && stepId) {
         states[stepId] = {
+          ...states[stepId],
           executionState: "succeeded",
           finishedAt: new Date(event.timestamp),
         };
       } else if (event.type === "step-faulted" && stepId) {
         states[stepId] = {
+          ...states[stepId],
           executionState: "failed",
           finishedAt: new Date(event.timestamp),
           faultMessage: String(event["faultMessage"] ?? ""),

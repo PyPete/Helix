@@ -3,7 +3,7 @@ import { describe, it, expect, vi } from "vitest";
 import { StepNodeComponent } from "./HelixNodes";
 
 // HelixNodes imports reactflow — mock it at the module level
-vi.mock("reactflow", () => ({
+vi.mock("@xyflow/react", () => ({
   memo: (c: unknown) => c,
   Handle: ({ id }: { id?: string }) => <div data-handle-id={id} />,
   Position: { Left: "left", Right: "right", Top: "top", Bottom: "bottom" },
@@ -15,11 +15,20 @@ describe("HelixNodes NodeTimingFooter", () => {
     id: "node_1",
     selected: false,
     isConnectable: true,
-    xPos: 0,
-    yPos: 0,
+    positionAbsoluteX: 0,
+    positionAbsoluteY: 0,
     zIndex: 0,
     type: "Step",
     dragging: false,
+    selectable: true,
+    draggable: true,
+    deletable: true,
+    width: 160,
+    height: 60,
+    sourcePosition: undefined,
+    targetPosition: undefined,
+    dragHandle: undefined,
+    parentId: undefined,
   };
 
   it("renders no timing footer when executionState is idle", () => {

@@ -1,4 +1,4 @@
-﻿import { useCallback, useState, type Dispatch, type SetStateAction } from "react";
+import { useCallback, useState, type Dispatch, type SetStateAction } from "react";
 import {
   type Node,
   type Edge,
@@ -8,7 +8,7 @@ import {
   type OnEdgesChange,
   applyNodeChanges,
   applyEdgeChanges,
-} from "reactflow";
+} from "@xyflow/react";
 import type { CapabilityDescriptor, WslDocument, WslNode, WslEdge } from "../../types/agent";
 import type { DeviceActionNodeData, HelixNodeData, HelixNodeType } from "./nodes/HelixNodes";
 
@@ -25,8 +25,8 @@ export type HelixEdge = Edge;
 export interface UseHelixFlowResult {
   nodes: HelixNode[];
   edges: HelixEdge[];
-  onNodesChange: OnNodesChange;
-  onEdgesChange: OnEdgesChange;
+  onNodesChange: OnNodesChange<HelixNode>;
+  onEdgesChange: OnEdgesChange<HelixEdge>;
   onConnect: OnConnect;
   addNode: (type: HelixNodeType, position?: { x: number; y: number }) => void;
   addDeviceActionNode: (
@@ -51,7 +51,7 @@ export function useHelixFlow(): UseHelixFlowResult {
   ]);
   const [edges, setEdges] = useState<HelixEdge[]>([]);
 
-  const onNodesChange: OnNodesChange = useCallback(
+  const onNodesChange: OnNodesChange<HelixNode> = useCallback(
     (changes) =>
       setNodes((nds) =>
         applyNodeChanges(
@@ -63,7 +63,7 @@ export function useHelixFlow(): UseHelixFlowResult {
     []
   );
 
-  const onEdgesChange: OnEdgesChange = useCallback(
+  const onEdgesChange: OnEdgesChange<HelixEdge> = useCallback(
     (changes) => setEdges((eds) => applyEdgeChanges(changes, eds)),
     []
   );
@@ -87,13 +87,15 @@ export function useHelixFlow(): UseHelixFlowResult {
         ...(type === "Loop"      && { iterations: 1 }),
         ...(type === "Delay"     && { durationMin: 1 }),
         ...(type === "WaitFor"   && { condition: "" }),
+        onNodeDataChange: (updates: Record<string, unknown>) =>
+          setNodes((nds) => nds.map((n) => n.id === id ? { ...n, data: { ...n.data, ...updates } } : n)),
       };
       setNodes((nds) => [
         ...nds,
         { id, type, position, data },
       ]);
     },
-    []
+    [setNodes]
   );
 
   const addDeviceActionNode = useCallback(

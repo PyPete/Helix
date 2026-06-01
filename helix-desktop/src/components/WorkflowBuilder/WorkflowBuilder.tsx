@@ -1,17 +1,17 @@
-﻿import { useState, useCallback, useRef, useEffect } from "react";
-import ReactFlow, {
+import { useState, useCallback, useRef, useEffect } from "react";
+import { ReactFlow,
   Background,
   BackgroundVariant,
   Controls,
   MiniMap,
   type ReactFlowInstance,
-} from "reactflow";
-import "reactflow/dist/style.css";
+} from "@xyflow/react";
+import "@xyflow/react/dist/style.css";
 
 import type { CapabilityDescriptor, DeviceAdapter, WslDocument } from "../../types/agent";
 import { NODE_TYPES, type HelixNodeType } from "./nodes/HelixNodes";
 import { EDGE_TYPES } from "./edges/AnimatedHelixEdge";
-import { useHelixFlow } from "./useHelixFlow";
+import { useHelixFlow, type HelixNode, type HelixEdge } from "./useHelixFlow";
 import { saveWorkflow, loadWorkflow, listWorkflows } from "../../lib/workflowLibrary";
 import { DevicePalette } from "./DevicePalette";
 import { useAgentWebSocket } from "../../hooks/useAgentWebSocket";
@@ -66,7 +66,7 @@ export function WorkflowBuilder({ baseUrl, onExport }: WorkflowBuilderProps) {
   const [savedWorkflows, setSavedWorkflows] = useState<string[]>([]);
   const [saveStatus, setSaveStatus] = useState<string | null>(null);
   const [selectedCapability, setSelectedCapability] = useState<string>("");
-  const rfInstance = useRef<ReactFlowInstance | null>(null);
+  const rfInstance = useRef<ReactFlowInstance<HelixNode, HelixEdge> | null>(null);
 
   const { nodes, edges, onNodesChange, onEdgesChange, onConnect, addNode, addDeviceActionNode, exportWsl, setNodes, setEdges } =
     useHelixFlow();
@@ -80,8 +80,10 @@ export function WorkflowBuilder({ baseUrl, onExport }: WorkflowBuilderProps) {
     setNodes((nds) =>
       nds.map((n) => {
         const ns: NodeExecutionState | undefined = nodeStates[n.id];
+        const isRunning = ns?.executionState === "running";
         return {
           ...n,
+          deletable: !isRunning,
           data: {
             ...n.data,
             executionState: ns?.executionState,
@@ -158,7 +160,7 @@ export function WorkflowBuilder({ baseUrl, onExport }: WorkflowBuilderProps) {
 
   // Right-click on canvas pane opens node-type context menu
   const onPaneContextMenu = useCallback(
-    (e: React.MouseEvent) => {
+    (e: MouseEvent | React.MouseEvent) => {
       e.preventDefault();
       const bounds = (e.currentTarget as HTMLElement).getBoundingClientRect();
       const flowPos = rfInstance.current?.screenToFlowPosition({
@@ -172,14 +174,16 @@ export function WorkflowBuilder({ baseUrl, onExport }: WorkflowBuilderProps) {
 
   const onPaneClick = useCallback(() => setCtxMenu(null), []);
 
-  // Only allow exec→exec or data→parameter connections; block exec→parameter cross-wiring.
+  // Only allow exec?exec or data?parameter connections; block exec?parameter cross-wiring.
   const isValidConnection = useCallback(
     (connection: { sourceHandle?: string | null; targetHandle?: string | null }) => {
       const src = connection.sourceHandle ?? "";
       const tgt = connection.targetHandle ?? "";
-      const srcIsExec = src === "exec-out";
+      // Exec source: anything except ret-* (return-value data ports).
+      // Exec target: only exec-in. This allows branch-a/branch-b/body/true-out/false-out ? exec-in.
+      const srcIsExec = !src.startsWith("ret-");
       const tgtIsExec = tgt === "exec-in";
-      // exec→exec or data→data; block exec→param and param→exec
+      // exec?exec or data?data; block exec?param and param?exec
       return srcIsExec === tgtIsExec;
     },
     []
@@ -219,7 +223,7 @@ export function WorkflowBuilder({ baseUrl, onExport }: WorkflowBuilderProps) {
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", onUp);
     };
-  }, [addDeviceActionNode]); // stable — never re-registers
+  }, [addDeviceActionNode]); // stable � never re-registers
 
   const handleAddNode = (type: HelixNodeType) => {
     addNode(type, ctxMenu?.flowPosition);
@@ -293,7 +297,7 @@ export function WorkflowBuilder({ baseUrl, onExport }: WorkflowBuilderProps) {
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
-            onInit={(instance) => { rfInstance.current = instance; }}
+            onInit={(instance: ReactFlowInstance<HelixNode, HelixEdge>) => { rfInstance.current = instance; }}
             nodeTypes={NODE_TYPES}
             edgeTypes={EDGE_TYPES}
             defaultEdgeOptions={{ type: "helixEdge" }}
@@ -393,7 +397,7 @@ export function WorkflowBuilder({ baseUrl, onExport }: WorkflowBuilderProps) {
           )}
         </div>
       </div>
-      {/* Drag ghost — follows cursor while a capability card is being dragged */}
+      {/* Drag ghost � follows cursor while a capability card is being dragged */}
       {activeDrag && activeDrag.x !== 0 && (
         <div
           style={{
@@ -411,9 +415,10 @@ export function WorkflowBuilder({ baseUrl, onExport }: WorkflowBuilderProps) {
             boxShadow: "0 4px 12px rgba(0,0,0,0.5)",
           }}
         >
-          {activeDrag.adapterId} › {activeDrag.capability}
+          {activeDrag.adapterId} � {activeDrag.capability}
         </div>
       )}
     </section>
   );
 }
+

@@ -1,11 +1,13 @@
-﻿import { memo } from "react";
+import { memo } from "react";
 import {
   BaseEdge,
   getBezierPath,
   type EdgeProps,
-} from "reactflow";
+  type Edge,
+} from "@xyflow/react";
 
 export interface HelixEdgeData {
+  [key: string]: unknown;
   executionState?: "idle" | "running" | "succeeded" | "failed";
 }
 
@@ -21,7 +23,7 @@ export const AnimatedHelixEdge = memo(
     data,
     markerEnd,
     selected,
-  }: EdgeProps<HelixEdgeData>) => {
+  }: EdgeProps<Edge<HelixEdgeData>>) => {
     const [edgePath] = getBezierPath({
       sourceX,
       sourceY,
@@ -59,7 +61,7 @@ export const AnimatedHelixEdge = memo(
               stroke="transparent"
               strokeWidth={1}
             />
-            <circle r={4} fill="#f5a623" filter="url(#dot-glow)">
+            <circle r={6} fill="#ffcc44" filter="url(#dot-glow)">
               <animateMotion dur="1.2s" repeatCount="indefinite" rotate="auto">
                 <mpath href={`#motion-path-${id}`} />
               </animateMotion>
@@ -68,7 +70,7 @@ export const AnimatedHelixEdge = memo(
         )}
         <defs>
           <filter id="dot-glow" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="2" result="blur" />
+            <feGaussianBlur stdDeviation="3" result="blur" />
             <feMerge>
               <feMergeNode in="blur" />
               <feMergeNode in="SourceGraphic" />

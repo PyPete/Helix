@@ -1,11 +1,11 @@
-﻿import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { WorkflowBuilder } from "./WorkflowBuilder";
-import type { NodeProps } from "reactflow";
+import type { NodeProps } from "@xyflow/react";
 
 // ReactFlow renders SVG/canvas internals that don't exist in jsdom.
 // Mock the entire reactflow module so the component tree renders without DOM errors.
-vi.mock("reactflow", () => {
+vi.mock("@xyflow/react", () => {
   const ReactFlow = vi.fn(({
     children,
     nodes,
@@ -34,7 +34,7 @@ vi.mock("reactflow", () => {
         {nodes?.map((node) => {
           const NodeComp = nodeTypes?.[node.type ?? ""];
           if (!NodeComp) return null;
-          return <NodeComp key={node.id} id={node.id} data={node.data as never} selected={false} isConnectable={true} xPos={node.position.x} yPos={node.position.y} zIndex={0} type={node.type ?? ""} dragging={false} />;
+          return <NodeComp key={node.id} id={node.id} data={node.data as never} selected={false} isConnectable={true} positionAbsoluteX={node.position.x} positionAbsoluteY={node.position.y} selectable={true} draggable={true} deletable={true} zIndex={0} type={node.type ?? ""} dragging={false} />;
         })}
         {children}
       </div>
@@ -42,6 +42,7 @@ vi.mock("reactflow", () => {
   });
   return {
     default: ReactFlow,
+    ReactFlow,
     Background: () => null,
     BackgroundVariant: { Dots: "dots" },
     Controls: () => null,
@@ -270,7 +271,7 @@ describe("WorkflowBuilder", () => {
 
     render(<WorkflowBuilder baseUrl="http://localhost:5080" onExport={vi.fn()} />);
 
-    // Add a Step node — it will get the next available id from the module-level counter
+    // Add a Step node � it will get the next available id from the module-level counter
     const canvas = screen.getByTestId("react-flow-canvas");
     fireEvent.contextMenu(canvas, { clientX: 200, clientY: 200 });
     fireEvent.click(screen.getByTestId("add-node-step"));

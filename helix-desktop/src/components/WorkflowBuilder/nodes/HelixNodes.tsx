@@ -1,6 +1,6 @@
-﻿import { memo, useState, useEffect } from "react";
+import { memo, useState, useEffect } from "react";
 import type React from "react";
-import { Handle, Position, type NodeProps, useEdges } from "reactflow";
+import { Handle, Position, type NodeProps, useEdges, type Node } from "@xyflow/react";
 import type { ParameterSchema, ParameterType } from "../../../types/agent";
 
 // ---- Shared types ----
@@ -19,6 +19,8 @@ export type HelixNodeType =
 export type ExecutionState = "idle" | "running" | "succeeded" | "failed";
 
 export interface HelixNodeData {
+  [key: string]: unknown;
+  onNodeDataChange?: (updates: Record<string, unknown>) => void;
   nodeType: HelixNodeType;
   label: string;
   capability?: string;
@@ -190,7 +192,7 @@ const handleStyle = (colour: string): React.CSSProperties => ({
   borderRadius: "50%",
 });
 
-const execHandle = handleStyle("#a6adc8");   // grey-white — control flow
+const execHandle = handleStyle("#a6adc8");   // grey-white � control flow
 const fieldStyle: React.CSSProperties = {
   background: "#2a2a3e",
   border: "1px solid #3a3a4a",
@@ -203,9 +205,9 @@ const fieldStyle: React.CSSProperties = {
   boxSizing: "border-box",
 };
 
-// ---- Start node (permanent entry point — non-deletable) ----
+// ---- Start node (permanent entry point � non-deletable) ----
 
-export const StartNodeComponent = memo(({ id, selected }: NodeProps<HelixNodeData>) => (
+export const StartNodeComponent = memo(({ id, selected }: NodeProps<Node<HelixNodeData>>) => (
   <div
     style={nodeStyle(undefined, { minWidth: 100, cursor: "default" }, selected)}
     data-testid={`node-start-${id}`}
@@ -220,7 +222,7 @@ StartNodeComponent.displayName = "StartNode";
 
 // ---- Step node ----
 
-export const StepNodeComponent = memo(({ data, id, selected }: NodeProps<HelixNodeData>) => {
+export const StepNodeComponent = memo(({ data, id, selected }: NodeProps<Node<HelixNodeData>>) => {
   const state = data.executionState;
   return (
     <div style={nodeStyle(state, undefined, selected)} data-testid={`node-step-${id}`}>
@@ -250,7 +252,7 @@ StepNodeComponent.displayName = "StepNode";
 
 // ---- Condition node ----
 
-export const ConditionNodeComponent = memo(({ data, id, selected }: NodeProps<HelixNodeData>) => {
+export const ConditionNodeComponent = memo(({ data, id, selected }: NodeProps<Node<HelixNodeData>>) => {
   const state = data.executionState;
   return (
     <div style={nodeStyle(state, undefined, selected)} data-testid={`node-condition-${id}`}>
@@ -283,7 +285,7 @@ ConditionNodeComponent.displayName = "ConditionNode";
 
 // ---- Branch node ----
 
-export const BranchNodeComponent = memo(({ data, id, selected }: NodeProps<HelixNodeData>) => {
+export const BranchNodeComponent = memo(({ data, id, selected }: NodeProps<Node<HelixNodeData>>) => {
   const state = data.executionState;
   return (
     <div style={nodeStyle(state, undefined, selected)} data-testid={`node-branch-${id}`}>
@@ -310,7 +312,7 @@ BranchNodeComponent.displayName = "BranchNode";
 
 // ---- Loop node ----
 
-export const LoopNodeComponent = memo(({ data, id, selected }: NodeProps<HelixNodeData>) => {
+export const LoopNodeComponent = memo(({ data, id, selected }: NodeProps<Node<HelixNodeData>>) => {
   const state = data.executionState;
   return (
     <div style={nodeStyle(state, undefined, selected)} data-testid={`node-loop-${id}`}>
@@ -345,7 +347,7 @@ LoopNodeComponent.displayName = "LoopNode";
 
 // ---- Parallel node ----
 
-export const ParallelNodeComponent = memo(({ data, id, selected }: NodeProps<HelixNodeData>) => {
+export const ParallelNodeComponent = memo(({ data, id, selected }: NodeProps<Node<HelixNodeData>>) => {
   const state = data.executionState;
   return (
     <div style={nodeStyle(state, undefined, selected)} data-testid={`node-parallel-${id}`}>
@@ -374,7 +376,7 @@ ParallelNodeComponent.displayName = "ParallelNode";
 
 // ---- Delay node ----
 
-export const DelayNodeComponent = memo(({ data, id, selected }: NodeProps<HelixNodeData>) => {
+export const DelayNodeComponent = memo(({ data, id, selected }: NodeProps<Node<HelixNodeData>>) => {
   const state = data.executionState;
   return (
     <div style={nodeStyle(state, undefined, selected)} data-testid={`node-delay-${id}`}>
@@ -390,6 +392,10 @@ export const DelayNodeComponent = memo(({ data, id, selected }: NodeProps<HelixN
           min={0}
           step={0.5}
           data-testid="delay-duration-input"
+          onChange={(e) => {
+            const val = e.target.valueAsNumber;
+            if (!isNaN(val)) (data.onNodeDataChange as ((u: Record<string, unknown>) => void) | undefined)?.({ durationMin: val });
+          }}
         />
       </div>
       <NodeTimingFooter
@@ -407,7 +413,7 @@ DelayNodeComponent.displayName = "DelayNode";
 
 // ---- WaitFor node ----
 
-export const WaitForNodeComponent = memo(({ data, id, selected }: NodeProps<HelixNodeData>) => {
+export const WaitForNodeComponent = memo(({ data, id, selected }: NodeProps<Node<HelixNodeData>>) => {
   const state = data.executionState;
   return (
     <div style={nodeStyle(state, undefined, selected)} data-testid={`node-waitfor-${id}`}>
@@ -438,6 +444,7 @@ WaitForNodeComponent.displayName = "WaitForNode";
 // ---- DeviceAction node ----
 
 export interface DeviceActionNodeData {
+  [key: string]: unknown;
   nodeType: "DeviceAction";
   adapterId: string;
   capability: string;
@@ -461,7 +468,7 @@ export const PORT_COLOURS: Record<ParameterType | "exec", string> = {
   exec:     "#a6adc8",
 };
 
-export const DeviceActionNodeComponent = memo(({ data, id, selected }: NodeProps<DeviceActionNodeData>) => {
+export const DeviceActionNodeComponent = memo(({ data, id, selected }: NodeProps<Node<DeviceActionNodeData>>) => {
   const state = data.executionState;
   const edges = useEdges();
 
@@ -473,7 +480,7 @@ export const DeviceActionNodeComponent = memo(({ data, id, selected }: NodeProps
         id="exec-in"
         style={handleStyle(PORT_COLOURS.exec)}
       />
-      <div style={headerStyle("#7c3aed")}>{data.adapterId} › {data.capability}</div>
+      <div style={headerStyle("#7c3aed")}>{data.adapterId} � {data.capability}</div>
       <div style={bodyStyle}>
         {(data.parameters ?? []).map((param) => {
           const isWired = edges.some(
