@@ -1,16 +1,16 @@
-﻿---
+---
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: Phase driver-port -- PopNextGen Driver Port (3 of 3 plans complete)
-status: complete
-last_updated: "2026-06-01T00:00:00.000Z"
+current_phase: Phase driver-port -- PopNextGen Driver Port (3 of 3 plans complete, VERIFIED)
+status: unknown
+last_updated: "2026-06-01T11:00:00.000Z"
 progress:
   total_phases: 11
-  completed_phases: 4
-  total_plans: 19
-  completed_plans: 20
-  percent: 36
+  completed_phases: 3
+  total_plans: 16
+  completed_plans: 17
+  percent: 27
 ---
 
 # Project State
@@ -57,6 +57,7 @@ See: .planning/PROJECT.md (updated 2026-05-26)
 | Phase 6 Plan 10 | Executed -- SpectralChart wired to UV:/MIR: TrendValue prefix (C5 BLOCKER closed) + SafetyEvent CurrentValue (C6 WARNING closed) + 49/49 tests complete |
 | Phase 6.1 Plan 01 | Executed -- CapabilityDescriptor types, DeviceStatusEvent + ManualActionEvent records, POST /devices/{id}/execute, AgentService DeviceHealthPollLoopAsync complete |
 | Phase 6.1 Plan 02 | Executed -- TS CapabilityDescriptor types, device-status WebSocket dispatch, DeviceManualControl panel (53/53 tests), SciChart wrapper placeholder complete |
+| Phase 6.2 Plan 01 | Executed -- DeviceActionNodeComponent (8th ReactFlow node type), PORT_COLOURS, DevicePalette, handleDrop, addDeviceActionNode, exportWsl Step mapping (62/62 tests) complete |
 
 ---
 
@@ -99,7 +100,9 @@ See: .planning/PROJECT.md (updated 2026-05-26)
 
 ## Next Steps
 
-Phase 6.1 Plan 02 complete. Phase 6.1 all 2 plans complete. Phase 7 (Site-Level React Dashboard) is next.
+Phase 6.2 Plan 01 complete (2026-06-01). DeviceAction node (8th ReactFlow node type), DevicePalette drag-to-canvas, hybrid ports, exportWsl Step mapping. 62 tests passing.
+
+Phase 6.1 Plan 02 complete. Phase 6.1 all 2 plans complete.
 
 driver-port Plan 03 complete (2026-06-01). 8 special/facade drivers ported: AtlasReactionSystem, Crystalline, IfmMasterController, OceanViewDriver, OceanViewUv, OceanViewNir, PicoTc08LowLevelWrapper, PicoTc08. 262 tests passing. NetOceanDirect and usbtc08.dll still need to be added for production runtime.
 
@@ -138,6 +141,7 @@ driver-port Plan 03 complete (2026-06-01). 8 special/facade drivers ported: Atla
 | phase-6.1 | 01 | ~15 min | 3/3 | 4 |
 | phase-6.1 | 02 | ~20 min | 2/2 | 8 |
 | driver-port | 03 | ~90 min | 8/8 | 27 |
+| phase-6.2 | 01 | ~15 min | 2/2 | 6 |
 
 ---
 
@@ -170,5 +174,3 @@ driver-port Plan 03 complete (2026-06-01). 8 special/facade drivers ported: Atla
 - `Helix.Orchestration.Core/Capabilities/CapabilityDescriptor.cs` -- CapabilityDescriptor schema types (Phase 6.1)
 - `helix-desktop/src/components/DeviceManualControl/DeviceManualControl.tsx` -- schema-driven manual control panel (Phase 6.1)
 - `helix-desktop/src/components/charts/index.ts` -- SciChart wrapper re-export layer (Phase 6.1)
-
-
