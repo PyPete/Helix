@@ -4,7 +4,7 @@ milestone: v1.0
 milestone_name: milestone
 current_phase: Phase driver-port -- PopNextGen Driver Port (3 of 3 plans complete, VERIFIED)
 status: unknown
-last_updated: "2026-06-01T11:00:00.000Z"
+last_updated: "2026-06-01T10:20:37.131Z"
 progress:
   total_phases: 11
   completed_phases: 3
@@ -58,6 +58,7 @@ See: .planning/PROJECT.md (updated 2026-05-26)
 | Phase 6.1 Plan 01 | Executed -- CapabilityDescriptor types, DeviceStatusEvent + ManualActionEvent records, POST /devices/{id}/execute, AgentService DeviceHealthPollLoopAsync complete |
 | Phase 6.1 Plan 02 | Executed -- TS CapabilityDescriptor types, device-status WebSocket dispatch, DeviceManualControl panel (53/53 tests), SciChart wrapper placeholder complete |
 | Phase 6.2 Plan 01 | Executed -- DeviceActionNodeComponent (8th ReactFlow node type), PORT_COLOURS, DevicePalette, handleDrop, addDeviceActionNode, exportWsl Step mapping (62/62 tests) complete |
+| Phase 6.2 Plan 02 | Executed -- useNodeExecutionState hook, NodeTimingFooter on all 8 node types, WorkflowBuilder live execution wiring, EstimatedDurationMs C# + TS types (76/76 tests) complete |
 
 ---
 
@@ -95,10 +96,14 @@ See: .planning/PROJECT.md (updated 2026-05-26)
 - IRunspaceEventEmitter namespace is Helix.Orchestration.Agent.Events (not Streaming) -- confirmed by build
 - CapabilityRegistry.GetAllCapabilityNames() used to enumerate adapters in DeviceHealthPollLoopAsync (no per-adapter registry needed)
 - SciChart wrapper layer (charts/index.ts) is pure re-export in Step 1 -- no npm install scichart, no App.tsx changes
+- MockWebSocket class pattern (stub global.WebSocket) used in WorkflowBuilder.test.tsx for execution state test -- adding vi.mock() calls to this file crashes the Vitest worker with V8 address space exhaustion (4 large module mocks already present)
+- NodeTimingFooter execution state tests placed in HelixNodes.test.tsx (new) to avoid WorkflowBuilder.test.tsx V8 crash
 
 ---
 
 ## Next Steps
+
+Phase 6.2 Plan 02 complete (2026-06-01). useNodeExecutionState hook, NodeTimingFooter on all 8 node types, WorkflowBuilder live execution wiring, EstimatedDurationMs C# + TS. 76 tests passing.
 
 Phase 6.2 Plan 01 complete (2026-06-01). DeviceAction node (8th ReactFlow node type), DevicePalette drag-to-canvas, hybrid ports, exportWsl Step mapping. 62 tests passing.
 
@@ -142,6 +147,7 @@ driver-port Plan 03 complete (2026-06-01). 8 special/facade drivers ported: Atla
 | phase-6.1 | 02 | ~20 min | 2/2 | 8 |
 | driver-port | 03 | ~90 min | 8/8 | 27 |
 | phase-6.2 | 01 | ~15 min | 2/2 | 6 |
+| phase-6.2 | 02 | ~25 min | 2/2 | 8 |
 
 ---
 
