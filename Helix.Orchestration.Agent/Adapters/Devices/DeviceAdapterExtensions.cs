@@ -1,4 +1,4 @@
-﻿using Helix.Orchestration.Core.Capabilities;
+using Helix.Orchestration.Core.Capabilities;
 using Helix.Orchestration.Devices.Drivers;
 using Helix.Orchestration.Devices.Interfaces;
 using Helix.Orchestration.Devices.Transports.Null;
@@ -14,6 +14,7 @@ public static class DeviceAdapterExtensions
 {
     public static IServiceCollection AddMigratedDeviceAdapters(this IServiceCollection services)
     {
+        AddPlan01SerialAdapters(services);
         AddPlan02NetworkAdapters(services);
         AddPlan03SpecialAdapters(services);
         // Register VapourtecR4 serial transport options
@@ -186,12 +187,235 @@ public static class DeviceAdapterExtensions
             // NOTE: OceanViewDriver and PicoTc08LowLevelWrapper are NOT registered in the
             // CapabilityRegistry — they are native integration layers, not DeviceAdapterBase adapters.
 
+            // Plan 01 — 32 serial drivers
+            RegisterPlan01Capabilities(sp, registry, logger);
+
             return registry;
         });
 
         services.AddSingleton<ICapabilityInvoker>(sp => sp.GetRequiredService<CapabilityRegistry>());
 
         return services;
+    }
+
+    /// <summary>
+    /// Registers all 32 Plan 01 serial device adapters.
+    /// Each driver uses its own inline SerialTransportOptions to avoid singleton collisions.
+    /// PortName values are placeholders; override via appsettings or environment variables in production.
+    /// </summary>
+    private static void AddPlan01SerialAdapters(IServiceCollection services)
+    {
+        // AalborgDfm - BaudRate 9600, CmdTerminator \r
+        services.AddSingleton(sp => new AalborgDfm(
+            new SerialDeviceTransport(new SerialTransportOptions { PortName = "COM4", BaudRate = 9600, CommandTerminator = "\r" }, sp.GetRequiredService<ILogger<SerialDeviceTransport>>()),
+            sp.GetRequiredService<ILogger<AalborgDfm>>()));
+
+        // Alicat - BaudRate 19200, CmdTerminator \r
+        services.AddSingleton(sp => new Alicat(
+            new SerialDeviceTransport(new SerialTransportOptions { PortName = "COM5", BaudRate = 19200, CommandTerminator = "\r" }, sp.GetRequiredService<ILogger<SerialDeviceTransport>>()),
+            sp.GetRequiredService<ILogger<Alicat>>()));
+
+        // ArduinoConductivity - BaudRate 9600, CmdTerminator \r\n (no-suffix → uses \r\n as flush signal)
+        services.AddSingleton(sp => new ArduinoConductivity(
+            new SerialDeviceTransport(new SerialTransportOptions { PortName = "COM6", BaudRate = 9600, CommandTerminator = "\r\n" }, sp.GetRequiredService<ILogger<SerialDeviceTransport>>()),
+            sp.GetRequiredService<ILogger<ArduinoConductivity>>()));
+
+        // ArduinoLeak - BaudRate 9600
+        services.AddSingleton(sp => new ArduinoLeak(
+            new SerialDeviceTransport(new SerialTransportOptions { PortName = "COM7", BaudRate = 9600, CommandTerminator = "\r\n" }, sp.GetRequiredService<ILogger<SerialDeviceTransport>>()),
+            sp.GetRequiredService<ILogger<ArduinoLeak>>()));
+
+        // ArduinopH - BaudRate 9600
+        services.AddSingleton(sp => new ArduinopH(
+            new SerialDeviceTransport(new SerialTransportOptions { PortName = "COM8", BaudRate = 9600, CommandTerminator = "\r\n" }, sp.GetRequiredService<ILogger<SerialDeviceTransport>>()),
+            sp.GetRequiredService<ILogger<ArduinopH>>()));
+
+        // ArduinoPressure - BaudRate 9600
+        services.AddSingleton(sp => new ArduinoPressure(
+            new SerialDeviceTransport(new SerialTransportOptions { PortName = "COM9", BaudRate = 9600, CommandTerminator = "\r\n" }, sp.GetRequiredService<ILogger<SerialDeviceTransport>>()),
+            sp.GetRequiredService<ILogger<ArduinoPressure>>()));
+
+        // ArduinoSignalTower - BaudRate 9600
+        services.AddSingleton(sp => new ArduinoSignalTower(
+            new SerialDeviceTransport(new SerialTransportOptions { PortName = "COM10", BaudRate = 9600, CommandTerminator = "\r\n" }, sp.GetRequiredService<ILogger<SerialDeviceTransport>>()),
+            sp.GetRequiredService<ILogger<ArduinoSignalTower>>()));
+
+        // ArduinoTemp - BaudRate 9600
+        services.AddSingleton(sp => new ArduinoTemp(
+            new SerialDeviceTransport(new SerialTransportOptions { PortName = "COM11", BaudRate = 9600, CommandTerminator = "\r\n" }, sp.GetRequiredService<ILogger<SerialDeviceTransport>>()),
+            sp.GetRequiredService<ILogger<ArduinoTemp>>()));
+
+        // ArduinoValves - BaudRate 9600
+        services.AddSingleton(sp => new ArduinoValves(
+            new SerialDeviceTransport(new SerialTransportOptions { PortName = "COM12", BaudRate = 9600, CommandTerminator = "\r\n" }, sp.GetRequiredService<ILogger<SerialDeviceTransport>>()),
+            sp.GetRequiredService<ILogger<ArduinoValves>>()));
+
+        // AtlasSyringePump - BaudRate 57600, CmdTerminator \r\n
+        services.AddSingleton(sp => new AtlasSyringePump(
+            new SerialDeviceTransport(new SerialTransportOptions { PortName = "COM13", BaudRate = 57600, CommandTerminator = "\r\n" }, sp.GetRequiredService<ILogger<SerialDeviceTransport>>()),
+            sp.GetRequiredService<ILogger<AtlasSyringePump>>()));
+
+        // Carino9 - BaudRate 9600
+        services.AddSingleton(sp => new Carino9(
+            new SerialDeviceTransport(new SerialTransportOptions { PortName = "COM14", BaudRate = 9600, CommandTerminator = "\r\n" }, sp.GetRequiredService<ILogger<SerialDeviceTransport>>()),
+            sp.GetRequiredService<ILogger<Carino9>>()));
+
+        // Cml18 - BaudRate 9600
+        services.AddSingleton(sp => new Cml18(
+            new SerialDeviceTransport(new SerialTransportOptions { PortName = "COM15", BaudRate = 9600, CommandTerminator = "\r\n" }, sp.GetRequiredService<ILogger<SerialDeviceTransport>>()),
+            sp.GetRequiredService<ILogger<Cml18>>()));
+
+        // ColeParmerTouch - BaudRate 115200, CmdTerminator \r
+        services.AddSingleton(sp => new ColeParmerTouch(
+            new SerialDeviceTransport(new SerialTransportOptions { PortName = "COM16", BaudRate = 115200, CommandTerminator = "\r" }, sp.GetRequiredService<ILogger<SerialDeviceTransport>>()),
+            sp.GetRequiredService<ILogger<ColeParmerTouch>>()));
+
+        // FoxyR1 - BaudRate 19200
+        services.AddSingleton(sp => new FoxyR1(
+            new SerialDeviceTransport(new SerialTransportOptions { PortName = "COM17", BaudRate = 19200, CommandTerminator = "\r\n" }, sp.GetRequiredService<ILogger<SerialDeviceTransport>>()),
+            sp.GetRequiredService<ILogger<FoxyR1>>()));
+
+        // Gynkotek - BaudRate 9600, no-suffix commands
+        services.AddSingleton(sp => new Gynkotek(
+            new SerialDeviceTransport(new SerialTransportOptions { PortName = "COM18", BaudRate = 9600, CommandTerminator = "\r\n" }, sp.GetRequiredService<ILogger<SerialDeviceTransport>>()),
+            sp.GetRequiredService<ILogger<Gynkotek>>()));
+
+        // Heidolph - BaudRate 9600
+        services.AddSingleton(sp => new Heidolph(
+            new SerialDeviceTransport(new SerialTransportOptions { PortName = "COM19", BaudRate = 9600, CommandTerminator = "\r\n" }, sp.GetRequiredService<ILogger<SerialDeviceTransport>>()),
+            sp.GetRequiredService<ILogger<Heidolph>>()));
+
+        // IkaDigitalHotPlate - BaudRate 9600, DataBits 7, Parity Even
+        services.AddSingleton(sp => new IkaDigitalHotPlate(
+            new SerialDeviceTransport(new SerialTransportOptions { PortName = "COM20", BaudRate = 9600, CommandTerminator = "\r\n", DataBits = 7, Parity = System.IO.Ports.Parity.Even }, sp.GetRequiredService<ILogger<SerialDeviceTransport>>()),
+            sp.GetRequiredService<ILogger<IkaDigitalHotPlate>>()));
+
+        // IkaOverheadStirrer - BaudRate 9600
+        services.AddSingleton(sp => new IkaOverheadStirrer(
+            new SerialDeviceTransport(new SerialTransportOptions { PortName = "COM21", BaudRate = 9600, CommandTerminator = "\r\n" }, sp.GetRequiredService<ILogger<SerialDeviceTransport>>()),
+            sp.GetRequiredService<ILogger<IkaOverheadStirrer>>()));
+
+        // IkaOverheadStirrerOldDevice - BaudRate 9600, DataBits 7, Parity Even
+        services.AddSingleton(sp => new IkaOverheadStirrerOldDevice(
+            new SerialDeviceTransport(new SerialTransportOptions { PortName = "COM22", BaudRate = 9600, CommandTerminator = "\r\n", DataBits = 7, Parity = System.IO.Ports.Parity.Even }, sp.GetRequiredService<ILogger<SerialDeviceTransport>>()),
+            sp.GetRequiredService<ILogger<IkaOverheadStirrerOldDevice>>()));
+
+        // IkaUltraTurrax - BaudRate 9600
+        services.AddSingleton(sp => new IkaUltraTurrax(
+            new SerialDeviceTransport(new SerialTransportOptions { PortName = "COM23", BaudRate = 9600, CommandTerminator = "\r\n" }, sp.GetRequiredService<ILogger<SerialDeviceTransport>>()),
+            sp.GetRequiredService<ILogger<IkaUltraTurrax>>()));
+
+        // KernPcb - BaudRate 9600
+        services.AddSingleton(sp => new KernPcb(
+            new SerialDeviceTransport(new SerialTransportOptions { PortName = "COM24", BaudRate = 9600, CommandTerminator = "\r\n" }, sp.GetRequiredService<ILogger<SerialDeviceTransport>>()),
+            sp.GetRequiredService<ILogger<KernPcb>>()));
+
+        // KnauerP2And4Pump - BaudRate 9600, CmdTerminator \r
+        services.AddSingleton(sp => new KnauerP2And4Pump(
+            new SerialDeviceTransport(new SerialTransportOptions { PortName = "COM25", BaudRate = 9600, CommandTerminator = "\r" }, sp.GetRequiredService<ILogger<SerialDeviceTransport>>()),
+            sp.GetRequiredService<ILogger<KnauerP2And4Pump>>()));
+
+        // LambdaDoser - BaudRate 2400, Parity Odd
+        services.AddSingleton(sp => new LambdaDoser(
+            new SerialDeviceTransport(new SerialTransportOptions { PortName = "COM26", BaudRate = 2400, CommandTerminator = "\r", Parity = System.IO.Ports.Parity.Odd }, sp.GetRequiredService<ILogger<SerialDeviceTransport>>()),
+            sp.GetRequiredService<ILogger<LambdaDoser>>()));
+
+        // MasterFlexLsDigital - BaudRate 4800, DataBits 7, Parity Odd
+        services.AddSingleton(sp => new MasterFlexLsDigital(
+            new SerialDeviceTransport(new SerialTransportOptions { PortName = "COM27", BaudRate = 4800, CommandTerminator = "\r", DataBits = 7, Parity = System.IO.Ports.Parity.Odd }, sp.GetRequiredService<ILogger<SerialDeviceTransport>>()),
+            sp.GetRequiredService<ILogger<MasterFlexLsDigital>>()));
+
+        // MettlerBalance - BaudRate 9600
+        services.AddSingleton(sp => new MettlerBalance(
+            new SerialDeviceTransport(new SerialTransportOptions { PortName = "COM28", BaudRate = 9600, CommandTerminator = "\r\n" }, sp.GetRequiredService<ILogger<SerialDeviceTransport>>()),
+            sp.GetRequiredService<ILogger<MettlerBalance>>()));
+
+        // NewEra1000 - BaudRate 19200, CmdTerminator \r
+        services.AddSingleton(sp => new NewEra1000(
+            new SerialDeviceTransport(new SerialTransportOptions { PortName = "COM29", BaudRate = 19200, CommandTerminator = "\r" }, sp.GetRequiredService<ILogger<SerialDeviceTransport>>()),
+            sp.GetRequiredService<ILogger<NewEra1000>>()));
+
+        // OrionVersaStarPro - BaudRate 115200, CmdTerminator \r
+        services.AddSingleton(sp => new OrionVersaStarPro(
+            new SerialDeviceTransport(new SerialTransportOptions { PortName = "COM30", BaudRate = 115200, CommandTerminator = "\r" }, sp.GetRequiredService<ILogger<SerialDeviceTransport>>()),
+            sp.GetRequiredService<ILogger<OrionVersaStarPro>>()));
+
+        // PilotOne - BaudRate 9600
+        services.AddSingleton(sp => new PilotOne(
+            new SerialDeviceTransport(new SerialTransportOptions { PortName = "COM31", BaudRate = 9600, CommandTerminator = "\r\n" }, sp.GetRequiredService<ILogger<SerialDeviceTransport>>()),
+            sp.GetRequiredService<ILogger<PilotOne>>()));
+
+        // SartoriusBalance - BaudRate 1200, DataBits 7, Parity Odd
+        services.AddSingleton(sp => new SartoriusBalance(
+            new SerialDeviceTransport(new SerialTransportOptions { PortName = "COM32", BaudRate = 1200, CommandTerminator = "\r\n", DataBits = 7, Parity = System.IO.Ports.Parity.Odd }, sp.GetRequiredService<ILogger<SerialDeviceTransport>>()),
+            sp.GetRequiredService<ILogger<SartoriusBalance>>()));
+
+        // SuperDew3 - BaudRate 9600
+        services.AddSingleton(sp => new SuperDew3(
+            new SerialDeviceTransport(new SerialTransportOptions { PortName = "COM33", BaudRate = 9600, CommandTerminator = "\r\n" }, sp.GetRequiredService<ILogger<SerialDeviceTransport>>()),
+            sp.GetRequiredService<ILogger<SuperDew3>>()));
+
+        // Vario - BaudRate 9600
+        services.AddSingleton(sp => new Vario(
+            new SerialDeviceTransport(new SerialTransportOptions { PortName = "COM34", BaudRate = 9600, CommandTerminator = "\r\n" }, sp.GetRequiredService<ILogger<SerialDeviceTransport>>()),
+            sp.GetRequiredService<ILogger<Vario>>()));
+
+        // ViciActuator - BaudRate 9600, CmdTerminator \r
+        services.AddSingleton(sp => new ViciActuator(
+            new SerialDeviceTransport(new SerialTransportOptions { PortName = "COM35", BaudRate = 9600, CommandTerminator = "\r" }, sp.GetRequiredService<ILogger<SerialDeviceTransport>>()),
+            sp.GetRequiredService<ILogger<ViciActuator>>()));
+
+        // ViciMultiValveActuator - BaudRate 9600, CmdTerminator \r
+        services.AddSingleton(sp => new ViciMultiValveActuator(
+            new SerialDeviceTransport(new SerialTransportOptions { PortName = "COM36", BaudRate = 9600, CommandTerminator = "\r" }, sp.GetRequiredService<ILogger<SerialDeviceTransport>>()),
+            sp.GetRequiredService<ILogger<ViciMultiValveActuator>>()));
+    }
+
+    private static void RegisterPlan01Capabilities(IServiceProvider sp, CapabilityRegistry registry, ILogger logger)
+    {
+        void RegisterDriver<T>(string prefix, T driver) where T : Helix.Orchestration.Devices.Abstractions.DeviceAdapterBase
+        {
+            foreach (var cap in driver.GetCapabilities())
+            {
+                var key = $"{prefix}.{cap.Name}";
+                registry.Register(key, new HelixAdapterCapabilityBridge(driver));
+                logger.LogInformation("Registered capability: {CapabilityName}", key);
+            }
+        }
+
+        RegisterDriver("aalborgdfm", sp.GetRequiredService<AalborgDfm>());
+        RegisterDriver("alicat", sp.GetRequiredService<Alicat>());
+        RegisterDriver("arduinoconductivity", sp.GetRequiredService<ArduinoConductivity>());
+        RegisterDriver("arduinoleak", sp.GetRequiredService<ArduinoLeak>());
+        RegisterDriver("arduinoph", sp.GetRequiredService<ArduinopH>());
+        RegisterDriver("arduinopressure", sp.GetRequiredService<ArduinoPressure>());
+        RegisterDriver("arduinosignaltower", sp.GetRequiredService<ArduinoSignalTower>());
+        RegisterDriver("arduinotemp", sp.GetRequiredService<ArduinoTemp>());
+        RegisterDriver("arduinovalves", sp.GetRequiredService<ArduinoValves>());
+        RegisterDriver("atlassyringepump", sp.GetRequiredService<AtlasSyringePump>());
+        RegisterDriver("carino9", sp.GetRequiredService<Carino9>());
+        RegisterDriver("cml18", sp.GetRequiredService<Cml18>());
+        RegisterDriver("coleparmertouch", sp.GetRequiredService<ColeParmerTouch>());
+        RegisterDriver("foxyr1", sp.GetRequiredService<FoxyR1>());
+        RegisterDriver("gynkotek", sp.GetRequiredService<Gynkotek>());
+        RegisterDriver("heidolph", sp.GetRequiredService<Heidolph>());
+        RegisterDriver("ikadigitalhotplate", sp.GetRequiredService<IkaDigitalHotPlate>());
+        RegisterDriver("ikaoverheadstirrer", sp.GetRequiredService<IkaOverheadStirrer>());
+        RegisterDriver("ikaoverheadstirrerolddevice", sp.GetRequiredService<IkaOverheadStirrerOldDevice>());
+        RegisterDriver("ikaultraturrax", sp.GetRequiredService<IkaUltraTurrax>());
+        RegisterDriver("kernpcb", sp.GetRequiredService<KernPcb>());
+        RegisterDriver("knauerp2and4pump", sp.GetRequiredService<KnauerP2And4Pump>());
+        RegisterDriver("lambdadoser", sp.GetRequiredService<LambdaDoser>());
+        RegisterDriver("masterflexlsdigital", sp.GetRequiredService<MasterFlexLsDigital>());
+        RegisterDriver("mettlerbalance", sp.GetRequiredService<MettlerBalance>());
+        RegisterDriver("newera1000", sp.GetRequiredService<NewEra1000>());
+        RegisterDriver("orionversastarpro", sp.GetRequiredService<OrionVersaStarPro>());
+        RegisterDriver("pilotone", sp.GetRequiredService<PilotOne>());
+        RegisterDriver("sartoriusbalance", sp.GetRequiredService<SartoriusBalance>());
+        RegisterDriver("superdew3", sp.GetRequiredService<SuperDew3>());
+        RegisterDriver("vario", sp.GetRequiredService<Vario>());
+        RegisterDriver("viciactuator", sp.GetRequiredService<ViciActuator>());
+        RegisterDriver("vicimultivalveactuator", sp.GetRequiredService<ViciMultiValveActuator>());
     }
 
     /// <summary>
