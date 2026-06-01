@@ -1,8 +1,17 @@
-﻿import { useState, useEffect, useRef } from "react";
-import type { ClassicPreset } from "rete";
+﻿import { useState, useCallback, useRef } from "react";
+import ReactFlow, {
+  Background,
+  BackgroundVariant,
+  Controls,
+  MiniMap,
+  type ReactFlowInstance,
+} from "reactflow";
+import "reactflow/dist/style.css";
+
 import type { DeviceAdapter, WslDocument } from "../../types/agent";
-import { exportToWsl, StepNode } from "./nodes/HelixNodes";
-import { useReteEditor } from "./useReteEditor";
+import { NODE_TYPES, type HelixNodeType } from "./nodes/HelixNodes";
+import { EDGE_TYPES } from "./edges/AnimatedHelixEdge";
+import { useHelixFlow } from "./useHelixFlow";
 import { saveWorkflow, loadWorkflow, listWorkflows } from "../../lib/workflowLibrary";
 
 interface WorkflowBuilderProps {
@@ -10,18 +19,45 @@ interface WorkflowBuilderProps {
   onExport: (wsl: WslDocument) => void;
 }
 
+// Context menu state
+interface CtxMenu {
+  x: number;
+  y: number;
+  flowPosition: { x: number; y: number };
+}
+
+const CANVAS_STYLE: React.CSSProperties = {
+  background: "#141420",
+  width: "100%",
+  height: "600px",
+  borderRadius: 6,
+  border: "1px solid #2a2a3e",
+};
+
+const MINIMAP_STYLE: React.CSSProperties = {
+  background: "#1e1e2e",
+  border: "1px solid #3a3a4a",
+};
+
+const NODE_MENU_TYPES: HelixNodeType[] = [
+  "Step", "Condition", "Branch", "Loop", "Parallel", "Delay", "WaitFor",
+];
+
 export function WorkflowBuilder({ baseUrl, onExport }: WorkflowBuilderProps) {
   const [devices, setDevices] = useState<DeviceAdapter[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const { editor } = useReteEditor(containerRef);
+  const [ctxMenu, setCtxMenu] = useState<CtxMenu | null>(null);
   const [workflowName, setWorkflowName] = useState("Untitled Workflow");
   const [savedWorkflows, setSavedWorkflows] = useState<string[]>([]);
   const [saveStatus, setSaveStatus] = useState<string | null>(null);
   const [selectedCapability, setSelectedCapability] = useState<string>("");
-  const [nodeCount, setNodeCount] = useState(0);
+  const rfInstance = useRef<ReactFlowInstance | null>(null);
 
-  useEffect(() => {
+  const { nodes, edges, onNodesChange, onEdgesChange, onConnect, addNode, exportWsl } =
+    useHelixFlow();
+
+  // Load devices
+  useState(() => {
     let cancelled = false;
     const load = async () => {
       try {
@@ -34,29 +70,16 @@ export function WorkflowBuilder({ baseUrl, onExport }: WorkflowBuilderProps) {
       }
     };
     load();
-    return () => {
-      cancelled = true;
-    };
-  }, [baseUrl]);
+    return () => { cancelled = true; };
+  });
 
   const handleExport = () => {
-    if (!editor) {
-      const wsl = exportToWsl(
-        { getNodes: () => [], getConnections: () => [] } as never,
-        "My Workflow"
-      );
-      onExport(wsl);
-      return;
-    }
-    setNodeCount(editor.getNodes().length);
-    const wsl = exportToWsl(editor, "My Workflow");
+    const wsl = exportWsl(workflowName);
     onExport(wsl);
   };
 
   const handleSave = async () => {
-    if (!editor) return;
-    setNodeCount(editor.getNodes().length);
-    const wsl = exportToWsl(editor, workflowName);
+    const wsl = exportWsl(workflowName);
     await saveWorkflow(workflowName, wsl);
     setSaveStatus("Saved");
     setTimeout(() => setSaveStatus(null), 2000);
@@ -74,22 +97,38 @@ export function WorkflowBuilder({ baseUrl, onExport }: WorkflowBuilderProps) {
 
   const handleCapabilityChange = (cap: string) => {
     setSelectedCapability(cap);
-    if (!editor) return;
-    const nodes = editor.getNodes();
-    const stepNode = nodes.find((n) => n instanceof StepNode) as StepNode | undefined;
-    if (stepNode) {
-      const ctrl = stepNode.controls["capability"] as ClassicPreset.InputControl<"text">;
-      ctrl.setValue(cap);
-    }
   };
+
+  // Right-click on canvas pane opens node-type context menu
+  const onPaneContextMenu = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      const bounds = (e.currentTarget as HTMLElement).getBoundingClientRect();
+      const flowPos = rfInstance.current?.screenToFlowPosition({
+        x: e.clientX,
+        y: e.clientY,
+      }) ?? { x: 0, y: 0 };
+      setCtxMenu({ x: e.clientX - bounds.left, y: e.clientY - bounds.top, flowPosition: flowPos });
+    },
+    []
+  );
+
+  const onPaneClick = useCallback(() => setCtxMenu(null), []);
+
+  const handleAddNode = (type: HelixNodeType) => {
+    addNode(type, ctxMenu?.flowPosition);
+    setCtxMenu(null);
+  };
+
+  const nodeCount = nodes.length;
 
   return (
     <section aria-label="Workflow Builder" data-testid="workflow-builder">
       {error && <p role="alert" className="error">{error}</p>}
+
+      {/* Toolbar */}
       <div className="toolbar">
-        <button onClick={handleExport} data-testid="export-wsl-btn">
-          Export WSL
-        </button>
+        <button onClick={handleExport} data-testid="export-wsl-btn">Export WSL</button>
         <input
           type="text"
           value={workflowName}
@@ -101,13 +140,23 @@ export function WorkflowBuilder({ baseUrl, onExport }: WorkflowBuilderProps) {
         {saveStatus && <span data-testid="save-status">{saveStatus}</span>}
         <button onClick={handleLoadList} data-testid="list-workflows-btn">Load...</button>
         {savedWorkflows.length > 0 && (
-          <select onChange={(e) => { if (e.target.value) handleLoad(e.target.value); }} data-testid="workflow-select">
+          <select
+            onChange={(e) => { if (e.target.value) handleLoad(e.target.value); }}
+            data-testid="workflow-select"
+          >
             <option value="">-- select workflow --</option>
-            {savedWorkflows.map(name => <option key={name} value={name}>{name}</option>)}
+            {savedWorkflows.map((name) => (
+              <option key={name} value={name}>{name}</option>
+            ))}
           </select>
         )}
         {devices.length > 0 && (
-          <select aria-label="Device capabilities" data-testid="capability-picker" value={selectedCapability} onChange={(e) => handleCapabilityChange(e.target.value)}>
+          <select
+            aria-label="Device capabilities"
+            data-testid="capability-picker"
+            value={selectedCapability}
+            onChange={(e) => handleCapabilityChange(e.target.value)}
+          >
             {devices.flatMap((d) =>
               d.capabilities.map((cap) => (
                 <option key={d.adapterId + "-" + cap} value={cap}>
@@ -118,28 +167,110 @@ export function WorkflowBuilder({ baseUrl, onExport }: WorkflowBuilderProps) {
           </select>
         )}
       </div>
-      <div style={{ position: "relative", width: "100%", height: "600px" }}>
-        <div
-          ref={containerRef}
-          style={{ width: "100%", height: "100%" }}
-          data-testid="rete-canvas"
-        />
-        {nodeCount === 0 && (
-          <span
-            data-testid="canvas-empty-hint"
+
+      {/* Canvas */}
+      <div style={{ position: "relative" }} data-testid="rete-canvas">
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onConnect={onConnect}
+          onInit={(instance) => { rfInstance.current = instance; }}
+          nodeTypes={NODE_TYPES}
+          edgeTypes={EDGE_TYPES}
+          defaultEdgeOptions={{ type: "helixEdge" }}
+          style={CANVAS_STYLE}
+          onPaneContextMenu={onPaneContextMenu}
+          onPaneClick={onPaneClick}
+          fitView
+          proOptions={{ hideAttribution: true }}
+        >
+          <Background
+            variant={BackgroundVariant.Dots}
+            color="#2a2a3e"
+            gap={20}
+            size={1}
+          />
+          <Controls
+            style={{ background: "#1e1e2e", border: "1px solid #3a3a4a", color: "#cdd6f4" }}
+          />
+          <MiniMap
+            style={MINIMAP_STYLE}
+            nodeColor={(node) => {
+              const state = (node.data as { executionState?: string }).executionState;
+              if (state === "running")   return "#f5a623";
+              if (state === "succeeded") return "#27ae60";
+              if (state === "failed")    return "#e74c3c";
+              return "#5b5ea6";
+            }}
+            maskColor="rgba(20,20,32,0.7)"
+          />
+
+          {/* Empty hint */}
+          {nodeCount === 0 && (
+            <div
+              data-testid="canvas-empty-hint"
+              style={{
+                position: "absolute",
+                top: "50%",
+                left: "50%",
+                transform: "translate(-50%,-50%)",
+                color: "#45475a",
+                pointerEvents: "none",
+                userSelect: "none",
+                fontSize: "0.85rem",
+                textAlign: "center",
+              }}
+            >
+              Right-click to add nodes
+            </div>
+          )}
+        </ReactFlow>
+
+        {/* Context menu */}
+        {ctxMenu && (
+          <div
+            data-testid="node-context-menu"
             style={{
               position: "absolute",
-              top: "50%",
-              left: "50%",
-              transform: "translate(-50%, -50%)",
-              color: "#888",
-              pointerEvents: "none",
-              userSelect: "none",
-              fontSize: "0.9rem",
+              top: ctxMenu.y,
+              left: ctxMenu.x,
+              background: "#1e1e2e",
+              border: "1px solid #3a3a4a",
+              borderRadius: 6,
+              padding: "4px 0",
+              zIndex: 10,
+              minWidth: 140,
+              boxShadow: "0 4px 16px rgba(0,0,0,0.5)",
             }}
           >
-            Right-click to add nodes
-          </span>
+            <div style={{ padding: "4px 12px", color: "#6c7086", fontSize: 11, fontWeight: 600 }}>
+              ADD NODE
+            </div>
+            {NODE_MENU_TYPES.map((type) => (
+              <button
+                key={type}
+                onClick={() => handleAddNode(type)}
+                data-testid={`add-node-${type.toLowerCase()}`}
+                style={{
+                  display: "block",
+                  width: "100%",
+                  background: "transparent",
+                  border: "none",
+                  color: "#cdd6f4",
+                  padding: "6px 12px",
+                  textAlign: "left",
+                  cursor: "pointer",
+                  fontSize: 13,
+                }}
+                onMouseEnter={(e) => { (e.target as HTMLElement).style.background = "#2a2a3e"; }}
+                onMouseLeave={(e) => { (e.target as HTMLElement).style.background = "transparent"; }}
+              >
+                {type}
+              </button>
+            ))}
+          </div>
         )}
       </div>
     </section>

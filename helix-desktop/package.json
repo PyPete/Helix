@@ -17,13 +17,8 @@
     "allotment": "^1.20.5",
     "react": "^18.3.0",
     "react-dom": "^18.3.0",
-    "recharts": "3.8.1",
-    "rete": "2.0.6",
-    "rete-area-plugin": "2.1.5",
-    "rete-connection-plugin": "2.0.5",
-    "rete-context-menu-plugin": "2.0.6",
-    "rete-react-plugin": "2.1.0",
-    "rete-render-utils": "2.0.3"
+    "reactflow": "^11.11.4",
+    "recharts": "3.8.1"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2.0.0",
