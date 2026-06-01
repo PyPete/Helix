@@ -1,10 +1,10 @@
----
+﻿---
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: Phase driver-port -- PopNextGen Driver Port (3 of 3 plans complete, VERIFIED)
+current_phase: Phase 7 -- Site-Level React Dashboard (context captured, ready to plan)
 status: unknown
-last_updated: "2026-06-01T10:20:37.131Z"
+last_updated: "2026-06-01T21:15:00.000Z"
 progress:
   total_phases: 11
   completed_phases: 3
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-05-26)
 
 **Core value:** A scientist can build a workflow, connect real lab hardware, execute an experiment, and see the results without writing code.
 
-**Current focus:** Phase 6.1 complete ï¿½ Phase 7 (Site-Level React Dashboard) is next
+**Current focus:** Phase 6.1 complete Ã¯Â¿Â½ Phase 7 (Site-Level React Dashboard) is next
 
 ---
 
@@ -103,7 +103,7 @@ See: .planning/PROJECT.md (updated 2026-05-26)
 
 ## Next Steps
 
-Phase 6.2 Plan 02 complete (2026-06-01). useNodeExecutionState hook, NodeTimingFooter on all 8 node types, WorkflowBuilder live execution wiring, EstimatedDurationMs C# + TS. 76 tests passing.
+Phase 7 context captured (2026-06-01). Ready to plan.
 
 Phase 6.2 Plan 01 complete (2026-06-01). DeviceAction node (8th ReactFlow node type), DevicePalette drag-to-canvas, hybrid ports, exportWsl Step mapping. 62 tests passing.
 
@@ -124,7 +124,7 @@ driver-port Plan 03 complete (2026-06-01). 8 special/facade drivers ported: Atla
 | 4. Integration Test Coverage | Complete | 2026-05-27 |
 | 5. Tauri Desktop App Foundation | Complete | 2026-05-28 |
 | 6. Tauri Desktop App - Workflow Builder + Execution | Complete | 2026-05-30 |
-| 6.1. Desktop App Polish ï¿½ Device Controls, Status Events & Chart Foundation | Complete | 2026-05-30 |
+| 6.1. Desktop App Polish Ã¯Â¿Â½ Device Controls, Status Events & Chart Foundation | Complete | 2026-05-30 |
 
 ---
 
@@ -180,3 +180,4 @@ driver-port Plan 03 complete (2026-06-01). 8 special/facade drivers ported: Atla
 - `Helix.Orchestration.Core/Capabilities/CapabilityDescriptor.cs` -- CapabilityDescriptor schema types (Phase 6.1)
 - `helix-desktop/src/components/DeviceManualControl/DeviceManualControl.tsx` -- schema-driven manual control panel (Phase 6.1)
 - `helix-desktop/src/components/charts/index.ts` -- SciChart wrapper re-export layer (Phase 6.1)
+
