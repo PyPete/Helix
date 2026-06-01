@@ -1,4 +1,5 @@
 ﻿import { memo } from "react";
+import type React from "react";
 import { Handle, Position, type NodeProps, useEdges } from "reactflow";
 import type { ParameterSchema, ParameterType } from "../../../types/agent";
 
@@ -24,6 +25,10 @@ export interface HelixNodeData {
   iterations?: number;
   durationMs?: number;
   executionState?: ExecutionState;
+  startedAt?: string;
+  estimatedCompletionAt?: string;
+  finishedAt?: string;
+  faultMessage?: string;
 }
 
 // ---- Shared node styles ----
@@ -86,6 +91,87 @@ const bodyStyle: React.CSSProperties = {
   gap: 5,
 };
 
+// ---- NodeTimingFooter (internal, not exported) ----
+
+function formatHHMMSS(ms: number): string {
+  const totalSec = Math.max(0, Math.floor(ms / 1000));
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const s = totalSec % 60;
+  return [h, m, s].map((v) => String(v).padStart(2, "0")).join(":");
+}
+
+interface NodeTimingFooterProps {
+  executionState?: ExecutionState;
+  startedAt?: string;
+  estimatedCompletionAt?: string;
+  finishedAt?: string;
+  faultMessage?: string;
+}
+
+const timingFooterBase: React.CSSProperties = {
+  padding: "4px 10px",
+  fontSize: 10,
+  borderTop: "1px solid #2a2a3e",
+  color: "#6c7086",
+  fontFamily: "monospace",
+};
+
+function NodeTimingFooter({
+  executionState,
+  startedAt,
+  estimatedCompletionAt,
+  finishedAt,
+}: NodeTimingFooterProps) {
+  if (!executionState || executionState === "idle") return null;
+
+  const now = Date.now();
+
+  if (executionState === "running") {
+    const startMs = startedAt ? Date.parse(startedAt) : NaN;
+    const elapsed = !isNaN(startMs) ? now - startMs : 0;
+    const etaMs = estimatedCompletionAt ? Date.parse(estimatedCompletionAt) : NaN;
+    const etaPart =
+      !isNaN(etaMs) && etaMs > now
+        ? `  ETA ~${formatHHMMSS(etaMs - now)}`
+        : "";
+    return (
+      <div style={{ ...timingFooterBase, color: "#f5a623" }} data-testid="timing-footer-running">
+        {`▶ ${formatHHMMSS(elapsed)}${etaPart}`}
+      </div>
+    );
+  }
+
+  if (executionState === "succeeded") {
+    const startMs = startedAt ? Date.parse(startedAt) : NaN;
+    const finMs = finishedAt ? Date.parse(finishedAt) : NaN;
+    const durationMs = !isNaN(startMs) && !isNaN(finMs) ? finMs - startMs : 0;
+    const totalSec = Math.max(0, Math.floor(durationMs / 1000));
+    const mins = Math.floor(totalSec / 60);
+    const secs = totalSec % 60;
+    const label = mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
+    return (
+      <div style={{ ...timingFooterBase, color: "#27ae60" }} data-testid="timing-footer-succeeded">
+        {`✓ Finished in ${label}`}
+      </div>
+    );
+  }
+
+  if (executionState === "failed") {
+    const finMs = finishedAt ? Date.parse(finishedAt) : NaN;
+    const timeStr = !isNaN(finMs)
+      ? new Date(finMs).toTimeString().slice(0, 8)
+      : "--:--:--";
+    return (
+      <div style={{ ...timingFooterBase, color: "#e74c3c" }} data-testid="timing-footer-failed">
+        {`✗ Failed at ${timeStr}`}
+      </div>
+    );
+  }
+
+  return null;
+}
+
 const handleStyle = (colour: string): React.CSSProperties => ({
   background: colour,
   border: "2px solid #1e1e2e",
@@ -123,6 +209,13 @@ export const StepNodeComponent = memo(({ data, id }: NodeProps<HelixNodeData>) =
           data-testid="step-capability-input"
         />
       </div>
+      <NodeTimingFooter
+        executionState={data.executionState}
+        startedAt={data.startedAt}
+        estimatedCompletionAt={data.estimatedCompletionAt}
+        finishedAt={data.finishedAt}
+        faultMessage={data.faultMessage}
+      />
       <Handle type="source" position={Position.Right} id="exec-out" style={execHandle} />
     </div>
   );
@@ -146,6 +239,13 @@ export const ConditionNodeComponent = memo(({ data, id }: NodeProps<HelixNodeDat
           data-testid="condition-input"
         />
       </div>
+      <NodeTimingFooter
+        executionState={data.executionState}
+        startedAt={data.startedAt}
+        estimatedCompletionAt={data.estimatedCompletionAt}
+        finishedAt={data.finishedAt}
+        faultMessage={data.faultMessage}
+      />
       <Handle type="source" position={Position.Right} id="true-out"
         style={{ ...handleStyle("#27ae60"), top: "60%" }} />
       <Handle type="source" position={Position.Right} id="false-out"
@@ -166,6 +266,13 @@ export const BranchNodeComponent = memo(({ data, id }: NodeProps<HelixNodeData>)
       <div style={bodyStyle}>
         <span style={{ color: "#6c7086", fontSize: 11 }}>Splits execution into two paths</span>
       </div>
+      <NodeTimingFooter
+        executionState={data.executionState}
+        startedAt={data.startedAt}
+        estimatedCompletionAt={data.estimatedCompletionAt}
+        finishedAt={data.finishedAt}
+        faultMessage={data.faultMessage}
+      />
       <Handle type="source" position={Position.Right} id="branch-a"
         style={{ ...execHandle, top: "55%" }} />
       <Handle type="source" position={Position.Right} id="branch-b"
@@ -194,6 +301,13 @@ export const LoopNodeComponent = memo(({ data, id }: NodeProps<HelixNodeData>) =
           data-testid="loop-iterations-input"
         />
       </div>
+      <NodeTimingFooter
+        executionState={data.executionState}
+        startedAt={data.startedAt}
+        estimatedCompletionAt={data.estimatedCompletionAt}
+        finishedAt={data.finishedAt}
+        faultMessage={data.faultMessage}
+      />
       <Handle type="source" position={Position.Right} id="body"
         style={{ ...execHandle, top: "55%" }} />
       <Handle type="source" position={Position.Right} id="exec-out"
@@ -214,6 +328,13 @@ export const ParallelNodeComponent = memo(({ data, id }: NodeProps<HelixNodeData
       <div style={bodyStyle}>
         <span style={{ color: "#6c7086", fontSize: 11 }}>Runs branches concurrently</span>
       </div>
+      <NodeTimingFooter
+        executionState={data.executionState}
+        startedAt={data.startedAt}
+        estimatedCompletionAt={data.estimatedCompletionAt}
+        finishedAt={data.finishedAt}
+        faultMessage={data.faultMessage}
+      />
       <Handle type="source" position={Position.Right} id="branch-a"
         style={{ ...execHandle, top: "50%" }} />
       <Handle type="source" position={Position.Right} id="branch-b"
@@ -244,6 +365,13 @@ export const DelayNodeComponent = memo(({ data, id }: NodeProps<HelixNodeData>) 
           data-testid="delay-duration-input"
         />
       </div>
+      <NodeTimingFooter
+        executionState={data.executionState}
+        startedAt={data.startedAt}
+        estimatedCompletionAt={data.estimatedCompletionAt}
+        finishedAt={data.finishedAt}
+        faultMessage={data.faultMessage}
+      />
       <Handle type="source" position={Position.Right} id="exec-out" style={execHandle} />
     </div>
   );
@@ -267,6 +395,13 @@ export const WaitForNodeComponent = memo(({ data, id }: NodeProps<HelixNodeData>
           data-testid="waitfor-condition-input"
         />
       </div>
+      <NodeTimingFooter
+        executionState={data.executionState}
+        startedAt={data.startedAt}
+        estimatedCompletionAt={data.estimatedCompletionAt}
+        finishedAt={data.finishedAt}
+        faultMessage={data.faultMessage}
+      />
       <Handle type="source" position={Position.Right} id="exec-out" style={execHandle} />
     </div>
   );
@@ -283,6 +418,10 @@ export interface DeviceActionNodeData {
   fieldValues: Record<string, unknown>;
   executionState?: ExecutionState;
   label: string;
+  startedAt?: string;
+  estimatedCompletionAt?: string;
+  finishedAt?: string;
+  faultMessage?: string;
 }
 
 export const PORT_COLOURS: Record<ParameterType | "exec", string> = {
@@ -392,6 +531,13 @@ export const DeviceActionNodeComponent = memo(({ data, id }: NodeProps<DeviceAct
           );
         })}
       </div>
+      <NodeTimingFooter
+        executionState={data.executionState}
+        startedAt={data.startedAt}
+        estimatedCompletionAt={data.estimatedCompletionAt}
+        finishedAt={data.finishedAt}
+        faultMessage={data.faultMessage}
+      />
       <Handle
         type="source"
         position={Position.Right}

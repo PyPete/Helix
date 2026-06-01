@@ -244,6 +244,59 @@ describe("WorkflowBuilder", () => {
     );
   });
 
+  it("step-started WebSocket event transitions node to running and shows timing-footer-running", async () => {
+    // Capture the WebSocket instance created by useAgentWebSocket
+    let capturedWs: {
+      onopen: ((e: unknown) => void) | null;
+      onclose: ((e: unknown) => void) | null;
+      onerror: ((e: unknown) => void) | null;
+      onmessage: ((e: { data: string }) => void) | null;
+      close: () => void;
+    } | null = null;
+
+    class MockWebSocket {
+      onopen: ((e: unknown) => void) | null = null;
+      onclose: ((e: unknown) => void) | null = null;
+      onerror: ((e: unknown) => void) | null = null;
+      onmessage: ((e: { data: string }) => void) | null = null;
+      close = vi.fn();
+      constructor() {
+        // eslint-disable-next-line @typescript-eslint/no-this-alias
+        capturedWs = this;
+      }
+    }
+    vi.stubGlobal("WebSocket", MockWebSocket);
+    vi.stubGlobal("fetch", vi.fn(() => new Promise(() => {})));
+
+    render(<WorkflowBuilder baseUrl="http://localhost:5080" onExport={vi.fn()} />);
+
+    // Add a Step node — it will get the next available id from the module-level counter
+    const canvas = screen.getByTestId("react-flow-canvas");
+    fireEvent.contextMenu(canvas, { clientX: 200, clientY: 200 });
+    fireEvent.click(screen.getByTestId("add-node-step"));
+
+    // Find the node id from the rendered data-testid
+    const nodeEl = await screen.findByTestId(/node-step-/);
+    const nodeId = nodeEl.getAttribute("data-testid")!.replace("node-step-", "");
+
+    // Trigger the step-started event via the captured WebSocket instance
+    await waitFor(() => expect(capturedWs).not.toBeNull());
+    capturedWs!.onmessage?.({
+      data: JSON.stringify({
+        type: "step-started",
+        runspaceId: "r1",
+        timestamp: new Date().toISOString(),
+        stepId: nodeId,
+        stepLabel: "A",
+      }),
+    });
+
+    // The node should transition to running and show the timing footer
+    await waitFor(() =>
+      expect(screen.getByTestId("timing-footer-running")).toBeInTheDocument()
+    );
+  });
+
   it("exportWsl produces nodeType Step with capability parameter for DeviceAction node", async () => {
     vi.stubGlobal("fetch", vi.fn(() => new Promise(() => {})));
     const onExport = vi.fn();

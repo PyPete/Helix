@@ -1,4 +1,4 @@
-﻿import { useCallback, useState } from "react";
+﻿import { useCallback, useState, type Dispatch, type SetStateAction } from "react";
 import {
   type Node,
   type Edge,
@@ -34,6 +34,8 @@ export interface UseHelixFlowResult {
     position?: { x: number; y: number }
   ) => void;
   exportWsl: (name: string) => WslDocument;
+  setNodes: Dispatch<SetStateAction<HelixNode[]>>;
+  setEdges: Dispatch<SetStateAction<HelixEdge[]>>;
 }
 
 export function useHelixFlow(): UseHelixFlowResult {
@@ -144,6 +146,6 @@ export function useHelixFlow(): UseHelixFlowResult {
     [nodes, edges]
   );
 
-  return { nodes, edges, onNodesChange, onEdgesChange, onConnect, addNode, addDeviceActionNode, exportWsl };
+  return { nodes, edges, onNodesChange, onEdgesChange, onConnect, addNode, addDeviceActionNode, exportWsl, setNodes, setEdges };
 }
 

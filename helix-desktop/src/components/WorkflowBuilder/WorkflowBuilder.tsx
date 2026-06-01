@@ -1,4 +1,4 @@
-﻿import { useState, useCallback, useRef } from "react";
+﻿import { useState, useCallback, useRef, useEffect } from "react";
 import ReactFlow, {
   Background,
   BackgroundVariant,
@@ -14,6 +14,8 @@ import { EDGE_TYPES } from "./edges/AnimatedHelixEdge";
 import { useHelixFlow } from "./useHelixFlow";
 import { saveWorkflow, loadWorkflow, listWorkflows } from "../../lib/workflowLibrary";
 import { DevicePalette } from "./DevicePalette";
+import { useAgentWebSocket } from "../../hooks/useAgentWebSocket";
+import { useNodeExecutionState, type NodeExecutionState } from "../../hooks/useNodeExecutionState";
 
 interface WorkflowBuilderProps {
   baseUrl: string;
@@ -54,8 +56,43 @@ export function WorkflowBuilder({ baseUrl, onExport }: WorkflowBuilderProps) {
   const [selectedCapability, setSelectedCapability] = useState<string>("");
   const rfInstance = useRef<ReactFlowInstance | null>(null);
 
-  const { nodes, edges, onNodesChange, onEdgesChange, onConnect, addNode, addDeviceActionNode, exportWsl } =
+  const { nodes, edges, onNodesChange, onEdgesChange, onConnect, addNode, addDeviceActionNode, exportWsl, setNodes, setEdges } =
     useHelixFlow();
+
+  const { runspaceEvents } = useAgentWebSocket(baseUrl);
+  const { nodeStates, edgeExecutionStates } = useNodeExecutionState(runspaceEvents);
+
+  // Merge execution state + timing into node data
+  useEffect(() => {
+    setNodes((nds) =>
+      nds.map((n) => {
+        const ns: NodeExecutionState | undefined = nodeStates[n.id];
+        if (!ns) return n;
+        return {
+          ...n,
+          data: {
+            ...n.data,
+            executionState: ns.executionState,
+            startedAt: ns.startedAt?.toISOString(),
+            estimatedCompletionAt: ns.estimatedCompletionAt?.toISOString(),
+            finishedAt: ns.finishedAt?.toISOString(),
+            faultMessage: ns.faultMessage,
+          },
+        };
+      })
+    );
+  }, [nodeStates, setNodes]);
+
+  // Update edge execution states to mirror source node state
+  useEffect(() => {
+    setEdges((eds) => {
+      const states = edgeExecutionStates(eds);
+      return eds.map((e) => ({
+        ...e,
+        data: { ...e.data, executionState: states[e.id] ?? "idle" },
+      }));
+    });
+  }, [nodeStates, edgeExecutionStates, setEdges]);
 
   // Load devices
   useState(() => {
