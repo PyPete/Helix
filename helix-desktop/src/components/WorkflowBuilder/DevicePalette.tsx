@@ -86,13 +86,8 @@ export function DevicePalette({ baseUrl, onDragStart }: DevicePaletteProps) {
             <div
               key={descriptor.verbName}
               data-testid={`capability-card-${adapter.adapterId}-${descriptor.verbName}`}
-              draggable
-              onDragStart={(e) => {
-                e.dataTransfer.setData(
-                  "application/helix-capability",
-                  JSON.stringify({ adapterId: adapter.adapterId, capability: descriptor.verbName, descriptor })
-                );
-                e.dataTransfer.effectAllowed = "copy";
+              onPointerDown={(e) => {
+                e.preventDefault();
                 onDragStart(adapter.adapterId, descriptor.verbName, descriptor);
               }}
               style={{
@@ -104,6 +99,7 @@ export function DevicePalette({ baseUrl, onDragStart }: DevicePaletteProps) {
                 cursor: "grab",
                 fontSize: 12,
                 color: "#cdd6f4",
+                userSelect: "none",
               }}
             >
               {descriptor.displayName || descriptor.verbName}

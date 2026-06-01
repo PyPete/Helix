@@ -45,6 +45,7 @@ export function useNodeExecutionState(
       } else if (event.type === "step-faulted" && stepId) {
         states[stepId] = {
           executionState: "failed",
+          finishedAt: new Date(event.timestamp),
           faultMessage: String(event["faultMessage"] ?? ""),
         };
       }

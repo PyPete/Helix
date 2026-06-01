@@ -38,6 +38,10 @@ try
 
     var builder = WebApplication.CreateBuilder(args);
 
+    // Serialize enums as strings so TypeScript can do param.type === "Numeric" etc.
+    builder.Services.ConfigureHttpJsonOptions(options =>
+        options.SerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter()));
+
     // Serilog
     builder.Host.UseSerilog((_, services, config) => config
         .ReadFrom.Services(services)
@@ -79,7 +83,114 @@ try
     builder.Services.AddSingleton<InMemoryTrendProvider>();
     builder.Services.AddSingleton<ITrendProvider>(sp => sp.GetRequiredService<InMemoryTrendProvider>());
     builder.Services.AddSingleton<TrendAggregator>();
-    builder.Services.AddSingleton<IRunspaceManager, RunspaceManager>();
+    builder.Services.AddSingleton<IRunspaceManager>(sp =>
+    {
+        var capRegistry  = sp.GetRequiredService<CapabilityRegistry>();
+        var emitter      = sp.GetService<IRunspaceEventEmitter>();
+        var execLogger   = sp.GetRequiredService<ILogger<RunspaceManager>>();
+        var simulator    = sp.GetService<Helix.Orchestration.Devices.Drivers.SimulatorDevice>();
+
+        // Build a lookup: full capability key → EstimatedDurationMs
+        var estimatedDurations = new Dictionary<string, int?>(StringComparer.OrdinalIgnoreCase);
+        if (simulator != null)
+        {
+            foreach (var desc in simulator.GetRichCapabilities())
+                estimatedDurations[$"simulator.{desc.VerbName}"] = desc.EstimatedDurationMs;
+        }
+
+        return new RunspaceManager(async (definition, ct) =>
+        {
+            // Deferred-body pattern: captures runspaceId after InMemoryRunspace is constructed.
+            Func<CancellationToken, Task>? body = null;
+            var runspace = new InMemoryRunspace(definition, token => body!(token));
+            var runspaceId = runspace.RunspaceId;
+
+            body = async (token) =>
+            {
+                // BFS walk from entry nodes (no incoming edges).
+                // Only exec edges determine execution order; data edges are ignored for sequencing.
+                var execEdges = definition.Edges.Where(e =>
+                    e.EdgeKind == null || string.Equals(e.EdgeKind, "exec", StringComparison.OrdinalIgnoreCase)).ToList();
+
+                var inDegree = definition.Nodes.ToDictionary(n => n.NodeId, _ => 0);
+                foreach (var edge in execEdges)
+                    if (inDegree.ContainsKey(edge.TargetNodeId))
+                        inDegree[edge.TargetNodeId]++;
+
+                var queue   = new Queue<WslNode>(definition.Nodes.Where(n => inDegree[n.NodeId] == 0));
+                var visited = new HashSet<string>();
+
+                while (queue.Count > 0 && !token.IsCancellationRequested)
+                {
+                    var node = queue.Dequeue();
+                    if (!visited.Add(node.NodeId)) continue;
+
+                    var isStep =
+                        node.NodeType.Equals("Step",         StringComparison.OrdinalIgnoreCase) ||
+                        node.NodeType.Equals("DeviceAction", StringComparison.OrdinalIgnoreCase) ||
+                        node.NodeType.Equals("Delay",        StringComparison.OrdinalIgnoreCase);
+
+                    if (isStep)
+                    {
+                        node.Parameters.TryGetValue("capability", out var capForEta);
+                        int? eta = capForEta is string capKey && estimatedDurations.TryGetValue(capKey, out var d) ? d : null;
+                        emitter?.Publish(new StepStartedEvent(runspaceId, node.NodeId, node.Label, eta));
+                    }
+
+                    try
+                    {
+                        if ((node.NodeType.Equals("Step",         StringComparison.OrdinalIgnoreCase) ||
+                             node.NodeType.Equals("DeviceAction", StringComparison.OrdinalIgnoreCase)) &&
+                            node.Parameters.TryGetValue("capability", out var capObj) &&
+                            capObj is string capName)
+                        {
+                            var result = await capRegistry.InvokeAsync(capName, node.Parameters, token);
+                            if (!result.Success)
+                            {
+                                emitter?.Publish(new StepFaultedEvent(runspaceId, node.NodeId,
+                                    result.ErrorMessage ?? $"Capability '{capName}' failed."));
+                                return;
+                            }
+                        }
+                        else if (node.NodeType.Equals("Delay", StringComparison.OrdinalIgnoreCase))
+                        {
+                            // Parameters arrive as JsonElement after JSON deserialization.
+                            var durationMin = 1.0;
+                            if (node.Parameters.TryGetValue("durationMin", out var dVal) &&
+                                dVal is System.Text.Json.JsonElement je &&
+                                je.ValueKind == System.Text.Json.JsonValueKind.Number)
+                                durationMin = je.GetDouble();
+                            await Task.Delay(TimeSpan.FromMinutes(durationMin), token);
+                        }
+
+                        if (isStep)
+                            emitter?.Publish(new StepCompletedEvent(runspaceId, node.NodeId));
+                    }
+                    catch (OperationCanceledException) { throw; }
+                    catch (Exception ex)
+                    {
+                        execLogger.LogError(ex, "Step {NodeId} faulted", node.NodeId);
+                        emitter?.Publish(new StepFaultedEvent(runspaceId, node.NodeId, ex.Message));
+                        return;
+                    }
+
+                    // Only follow exec edges for control flow; data edges carry values, not sequencing.
+                    foreach (var edge in definition.Edges.Where(e =>
+                        e.SourceNodeId == node.NodeId &&
+                        (e.EdgeKind == null || string.Equals(e.EdgeKind, "exec", StringComparison.OrdinalIgnoreCase))))
+                    {
+                        var next = definition.Nodes.FirstOrDefault(n => n.NodeId == edge.TargetNodeId);
+                        if (next != null && !visited.Contains(next.NodeId))
+                            queue.Enqueue(next);
+                    }
+                }
+
+                emitter?.Publish(new RunspaceCompletedEvent(runspaceId));
+            };
+
+            return await Task.FromResult(runspace);
+        });
+    });
     builder.Services.AddSingleton<Func<string, WorkflowContext>>(sp => workflowId => new WorkflowContext
     {
         WorkflowId = workflowId,

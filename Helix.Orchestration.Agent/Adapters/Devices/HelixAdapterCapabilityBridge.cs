@@ -17,18 +17,21 @@ internal sealed class HelixAdapterCapabilityBridge(IHelixAdapter adapter)
         object? parameters = null,
         CancellationToken cancellationToken = default)
     {
+        // Strip adapter prefix: "simulator.SetFlow" → "SetFlow"
+        var dot = capabilityName.IndexOf('.');
+        var verbName = dot >= 0 ? capabilityName[(dot + 1)..] : capabilityName;
+
         JsonElement jsonParams = parameters is JsonElement je
             ? je
             : JsonSerializer.SerializeToElement(parameters ?? new { });
 
-        var result = await adapter.InvokeCapabilityAsync(capabilityName, jsonParams, null, cancellationToken);
+        var result = await adapter.InvokeCapabilityAsync(verbName, jsonParams, null, cancellationToken);
 
         return result.Success
             ? CoreResult.Succeeded(result.ReturnValue)
             : CoreResult.Failed(result.ErrorMessage ?? "Capability invocation failed.");
     }
 
-    public async Task<bool> IsAvailableAsync(string capabilityName)
-        => adapter.GetCapabilities().Any(c => c.Name == capabilityName)
-           && await adapter.HealthCheckAsync();
+    public Task<bool> IsAvailableAsync(string capabilityName)
+        => adapter.HealthCheckAsync();
 }

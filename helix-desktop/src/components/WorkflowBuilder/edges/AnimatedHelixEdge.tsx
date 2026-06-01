@@ -20,6 +20,7 @@ export const AnimatedHelixEdge = memo(
     targetPosition,
     data,
     markerEnd,
+    selected,
   }: EdgeProps<HelixEdgeData>) => {
     const [edgePath] = getBezierPath({
       sourceX,
@@ -36,9 +37,10 @@ export const AnimatedHelixEdge = memo(
       state === "running"   ? "#f5a623" :
       state === "succeeded" ? "#27ae60" :
       state === "failed"    ? "#e74c3c" :
+      selected              ? "#cdd6f4" :
       "#4a4a6a";
 
-    const strokeWidth = state === "idle" ? 1.5 : 2;
+    const strokeWidth = selected ? 2.5 : state === "idle" ? 1.5 : 2;
 
     return (
       <>

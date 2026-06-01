@@ -187,6 +187,15 @@ public static class DeviceAdapterExtensions
             // NOTE: OceanViewDriver and PicoTc08LowLevelWrapper are NOT registered in the
             // CapabilityRegistry — they are native integration layers, not DeviceAdapterBase adapters.
 
+            // SimulatorDevice — in-process simulator (always registered)
+            var simulator = sp.GetRequiredService<SimulatorDevice>();
+            foreach (var cap in simulator.GetCapabilities())
+            {
+                var key = $"simulator.{cap.Name}";
+                registry.Register(key, new HelixAdapterCapabilityBridge(simulator));
+                logger.LogInformation("Registered capability: {CapabilityName}", key);
+            }
+
             // Plan 01 — 32 serial drivers
             RegisterPlan01Capabilities(sp, registry, logger);
 
@@ -428,14 +437,14 @@ public static class DeviceAdapterExtensions
         // NullDeviceTransport — shared singleton stub for all facade drivers
         services.AddSingleton<NullDeviceTransport>();
 
+        // SimulatorDevice — in-process simulator for development/UAT
+        services.AddSingleton<SimulatorDevice>();
+
         // AtlasReactionSystem — File I/O facade
-        // Note: IDirectoryInfo, IReadCsvFile, IGetProcess require concrete implementations for production.
-        services.AddSingleton<IDirectoryInfo>(_ =>
-            throw new NotImplementedException("IDirectoryInfo production implementation not registered."));
-        services.AddSingleton<IReadCsvFile>(_ =>
-            throw new NotImplementedException("IReadCsvFile production implementation not registered."));
-        services.AddSingleton<IGetProcess>(_ =>
-            throw new NotImplementedException("IGetProcess production implementation not registered."));
+        // Null-object stubs — replace with concrete implementations when Atlas hardware is present.
+        services.AddSingleton<IDirectoryInfo>(new NullDirectoryInfo());
+        services.AddSingleton<IReadCsvFile>(new NullReadCsvFile());
+        services.AddSingleton<IGetProcess>(new NullGetProcess());
         services.AddSingleton(sp => new AtlasReactionSystem(
             sp.GetRequiredService<IDirectoryInfo>(),
             sp.GetRequiredService<IReadCsvFile>(),
@@ -443,19 +452,16 @@ public static class DeviceAdapterExtensions
             sp.GetRequiredService<NullDeviceTransport>(),
             sp.GetRequiredService<ILogger<AtlasReactionSystem>>()));
 
-        // Crystalline — SQL facade
-        services.AddSingleton<ICrystallineSqlClient>(_ =>
-            throw new NotImplementedException("ICrystallineSqlClient production implementation not registered."));
+        // Crystalline — SQL facade (null stub until Crystalline SQL client is linked)
+        services.AddSingleton<ICrystallineSqlClient>(new NullCrystallineSqlClient());
         services.AddSingleton(sp => new Crystalline(
             sp.GetRequiredService<ICrystallineSqlClient>(),
             sp.GetRequiredService<NullDeviceTransport>(),
             sp.GetRequiredService<ILogger<Crystalline>>()));
 
-        // IfmMasterController — IO-Link HTTP facade
-        services.AddSingleton<IPopIoLinkClient>(_ =>
-            throw new NotImplementedException("IPopIoLinkClient production implementation not registered."));
-        services.AddSingleton<IFile>(_ =>
-            throw new NotImplementedException("IFile production implementation not registered."));
+        // IfmMasterController — IO-Link HTTP facade (null stubs until IFM client is linked)
+        services.AddSingleton<IPopIoLinkClient>(new NullPopIoLinkClient());
+        services.AddSingleton<IFile>(new NullFile());
         services.AddSingleton(sp => new IfmMasterController(
             sp.GetRequiredService<IPopIoLinkClient>(),
             sp.GetRequiredService<IFile>(),
@@ -509,12 +515,11 @@ public static class DeviceAdapterExtensions
             sp.GetRequiredService<TcpDeviceTransport>(),
             sp.GetRequiredService<ILogger<Microsaic>>()));
 
-        // ── IMettlerOpcCommand — placeholder production implementation ────────
-        // Replace with a concrete adapter before starting the application.
-        services.AddSingleton<IMettlerOpcCommand>(_ =>
-            throw new NotImplementedException(
-                "IMettlerOpcCommand production implementation not yet registered. " +
-                "Register a concrete OPC client adapter before starting the application."));
+        // ── IMettlerOpcCommand — null-object stub (no OPC client linked yet) ─
+        // EasyMax/Fbrm/ReactIr require this interface at DI construction time.
+        // The stub lets the Agent start without an OPC server; replace with a
+        // concrete OpcUa client adapter when Mettler hardware is present.
+        services.AddSingleton<IMettlerOpcCommand>(new NullMettlerOpcCommand());
 
         // ── EasyMax — OPC-UA (opc.tcp://localhost:4841, placeholder endpoint) ─
         services.AddSingleton(sp => new EasyMax(
@@ -552,4 +557,88 @@ public static class DeviceAdapterExtensions
             sp.GetRequiredService<IMettlerOpcCommand>(),
             sp.GetRequiredService<ILogger<ReactIr>>()));
     }
+}
+
+// ── Null-object stubs for unlinked external dependencies ─────────────────────
+// These allow the Agent to start without every third-party client installed.
+// Replace each with a concrete adapter when the corresponding hardware is present.
+
+internal sealed class NullDirectoryInfo : IDirectoryInfo
+{
+    public bool CheckFolderExists(string path) => false;
+    public IEnumerable<IFileInfo> GetFiles() => [];
+    public void SetPath(string path) { }
+}
+
+internal sealed class NullReadCsvFile : IReadCsvFile
+{
+    public System.Data.DataTable Read(string filePath) => new();
+}
+
+internal sealed class NullGetProcess : IGetProcess
+{
+    public (bool ProcessFound, string MainWindowTitle) FindProcessByName(string processName)
+        => (false, string.Empty);
+}
+
+internal sealed class NullCrystallineSqlClient : ICrystallineSqlClient
+{
+    public bool CreateSession(string endPoint) => false;
+    public bool CloseSession() => false;
+    public bool SubscribeToReactor(string reactor) => false;
+    public bool ReactorLive(string reactor) => false;
+    public IEnumerable<(string TrendName, double Value, string Unit)> GetRuntimeDataForReactor(string reactor) => [];
+    public (Helix.Orchestration.Devices.Model.DeviceResult Result, byte[]? Image) GrabImage(string reactor)
+        => (Helix.Orchestration.Devices.Model.DeviceResult.Fail("No Crystalline client registered"), null);
+    public IReadOnlyList<(string Name, string Value)> GetDeviceInfo() => [];
+    public IReadOnlyList<(string Name, string Value)> GetDeviceInfo(string reactor) => [];
+    public Dictionary<int, (string Name, string Unit)> FindVariableNames(string reactor) => [];
+    public IEnumerable<string> FindReactors() => [];
+}
+
+internal sealed class NullPopIoLinkClient : IPopIoLinkClient
+{
+    public Task<IEnumerable<(string DeviceId, byte Port)>> FindActiveSensorsFromEndPointAsync(string endPoint)
+        => Task.FromResult(Enumerable.Empty<(string, byte)>());
+    public Task<bool> CreateSessionAsync(string endPoint, byte portNumber) => Task.FromResult(false);
+    public void CloseSession() { }
+    public List<(string Id, ushort Index, double Gradient, double Offset)> GetAllVariablesForDevice() => [];
+    public Task<(bool Success, object? Data)> GetVariableDataAtIndexAsync(ushort index)
+        => Task.FromResult((false, (object?)null));
+    public Task<List<(string Name, object Value)>> GetAllProcessDataForDeviceAsync()
+        => Task.FromResult(new List<(string, object)>());
+    public (string ProductId, uint DeviceId, ushort VendorId) GetDeviceIdentifiers()
+        => (string.Empty, 0u, 0);
+}
+
+internal sealed class NullFile : IFile
+{
+    public string ReadAllText(string path) => string.Empty;
+    public Task<string> ReadAllTextAsync(string path) => Task.FromResult(string.Empty);
+}
+
+/// <summary>
+/// Null-object implementation of IMettlerOpcCommand. Returns safe no-op defaults
+/// so EasyMax/Fbrm/ReactIr can be registered without an OPC server present.
+/// Replace with a concrete OpcUa client when Mettler hardware is available.
+/// </summary>
+internal sealed class NullMettlerOpcCommand : IMettlerOpcCommand
+{
+    public (bool flag, OpcConnectionEnum connectionEnum, string reason) CreateSession(string endPoint)
+        => (false, OpcConnectionEnum.NotConnected, "No OPC client registered");
+
+    public bool CloseSession() => false;
+
+    public T GetAtNode<T>(string node) => default!;
+
+    public void CallMethod(string objectId, string methodId, params object[] parameters) { }
+
+    public IEnumerable<string> ConnectedDevices(string parentNode, string deviceName, bool stripBlank = true)
+        => [];
+
+    public void SubscribeToNode(string node, OpcDataChangeReceivedEventHandler callback) { }
+
+    public List<Tuple<double[], double[]>> ReturnRaw(IEnumerable<string> spectraNodes) => [];
+
+    public List<(string name, double value, string unit)> GetTrendsAtNode(string trendNode) => [];
 }

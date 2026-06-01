@@ -50,6 +50,18 @@ export function WorkflowBuilder({ baseUrl, onExport }: WorkflowBuilderProps) {
   const [devices, setDevices] = useState<DeviceAdapter[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [ctxMenu, setCtxMenu] = useState<CtxMenu | null>(null);
+  const canvasWrapperRef = useRef<HTMLDivElement>(null);
+
+  // Pointer-event drag state (works in both browser and Tauri WebView2)
+  const [activeDrag, setActiveDrag] = useState<{
+    adapterId: string;
+    capability: string;
+    descriptor: CapabilityDescriptor;
+    x: number;
+    y: number;
+  } | null>(null);
+  // Ref keeps drag data accessible inside stable event listeners without re-registering on every move.
+  const activeDragRef = useRef<typeof activeDrag>(null);
   const [workflowName, setWorkflowName] = useState("Untitled Workflow");
   const [savedWorkflows, setSavedWorkflows] = useState<string[]>([]);
   const [saveStatus, setSaveStatus] = useState<string | null>(null);
@@ -62,21 +74,21 @@ export function WorkflowBuilder({ baseUrl, onExport }: WorkflowBuilderProps) {
   const { runspaceEvents } = useAgentWebSocket(baseUrl);
   const { nodeStates, edgeExecutionStates } = useNodeExecutionState(runspaceEvents);
 
-  // Merge execution state + timing into node data
+  // Merge execution state + timing into node data.
+  // Always write (even undefined) so that runspace-started correctly clears previous run's colours.
   useEffect(() => {
     setNodes((nds) =>
       nds.map((n) => {
         const ns: NodeExecutionState | undefined = nodeStates[n.id];
-        if (!ns) return n;
         return {
           ...n,
           data: {
             ...n.data,
-            executionState: ns.executionState,
-            startedAt: ns.startedAt?.toISOString(),
-            estimatedCompletionAt: ns.estimatedCompletionAt?.toISOString(),
-            finishedAt: ns.finishedAt?.toISOString(),
-            faultMessage: ns.faultMessage,
+            executionState: ns?.executionState,
+            startedAt: ns?.startedAt?.toISOString(),
+            estimatedCompletionAt: ns?.estimatedCompletionAt?.toISOString(),
+            finishedAt: ns?.finishedAt?.toISOString(),
+            faultMessage: ns?.faultMessage,
           },
         };
       })
@@ -111,8 +123,15 @@ export function WorkflowBuilder({ baseUrl, onExport }: WorkflowBuilderProps) {
     return () => { cancelled = true; };
   });
 
+  // Auto-export whenever the canvas changes so ExecutionPanel is always armed.
+  useEffect(() => {
+    const wsl = exportWsl(workflowName);
+    onExport(wsl);
+  }, [exportWsl, workflowName, onExport]);
+
   const handleExport = () => {
     const wsl = exportWsl(workflowName);
+    console.log("[WSL Export]", JSON.stringify(wsl, null, 2));
     onExport(wsl);
   };
 
@@ -153,30 +172,54 @@ export function WorkflowBuilder({ baseUrl, onExport }: WorkflowBuilderProps) {
 
   const onPaneClick = useCallback(() => setCtxMenu(null), []);
 
-  const handleDrop = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault();
-      const raw = e.dataTransfer.getData("application/helix-capability");
-      if (!raw) return;
-      try {
-        const parsed = JSON.parse(raw) as {
-          adapterId: string;
-          capability: string;
-          descriptor: CapabilityDescriptor;
-        };
-        const { adapterId, capability, descriptor } = parsed;
-        if (!adapterId || !capability || !descriptor) return;
-        const position = rfInstance.current?.screenToFlowPosition({
-          x: e.clientX,
-          y: e.clientY,
-        }) ?? { x: 200, y: 200 };
-        addDeviceActionNode(adapterId, capability, descriptor, position);
-      } catch {
-        // Invalid JSON payload — ignore drop per T-6.2-01
-      }
+  // Only allow exec→exec or data→parameter connections; block exec→parameter cross-wiring.
+  const isValidConnection = useCallback(
+    (connection: { sourceHandle?: string | null; targetHandle?: string | null }) => {
+      const src = connection.sourceHandle ?? "";
+      const tgt = connection.targetHandle ?? "";
+      const srcIsExec = src === "exec-out";
+      const tgtIsExec = tgt === "exec-in";
+      // exec→exec or data→data; block exec→param and param→exec
+      return srcIsExec === tgtIsExec;
     },
-    [addDeviceActionNode]
+    []
   );
+
+  // Keep ref in sync so stable event listeners always read current drag data.
+  useEffect(() => { activeDragRef.current = activeDrag; }, [activeDrag]);
+
+  // Register listeners once; read drag data via ref to avoid re-registration on every pointermove.
+  useEffect(() => {
+    const onMove = (e: PointerEvent) => {
+      if (!activeDragRef.current) return;
+      setActiveDrag((d) => d ? { ...d, x: e.clientX, y: e.clientY } : null);
+    };
+
+    const onUp = (e: PointerEvent) => {
+      const d = activeDragRef.current;
+      if (!d) return;
+      const canvas = canvasWrapperRef.current;
+      if (canvas) {
+        const rect = canvas.getBoundingClientRect();
+        if (e.clientX >= rect.left && e.clientX <= rect.right &&
+            e.clientY >= rect.top  && e.clientY <= rect.bottom) {
+          const position = rfInstance.current?.screenToFlowPosition({
+            x: e.clientX,
+            y: e.clientY,
+          }) ?? { x: 200, y: 200 };
+          addDeviceActionNode(d.adapterId, d.capability, d.descriptor, position);
+        }
+      }
+      setActiveDrag(null);
+    };
+
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    return () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+    };
+  }, [addDeviceActionNode]); // stable — never re-registers
 
   const handleAddNode = (type: HelixNodeType) => {
     addNode(type, ctxMenu?.flowPosition);
@@ -233,12 +276,16 @@ export function WorkflowBuilder({ baseUrl, onExport }: WorkflowBuilderProps) {
 
       {/* Canvas with device palette */}
       <div style={{ display: "flex", height: "600px" }}>
-        <DevicePalette baseUrl={baseUrl} onDragStart={() => {}} />
+        <DevicePalette
+          baseUrl={baseUrl}
+          onDragStart={(adapterId, capability, descriptor) =>
+            setActiveDrag({ adapterId, capability, descriptor, x: 0, y: 0 })
+          }
+        />
         <div
+          ref={canvasWrapperRef}
           style={{ flex: 1, position: "relative" }}
           data-testid="rete-canvas"
-          onDrop={handleDrop}
-          onDragOver={(e) => e.preventDefault()}
         >
           <ReactFlow
             nodes={nodes}
@@ -253,6 +300,8 @@ export function WorkflowBuilder({ baseUrl, onExport }: WorkflowBuilderProps) {
             style={CANVAS_STYLE}
             onPaneContextMenu={onPaneContextMenu}
             onPaneClick={onPaneClick}
+            isValidConnection={isValidConnection}
+            deleteKeyCode={["Backspace", "Delete"]}
             fitView
             proOptions={{ hideAttribution: true }}
           >
@@ -344,6 +393,27 @@ export function WorkflowBuilder({ baseUrl, onExport }: WorkflowBuilderProps) {
           )}
         </div>
       </div>
+      {/* Drag ghost — follows cursor while a capability card is being dragged */}
+      {activeDrag && activeDrag.x !== 0 && (
+        <div
+          style={{
+            position: "fixed",
+            left: activeDrag.x + 12,
+            top: activeDrag.y + 12,
+            background: "#2a2a3e",
+            border: "1px solid #7c3aed",
+            borderRadius: 4,
+            padding: "4px 10px",
+            fontSize: 12,
+            color: "#cdd6f4",
+            pointerEvents: "none",
+            zIndex: 9999,
+            boxShadow: "0 4px 12px rgba(0,0,0,0.5)",
+          }}
+        >
+          {activeDrag.adapterId} › {activeDrag.capability}
+        </div>
+      )}
     </section>
   );
 }

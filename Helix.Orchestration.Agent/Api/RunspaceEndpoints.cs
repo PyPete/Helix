@@ -30,8 +30,10 @@ public static class RunspaceEndpoints
             try
             {
                 var runspace = await manager.CreateAsync(definition, ct);
-                await runspace.StartAsync(ct);
+                // Publish runspace-started BEFORE StartAsync so it arrives in the channel
+                // before any step events the background body emits. The channel is FIFO.
                 emitter?.Publish(new RunspaceStartedEvent(runspace.RunspaceId));
+                await runspace.StartAsync(ct);
                 return Results.Ok(new { runspaceId = runspace.RunspaceId });
             }
             catch (Exception ex)

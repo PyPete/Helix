@@ -109,7 +109,7 @@ public sealed class AgentService(
         {
             await foreach (var evt in emitter.Events.ReadAllAsync(ct))
             {
-                var json = JsonSerializer.Serialize(evt, new JsonSerializerOptions
+                var json = JsonSerializer.Serialize(evt, evt.GetType(), new JsonSerializerOptions
                 {
                     PropertyNamingPolicy = JsonNamingPolicy.CamelCase
                 });

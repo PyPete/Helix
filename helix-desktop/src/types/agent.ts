@@ -44,6 +44,7 @@ export interface WslEdge {
   edgeId: string;
   sourceNodeId: string;
   targetNodeId: string;
+  edgeKind?: "exec" | "data";
 }
 export interface WslDocument {
   documentId: string;
@@ -101,6 +102,7 @@ export interface CapabilityDescriptor {
   parameters: ParameterSchema[];
   isDestructive: boolean;
   requiresActiveRunspace: boolean;
+  returns?: ParameterSchema[];
 }
 
 export interface DeviceStatusEvent {

@@ -1,8 +1,11 @@
+using System.Text.Json.Serialization;
+
 namespace Helix.Orchestration.Core.Capabilities;
 
 /// <summary>
 /// Describes the data type of a capability parameter.
 /// </summary>
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum ParameterType
 {
     Numeric,
@@ -15,6 +18,7 @@ public enum ParameterType
 /// <summary>
 /// Classifies the functional purpose of a capability.
 /// </summary>
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum CapabilityCategory
 {
     Control,
@@ -67,4 +71,5 @@ public record CapabilityDescriptor(
     ParameterSchema[] Parameters,
     bool IsDestructive,
     bool RequiresActiveRunspace,
-    int? EstimatedDurationMs = null);
+    int? EstimatedDurationMs = null,
+    ParameterSchema[]? Returns = null);

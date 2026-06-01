@@ -15,4 +15,5 @@ public sealed record WslEdge(
     string EdgeId,
     string SourceNodeId,
     string TargetNodeId,
-    string? Condition = null);
+    string? Condition = null,
+    string? EdgeKind = null);   // "exec" | "data" | null (null treated as exec)

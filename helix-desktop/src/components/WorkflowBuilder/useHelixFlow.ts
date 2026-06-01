@@ -12,6 +12,8 @@ import {
 import type { CapabilityDescriptor, WslDocument, WslNode, WslEdge } from "../../types/agent";
 import type { DeviceActionNodeData, HelixNodeData, HelixNodeType } from "./nodes/HelixNodes";
 
+export const START_NODE_ID = "start_node";
+
 let _nodeId = 1;
 function nextId(): string {
   return `node_${_nodeId++}`;
@@ -39,11 +41,25 @@ export interface UseHelixFlowResult {
 }
 
 export function useHelixFlow(): UseHelixFlowResult {
-  const [nodes, setNodes] = useState<HelixNode[]>([]);
+  const [nodes, setNodes] = useState<HelixNode[]>([
+    {
+      id: START_NODE_ID,
+      type: "Start",
+      position: { x: 40, y: 150 },
+      data: { nodeType: "Start", label: "Start" },
+    },
+  ]);
   const [edges, setEdges] = useState<HelixEdge[]>([]);
 
   const onNodesChange: OnNodesChange = useCallback(
-    (changes) => setNodes((nds) => applyNodeChanges(changes, nds)),
+    (changes) =>
+      setNodes((nds) =>
+        applyNodeChanges(
+          // Prevent the Start node from being deleted
+          changes.filter((c) => !(c.type === "remove" && c.id === START_NODE_ID)),
+          nds
+        )
+      ),
     []
   );
 
@@ -69,7 +85,7 @@ export function useHelixFlow(): UseHelixFlowResult {
         ...(type === "Step"      && { capability: "" }),
         ...(type === "Condition" && { condition: "" }),
         ...(type === "Loop"      && { iterations: 1 }),
-        ...(type === "Delay"     && { durationMs: 1000 }),
+        ...(type === "Delay"     && { durationMin: 1 }),
         ...(type === "WaitFor"   && { condition: "" }),
       };
       setNodes((nds) => [
@@ -93,6 +109,7 @@ export function useHelixFlow(): UseHelixFlowResult {
         adapterId,
         capability,
         parameters: descriptor.parameters,
+        returns: descriptor.returns,
         fieldValues: {},
         label: `${adapterId}.${capability}`,
       };
@@ -103,7 +120,7 @@ export function useHelixFlow(): UseHelixFlowResult {
 
   const exportWsl = useCallback(
     (name: string): WslDocument => {
-      const wslNodes: WslNode[] = nodes.map((n) => {
+      const wslNodes: WslNode[] = nodes.filter((n) => n.id !== START_NODE_ID).map((n) => {
         if (n.data.nodeType === "DeviceAction") {
           const d = n.data as DeviceActionNodeData;
           return {
@@ -124,15 +141,16 @@ export function useHelixFlow(): UseHelixFlowResult {
             ...(n.data.capability  !== undefined && { capability: n.data.capability }),
             ...(n.data.condition   !== undefined && { condition: n.data.condition }),
             ...(n.data.iterations  !== undefined && { iterations: n.data.iterations }),
-            ...(n.data.durationMs  !== undefined && { durationMs: n.data.durationMs }),
+            ...(n.data.durationMin !== undefined && { durationMin: n.data.durationMin }),
           },
         };
       });
 
-      const wslEdges: WslEdge[] = edges.map((e) => ({
+      const wslEdges: WslEdge[] = edges.filter((e) => e.source !== START_NODE_ID).map((e) => ({
         edgeId: e.id,
         sourceNodeId: e.source,
         targetNodeId: e.target,
+        edgeKind: e.sourceHandle === "exec-out" ? "exec" : "data",
       }));
 
       return {

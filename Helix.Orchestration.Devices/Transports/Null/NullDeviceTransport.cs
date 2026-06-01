@@ -13,7 +13,7 @@ public sealed class NullDeviceTransport : IDeviceTransport
     private readonly Subject<byte[]> _dataReceived = new();
 
     /// <inheritdoc/>
-    public TransportStatus Status => TransportStatus.Connected;
+    public TransportStatus Status => TransportStatus.Disconnected;
 
     /// <inheritdoc/>
     public IObservable<TransportStatus> StatusChanged => _statusChanged;

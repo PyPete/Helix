@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import type { WslDocument, RunspaceEvent } from "../../types/agent";
 
 interface ExecutionPanelProps {
@@ -6,6 +6,26 @@ interface ExecutionPanelProps {
   definition: WslDocument | null;
   runspaceEvents: RunspaceEvent[];
 }
+
+const STATUS_LABELS: Record<string, string> = {
+  idle: "Idle",
+  "runspace-started": "Running",
+  "step-started": "Running",
+  "runspace-paused": "Paused",
+  "runspace-completed": "Completed",
+  "runspace-aborted": "Aborted",
+  "runspace-faulted": "Faulted",
+};
+
+const STATUS_COLORS: Record<string, string> = {
+  idle: "#6c7086",
+  "runspace-started": "#f5a623",
+  "step-started": "#f5a623",
+  "runspace-paused": "#89b4fa",
+  "runspace-completed": "#27ae60",
+  "runspace-aborted": "#6c7086",
+  "runspace-faulted": "#e74c3c",
+};
 
 export function ExecutionPanel({
   baseUrl,
@@ -20,7 +40,6 @@ export function ExecutionPanel({
     (e: RunspaceEvent) => e.runspaceId === runspaceId
   );
 
-  // ES2020-compatible: get last event for current runspace
   const eventsForStatus = runspaceEvents.filter(
     (e: RunspaceEvent) => e.runspaceId === runspaceId
   );
@@ -33,6 +52,12 @@ export function ExecutionPanel({
   const isRunning =
     currentStatus === "runspace-started" || currentStatus === "step-started";
   const isPaused = currentStatus === "runspace-paused";
+
+  const hasExecutableNodes =
+    definition !== null &&
+    definition.nodes.some((n) =>
+      ["Step", "DeviceAction", "Delay", "WaitFor", "Condition", "Branch", "Loop", "Parallel"].includes(n.nodeType)
+    );
 
   const handleCompile = async (): Promise<unknown | null> => {
     if (!definition) {
@@ -124,11 +149,23 @@ export function ExecutionPanel({
     }
   };
 
+  const statusColor = STATUS_COLORS[currentStatus] ?? "#6c7086";
+  const statusLabel = STATUS_LABELS[currentStatus] ?? currentStatus;
+
   return (
     <section aria-label="Experiment Execution" data-testid="execution-panel">
       {error && (
         <p role="alert" className="error">
           {error}
+        </p>
+      )}
+      {definition && !hasExecutableNodes && (
+        <p
+          role="status"
+          data-testid="no-nodes-warning"
+          style={{ color: "#f5a623", fontSize: "0.85rem", margin: "4px 0" }}
+        >
+          Workflow has no executable nodes — add steps in the Builder tab first.
         </p>
       )}
       <div className="controls">
@@ -137,7 +174,7 @@ export function ExecutionPanel({
           disabled={!definition || submitting || isRunning || isPaused}
           data-testid="start-btn"
         >
-          Start
+          {submitting ? "Starting…" : "Start"}
         </button>
         <button
           onClick={handlePause}
@@ -160,16 +197,45 @@ export function ExecutionPanel({
         >
           Abort
         </button>
+        <span
+          data-testid="runspace-status"
+          style={{
+            marginLeft: 12,
+            color: statusColor,
+            fontWeight: 600,
+            fontSize: "0.9rem",
+          }}
+        >
+          {statusLabel}
+        </span>
       </div>
       {runspaceId && (
-        <p data-testid="runspace-id">Runspace: {runspaceId}</p>
+        <p data-testid="runspace-id" style={{ fontSize: "0.75rem", color: "#6c7086" }}>
+          Runspace: {runspaceId}
+        </p>
       )}
-      <ul data-testid="step-list">
-        {eventsForRunspace.map((e, i) => (
-          <li key={i} data-testid={`step-event-${e.type}`}>
-            {e.type}
-          </li>
-        ))}
+      <ul data-testid="step-list" style={{ listStyle: "none", padding: 0, margin: "8px 0" }}>
+        {eventsForRunspace.map((e, i) => {
+          const isStep = e.type === "step-started" || e.type === "step-completed" || e.type === "step-faulted";
+          const stepLabel = isStep ? String(e["stepLabel"] ?? e["stepId"] ?? "") : "";
+          const eventColor =
+            e.type === "step-completed" || e.type === "runspace-completed"
+              ? "#27ae60"
+              : e.type === "step-faulted" || e.type === "runspace-faulted"
+              ? "#e74c3c"
+              : e.type === "step-started" || e.type === "runspace-started"
+              ? "#f5a623"
+              : "#6c7086";
+          return (
+            <li
+              key={i}
+              data-testid={`step-event-${e.type}`}
+              style={{ color: eventColor, fontSize: "0.8rem", padding: "2px 0" }}
+            >
+              {e.type}{stepLabel ? ` — ${stepLabel}` : ""}
+            </li>
+          );
+        })}
       </ul>
     </section>
   );

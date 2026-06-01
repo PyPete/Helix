@@ -1,4 +1,4 @@
-﻿import { memo } from "react";
+﻿import { memo, useState, useEffect } from "react";
 import type React from "react";
 import { Handle, Position, type NodeProps, useEdges } from "reactflow";
 import type { ParameterSchema, ParameterType } from "../../../types/agent";
@@ -6,6 +6,7 @@ import type { ParameterSchema, ParameterType } from "../../../types/agent";
 // ---- Shared types ----
 
 export type HelixNodeType =
+  | "Start"
   | "Step"
   | "Condition"
   | "Branch"
@@ -23,7 +24,7 @@ export interface HelixNodeData {
   capability?: string;
   condition?: string;
   iterations?: number;
-  durationMs?: number;
+  durationMin?: number;
   executionState?: ExecutionState;
   startedAt?: string;
   estimatedCompletionAt?: string;
@@ -56,16 +57,17 @@ const baseNode: React.CSSProperties = {
   boxShadow: "0 2px 8px rgba(0,0,0,0.5)",
 };
 
-function nodeStyle(state: ExecutionState | undefined, extra?: React.CSSProperties): React.CSSProperties {
+function nodeStyle(state: ExecutionState | undefined, extra?: React.CSSProperties, selected?: boolean): React.CSSProperties {
+  const glow = state === "running"
+    ? `0 0 10px 2px rgba(245,166,35,0.35), 0 2px 8px rgba(0,0,0,0.5)`
+    : state === "failed"
+    ? `0 0 10px 2px rgba(231,76,60,0.35), 0 2px 8px rgba(0,0,0,0.5)`
+    : "0 2px 8px rgba(0,0,0,0.5)";
   return {
     ...baseNode,
     border: `1.5px solid ${borderColour(state)}`,
     opacity: nodeOpacity(state),
-    boxShadow: state === "running"
-      ? `0 0 10px 2px rgba(245,166,35,0.35), 0 2px 8px rgba(0,0,0,0.5)`
-      : state === "failed"
-      ? `0 0 10px 2px rgba(231,76,60,0.35), 0 2px 8px rgba(0,0,0,0.5)`
-      : "0 2px 8px rgba(0,0,0,0.5)",
+    boxShadow: selected ? `0 0 0 2px #cdd6f4, ${glow}` : glow,
     ...extra,
   };
 }
@@ -123,6 +125,14 @@ function NodeTimingFooter({
   estimatedCompletionAt,
   finishedAt,
 }: NodeTimingFooterProps) {
+  // Tick every second while running so the elapsed/ETA display updates.
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    if (executionState !== "running") return;
+    const id = setInterval(() => setTick((t) => t + 1), 1000);
+    return () => clearInterval(id);
+  }, [executionState]);
+
   if (!executionState || executionState === "idle") return null;
 
   const now = Date.now();
@@ -188,16 +198,32 @@ const fieldStyle: React.CSSProperties = {
   padding: "3px 6px",
   color: "#cdd6f4",
   fontSize: 12,
-  width: "100%",
+  flex: 1,
+  minWidth: 60,
   boxSizing: "border-box",
 };
 
+// ---- Start node (permanent entry point — non-deletable) ----
+
+export const StartNodeComponent = memo(({ id, selected }: NodeProps<HelixNodeData>) => (
+  <div
+    style={nodeStyle(undefined, { minWidth: 100, cursor: "default" }, selected)}
+    data-testid={`node-start-${id}`}
+  >
+    <div style={{ ...headerStyle("#1a6b4a"), justifyContent: "center", fontSize: 13, letterSpacing: "0.1em" }}>
+      ▶ START
+    </div>
+    <Handle type="source" position={Position.Right} id="exec-out" style={execHandle} />
+  </div>
+));
+StartNodeComponent.displayName = "StartNode";
+
 // ---- Step node ----
 
-export const StepNodeComponent = memo(({ data, id }: NodeProps<HelixNodeData>) => {
+export const StepNodeComponent = memo(({ data, id, selected }: NodeProps<HelixNodeData>) => {
   const state = data.executionState;
   return (
-    <div style={nodeStyle(state)} data-testid={`node-step-${id}`}>
+    <div style={nodeStyle(state, undefined, selected)} data-testid={`node-step-${id}`}>
       <Handle type="target" position={Position.Left} id="exec-in" style={execHandle} />
       <div style={headerStyle("#5b5ea6")}>⚡ Step</div>
       <div style={bodyStyle}>
@@ -224,10 +250,10 @@ StepNodeComponent.displayName = "StepNode";
 
 // ---- Condition node ----
 
-export const ConditionNodeComponent = memo(({ data, id }: NodeProps<HelixNodeData>) => {
+export const ConditionNodeComponent = memo(({ data, id, selected }: NodeProps<HelixNodeData>) => {
   const state = data.executionState;
   return (
-    <div style={nodeStyle(state)} data-testid={`node-condition-${id}`}>
+    <div style={nodeStyle(state, undefined, selected)} data-testid={`node-condition-${id}`}>
       <Handle type="target" position={Position.Left} id="exec-in" style={execHandle} />
       <div style={headerStyle("#c0392b")}>⟨⟩ Condition</div>
       <div style={bodyStyle}>
@@ -257,10 +283,10 @@ ConditionNodeComponent.displayName = "ConditionNode";
 
 // ---- Branch node ----
 
-export const BranchNodeComponent = memo(({ data, id }: NodeProps<HelixNodeData>) => {
+export const BranchNodeComponent = memo(({ data, id, selected }: NodeProps<HelixNodeData>) => {
   const state = data.executionState;
   return (
-    <div style={nodeStyle(state)} data-testid={`node-branch-${id}`}>
+    <div style={nodeStyle(state, undefined, selected)} data-testid={`node-branch-${id}`}>
       <Handle type="target" position={Position.Left} id="exec-in" style={execHandle} />
       <div style={headerStyle("#6c3483")}>⑂ Branch</div>
       <div style={bodyStyle}>
@@ -284,10 +310,10 @@ BranchNodeComponent.displayName = "BranchNode";
 
 // ---- Loop node ----
 
-export const LoopNodeComponent = memo(({ data, id }: NodeProps<HelixNodeData>) => {
+export const LoopNodeComponent = memo(({ data, id, selected }: NodeProps<HelixNodeData>) => {
   const state = data.executionState;
   return (
-    <div style={nodeStyle(state)} data-testid={`node-loop-${id}`}>
+    <div style={nodeStyle(state, undefined, selected)} data-testid={`node-loop-${id}`}>
       <Handle type="target" position={Position.Left} id="exec-in" style={execHandle} />
       <div style={headerStyle("#1a6b4a")}>↻ Loop</div>
       <div style={bodyStyle}>
@@ -319,10 +345,10 @@ LoopNodeComponent.displayName = "LoopNode";
 
 // ---- Parallel node ----
 
-export const ParallelNodeComponent = memo(({ data, id }: NodeProps<HelixNodeData>) => {
+export const ParallelNodeComponent = memo(({ data, id, selected }: NodeProps<HelixNodeData>) => {
   const state = data.executionState;
   return (
-    <div style={nodeStyle(state)} data-testid={`node-parallel-${id}`}>
+    <div style={nodeStyle(state, undefined, selected)} data-testid={`node-parallel-${id}`}>
       <Handle type="target" position={Position.Left} id="exec-in" style={execHandle} />
       <div style={headerStyle("#1a5276")}>⫸ Parallel</div>
       <div style={bodyStyle}>
@@ -348,20 +374,21 @@ ParallelNodeComponent.displayName = "ParallelNode";
 
 // ---- Delay node ----
 
-export const DelayNodeComponent = memo(({ data, id }: NodeProps<HelixNodeData>) => {
+export const DelayNodeComponent = memo(({ data, id, selected }: NodeProps<HelixNodeData>) => {
   const state = data.executionState;
   return (
-    <div style={nodeStyle(state)} data-testid={`node-delay-${id}`}>
+    <div style={nodeStyle(state, undefined, selected)} data-testid={`node-delay-${id}`}>
       <Handle type="target" position={Position.Left} id="exec-in" style={execHandle} />
       <div style={headerStyle("#7d6608")}>⏱ Delay</div>
       <div style={bodyStyle}>
-        <label style={{ color: "#6c7086", fontSize: 11 }}>Duration (ms)</label>
+        <label style={{ color: "#6c7086", fontSize: 11 }}>Duration (min)</label>
         <input
           className="nodrag"
           type="number"
           style={fieldStyle}
-          defaultValue={data.durationMs ?? 1000}
+          defaultValue={data.durationMin ?? 1}
           min={0}
+          step={0.5}
           data-testid="delay-duration-input"
         />
       </div>
@@ -380,10 +407,10 @@ DelayNodeComponent.displayName = "DelayNode";
 
 // ---- WaitFor node ----
 
-export const WaitForNodeComponent = memo(({ data, id }: NodeProps<HelixNodeData>) => {
+export const WaitForNodeComponent = memo(({ data, id, selected }: NodeProps<HelixNodeData>) => {
   const state = data.executionState;
   return (
-    <div style={nodeStyle(state)} data-testid={`node-waitfor-${id}`}>
+    <div style={nodeStyle(state, undefined, selected)} data-testid={`node-waitfor-${id}`}>
       <Handle type="target" position={Position.Left} id="exec-in" style={execHandle} />
       <div style={headerStyle("#117a65")}>⏸ WaitFor</div>
       <div style={bodyStyle}>
@@ -415,6 +442,7 @@ export interface DeviceActionNodeData {
   adapterId: string;
   capability: string;
   parameters: ParameterSchema[];
+  returns?: ParameterSchema[];
   fieldValues: Record<string, unknown>;
   executionState?: ExecutionState;
   label: string;
@@ -433,12 +461,12 @@ export const PORT_COLOURS: Record<ParameterType | "exec", string> = {
   exec:     "#a6adc8",
 };
 
-export const DeviceActionNodeComponent = memo(({ data, id }: NodeProps<DeviceActionNodeData>) => {
+export const DeviceActionNodeComponent = memo(({ data, id, selected }: NodeProps<DeviceActionNodeData>) => {
   const state = data.executionState;
   const edges = useEdges();
 
   return (
-    <div style={nodeStyle(state)} data-testid={`node-deviceaction-${id}`}>
+    <div style={nodeStyle(state, { minWidth: 220 }, selected)} data-testid={`node-deviceaction-${id}`}>
       <Handle
         type="target"
         position={Position.Left}
@@ -452,12 +480,12 @@ export const DeviceActionNodeComponent = memo(({ data, id }: NodeProps<DeviceAct
             (e) => e.targetHandle === param.name && e.target === id
           );
           return (
-            <div key={param.name} style={{ display: "flex", alignItems: "center", gap: 6, position: "relative" }}>
+            <div key={param.name} style={{ display: "flex", alignItems: "center", gap: 6, position: "relative", paddingLeft: 14 }}>
               <Handle
                 type="target"
                 position={Position.Left}
                 id={param.name}
-                style={handleStyle(PORT_COLOURS[param.type] ?? PORT_COLOURS.exec)}
+                style={{ ...handleStyle(PORT_COLOURS[param.type] ?? PORT_COLOURS.exec), left: 0 }}
               />
               {isWired ? (
                 <span
@@ -531,6 +559,22 @@ export const DeviceActionNodeComponent = memo(({ data, id }: NodeProps<DeviceAct
           );
         })}
       </div>
+      {/* Return value output handles */}
+      {(data.returns ?? []).map((ret) => (
+        <div
+          key={`ret-${ret.name}`}
+          style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 6, position: "relative", paddingRight: 14, padding: "2px 14px 2px 10px" }}
+        >
+          {ret.unit && <span style={{ color: "#6c7086", fontSize: 10 }}>{ret.unit}</span>}
+          <label style={{ color: "#a6e3a1", fontSize: 11 }}>{ret.displayName || ret.name}</label>
+          <Handle
+            type="source"
+            position={Position.Right}
+            id={`ret-${ret.name}`}
+            style={{ ...handleStyle(PORT_COLOURS[ret.type] ?? PORT_COLOURS.exec), right: 0 }}
+          />
+        </div>
+      ))}
       <NodeTimingFooter
         executionState={data.executionState}
         startedAt={data.startedAt}
@@ -552,6 +596,7 @@ DeviceActionNodeComponent.displayName = "DeviceActionNode";
 // ---- nodeTypes map (pass to <ReactFlow nodeTypes={NODE_TYPES}>) ----
 
 export const NODE_TYPES = {
+  Start: StartNodeComponent,
   Step: StepNodeComponent,
   Condition: ConditionNodeComponent,
   Branch: BranchNodeComponent,

@@ -1,8 +1,12 @@
 using Helix.Orchestration.Agent.Events;
-using Helix.Orchestration.Core.Capabilities;
+using Helix.Orchestration.Devices.Drivers;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using CapabilityDescriptor = Helix.Orchestration.Core.Capabilities.CapabilityDescriptor;
+using CapabilityCategory = Helix.Orchestration.Core.Capabilities.CapabilityCategory;
+using CapabilityRegistry = Helix.Orchestration.Core.Capabilities.CapabilityRegistry;
+using ParameterSchema = Helix.Orchestration.Core.Capabilities.ParameterSchema;
 
 namespace Helix.Orchestration.Agent.Api;
 
@@ -26,16 +30,31 @@ public static class DeviceEndpoints
         var group = app.MapGroup("/devices")
             .WithTags("Devices");
 
-        // GET /devices — return all registered adapters from CapabilityRegistry
-        group.MapGet("/", IResult (CapabilityRegistry registry) =>
+        // GET /devices — return one entry per adapter, only if at least one capability is available
+        group.MapGet("/", async Task<IResult> (CapabilityRegistry registry) =>
         {
             try
             {
-                var adapters = registry.GetAllCapabilityNames()
-                    .Select(name => new { adapterId = name, capabilities = new[] { name } })
-                    .ToList();
+                // Group capability keys by adapter prefix (e.g. "simulator.SetFlow" → "simulator")
+                var groups = registry.GetAllCapabilityNames()
+                    .GroupBy(name =>
+                    {
+                        var dot = name.IndexOf('.');
+                        return dot > 0 ? name[..dot] : name;
+                    });
 
-                return Results.Ok(adapters);
+                var available = new List<object>();
+                foreach (var g in groups)
+                {
+                    // Check availability via HealthCheckAsync on the first capability key.
+                    // NullDeviceTransport always returns Connected (simulator is always available).
+                    // Serial/TCP transports return Disconnected when hardware is not present.
+                    var probe = g.First();
+                    if (await registry.IsAvailableAsync(probe))
+                        available.Add(new { adapterId = g.Key, capabilities = g.ToArray() });
+                }
+
+                return Results.Ok(available);
             }
             catch (Exception ex)
             {
@@ -51,26 +70,43 @@ public static class DeviceEndpoints
         .ProducesProblem(StatusCodes.Status500InternalServerError);
 
         // GET /devices/{id}/capabilities — return CapabilityDescriptor[] for one adapter
-        group.MapGet("/{id}/capabilities", IResult (string id, CapabilityRegistry registry) =>
+        group.MapGet("/{id}/capabilities", IResult (string id, CapabilityRegistry registry,
+            SimulatorDevice? simulator) =>
         {
             try
             {
-                var allNames = registry.GetAllCapabilityNames().ToHashSet(StringComparer.OrdinalIgnoreCase);
-                if (!allNames.Contains(id))
+                // Find all capability keys that belong to this adapter prefix.
+                var adapterKeys = registry.GetAllCapabilityNames()
+                    .Where(name =>
+                    {
+                        var dot = name.IndexOf('.');
+                        var prefix = dot > 0 ? name[..dot] : name;
+                        return string.Equals(prefix, id, StringComparison.OrdinalIgnoreCase);
+                    })
+                    .ToArray();
+
+                if (adapterKeys.Length == 0)
                     return Results.NotFound(new { Error = $"Device '{id}' not found." });
 
-                // Build stub CapabilityDescriptor per registered capability name.
-                // Full metadata will be populated when CapabilityDescriptor registration is wired in a later plan.
-                var descriptors = allNames
-                    .Select(verbName => new CapabilityDescriptor(
-                        verbName,
-                        verbName,
-                        string.Empty,
-                        CapabilityCategory.Utility,
-                        Array.Empty<ParameterSchema>(),
-                        false,
-                        false))
-                    .ToArray();
+                // Use rich descriptors from the simulator when available.
+                CapabilityDescriptor[] descriptors;
+                if (string.Equals(id, "simulator", StringComparison.OrdinalIgnoreCase) && simulator is not null)
+                {
+                    descriptors = simulator.GetRichCapabilities().ToArray();
+                }
+                else
+                {
+                    // Stub descriptors for adapters that haven't wired rich metadata yet.
+                    descriptors = adapterKeys
+                        .Select(key =>
+                        {
+                            var dot = key.IndexOf('.');
+                            var verbName = dot > 0 ? key[(dot + 1)..] : key;
+                            return new CapabilityDescriptor(verbName, verbName, string.Empty,
+                                CapabilityCategory.Utility, Array.Empty<ParameterSchema>(), false, false);
+                        })
+                        .ToArray();
+                }
 
                 return Results.Ok(new { adapterId = id, capabilities = descriptors });
             }
