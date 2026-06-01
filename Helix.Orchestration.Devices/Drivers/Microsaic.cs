@@ -1,4 +1,4 @@
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using Helix.Orchestration.Devices.Abstractions;
@@ -34,7 +34,7 @@ public sealed class Microsaic : DeviceAdapterBase
     {
     }
 
-    // ── Encoding helpers ──────────────────────────────────────────────────────
+    // â”€â”€ Encoding helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     /// <summary>Encodes a command string to ASCII bytes, appending the "\n\n" terminator (CmdEnd).</summary>
     private static byte[] Encode(string command) => Encoding.ASCII.GetBytes(command + "\n\n");
@@ -45,7 +45,7 @@ public sealed class Microsaic : DeviceAdapterBase
     /// <summary>Decodes a response byte array to an ASCII string preserving newlines (for multi-line parsing).</summary>
     private static string DecodeLines(byte[] response) => Encoding.ASCII.GetString(response).Trim();
 
-    // ── Capability registration ───────────────────────────────────────────────
+    // â”€â”€ Capability registration â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     /// <inheritdoc/>
     protected override void RegisterCapabilities(CapabilityDispatchBuilder builder)
@@ -259,7 +259,7 @@ public sealed class Microsaic : DeviceAdapterBase
             });
     }
 
-    // ── Trend streaming ───────────────────────────────────────────────────────
+    // â”€â”€ Trend streaming â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     /// <inheritdoc/>
     public override async IAsyncEnumerable<TrendSample> StreamTrendsAsync(
@@ -272,29 +272,34 @@ public sealed class Microsaic : DeviceAdapterBase
 
         while (!cancellationToken.IsCancellationRequested)
         {
+            var cancelled = false;
             try
             {
                 await Task.Delay(250, cancellationToken).ConfigureAwait(false);
             }
             catch (OperationCanceledException)
             {
-                yield break;
+                cancelled = true;
             }
+            if (cancelled) yield break;
 
             byte[]? rawData = null;
+            var dataFetchFailed = false;
             try
             {
                 rawData = await Transport.SendReceiveAsync(Encode("GET LIVE_DATA"), cancellationToken);
             }
             catch (OperationCanceledException)
             {
-                yield break;
+                cancelled = true;
             }
             catch (Exception ex)
             {
                 Logger.LogWarning(ex, "Microsaic: failed to poll GET LIVE_DATA; skipping trend sample");
-                continue;
+                dataFetchFailed = true;
             }
+            if (cancelled) yield break;
+            if (dataFetchFailed) continue;
 
             if (rawData == null) continue;
 
@@ -341,7 +346,7 @@ public sealed class Microsaic : DeviceAdapterBase
         }
     }
 
-    // ── Private helpers ───────────────────────────────────────────────────────
+    // â”€â”€ Private helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     /// <summary>
     /// Polls a command until the response contains <paramref name="expectedToken"/> or times out (5 s).
@@ -392,3 +397,5 @@ public sealed class Microsaic : DeviceAdapterBase
         return double.TryParse(valuePart[1], out var result) ? result : 0;
     }
 }
+
+
