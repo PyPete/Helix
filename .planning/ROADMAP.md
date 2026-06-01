@@ -1,4 +1,4 @@
-# Roadmap
+ï»¿# Roadmap
 
 **Project:** Helix Orchestration Platform
 **Milestone:** 1 -- Hardware-ready platform with local UI, full test coverage, documentation, and deployment scripts
@@ -17,7 +17,8 @@
 | 4 | Transport + Execution Integration Tests | Verify transport layer and E2E workflow execution without real hardware | 1, 2, 3 | M |
 | 5 | Tauri Desktop App - Foundation | Scaffold the cross-platform fumehood UI and wire it to Agent | 2 | M |
 | 6 | Tauri Desktop App - Workflow Builder + Execution | Agent REST API + WebSocket layer, WSL compiler completions, Rete.js node editor, execution panel, live trends, safety display | 5 | XL |
-| 6.1 | Desktop App Polish — Device Controls, Status Events & Chart Foundation | CapabilityDescriptor schema, manual control endpoint, DeviceStatusEvent, SciChart wrapper layer | 6 | S |
+| 6.1 | Desktop App Polish â€” Device Controls, Status Events & Chart Foundation | CapabilityDescriptor schema, manual control endpoint, DeviceStatusEvent, SciChart wrapper layer | 6 | S |
+| 6.2 | Workflow Builder â€” Device Palette, Hybrid Ports & Live Execution | Production-quality ReactFlow node canvas: device action palette, hybrid static/dataflow ports, live traffic-light execution state | 6.1 | L |
 | 7 | Site-Level React Dashboard | Vite + TypeScript SPA with site overview, campaigns, history, and live trends | 2 | M |
 | 8 | CI Hardening + Full Test Coverage | All projects build and test in CI; coverage report; no skipped tests | 1, 4, 6, 7 | M |
 | 9 | Docusaurus Documentation | Scaffold and populate developer + scientist docs; auto-generate API reference | 7, 8 | M |
@@ -225,25 +226,25 @@ Plans:
 
 ---
 
-## Phase 6.1: Desktop App Polish — Device Controls, Status Events & Chart Foundation
+## Phase 6.1: Desktop App Polish â€” Device Controls, Status Events & Chart Foundation
 
-**Goal:** Close the three Phase 7 prerequisites that emerged from Phase 6 todos: add `DeviceStatusEvent` to the Agent WebSocket stream so the UI can react to device connect/disconnect; implement `POST /devices/{id}/execute` with auto-generated manual control panel so scientists can interact with devices directly from the desktop; and install the SciChart wrapper layer (Step 1 only — placeholder mode, no license required) so the chart abstraction is in place before Phase 7 builds on it.
+**Goal:** Close the three Phase 7 prerequisites that emerged from Phase 6 todos: add `DeviceStatusEvent` to the Agent WebSocket stream so the UI can react to device connect/disconnect; implement `POST /devices/{id}/execute` with auto-generated manual control panel so scientists can interact with devices directly from the desktop; and install the SciChart wrapper layer (Step 1 only â€” placeholder mode, no license required) so the chart abstraction is in place before Phase 7 builds on it.
 
 **Deliverables:**
 
 Agent-side:
 - `DeviceStatusEvent` record added to `RunspaceEvent.cs`; `AgentService` publishes `device-status` frames on adapter connect/disconnect
-- `CapabilityDescriptor` + `ParameterSchema` types added to `Helix.Orchestration.Core` — extends `CapabilityRegistry` with display metadata and parameter schemas
-- `POST /devices/{id}/execute` endpoint in `DeviceEndpoints.cs` — invokes capability through `CapabilityRegistry.InvokeAsync`, records `ManualActionEvent` to timeline
+- `CapabilityDescriptor` + `ParameterSchema` types added to `Helix.Orchestration.Core` â€” extends `CapabilityRegistry` with display metadata and parameter schemas
+- `POST /devices/{id}/execute` endpoint in `DeviceEndpoints.cs` â€” invokes capability through `CapabilityRegistry.InvokeAsync`, records `ManualActionEvent` to timeline
 - `GET /devices/{id}/capabilities` updated to return `CapabilityDescriptor[]` (was `string[]`)
 
 Tauri desktop app:
-- `DeviceManualControl.tsx` — generic schema-driven panel; renders one widget per `CapabilityDescriptor` (numeric input, toggle, enum select, action button); confirm dialog for destructive capabilities
+- `DeviceManualControl.tsx` â€” generic schema-driven panel; renders one widget per `CapabilityDescriptor` (numeric input, toggle, enum select, action button); confirm dialog for destructive capabilities
 - `useAgentWebSocket` updated to dispatch `device-status` frames; `DeviceRegistry` auto-refreshes on device online/offline
 - SciChart wrapper layer: `src/components/charts/` directory with `types.ts`, `PlaceholderChart.tsx`, and `charts/index.ts` runtime router; existing `ScalarTrendChart` and `SpectralChart` re-exported through the wrapper (no behaviour change, all tests still pass in placeholder mode)
 - `DeviceRegistry.tsx` gains "Manual Control" button per adapter row, renders `DeviceManualControl` panel
 
-**Requirements covered:** C7 (device status auto-update), C8 (manual device control), no new requirement IDs — these are polish items
+**Requirements covered:** C7 (device status auto-update), C8 (manual device control), no new requirement IDs â€” these are polish items
 
 **Dependencies:** Phase 6 (Agent REST/WebSocket foundation, DeviceRegistry component, recharts charts)
 
@@ -383,7 +384,7 @@ Plans:
 | 4. Transport + Execution Integration Tests | 0/4 | Not started | - |
 | 5. Tauri Desktop App - Foundation | 3/3 | Complete | 2026-05-28 |
 | 6. Tauri Desktop App - Workflow Builder + Execution | 10/10 | Complete | 2026-05-30 |
-| 6.1. Desktop App Polish — Device Controls, Status Events & Chart Foundation | 2/2 | Complete 2026-05-30 | - |
+| 6.1. Desktop App Polish â€” Device Controls, Status Events & Chart Foundation | 2/2 | Complete 2026-05-30 | - |
 | 7. Site-Level React Dashboard | 0/6 | Not started | - |
 | 8. CI Hardening + Full Test Coverage | 0/5 | Not started | - |
 | 9. Docusaurus Documentation | 0/5 | Not started | - |
@@ -446,4 +447,5 @@ Plans:
 | G6 | Phase 10 | Pending |
 
 **Coverage: 49/49 requirements mapped (100%)**
+
 
