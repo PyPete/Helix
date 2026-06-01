@@ -1,6 +1,7 @@
 ﻿using Helix.Orchestration.Core.Capabilities;
 using Helix.Orchestration.Devices.Drivers;
 using Helix.Orchestration.Devices.Interfaces;
+using Helix.Orchestration.Devices.Transports.Null;
 using Helix.Orchestration.Devices.Transports.Opc;
 using Helix.Orchestration.Devices.Transports.Serial;
 using Helix.Orchestration.Devices.Transports.Tcp;
@@ -14,6 +15,7 @@ public static class DeviceAdapterExtensions
     public static IServiceCollection AddMigratedDeviceAdapters(this IServiceCollection services)
     {
         AddPlan02NetworkAdapters(services);
+        AddPlan03SpecialAdapters(services);
         // Register VapourtecR4 serial transport options
         // PortName is a placeholder; override via appsettings or environment variable in production.
         services.AddSingleton(new SerialTransportOptions
@@ -126,12 +128,139 @@ public static class DeviceAdapterExtensions
                 logger.LogInformation("Registered capability: {CapabilityName}", key);
             }
 
+            // Plan 03 — special/facade drivers
+            // AtlasReactionSystem
+            var atlas = sp.GetRequiredService<AtlasReactionSystem>();
+            foreach (var cap in atlas.GetCapabilities())
+            {
+                var key = $"atlasreactionsystem.{cap.Name}";
+                registry.Register(key, new HelixAdapterCapabilityBridge(atlas));
+                logger.LogInformation("Registered capability: {CapabilityName}", key);
+            }
+
+            // Crystalline
+            var crystalline = sp.GetRequiredService<Crystalline>();
+            foreach (var cap in crystalline.GetCapabilities())
+            {
+                var key = $"crystalline.{cap.Name}";
+                registry.Register(key, new HelixAdapterCapabilityBridge(crystalline));
+                logger.LogInformation("Registered capability: {CapabilityName}", key);
+            }
+
+            // IfmMasterController
+            var ifm = sp.GetRequiredService<IfmMasterController>();
+            foreach (var cap in ifm.GetCapabilities())
+            {
+                var key = $"ifmmastercontroller.{cap.Name}";
+                registry.Register(key, new HelixAdapterCapabilityBridge(ifm));
+                logger.LogInformation("Registered capability: {CapabilityName}", key);
+            }
+
+            // OceanViewUv
+            var oceanViewUv = sp.GetRequiredService<OceanViewUv>();
+            foreach (var cap in oceanViewUv.GetCapabilities())
+            {
+                var key = $"oceanviewuv.{cap.Name}";
+                registry.Register(key, new HelixAdapterCapabilityBridge(oceanViewUv));
+                logger.LogInformation("Registered capability: {CapabilityName}", key);
+            }
+
+            // OceanViewNir
+            var oceanViewNir = sp.GetRequiredService<OceanViewNir>();
+            foreach (var cap in oceanViewNir.GetCapabilities())
+            {
+                var key = $"oceanviewnir.{cap.Name}";
+                registry.Register(key, new HelixAdapterCapabilityBridge(oceanViewNir));
+                logger.LogInformation("Registered capability: {CapabilityName}", key);
+            }
+
+            // PicoTc08
+            var pico = sp.GetRequiredService<PicoTc08>();
+            foreach (var cap in pico.GetCapabilities())
+            {
+                var key = $"picotc08.{cap.Name}";
+                registry.Register(key, new HelixAdapterCapabilityBridge(pico));
+                logger.LogInformation("Registered capability: {CapabilityName}", key);
+            }
+
+            // NOTE: OceanViewDriver and PicoTc08LowLevelWrapper are NOT registered in the
+            // CapabilityRegistry — they are native integration layers, not DeviceAdapterBase adapters.
+
             return registry;
         });
 
         services.AddSingleton<ICapabilityInvoker>(sp => sp.GetRequiredService<CapabilityRegistry>());
 
         return services;
+    }
+
+    /// <summary>
+    /// Registers Plan 03 special/facade drivers (File I/O, SQL, IO-Link, CDll/P-Invoke).
+    /// All facade drivers receive a NullDeviceTransport singleton as the stub transport.
+    /// OceanViewDriver and PicoTc08LowLevelWrapper are registered as domain interface implementations only.
+    /// </summary>
+    private static void AddPlan03SpecialAdapters(IServiceCollection services)
+    {
+        // NullDeviceTransport — shared singleton stub for all facade drivers
+        services.AddSingleton<NullDeviceTransport>();
+
+        // AtlasReactionSystem — File I/O facade
+        // Note: IDirectoryInfo, IReadCsvFile, IGetProcess require concrete implementations for production.
+        services.AddSingleton<IDirectoryInfo>(_ =>
+            throw new NotImplementedException("IDirectoryInfo production implementation not registered."));
+        services.AddSingleton<IReadCsvFile>(_ =>
+            throw new NotImplementedException("IReadCsvFile production implementation not registered."));
+        services.AddSingleton<IGetProcess>(_ =>
+            throw new NotImplementedException("IGetProcess production implementation not registered."));
+        services.AddSingleton(sp => new AtlasReactionSystem(
+            sp.GetRequiredService<IDirectoryInfo>(),
+            sp.GetRequiredService<IReadCsvFile>(),
+            sp.GetRequiredService<IGetProcess>(),
+            sp.GetRequiredService<NullDeviceTransport>(),
+            sp.GetRequiredService<ILogger<AtlasReactionSystem>>()));
+
+        // Crystalline — SQL facade
+        services.AddSingleton<ICrystallineSqlClient>(_ =>
+            throw new NotImplementedException("ICrystallineSqlClient production implementation not registered."));
+        services.AddSingleton(sp => new Crystalline(
+            sp.GetRequiredService<ICrystallineSqlClient>(),
+            sp.GetRequiredService<NullDeviceTransport>(),
+            sp.GetRequiredService<ILogger<Crystalline>>()));
+
+        // IfmMasterController — IO-Link HTTP facade
+        services.AddSingleton<IPopIoLinkClient>(_ =>
+            throw new NotImplementedException("IPopIoLinkClient production implementation not registered."));
+        services.AddSingleton<IFile>(_ =>
+            throw new NotImplementedException("IFile production implementation not registered."));
+        services.AddSingleton(sp => new IfmMasterController(
+            sp.GetRequiredService<IPopIoLinkClient>(),
+            sp.GetRequiredService<IFile>(),
+            sp.GetRequiredService<NullDeviceTransport>(),
+            sp.GetRequiredService<ILogger<IfmMasterController>>()));
+
+        // OceanViewDriver — CDll IOceanViewDriver implementation (native integration layer)
+        services.AddSingleton<IOceanViewDriver, OceanViewDriver>();
+
+        // OceanViewUv — wraps IOceanViewDriver
+        services.AddSingleton(sp => new OceanViewUv(
+            sp.GetRequiredService<IOceanViewDriver>(),
+            sp.GetRequiredService<NullDeviceTransport>(),
+            sp.GetRequiredService<ILogger<OceanViewUv>>()));
+
+        // OceanViewNir — wraps IOceanViewDriver
+        services.AddSingleton(sp => new OceanViewNir(
+            sp.GetRequiredService<IOceanViewDriver>(),
+            sp.GetRequiredService<NullDeviceTransport>(),
+            sp.GetRequiredService<ILogger<OceanViewNir>>()));
+
+        // PicoTc08LowLevelWrapper — IPicoApi implementation (native integration layer)
+        services.AddSingleton<IPicoApi, PicoTc08LowLevelWrapper>();
+
+        // PicoTc08 — wraps IPicoApi
+        services.AddSingleton(sp => new PicoTc08(
+            sp.GetRequiredService<IPicoApi>(),
+            sp.GetRequiredService<NullDeviceTransport>(),
+            sp.GetRequiredService<ILogger<PicoTc08>>()));
     }
 
     /// <summary>
