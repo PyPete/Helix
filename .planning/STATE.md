@@ -1,22 +1,22 @@
----
+﻿---
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: Phase 6.1 -- Desktop App Polish � Device Controls, Status Events & Chart Foundation (Plan 2 of 2 complete)
+current_phase: Phase 6.1 -- Desktop App Polish ï¿½ Device Controls, Status Events & Chart Foundation (Plan 2 of 2 complete)
 status: complete
-last_updated: "2026-05-30T00:00:00.000Z"
+last_updated: "2026-06-01T07:49:44.592Z"
 progress:
-  total_phases: 10
-  completed_phases: 2
-  total_plans: 13
-  completed_plans: 16
-  percent: 20
+  total_phases: 11
+  completed_phases: 3
+  total_plans: 16
+  completed_plans: 17
+  percent: 27
 ---
 
 # Project State
 
 **Last updated:** 2026-05-30
-**Current phase:** Phase 6.1 -- Desktop App Polish � Device Controls, Status Events & Chart Foundation (Plan 2 of 2 complete)
+**Current phase:** Phase 6.1 -- Desktop App Polish ï¿½ Device Controls, Status Events & Chart Foundation (Plan 2 of 2 complete)
 **Workflow:** YOLO mode, fine granularity, parallel execution enabled
 
 ---
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-05-26)
 
 **Core value:** A scientist can build a workflow, connect real lab hardware, execute an experiment, and see the results without writing code.
 
-**Current focus:** Phase 6.1 complete � Phase 7 (Site-Level React Dashboard) is next
+**Current focus:** Phase 6.1 complete ï¿½ Phase 7 (Site-Level React Dashboard) is next
 
 ---
 
@@ -101,6 +101,8 @@ See: .planning/PROJECT.md (updated 2026-05-26)
 
 Phase 6.1 Plan 02 complete. Phase 6.1 all 2 plans complete. Phase 7 (Site-Level React Dashboard) is next.
 
+driver-port Plan 03 complete (2026-06-01). 8 special/facade drivers ported: AtlasReactionSystem, Crystalline, IfmMasterController, OceanViewDriver, OceanViewUv, OceanViewNir, PicoTc08LowLevelWrapper, PicoTc08. 262 tests passing. NetOceanDirect and usbtc08.dll still need to be added for production runtime.
+
 ---
 
 ## Phase History
@@ -114,7 +116,7 @@ Phase 6.1 Plan 02 complete. Phase 6.1 all 2 plans complete. Phase 7 (Site-Level 
 | 4. Integration Test Coverage | Complete | 2026-05-27 |
 | 5. Tauri Desktop App Foundation | Complete | 2026-05-28 |
 | 6. Tauri Desktop App - Workflow Builder + Execution | Complete | 2026-05-30 |
-| 6.1. Desktop App Polish � Device Controls, Status Events & Chart Foundation | Complete | 2026-05-30 |
+| 6.1. Desktop App Polish ï¿½ Device Controls, Status Events & Chart Foundation | Complete | 2026-05-30 |
 
 ---
 
@@ -135,6 +137,7 @@ Phase 6.1 Plan 02 complete. Phase 6.1 all 2 plans complete. Phase 7 (Site-Level 
 | phase-6 | 10 | ~4 min | 2/2 | 5 |
 | phase-6.1 | 01 | ~15 min | 3/3 | 4 |
 | phase-6.1 | 02 | ~20 min | 2/2 | 8 |
+| driver-port | 03 | ~90 min | 8/8 | 27 |
 
 ---
 
@@ -167,3 +170,4 @@ Phase 6.1 Plan 02 complete. Phase 6.1 all 2 plans complete. Phase 7 (Site-Level 
 - `Helix.Orchestration.Core/Capabilities/CapabilityDescriptor.cs` -- CapabilityDescriptor schema types (Phase 6.1)
 - `helix-desktop/src/components/DeviceManualControl/DeviceManualControl.tsx` -- schema-driven manual control panel (Phase 6.1)
 - `helix-desktop/src/components/charts/index.ts` -- SciChart wrapper re-export layer (Phase 6.1)
+
