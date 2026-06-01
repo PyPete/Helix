@@ -1,5 +1,6 @@
 ﻿import { memo } from "react";
-import { Handle, Position, type NodeProps } from "reactflow";
+import { Handle, Position, type NodeProps, useEdges } from "reactflow";
+import type { ParameterSchema, ParameterType } from "../../../types/agent";
 
 // ---- Shared types ----
 
@@ -10,7 +11,8 @@ export type HelixNodeType =
   | "Loop"
   | "Parallel"
   | "Delay"
-  | "WaitFor";
+  | "WaitFor"
+  | "DeviceAction";
 
 export type ExecutionState = "idle" | "running" | "succeeded" | "failed";
 
@@ -271,6 +273,136 @@ export const WaitForNodeComponent = memo(({ data, id }: NodeProps<HelixNodeData>
 });
 WaitForNodeComponent.displayName = "WaitForNode";
 
+// ---- DeviceAction node ----
+
+export interface DeviceActionNodeData {
+  nodeType: "DeviceAction";
+  adapterId: string;
+  capability: string;
+  parameters: ParameterSchema[];
+  fieldValues: Record<string, unknown>;
+  executionState?: ExecutionState;
+  label: string;
+}
+
+export const PORT_COLOURS: Record<ParameterType | "exec", string> = {
+  Numeric:  "#5b8dd9",
+  Enum:     "#e67e22",
+  Boolean:  "#27ae60",
+  String:   "#e91e8c",
+  Duration: "#5b8dd9",
+  exec:     "#a6adc8",
+};
+
+export const DeviceActionNodeComponent = memo(({ data, id }: NodeProps<DeviceActionNodeData>) => {
+  const state = data.executionState;
+  const edges = useEdges();
+
+  return (
+    <div style={nodeStyle(state)} data-testid={`node-deviceaction-${id}`}>
+      <Handle
+        type="target"
+        position={Position.Left}
+        id="exec-in"
+        style={handleStyle(PORT_COLOURS.exec)}
+      />
+      <div style={headerStyle("#7c3aed")}>{data.adapterId} › {data.capability}</div>
+      <div style={bodyStyle}>
+        {(data.parameters ?? []).map((param) => {
+          const isWired = edges.some(
+            (e) => e.targetHandle === param.name && e.target === id
+          );
+          return (
+            <div key={param.name} style={{ display: "flex", alignItems: "center", gap: 6, position: "relative" }}>
+              <Handle
+                type="target"
+                position={Position.Left}
+                id={param.name}
+                style={handleStyle(PORT_COLOURS[param.type] ?? PORT_COLOURS.exec)}
+              />
+              {isWired ? (
+                <span
+                  data-testid={`wire-indicator-${param.name}`}
+                  style={{ color: "#6c7086", fontSize: 11 }}
+                >
+                  ↤ wired
+                </span>
+              ) : (
+                <>
+                  <label style={{ color: "#6c7086", fontSize: 11, minWidth: 60 }}>
+                    {param.displayName || param.name}
+                  </label>
+                  {param.type === "Numeric" && (
+                    <>
+                      <input
+                        type="number"
+                        className="nodrag"
+                        style={fieldStyle}
+                        min={param.min}
+                        max={param.max}
+                        step={param.step ?? 1}
+                        defaultValue={param.defaultValue as number | undefined}
+                      />
+                      {param.unit && <span style={{ color: "#6c7086", fontSize: 11 }}>{param.unit}</span>}
+                    </>
+                  )}
+                  {param.type === "Duration" && (
+                    <>
+                      <input
+                        type="number"
+                        className="nodrag"
+                        style={fieldStyle}
+                        min={param.min}
+                        max={param.max}
+                        step={param.step ?? 1}
+                        defaultValue={param.defaultValue as number | undefined}
+                      />
+                      <span style={{ color: "#6c7086", fontSize: 11 }}>ms</span>
+                    </>
+                  )}
+                  {param.type === "Enum" && (
+                    <select
+                      className="nodrag"
+                      style={fieldStyle}
+                      defaultValue={param.defaultValue as string | undefined}
+                    >
+                      {param.options?.map((o) => (
+                        <option key={o} value={o}>{o}</option>
+                      ))}
+                    </select>
+                  )}
+                  {param.type === "Boolean" && (
+                    <input
+                      type="checkbox"
+                      className="nodrag"
+                      defaultChecked={Boolean(param.defaultValue)}
+                    />
+                  )}
+                  {param.type === "String" && (
+                    <input
+                      type="text"
+                      className="nodrag"
+                      style={fieldStyle}
+                      defaultValue={String(param.defaultValue ?? "")}
+                    />
+                  )}
+                </>
+              )}
+            </div>
+          );
+        })}
+      </div>
+      <Handle
+        type="source"
+        position={Position.Right}
+        id="exec-out"
+        style={handleStyle(PORT_COLOURS.exec)}
+      />
+    </div>
+  );
+});
+DeviceActionNodeComponent.displayName = "DeviceActionNode";
+
 // ---- nodeTypes map (pass to <ReactFlow nodeTypes={NODE_TYPES}>) ----
 
 export const NODE_TYPES = {
@@ -281,4 +413,5 @@ export const NODE_TYPES = {
   Parallel: ParallelNodeComponent,
   Delay: DelayNodeComponent,
   WaitFor: WaitForNodeComponent,
+  DeviceAction: DeviceActionNodeComponent,
 } as const;

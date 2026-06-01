@@ -1,12 +1,22 @@
 ﻿import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { WorkflowBuilder } from "./WorkflowBuilder";
+import type { NodeProps } from "reactflow";
 
 // ReactFlow renders SVG/canvas internals that don't exist in jsdom.
 // Mock the entire reactflow module so the component tree renders without DOM errors.
 vi.mock("reactflow", () => {
-  const ReactFlow = vi.fn(({ children, onPaneContextMenu, onPaneClick, onInit }: {
+  const ReactFlow = vi.fn(({
+    children,
+    nodes,
+    nodeTypes,
+    onPaneContextMenu,
+    onPaneClick,
+    onInit,
+  }: {
     children?: React.ReactNode;
+    nodes?: Array<{ id: string; type?: string; data: unknown; position: { x: number; y: number } }>;
+    nodeTypes?: Record<string, React.ComponentType<NodeProps>>;
     onPaneContextMenu?: (e: React.MouseEvent) => void;
     onPaneClick?: (e: React.MouseEvent) => void;
     onInit?: (instance: unknown) => void;
@@ -20,6 +30,12 @@ vi.mock("reactflow", () => {
         onContextMenu={onPaneContextMenu}
         onClick={onPaneClick}
       >
+        {/* Render node components so data-testid attributes are accessible */}
+        {nodes?.map((node) => {
+          const NodeComp = nodeTypes?.[node.type ?? ""];
+          if (!NodeComp) return null;
+          return <NodeComp key={node.id} id={node.id} data={node.data as never} selected={false} isConnectable={true} xPos={node.position.x} yPos={node.position.y} zIndex={0} type={node.type ?? ""} dragging={false} />;
+        })}
         {children}
       </div>
     );
@@ -30,14 +46,22 @@ vi.mock("reactflow", () => {
     BackgroundVariant: { Dots: "dots" },
     Controls: () => null,
     MiniMap: () => null,
+    Handle: ({ id }: { id?: string }) => <div data-handle-id={id} />,
+    Position: { Left: "left", Right: "right", Top: "top", Bottom: "bottom" },
     useReactFlow: vi.fn(() => ({
       screenToFlowPosition: (p: { x: number; y: number }) => p,
     })),
-    addEdge: vi.fn((conn, eds) => [...eds, conn]),
-    applyNodeChanges: vi.fn((_, nds) => nds),
-    applyEdgeChanges: vi.fn((_, eds) => eds),
+    useEdges: vi.fn(() => []),
+    addEdge: vi.fn((conn: unknown, eds: unknown[]) => [...eds, conn]),
+    applyNodeChanges: vi.fn((_: unknown, nds: unknown[]) => nds),
+    applyEdgeChanges: vi.fn((_: unknown, eds: unknown[]) => eds),
   };
 });
+
+// Mock DevicePalette to prevent fetch side-effects in WorkflowBuilder tests
+vi.mock("./DevicePalette", () => ({
+  DevicePalette: () => <div data-testid="device-palette" />,
+}));
 
 // Mock workflowLibrary
 const { mockSave, mockList } = vi.hoisted(() => ({
@@ -185,5 +209,88 @@ describe("WorkflowBuilder", () => {
     expect(screen.getByTestId("node-context-menu")).toBeInTheDocument();
     fireEvent.click(canvas);
     expect(screen.queryByTestId("node-context-menu")).not.toBeInTheDocument();
+  });
+
+  it("drop on canvas creates a DeviceAction node", async () => {
+    vi.stubGlobal("fetch", vi.fn(() => new Promise(() => {})));
+    render(<WorkflowBuilder baseUrl="http://localhost:5080" onExport={vi.fn()} />);
+
+    const descriptor = {
+      verbName: "SetFlow",
+      displayName: "Set Flow",
+      description: "Sets the flow rate",
+      category: "Control",
+      parameters: [],
+      isDestructive: false,
+      requiresActiveRunspace: false,
+    };
+    const payload = JSON.stringify({
+      adapterId: "Alicat",
+      capability: "SetFlow",
+      descriptor,
+    });
+
+    const canvas = screen.getByTestId("rete-canvas");
+    fireEvent.drop(canvas, {
+      dataTransfer: {
+        getData: (key: string) => (key === "application/helix-capability" ? payload : ""),
+      },
+      clientX: 300,
+      clientY: 300,
+    });
+
+    await waitFor(() =>
+      expect(screen.getByTestId(/node-deviceaction-/)).toBeInTheDocument()
+    );
+  });
+
+  it("exportWsl produces nodeType Step with capability parameter for DeviceAction node", async () => {
+    vi.stubGlobal("fetch", vi.fn(() => new Promise(() => {})));
+    const onExport = vi.fn();
+    render(<WorkflowBuilder baseUrl="http://localhost:5080" onExport={onExport} />);
+
+    const descriptor = {
+      verbName: "SetFlow",
+      displayName: "Set Flow",
+      description: "Sets the flow rate",
+      category: "Control",
+      parameters: [],
+      isDestructive: false,
+      requiresActiveRunspace: false,
+    };
+    const payload = JSON.stringify({
+      adapterId: "Alicat",
+      capability: "SetFlow",
+      descriptor,
+    });
+
+    const canvas = screen.getByTestId("rete-canvas");
+    fireEvent.drop(canvas, {
+      dataTransfer: {
+        getData: (key: string) => (key === "application/helix-capability" ? payload : ""),
+      },
+      clientX: 300,
+      clientY: 300,
+    });
+
+    await waitFor(() =>
+      expect(screen.getByTestId(/node-deviceaction-/)).toBeInTheDocument()
+    );
+
+    fireEvent.click(screen.getByTestId("export-wsl-btn"));
+
+    await waitFor(() => {
+      expect(onExport).toHaveBeenCalledWith(
+        expect.objectContaining({
+          schemaVersion: "1.0",
+          nodes: expect.arrayContaining([
+            expect.objectContaining({
+              nodeType: "Step",
+              parameters: expect.objectContaining({ capability: "Alicat.SetFlow" }),
+            }),
+          ]),
+        })
+      );
+    });
   });
 });

@@ -9,8 +9,8 @@ import {
   applyNodeChanges,
   applyEdgeChanges,
 } from "reactflow";
-import type { WslDocument, WslNode, WslEdge } from "../../types/agent";
-import type { HelixNodeData, HelixNodeType } from "./nodes/HelixNodes";
+import type { CapabilityDescriptor, WslDocument, WslNode, WslEdge } from "../../types/agent";
+import type { DeviceActionNodeData, HelixNodeData, HelixNodeType } from "./nodes/HelixNodes";
 
 let _nodeId = 1;
 function nextId(): string {
@@ -27,6 +27,12 @@ export interface UseHelixFlowResult {
   onEdgesChange: OnEdgesChange;
   onConnect: OnConnect;
   addNode: (type: HelixNodeType, position?: { x: number; y: number }) => void;
+  addDeviceActionNode: (
+    adapterId: string,
+    capability: string,
+    descriptor: CapabilityDescriptor,
+    position?: { x: number; y: number }
+  ) => void;
   exportWsl: (name: string) => WslDocument;
 }
 
@@ -72,19 +78,54 @@ export function useHelixFlow(): UseHelixFlowResult {
     []
   );
 
+  const addDeviceActionNode = useCallback(
+    (
+      adapterId: string,
+      capability: string,
+      descriptor: CapabilityDescriptor,
+      position = { x: 200, y: 200 }
+    ) => {
+      const id = nextId();
+      const data: DeviceActionNodeData = {
+        nodeType: "DeviceAction",
+        adapterId,
+        capability,
+        parameters: descriptor.parameters,
+        fieldValues: {},
+        label: `${adapterId}.${capability}`,
+      };
+      setNodes((nds) => [...nds, { id, type: "DeviceAction", position, data } as unknown as HelixNode]);
+    },
+    []
+  );
+
   const exportWsl = useCallback(
     (name: string): WslDocument => {
-      const wslNodes: WslNode[] = nodes.map((n) => ({
-        nodeId: n.id,
-        label: n.data.label,
-        nodeType: n.data.nodeType,
-        parameters: {
-          ...(n.data.capability  !== undefined && { capability: n.data.capability }),
-          ...(n.data.condition   !== undefined && { condition: n.data.condition }),
-          ...(n.data.iterations  !== undefined && { iterations: n.data.iterations }),
-          ...(n.data.durationMs  !== undefined && { durationMs: n.data.durationMs }),
-        },
-      }));
+      const wslNodes: WslNode[] = nodes.map((n) => {
+        if (n.data.nodeType === "DeviceAction") {
+          const d = n.data as DeviceActionNodeData;
+          return {
+            nodeId: n.id,
+            label: d.label,
+            nodeType: "Step",
+            parameters: {
+              capability: `${d.adapterId}.${d.capability}`,
+              ...d.fieldValues,
+            },
+          };
+        }
+        return {
+          nodeId: n.id,
+          label: n.data.label,
+          nodeType: n.data.nodeType,
+          parameters: {
+            ...(n.data.capability  !== undefined && { capability: n.data.capability }),
+            ...(n.data.condition   !== undefined && { condition: n.data.condition }),
+            ...(n.data.iterations  !== undefined && { iterations: n.data.iterations }),
+            ...(n.data.durationMs  !== undefined && { durationMs: n.data.durationMs }),
+          },
+        };
+      });
 
       const wslEdges: WslEdge[] = edges.map((e) => ({
         edgeId: e.id,
@@ -103,6 +144,6 @@ export function useHelixFlow(): UseHelixFlowResult {
     [nodes, edges]
   );
 
-  return { nodes, edges, onNodesChange, onEdgesChange, onConnect, addNode, exportWsl };
+  return { nodes, edges, onNodesChange, onEdgesChange, onConnect, addNode, addDeviceActionNode, exportWsl };
 }
 
