@@ -58,6 +58,7 @@ public record ParameterSchema(
 /// <param name="Parameters">Ordered list of parameter schemas accepted by this capability.</param>
 /// <param name="IsDestructive">True if invoking this capability has irreversible side effects.</param>
 /// <param name="RequiresActiveRunspace">True if this capability may only be invoked during an active runspace.</param>
+/// <param name="EstimatedDurationMs">Optional estimated execution duration in milliseconds. Null if unknown.</param>
 public record CapabilityDescriptor(
     string VerbName,
     string DisplayName,
@@ -65,4 +66,5 @@ public record CapabilityDescriptor(
     CapabilityCategory Category,
     ParameterSchema[] Parameters,
     bool IsDestructive,
-    bool RequiresActiveRunspace);
+    bool RequiresActiveRunspace,
+    int? EstimatedDurationMs = null);

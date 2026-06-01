@@ -57,6 +57,7 @@ export interface RunspaceEvent {
   type: string;
   runspaceId: string;
   timestamp: string;
+  estimatedDurationMs?: number;
   [key: string]: unknown;
 }
 export interface TrendValue {

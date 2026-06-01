@@ -37,7 +37,12 @@ public sealed record RunspaceFaultedEvent(string RunspaceId, string FaultMessage
 /// <param name="RunspaceId">Identifier of the owning runspace.</param>
 /// <param name="StepId">Unique identifier of the step.</param>
 /// <param name="StepLabel">Human-readable label for the step.</param>
-public sealed record StepStartedEvent(string RunspaceId, string StepId, string StepLabel)
+/// <param name="EstimatedDurationMs">Optional estimated execution duration in milliseconds. Null if unknown.</param>
+public sealed record StepStartedEvent(
+    string RunspaceId,
+    string StepId,
+    string StepLabel,
+    int? EstimatedDurationMs = null)
     : RunspaceEvent("step-started", RunspaceId, DateTimeOffset.UtcNow);
 
 /// <summary>Emitted when a workflow step finishes without error.</summary>
