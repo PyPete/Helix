@@ -1,0 +1,32 @@
+{
+  "version": "1.0",
+  "timestamp": "2026-06-01T21:13:31Z",
+  "phase": "7",
+  "phase_name": "Site-Level React Dashboard",
+  "phase_dir": ".planning/phases/phase-7",
+  "plan": null,
+  "task": null,
+  "total_tasks": null,
+  "status": "paused",
+  "completed_tasks": [],
+  "remaining_tasks": [
+    {"id": 1, "name": "Run gsd-phase-researcher (previous run failed with socket error)", "status": "not_started"},
+    {"id": 2, "name": "Run gsd-pattern-mapper (previous run produced stub only)", "status": "not_started"},
+    {"id": 3, "name": "Spawn gsd-planner to create PLAN.md(s)", "status": "not_started"},
+    {"id": 4, "name": "Run gsd-plan-checker verification loop", "status": "not_started"},
+    {"id": 5, "name": "Commit plan docs", "status": "not_started"}
+  ],
+  "blockers": [],
+  "human_actions_pending": [],
+  "decisions": [
+    {"decision": "Chart library: SciChart.js with full licence wiring", "rationale": "User chose SciChart.js in discuss-phase", "phase": "7"},
+    {"decision": "Live trends via raw WebSocket on SiteServer /api/trends/ws", "rationale": "Language-independent, no SignalR dependency", "phase": "7"},
+    {"decision": "Navigation: React Router, 4 pages: /, /campaigns, /history, /trends", "rationale": "Decided in discuss-phase", "phase": "7"},
+    {"decision": "Fumehood data: placeholder/simulated in Phase 7", "rationale": "No new backend endpoint required for Phase 7", "phase": "7"}
+  ],
+  "uncommitted_files": [
+    ".planning/phases/phase-7/07-PATTERNS.md (stub - 5 lines, no real content)"
+  ],
+  "next_action": "Run /gsd-plan-phase 7 — workflow will detect missing RESEARCH.md and restart from research step",
+  "context_notes": "Planning was interrupted mid-research. discuss-phase is fully complete and committed. All decisions locked in 07-CONTEXT.md. Simply re-run /gsd-plan-phase 7 to proceed."
+}
