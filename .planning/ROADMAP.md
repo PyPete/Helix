@@ -385,8 +385,8 @@ Plans:
 | 5. Tauri Desktop App - Foundation | 3/3 | Complete | 2026-05-28 |
 | 6. Tauri Desktop App - Workflow Builder + Execution | 10/10 | Complete | 2026-05-30 |
 | 6.1. Desktop App Polish — Device Controls, Status Events & Chart Foundation | 2/2 | Complete 2026-05-30 | - |
-| 7. Site-Level React Dashboard | 0/6 | Not started | - |
-| 8. CI Hardening + Full Test Coverage | 0/5 | Not started | - |
+| 7. Site-Level React Dashboard | 1/1 | Complete | 2026-06-02 |
+| 8. CI Hardening + Full Test Coverage | 3/3 | Complete | 2026-06-02 |
 | 9. Docusaurus Documentation | 0/5 | Not started | - |
 | 10. Deployment + Setup Scripts | 0/6 | Not started | - |
 

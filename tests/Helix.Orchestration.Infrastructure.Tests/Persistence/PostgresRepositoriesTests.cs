@@ -8,11 +8,26 @@ namespace Helix.Orchestration.Infrastructure.Tests.Persistence;
 public sealed class PostgresFixture : IAsyncLifetime
 {
     private readonly PostgreSqlContainer? _container;
+    private readonly string? _connectionString;
     public DbConnectionFactory? ConnectionFactory { get; private set; }
     public bool IsAvailable { get; private set; }
 
     public PostgresFixture()
     {
+        // CI service container path: PGHOST is set by the GitHub Actions postgres service
+        var pgHost = Environment.GetEnvironmentVariable("PGHOST");
+        if (!string.IsNullOrEmpty(pgHost))
+        {
+            var pgPort = Environment.GetEnvironmentVariable("PGPORT") ?? "5432";
+            var pgDb = Environment.GetEnvironmentVariable("PGDATABASE") ?? "helix_orchestration";
+            var pgUser = Environment.GetEnvironmentVariable("PGUSER") ?? "helix";
+            var pgPassword = Environment.GetEnvironmentVariable("PGPASSWORD") ?? "helix_dev_password";
+            _connectionString = $"Host={pgHost};Port={pgPort};Database={pgDb};Username={pgUser};Password={pgPassword}";
+            _container = null;
+            IsAvailable = true;
+            return;
+        }
+
         try
         {
             _container = new PostgreSqlBuilder("postgres:16")
@@ -31,13 +46,23 @@ public sealed class PostgresFixture : IAsyncLifetime
 
     public async Task InitializeAsync()
     {
-        if (!IsAvailable || _container == null)
+        if (!IsAvailable)
             return;
 
         try
         {
-            await _container.StartAsync();
-            ConnectionFactory = new DbConnectionFactory(_container.GetConnectionString());
+            string connStr;
+            if (_container != null)
+            {
+                await _container.StartAsync();
+                connStr = _container.GetConnectionString();
+            }
+            else
+            {
+                connStr = _connectionString!;
+            }
+
+            ConnectionFactory = new DbConnectionFactory(connStr);
 
             var migrationPath = Path.Combine(AppContext.BaseDirectory, "migrations", "001_initial.sql");
             if (!File.Exists(migrationPath))
@@ -94,7 +119,7 @@ public sealed class PostgresRepositoriesTests
         var repo = new PostgresExperimentRepository(_fixture.ConnectionFactory);
         var record = new ExperimentRecord(
             RunspaceId: "runspace-1",
-            CampaignId: "camp-1",
+            CampaignId: null,
             DefinitionId: "def-1",
             Name: "Experiment 1",
             Status: "Completed",

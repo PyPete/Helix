@@ -54,6 +54,9 @@ public sealed class HelixWebApplicationFactory : WebApplicationFactory<Program>
         public Task<IReadOnlyList<ExperimentRecord>> GetByCampaignIdAsync(string campaignId, CancellationToken ct = default)
             => Task.FromResult<IReadOnlyList<ExperimentRecord>>(
                 _store.Values.Where(r => r.CampaignId == campaignId).ToList());
+
+        public Task<IReadOnlyList<ExperimentRecord>> GetAllAsync(CancellationToken ct = default)
+            => Task.FromResult<IReadOnlyList<ExperimentRecord>>(_store.Values.ToList());
     }
 
     private sealed class InMemoryCampaignRepository : ICampaignRepository

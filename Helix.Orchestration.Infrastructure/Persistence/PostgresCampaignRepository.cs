@@ -48,29 +48,14 @@ public sealed class PostgresCampaignRepository(DbConnectionFactory connectionFac
     public async Task<CampaignRecord?> GetByIdAsync(string campaignId, CancellationToken ct = default)
     {
         const string campaignSql = """
-            SELECT
-                campaign_id AS CampaignId,
-                name AS Name,
-                description AS Description,
-                status AS Status,
-                created_at AS CreatedAt,
-                started_at AS StartedAt,
-                ended_at AS EndedAt
+            SELECT campaign_id, name, description, status, created_at, started_at, ended_at
             FROM campaigns
             WHERE campaign_id = @campaignId;
             """;
 
         const string iterationsSql = """
-            SELECT
-                campaign_id AS CampaignId,
-                iteration_index AS IterationIndex,
-                parameters_json AS ParametersJson,
-                runspace_id AS RunspaceId,
-                status AS Status,
-                message AS Message,
-                created_at AS CreatedAt,
-                started_at AS StartedAt,
-                ended_at AS EndedAt
+            SELECT campaign_id, iteration_index, parameters_json, runspace_id,
+                   status, message, created_at, started_at, ended_at
             FROM campaign_iterations
             WHERE campaign_id = @campaignId
             ORDER BY iteration_index;
@@ -85,46 +70,23 @@ public sealed class PostgresCampaignRepository(DbConnectionFactory connectionFac
         if (campaignRow is null)
             return null;
 
-        var iterations = (await connection.QueryAsync<CampaignIterationRecord>(
+        var iterationRows = (await connection.QueryAsync<CampaignIterationRow>(
             new CommandDefinition(iterationsSql, new { campaignId }, cancellationToken: ct))).ToList();
 
-        return new CampaignRecord(
-            campaignRow.CampaignId,
-            campaignRow.Name,
-            campaignRow.Description,
-            campaignRow.Status,
-            campaignRow.CreatedAt,
-            campaignRow.StartedAt,
-            campaignRow.EndedAt,
-            iterations);
+        return campaignRow.ToRecord(iterationRows.Select(i => i.ToRecord()).ToList());
     }
 
     public async Task<IReadOnlyList<CampaignRecord>> GetAllAsync(CancellationToken ct = default)
     {
         const string campaignSql = """
-            SELECT
-                campaign_id AS CampaignId,
-                name AS Name,
-                description AS Description,
-                status AS Status,
-                created_at AS CreatedAt,
-                started_at AS StartedAt,
-                ended_at AS EndedAt
+            SELECT campaign_id, name, description, status, created_at, started_at, ended_at
             FROM campaigns
             ORDER BY created_at;
             """;
 
         const string iterationsSql = """
-            SELECT
-                campaign_id AS CampaignId,
-                iteration_index AS IterationIndex,
-                parameters_json AS ParametersJson,
-                runspace_id AS RunspaceId,
-                status AS Status,
-                message AS Message,
-                created_at AS CreatedAt,
-                started_at AS StartedAt,
-                ended_at AS EndedAt
+            SELECT campaign_id, iteration_index, parameters_json, runspace_id,
+                   status, message, created_at, started_at, ended_at
             FROM campaign_iterations
             ORDER BY campaign_id, iteration_index;
             """;
@@ -133,21 +95,16 @@ public sealed class PostgresCampaignRepository(DbConnectionFactory connectionFac
         await connection.OpenAsync(ct);
 
         var campaigns = (await connection.QueryAsync<CampaignRow>(new CommandDefinition(campaignSql, cancellationToken: ct))).ToList();
-        var iterations = (await connection.QueryAsync<CampaignIterationRecord>(new CommandDefinition(iterationsSql, cancellationToken: ct))).ToList();
+        var iterations = (await connection.QueryAsync<CampaignIterationRow>(new CommandDefinition(iterationsSql, cancellationToken: ct))).ToList();
 
         var byCampaign = iterations.GroupBy(i => i.CampaignId)
-            .ToDictionary(g => g.Key, g => (IReadOnlyList<CampaignIterationRecord>)g.ToList());
+            .ToDictionary(g => g.Key, g => g.Select(r => r.ToRecord()).ToList());
 
         return campaigns
-            .Select(c => new CampaignRecord(
-                c.CampaignId,
-                c.Name,
-                c.Description,
-                c.Status,
-                c.CreatedAt,
-                c.StartedAt,
-                c.EndedAt,
-                byCampaign.TryGetValue(c.CampaignId, out var list) ? list : Array.Empty<CampaignIterationRecord>()))
+            .Select(c => c.ToRecord(
+                byCampaign.TryGetValue(c.CampaignId, out var list)
+                    ? (IReadOnlyList<CampaignIterationRecord>)list
+                    : Array.Empty<CampaignIterationRecord>()))
             .ToList();
     }
 
@@ -160,12 +117,33 @@ public sealed class PostgresCampaignRepository(DbConnectionFactory connectionFac
         await connection.ExecuteAsync(new CommandDefinition(sql, new { campaignId }, cancellationToken: ct));
     }
 
-    private sealed record CampaignRow(
-        string CampaignId,
-        string Name,
-        string? Description,
-        string Status,
-        DateTimeOffset CreatedAt,
-        DateTimeOffset? StartedAt,
-        DateTimeOffset? EndedAt);
+    private sealed class CampaignRow
+    {
+        public string CampaignId { get; set; } = "";
+        public string Name { get; set; } = "";
+        public string? Description { get; set; }
+        public string Status { get; set; } = "";
+        public DateTimeOffset CreatedAt { get; set; }
+        public DateTimeOffset? StartedAt { get; set; }
+        public DateTimeOffset? EndedAt { get; set; }
+
+        public CampaignRecord ToRecord(IReadOnlyList<CampaignIterationRecord> iterations) =>
+            new(CampaignId, Name, Description, Status, CreatedAt, StartedAt, EndedAt, iterations);
+    }
+
+    private sealed class CampaignIterationRow
+    {
+        public string CampaignId { get; set; } = "";
+        public int IterationIndex { get; set; }
+        public string ParametersJson { get; set; } = "";
+        public string? RunspaceId { get; set; }
+        public string Status { get; set; } = "";
+        public string? Message { get; set; }
+        public DateTimeOffset CreatedAt { get; set; }
+        public DateTimeOffset? StartedAt { get; set; }
+        public DateTimeOffset? EndedAt { get; set; }
+
+        public CampaignIterationRecord ToRecord() =>
+            new(CampaignId, IterationIndex, ParametersJson, RunspaceId, Status, Message, CreatedAt, StartedAt, EndedAt);
+    }
 }

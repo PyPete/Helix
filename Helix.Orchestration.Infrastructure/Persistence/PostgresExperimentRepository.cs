@@ -35,39 +35,24 @@ public sealed class PostgresExperimentRepository(DbConnectionFactory connectionF
     {
         const string sql = """
             SELECT
-                runspace_id AS RunspaceId,
-                campaign_id AS CampaignId,
-                definition_id AS DefinitionId,
-                name AS Name,
-                status AS Status,
-                created_at AS CreatedAt,
-                started_at AS StartedAt,
-                ended_at AS EndedAt,
-                fault_message AS FaultMessage,
-                definition_json AS DefinitionJson
+                runspace_id, campaign_id, definition_id, name, status,
+                created_at, started_at, ended_at, fault_message, definition_json
             FROM experiments
             WHERE runspace_id = @runspaceId;
             """;
 
         await using var connection = connectionFactory.Create();
         await connection.OpenAsync(ct);
-        return await connection.QuerySingleOrDefaultAsync<ExperimentRecord>(new CommandDefinition(sql, new { runspaceId }, cancellationToken: ct));
+        var row = await connection.QuerySingleOrDefaultAsync<ExperimentRow>(new CommandDefinition(sql, new { runspaceId }, cancellationToken: ct));
+        return row?.ToRecord();
     }
 
     public async Task<IReadOnlyList<ExperimentRecord>> GetByCampaignIdAsync(string campaignId, CancellationToken ct = default)
     {
         const string sql = """
             SELECT
-                runspace_id AS RunspaceId,
-                campaign_id AS CampaignId,
-                definition_id AS DefinitionId,
-                name AS Name,
-                status AS Status,
-                created_at AS CreatedAt,
-                started_at AS StartedAt,
-                ended_at AS EndedAt,
-                fault_message AS FaultMessage,
-                definition_json AS DefinitionJson
+                runspace_id, campaign_id, definition_id, name, status,
+                created_at, started_at, ended_at, fault_message, definition_json
             FROM experiments
             WHERE campaign_id = @campaignId
             ORDER BY created_at;
@@ -75,32 +60,41 @@ public sealed class PostgresExperimentRepository(DbConnectionFactory connectionF
 
         await using var connection = connectionFactory.Create();
         await connection.OpenAsync(ct);
-        var rows = await connection.QueryAsync<ExperimentRecord>(new CommandDefinition(sql, new { campaignId }, cancellationToken: ct));
-        return rows.ToList();
+        var rows = await connection.QueryAsync<ExperimentRow>(new CommandDefinition(sql, new { campaignId }, cancellationToken: ct));
+        return rows.Select(r => r.ToRecord()).ToList();
     }
 
     public async Task<IReadOnlyList<ExperimentRecord>> GetAllAsync(CancellationToken ct = default)
     {
         const string sql = """
             SELECT
-                runspace_id    AS RunspaceId,
-                campaign_id    AS CampaignId,
-                definition_id  AS DefinitionId,
-                name           AS Name,
-                status         AS Status,
-                created_at     AS CreatedAt,
-                started_at     AS StartedAt,
-                ended_at       AS EndedAt,
-                fault_message  AS FaultMessage,
-                definition_json AS DefinitionJson
+                runspace_id, campaign_id, definition_id, name, status,
+                created_at, started_at, ended_at, fault_message, definition_json
             FROM experiments
             ORDER BY created_at DESC;
             """;
 
         await using var connection = connectionFactory.Create();
         await connection.OpenAsync(ct);
-        var rows = await connection.QueryAsync<ExperimentRecord>(
-            new CommandDefinition(sql, cancellationToken: ct));
-        return rows.ToList();
+        var rows = await connection.QueryAsync<ExperimentRow>(new CommandDefinition(sql, cancellationToken: ct));
+        return rows.Select(r => r.ToRecord()).ToList();
+    }
+
+    private sealed class ExperimentRow
+    {
+        public string RunspaceId { get; set; } = "";
+        public string? CampaignId { get; set; }
+        public string DefinitionId { get; set; } = "";
+        public string Name { get; set; } = "";
+        public string Status { get; set; } = "";
+        public DateTimeOffset CreatedAt { get; set; }
+        public DateTimeOffset? StartedAt { get; set; }
+        public DateTimeOffset? EndedAt { get; set; }
+        public string? FaultMessage { get; set; }
+        public string DefinitionJson { get; set; } = "";
+
+        public ExperimentRecord ToRecord() => new(
+            RunspaceId, CampaignId, DefinitionId, Name, Status,
+            CreatedAt, StartedAt, EndedAt, FaultMessage, DefinitionJson);
     }
 }
