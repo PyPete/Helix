@@ -47,6 +47,10 @@ jobs:
               echo "base_url=/Helix/dev/"     >> "$GITHUB_OUTPUT"
               echo "dest_dir=dev"             >> "$GITHUB_OUTPUT"
               ;;
+            *)
+              echo "Branch '${{ github.ref_name }}' is not a deployable branch (main/stage/dev). Aborting." >&2
+              exit 1
+              ;;
           esac
 
       - name: Install dependencies
@@ -60,7 +64,7 @@ jobs:
         run: npm run build
 
       - name: Deploy to gh-pages
-        uses: peaceiris/actions-gh-pages@v4
+        uses: peaceiris/actions-gh-pages@84c30a85c19949d7eee79c4ff27748b70285e453 # v4.0.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: docs-site/build
