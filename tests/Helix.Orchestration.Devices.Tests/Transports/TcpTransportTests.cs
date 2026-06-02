@@ -32,7 +32,7 @@ public sealed class TcpTransportTests
                 await stream.WriteAsync(Encoding.ASCII.GetBytes(request));
                 await stream.FlushAsync();
                 // Wait to ensure client reads response before connection closes
-                await Task.Delay(500);
+                await Task.Delay(50);
             }
             catch (Exception ex)
             {
@@ -143,7 +143,7 @@ public sealed class TcpTransportTests
                 await stream.WriteAsync(prefix);
                 await stream.WriteAsync(responseBytes);
                 await stream.FlushAsync();
-                await Task.Delay(500);
+                await Task.Delay(50);
             }
             catch (Exception ex)
             {

@@ -112,12 +112,10 @@ public sealed class TcpDeviceTransport : IDeviceTransport
             {
                 try
                 {
-                    await _readLoopTask;
+                    await _readLoopTask.WaitAsync(TimeSpan.FromSeconds(2));
                 }
-                catch (OperationCanceledException)
-                {
-                    // Expected
-                }
+                catch (OperationCanceledException) { }
+                catch (TimeoutException) { }
             }
 
             _stream?.Close();
@@ -212,7 +210,8 @@ public sealed class TcpDeviceTransport : IDeviceTransport
 
         // Reads exactly dest.Length bytes from the channel, carrying any leftover bytes from
         // a chunk that delivered more data than the current segment needed (common on loopback).
-        async Task<byte[]?> ReadExactAsync(byte[] dest, byte[]? leftover)
+        // Returns (true, leftover) on success, (false, _) when the channel closed before all bytes arrived.
+        async Task<(bool ok, byte[]? leftover)> ReadExactAsync(byte[] dest, byte[]? leftover)
         {
             var offset = 0;
             var needed = dest.Length;
@@ -228,27 +227,41 @@ public sealed class TcpDeviceTransport : IDeviceTransport
 
             while (needed > 0)
             {
+                // Drain any already-buffered items before waiting for more.
+                while (needed > 0 && _messageChannel!.Reader.TryRead(out var buffered))
+                {
+                    var take = Math.Min(needed, buffered.Length);
+                    Array.Copy(buffered, 0, dest, offset, take);
+                    offset += take;
+                    needed -= take;
+                    if (take < buffered.Length)
+                        leftover = buffered[take..];
+                }
+
+                if (needed == 0) break;
+
                 if (!await _messageChannel!.Reader.WaitToReadAsync(cts.Token))
-                    return null;
-
-                if (!_messageChannel.Reader.TryRead(out var chunk))
-                    continue;
-
-                var take = Math.Min(needed, chunk.Length);
-                Array.Copy(chunk, 0, dest, offset, take);
-                offset += take;
-                needed -= take;
-
-                if (take < chunk.Length)
-                    leftover = chunk[take..];
+                {
+                    // Channel closed - drain any final items written before completion.
+                    while (needed > 0 && _messageChannel!.Reader.TryRead(out var final))
+                    {
+                        var take = Math.Min(needed, final.Length);
+                        Array.Copy(final, 0, dest, offset, take);
+                        offset += take;
+                        needed -= take;
+                        if (take < final.Length)
+                            leftover = final[take..];
+                    }
+                    break;
+                }
             }
 
-            return leftover;
+            return (needed == 0, leftover);
         }
 
         var lengthBuffer = new byte[4];
-        var leftover = await ReadExactAsync(lengthBuffer, null);
-        if (leftover == null && BitConverter.ToInt32(lengthBuffer) == 0)
+        var (prefixOk, leftover) = await ReadExactAsync(lengthBuffer, null);
+        if (!prefixOk)
             throw new IOException("Failed to read length prefix");
 
         var length = BitConverter.ToInt32(lengthBuffer, 0);
@@ -256,7 +269,8 @@ public sealed class TcpDeviceTransport : IDeviceTransport
             throw new InvalidOperationException($"Invalid length prefix: {length}");
 
         var messageBuffer = new byte[length];
-        if (await ReadExactAsync(messageBuffer, leftover) == null && messageBuffer.Length > 0)
+        var (bodyOk, _) = await ReadExactAsync(messageBuffer, leftover);
+        if (!bodyOk)
             throw new IOException("Failed to read message body");
 
         return messageBuffer;
