@@ -338,6 +338,15 @@ Plans:
 
 **Dependencies:** Phase 8 (stable, tested codebase to document); Phase 7 (Site Server API stable; screenshots from Tauri app available from Phase 6)
 
+**Plans:** 5 plans
+
+Plans:
+- [x] 09-01-PLAN.md -- Docusaurus scaffold, sidebars, CI job
+- [x] 09-02-PLAN.md -- Architecture, adapter authoring guide, transport guide
+- [x] 09-03-PLAN.md -- REST API reference (OpenAPI + Redocly), gRPC reference
+- [x] 09-04-PLAN.md -- Operator docs (workflow authoring, capabilities, experiment setup, deployment)
+- [x] 09-05-PLAN.md -- Final verification and ROADMAP update
+
 **Success criteria:**
 - [ ] `npm run build` in docs-site/ exits 0 with no broken internal links
 - [ ] The adapter authoring guide walks through VapourtecR4 as the worked example and is accurate against the Phase 2 implementation
@@ -387,7 +396,7 @@ Plans:
 | 6.1. Desktop App Polish — Device Controls, Status Events & Chart Foundation | 2/2 | Complete 2026-05-30 | - |
 | 7. Site-Level React Dashboard | 1/1 | Complete | 2026-06-02 |
 | 8. CI Hardening + Full Test Coverage | 3/3 | Complete | 2026-06-02 |
-| 9. Docusaurus Documentation | 1/5 | In progress | - |
+| 9. Docusaurus Documentation | 5/5 | Complete | 2026-06-02 |
 | 10. Deployment + Setup Scripts | 0/6 | Not started | - |
 
 ---
@@ -434,11 +443,11 @@ Plans:
 | E4 | Phase 7 | Pending |
 | E5 | Phase 7 | Pending |
 | E6 | Phase 7 | Pending |
-| F1 | Phase 9 | In Progress (09-01 scaffold complete) |
-| F2 | Phase 9 | Pending |
-| F3 | Phase 9 | Pending |
-| F4 | Phase 9 | Complete (09-03: rest-api.md with endpoint table + generate-openapi.js) |
-| F5 | Phase 9 | Complete (09-03: grpc-reference.md with AgentControl + DeviceAdapter tables) |
+| F1 | Phase 9 | Complete |
+| F2 | Phase 9 | Complete |
+| F3 | Phase 9 | Complete |
+| F4 | Phase 9 | Complete |
+| F5 | Phase 9 | Complete |
 | G1 | Phase 10 | Pending |
 | G2 | Phase 10 | Pending |
 | G3 | Phase 10 | Pending |
