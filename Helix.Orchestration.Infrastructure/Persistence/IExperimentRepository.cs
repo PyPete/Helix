@@ -7,6 +7,8 @@ public interface IExperimentRepository
     Task<ExperimentRecord?> GetByRunspaceIdAsync(string runspaceId, CancellationToken ct = default);
 
     Task<IReadOnlyList<ExperimentRecord>> GetByCampaignIdAsync(string campaignId, CancellationToken ct = default);
+
+    Task<IReadOnlyList<ExperimentRecord>> GetAllAsync(CancellationToken ct = default);
 }
 
 public sealed record ExperimentRecord(
