@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: Phase 9 -- Docusaurus Documentation (1 of 5 plans complete)
+current_phase: Phase 9 -- Docusaurus Documentation (Plans 1, 3 of 5 complete)
 status: in-progress
-last_updated: "2026-06-02T00:00:00.000Z"
+last_updated: "2026-06-02T15:32:58.644Z"
 progress:
   total_phases: 11
   completed_phases: 5
   total_plans: 23
-  completed_plans: 23
+  completed_plans: 24
   percent: 45
 ---
 
@@ -101,10 +101,15 @@ See: .planning/PROJECT.md (updated 2026-05-26)
 - Docusaurus home page index.tsx updated to link to /docs/developer/intro + /docs/operator/intro (deleted /docs/intro)
 - MockWebSocket class pattern (stub global.WebSocket) used in WorkflowBuilder.test.tsx for execution state test -- adding vi.mock() calls to this file crashes the Vitest worker with V8 address space exhaustion (4 large module mocks already present)
 - NodeTimingFooter execution state tests placed in HelixNodes.test.tsx (new) to avoid WorkflowBuilder.test.tsx V8 crash
+- docusaurus-plugin-redoc v2.5.0 cannot be used standalone -- requires redocusaurus preset for @theme/ApiDoc; fallback to endpoint summary table in rest-api.md (F4 satisfied)
+- MDX in Docusaurus parses {id} in table cells as JSX expressions -- use HTML entity escaping (&#123;id&#125;) for path parameters
+- dotnet-tools.json command name for swashbuckle.aspnetcore.cli is "swagger" (not "dotnet-swagger")
 
 ---
 
 ## Next Steps
+
+Phase 9 Plan 03 complete (2026-06-02). REST API reference (rest-api.md), gRPC reference (grpc-reference.md), OpenAPI generation script (generate-openapi.js), Swashbuckle CLI tooling. docusaurus-plugin-redoc fallback applied (endpoint table satisfies F4). npm run build exits 0.
 
 Phase 9 Plan 01 complete (2026-06-02). Docusaurus 3 scaffold at docs-site/ with Developer/Operator sections and CI docs build job. npm run build exits 0. Ready for Wave 1 content plans (09-02 through 09-05).
 
@@ -154,6 +159,7 @@ driver-port Plan 03 complete (2026-06-01). 8 special/facade drivers ported: Atla
 | driver-port | 03 | ~90 min | 8/8 | 27 |
 | phase-6.2 | 01 | ~15 min | 2/2 | 6 |
 | phase-6.2 | 02 | ~25 min | 2/2 | 8 |
+| phase-9 | 03 | ~25 min | 2/2 | 7 |
 
 ---
 

@@ -437,8 +437,8 @@ Plans:
 | F1 | Phase 9 | In Progress (09-01 scaffold complete) |
 | F2 | Phase 9 | Pending |
 | F3 | Phase 9 | Pending |
-| F4 | Phase 9 | Pending |
-| F5 | Phase 9 | Pending |
+| F4 | Phase 9 | Complete (09-03: rest-api.md with endpoint table + generate-openapi.js) |
+| F5 | Phase 9 | Complete (09-03: grpc-reference.md with AgentControl + DeviceAdapter tables) |
 | G1 | Phase 10 | Pending |
 | G2 | Phase 10 | Pending |
 | G3 | Phase 10 | Pending |
