@@ -5,9 +5,7 @@ import { SiteOverviewPage } from "./pages/SiteOverviewPage";
 import { CampaignsPage } from "./pages/CampaignsPage";
 import { HistoryPage } from "./pages/HistoryPage";
 import { TrendsPage } from "./pages/TrendsPage";
-
-// Wave 2 placeholders — replaced one-by-one as tasks 07-2-* complete
-const AnalyticsPage = () => <div data-testid="analytics-page">Analytics (placeholder)</div>;
+import { AnalyticsPage } from "./pages/AnalyticsPage";
 
 export function App() {
   const baseUrl = import.meta.env.VITE_SITE_SERVER_URL ?? "http://localhost:5000";
