@@ -15,8 +15,12 @@ const config: Config = {
   },
 
   // GitHub Pages deployment URL
+  // BASE_URL is set per-branch by deploy-docs.yml:
+  //   main  → /Helix/
+  //   stage → /Helix/stage/
+  //   dev   → /Helix/dev/
   url: 'https://PyPete.github.io',
-  baseUrl: '/Helix/',
+  baseUrl: process.env.BASE_URL ?? '/Helix/',
 
   // GitHub pages deployment config
   organizationName: 'PyPete',
