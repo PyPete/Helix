@@ -1,6 +1,13 @@
 import "@testing-library/jest-dom";
 import React from "react";
 
+// Clear all mock call histories before each test so that RTL's deferred cleanup
+// (which runs after user afterEach but before the next test's beforeEach) does not
+// bleed call counts across tests within the same file. Implementations are preserved.
+beforeEach(() => {
+  vi.clearAllMocks();
+});
+
 vi.mock("scichart", () => ({
   SciChartSurface: {
     setRuntimeLicenseKey: vi.fn(),
