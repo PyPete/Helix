@@ -1,8 +1,8 @@
----
+﻿---
 phase: "7"
 status: planned
 waves: 3
-tasks: 26
+tasks: 28
 requirements: [E1, E2, E3, E4, E5, E6]
 ---
 
@@ -24,7 +24,7 @@ experiment history, and watch live trend charts without installing any desktop s
 | E3   | ROADMAP | Campaign management: create, start, monitor, abort    | 07-2-002, 07-3-002 |
 | E4   | ROADMAP | Experiment history browser                            | 07-0-009, 07-0-010, 07-2-003, 07-3-003 |
 | E5   | ROADMAP | Live trend visualisation via WebSocket                | 07-0-007, 07-0-008, 07-1-002, 07-2-004, 07-3-004 |
-| E6   | ROADMAP | Analytical data viewer (spectrum/DAD placeholder)     | 07-2-004, 07-3-004 |
+| E6   | ROADMAP | Analytical data viewer (spectrum/DAD placeholder)     | 07-2-005, 07-3-006 |
 | D-01 | CONTEXT | Chart: SciChart.js 5.2.32 + scichart-react, licence wiring | 07-0-002, 07-1-004 |
 | D-02 | CONTEXT | Live trends: raw WebSocket on /api/trends/ws          | 07-0-007, 07-0-008, 07-1-002 |
 | D-03 | CONTEXT | Navigation: React Router v7 (react-router), 4 routes  | 07-0-002, 07-1-003, 07-1-004 |
@@ -1144,6 +1144,7 @@ export function SiteOverviewPage() {
 **Acceptance criteria:**
 - File has `data-testid="site-overview-page"` (grep)
 - `PLACEHOLDER_FUMEHOODS` has `"running"` and `"faulted"` entries (grep)
+- `SiteOverviewPage` renders a `data-testid="active-count"` element showing count of status==="running" fumehoods (grep)
 - 0 raw hex literals in the file
 - `npm test -- --run` exits 0
 
@@ -1355,9 +1356,92 @@ export function TrendsPage({ trendValues }: TrendsPageProps) {
 
 ---
 
+### Task 07-2-005 — src/pages/AnalyticsPage.tsx
+
+**ID:** `07-2-005`
+**Files:**
+- `helix-dashboard/src/pages/AnalyticsPage.tsx` (new)
+- `helix-dashboard/src/App.tsx` (modify: add /analytics route + Navbar link)
+
+**Dependencies:** `07-1-003`, `07-1-004`
+
+**Covers:** E6 — Analytical data viewer (spectrum/DAD placeholder)
+
+**Steps:**
+
+1. Create `AnalyticsPage.tsx`. Renders placeholder spectrum and DAD chromatogram charts
+   using `SciChartLine` with static hardcoded data (no API call needed in Phase 7).
+
+```typescript
+import { SciChartLine } from "../components/SciChartLine";
+import type { TrendValue } from "../types/dashboard";
+
+function makeSpectrum(n = 50): TrendValue[] {
+  return Array.from({ length: n }, (_, i) => ({
+    type: "trend-value" as const,
+    trendName: "UV Spectrum",
+    value: Math.sin(i / 5) * 0.8 + 1 + Math.random() * 0.1,
+    unit: "AU",
+    timestamp: new Date(Date.now() - (n - i) * 1000).toISOString(),
+  }));
+}
+
+function makeDAD(n = 50): TrendValue[] {
+  return Array.from({ length: n }, (_, i) => ({
+    type: "trend-value" as const,
+    trendName: "DAD 254nm",
+    value: Math.exp(-((i - 25) ** 2) / 50) * 1200,
+    unit: "mAU",
+    timestamp: new Date(Date.now() - (n - i) * 1000).toISOString(),
+  }));
+}
+
+const SPECTRUM_DATA = makeSpectrum();
+const DAD_DATA = makeDAD();
+
+export function AnalyticsPage() {
+  return (
+    <section aria-label="Analytical Data Viewer" data-testid="analytics-page">
+      <h1 style={{ color: "var(--color-text)", fontSize: "var(--text-xl)" }}>
+        Analytical Data
+      </h1>
+      <p style={{ color: "var(--color-text-muted)", fontSize: "var(--text-sm)",
+        marginBottom: "var(--space-4)" }}>
+        Placeholder charts — live analytical data requires a later phase.
+      </p>
+      <SciChartLine trendName="UV Spectrum (placeholder)" trendValues={SPECTRUM_DATA} />
+      <SciChartLine trendName="DAD Chromatogram 254nm (placeholder)" trendValues={DAD_DATA} />
+    </section>
+  );
+}
+```
+
+2. In `App.tsx`: add `/analytics` route inside the Layout route group:
+   ```typescript
+   import { AnalyticsPage } from "./pages/AnalyticsPage";
+   // ...
+   <Route path="analytics" element={<AnalyticsPage />} />
+   ```
+
+3. In `Navbar.tsx`: add `<NavLink to="/analytics">Analytics</NavLink>` after the Trends link.
+
+4. Verify no raw hex literals:
+   `grep -n "#[0-9a-fA-F]\{3,6\}" helix-dashboard/src/pages/AnalyticsPage.tsx`
+   Must return 0 results.
+
+**Acceptance criteria:**
+- File has `data-testid="analytics-page"` (grep)
+- File renders two `SciChartLine` components (grep for `SciChartLine` ×2)
+- `/analytics` route exists in `App.tsx` (grep)
+- Navbar has 5 NavLinks: Overview, Campaigns, History, Trends, Analytics (grep)
+- `npm test -- --run` exits 0
+
+**Test command:** `cd helix-dashboard && npm test -- --run`
+
+---
 ## Wave 3 — Tests + Build Gate
 
-All Wave 2 tasks must be green. Tasks 07-3-001 through 07-3-004 are independent.
+All Wave 2 tasks must be green. Tasks 07-3-001 through 07-3-004 and 07-3-006 are independent.
 Task 07-3-005 is the final phase gate.
 
 ---
@@ -1616,12 +1700,70 @@ describe("TrendsPage", () => {
 
 ---
 
+### Task 07-3-006 — AnalyticsPage unit test
+
+**ID:** `07-3-006`
+**Files:**
+- `helix-dashboard/src/pages/AnalyticsPage.test.tsx` (new)
+
+**Dependencies:** `07-2-005`
+
+**Steps:**
+
+1. Create `AnalyticsPage.test.tsx` using the SciChart mock already in `test/setup.ts`:
+
+```typescript
+import { render, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router";
+import { AnalyticsPage } from "./AnalyticsPage";
+
+describe("AnalyticsPage", () => {
+  it("renders without crash", () => {
+    render(
+      <MemoryRouter>
+        <AnalyticsPage />
+      </MemoryRouter>
+    );
+    expect(screen.getByTestId("analytics-page")).toBeInTheDocument();
+  });
+
+  it("renders two SciChartLine placeholders", () => {
+    render(
+      <MemoryRouter>
+        <AnalyticsPage />
+      </MemoryRouter>
+    );
+    const charts = screen.getAllByTestId("scichart-surface");
+    expect(charts).toHaveLength(2);
+  });
+
+  it("shows placeholder text", () => {
+    render(
+      <MemoryRouter>
+        <AnalyticsPage />
+      </MemoryRouter>
+    );
+    expect(screen.getByText(/placeholder/i)).toBeInTheDocument();
+  });
+});
+```
+
+2. `cd helix-dashboard && npm test -- --run src/pages/AnalyticsPage.test.tsx`
+   All 3 tests must be GREEN.
+
+**Acceptance criteria:**
+- 3 passing tests: renders, two chart placeholders, placeholder text
+- `npm test -- --run` exits 0
+
+**Test command:** `cd helix-dashboard && npm test -- --run src/pages/AnalyticsPage.test.tsx`
+
+---
 ### Task 07-3-005 — Full suite gate
 
 **ID:** `07-3-005`
 **Files:** none (validation only)
 
-**Dependencies:** `07-3-001`, `07-3-002`, `07-3-003`, `07-3-004`
+**Dependencies:** `07-3-001`, `07-3-002`, `07-3-003`, `07-3-004`, `07-3-006`
 
 **Steps:**
 
@@ -1690,9 +1832,10 @@ Wave 2 (all Wave 1 green; pages parallel):
 
 Wave 3 (all Wave 2 green; tests parallel):
   07-3-001 --> |
-  07-3-002 --> +--> 07-3-005 (gate)
-  07-3-003 --> |
+  07-3-002 --> |
+  07-3-003 --> +--> 07-3-005 (gate)
   07-3-004 --> |
+  07-3-006 --> |
 ```
 
 ---
@@ -1701,7 +1844,7 @@ Wave 3 (all Wave 2 green; tests parallel):
 
 - [ ] `helix-dashboard/` exists and `npm run build` exits 0
 - [ ] `helix-dashboard/public/scichart2d.wasm` exists (WASM copy ran)
-- [ ] All 4 routes render without crashing (App.test.tsx green)
+- [ ] All 5 routes render without crashing (App.test.tsx green; includes /analytics)
 - [ ] `GET /api/experiments` returns 200 (dotnet build confirms; verify via Swagger)
 - [ ] `GET /api/trends/ws` upgrades to WebSocket (`app.UseWebSockets()` wired)
 - [ ] `MqttTrendBridge` calls `_trendWsManager.BroadcastAsync` (grep + dotnet build)

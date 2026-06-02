@@ -640,16 +640,20 @@ security_enforcement not set in .planning/config.json -- treating as enabled.
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. SciChart licence key -- Does team have a paid key? Store as VITE_SCICHART_KEY env var;
-   default "" (community) for Phase 7.
+1. SciChart licence key -- **RESOLVED:** Use community mode (`""`) for Phase 7. Store key as
+   `VITE_SCICHART_KEY` env var; empty string produces a watermark but is fully functional.
+   Post-Phase 7 operational concern per CONTEXT.md Deferred Ideas.
 
-2. SiteServer development port -- Not set in Program.cs. Check appsettings.Development.json
-   at implementation; update Vite proxy target.
+2. SiteServer development port -- **RESOLVED:** Accept assumption 5000 as the proxy target;
+   task 07-0-003 instructs the executor to verify `launchSettings.json` and update the proxy
+   target if it differs. Risk is LOW (trivial one-line fix).
 
-3. Vite WS proxy forwarding -- Documented Vite feature but not tested against ASP.NET Core.
-   Verify in Wave 1 smoke test.
+3. Vite WS proxy forwarding -- **RESOLVED:** Proceed with documented approach (`ws: true` in
+   Vite proxy config). Mitigation is already in the plan (proxy entry order enforced in
+   07-3-005 gate step 4). If forwarding fails during Wave 1 smoke test, the fallback is a
+   direct WebSocket URL pointing at the SiteServer port.
 
 ---
 
