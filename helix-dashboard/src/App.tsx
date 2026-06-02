@@ -4,14 +4,14 @@ import { useTrendWebSocket } from "./hooks/useTrendWebSocket";
 import { SiteOverviewPage } from "./pages/SiteOverviewPage";
 import { CampaignsPage } from "./pages/CampaignsPage";
 import { HistoryPage } from "./pages/HistoryPage";
+import { TrendsPage } from "./pages/TrendsPage";
 
 // Wave 2 placeholders — replaced one-by-one as tasks 07-2-* complete
-const TrendsPage = () => <div data-testid="trends-page">Trends (placeholder)</div>;
 const AnalyticsPage = () => <div data-testid="analytics-page">Analytics (placeholder)</div>;
 
 export function App() {
   const baseUrl = import.meta.env.VITE_SITE_SERVER_URL ?? "http://localhost:5000";
-  const { connected } = useTrendWebSocket(baseUrl);
+  const { connected, trendValues } = useTrendWebSocket(baseUrl);
 
   return (
     <Routes>
@@ -19,7 +19,7 @@ export function App() {
         <Route index element={<SiteOverviewPage />} />
         <Route path="campaigns" element={<CampaignsPage baseUrl={baseUrl} />} />
         <Route path="history" element={<HistoryPage baseUrl={baseUrl} />} />
-        <Route path="trends" element={<TrendsPage />} />
+        <Route path="trends" element={<TrendsPage trendValues={trendValues} />} />
         <Route path="analytics" element={<AnalyticsPage />} />
       </Route>
     </Routes>
