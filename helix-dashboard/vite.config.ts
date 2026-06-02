@@ -13,5 +13,5 @@ export default defineConfig({
     },
   },
   envPrefix: ["VITE_"],
-  build: { target: "es2020", minify: "esbuild", sourcemap: false },
+  build: { target: "es2020", sourcemap: false },
 });
