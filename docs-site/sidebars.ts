@@ -31,7 +31,10 @@ const sidebars: SidebarsConfig = {
       label: 'Operator Guide',
       items: [
         'operator/intro',
-        // Future: operator/workflow-authoring, operator/device-setup, operator/deployment, etc.
+        'operator/workflow-authoring',
+        'operator/device-capabilities',
+        'operator/experiment-setup',
+        'operator/deployment-setup',
       ],
     },
   ],
