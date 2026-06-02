@@ -3,9 +3,9 @@ import { Layout } from "./components/Layout";
 import { useTrendWebSocket } from "./hooks/useTrendWebSocket";
 import { SiteOverviewPage } from "./pages/SiteOverviewPage";
 import { CampaignsPage } from "./pages/CampaignsPage";
+import { HistoryPage } from "./pages/HistoryPage";
 
 // Wave 2 placeholders — replaced one-by-one as tasks 07-2-* complete
-const HistoryPage = () => <div data-testid="history-page">History (placeholder)</div>;
 const TrendsPage = () => <div data-testid="trends-page">Trends (placeholder)</div>;
 const AnalyticsPage = () => <div data-testid="analytics-page">Analytics (placeholder)</div>;
 
@@ -18,7 +18,7 @@ export function App() {
       <Route element={<Layout connected={connected} />}>
         <Route index element={<SiteOverviewPage />} />
         <Route path="campaigns" element={<CampaignsPage baseUrl={baseUrl} />} />
-        <Route path="history" element={<HistoryPage />} />
+        <Route path="history" element={<HistoryPage baseUrl={baseUrl} />} />
         <Route path="trends" element={<TrendsPage />} />
         <Route path="analytics" element={<AnalyticsPage />} />
       </Route>
