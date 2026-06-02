@@ -16,7 +16,11 @@ const sidebars: SidebarsConfig = {
       label: 'Developer Guide',
       items: [
         'developer/intro',
-        // Future: developer/architecture, developer/adapters, developer/api-reference, etc.
+        'developer/architecture',
+        'developer/adapter-authoring',
+        'developer/transport-guide',
+        'developer/rest-api',
+        'developer/grpc-reference',
       ],
     },
   ],
@@ -34,3 +38,4 @@ const sidebars: SidebarsConfig = {
 };
 
 export default sidebars;
+
