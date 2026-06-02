@@ -20,9 +20,9 @@ export function SciChartLine({ trendName = "Trend", trendValues }: SciChartLineP
     seriesRef.current.append(new Date(last.timestamp).getTime(), last.value);
   }, [trendValues]);
 
-  const initChart = useCallback(async (rootElement: HTMLDivElement) => {
+  const initChart = useCallback(async (rootElement: string | HTMLDivElement) => {
     const { sciChartSurface, wasmContext } = await SciChartSurface.create(
-      rootElement, { theme: new SciChartJsNavyTheme() }
+      rootElement as HTMLDivElement, { theme: new SciChartJsNavyTheme() }
     );
     sciChartSurface.xAxes.add(new NumericAxis(wasmContext));
     sciChartSurface.yAxes.add(new NumericAxis(wasmContext));
