@@ -207,52 +207,56 @@ public sealed class TcpDeviceTransport : IDeviceTransport
 
     private async Task<byte[]> ReadLengthPrefixedFromChannelAsync(CancellationToken cancellationToken)
     {
-        var lengthBuffer = new byte[4];
-        var bytesNeeded = 4;
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        cts.CancelAfter(_options.ReceiveTimeoutMs);
 
-        // Read length prefix
-        using (var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken))
+        // Reads exactly dest.Length bytes from the channel, carrying any leftover bytes from
+        // a chunk that delivered more data than the current segment needed (common on loopback).
+        async Task<byte[]?> ReadExactAsync(byte[] dest, byte[]? leftover)
         {
-            cts.CancelAfter(_options.ReceiveTimeoutMs);
+            var offset = 0;
+            var needed = dest.Length;
 
-            while (bytesNeeded > 0 && await _messageChannel!.Reader.WaitToReadAsync(cts.Token))
+            if (leftover is { Length: > 0 })
             {
-                if (_messageChannel.Reader.TryRead(out var data))
-                {
-                    var toCopy = Math.Min(bytesNeeded, data.Length);
-                    Array.Copy(data, 0, lengthBuffer, 4 - bytesNeeded, toCopy);
-                    bytesNeeded -= toCopy;
-                }
+                var take = Math.Min(needed, leftover.Length);
+                Array.Copy(leftover, 0, dest, 0, take);
+                offset += take;
+                needed -= take;
+                leftover = take < leftover.Length ? leftover[take..] : null;
             }
+
+            while (needed > 0)
+            {
+                if (!await _messageChannel!.Reader.WaitToReadAsync(cts.Token))
+                    return null;
+
+                if (!_messageChannel.Reader.TryRead(out var chunk))
+                    continue;
+
+                var take = Math.Min(needed, chunk.Length);
+                Array.Copy(chunk, 0, dest, offset, take);
+                offset += take;
+                needed -= take;
+
+                if (take < chunk.Length)
+                    leftover = chunk[take..];
+            }
+
+            return leftover;
         }
 
-        if (bytesNeeded > 0)
+        var lengthBuffer = new byte[4];
+        var leftover = await ReadExactAsync(lengthBuffer, null);
+        if (leftover == null && BitConverter.ToInt32(lengthBuffer) == 0)
             throw new IOException("Failed to read length prefix");
 
         var length = BitConverter.ToInt32(lengthBuffer, 0);
         if (length <= 0 || length > 10_000_000)
             throw new InvalidOperationException($"Invalid length prefix: {length}");
 
-        // Read message body
         var messageBuffer = new byte[length];
-        bytesNeeded = length;
-
-        using (var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken))
-        {
-            cts.CancelAfter(_options.ReceiveTimeoutMs);
-
-            while (bytesNeeded > 0 && await _messageChannel!.Reader.WaitToReadAsync(cts.Token))
-            {
-                if (_messageChannel.Reader.TryRead(out var data))
-                {
-                    var toCopy = Math.Min(bytesNeeded, data.Length);
-                    Array.Copy(data, 0, messageBuffer, length - bytesNeeded, toCopy);
-                    bytesNeeded -= toCopy;
-                }
-            }
-        }
-
-        if (bytesNeeded > 0)
+        if (await ReadExactAsync(messageBuffer, leftover) == null && messageBuffer.Length > 0)
             throw new IOException("Failed to read message body");
 
         return messageBuffer;
