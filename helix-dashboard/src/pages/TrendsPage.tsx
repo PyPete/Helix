@@ -8,7 +8,7 @@ export function TrendsPage({ trendValues }: TrendsPageProps) {
     (acc[v.trendName] ??= []).push(v);
     return acc;
   }, {});
-  const names = Object.keys(byName);
+  const names = Object.keys(byName).sort();
 
   return (
     <section aria-label="Live Trends" data-testid="trends-page">

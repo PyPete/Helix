@@ -55,18 +55,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
-
-// UseWebSockets MUST come before any app.Map* calls
+// WebSocket clients cannot follow HTTP→HTTPS redirects, so handle WS before the redirect.
 app.UseWebSockets();
 
-// Map endpoint groups
-app.MapExperimentEndpoints();
-app.MapDeviceEndpoints();
-app.MapTrendEndpoints();
-app.MapCampaignEndpoints();
-
-// WebSocket endpoint for live trend streaming (E5 / D-02)
 var trendWsManager = app.Services.GetRequiredService<TrendWebSocketManager>();
 app.Use(async (context, next) =>
 {
@@ -84,6 +75,14 @@ app.Use(async (context, next) =>
     }
     else { await next(context); }
 });
+
+app.UseHttpsRedirection();
+
+// Map endpoint groups
+app.MapExperimentEndpoints();
+app.MapDeviceEndpoints();
+app.MapTrendEndpoints();
+app.MapCampaignEndpoints();
 
 app.Run();
 

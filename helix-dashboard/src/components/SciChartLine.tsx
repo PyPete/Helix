@@ -1,7 +1,7 @@
 import { useRef, useEffect, useCallback } from "react";
 import { SciChartReact } from "scichart-react";
 import {
-  SciChartSurface, NumericAxis, FastLineRenderableSeries,
+  SciChartSurface, DateTimeNumericAxis, NumericAxis, FastLineRenderableSeries,
   XyDataSeries, SciChartJsNavyTheme,
 } from "scichart";
 import type { TrendValue } from "../types/dashboard";
@@ -12,22 +12,31 @@ interface SciChartLineProps {
 }
 
 export function SciChartLine({ trendName = "Trend", trendValues }: SciChartLineProps) {
-  const seriesRef = useRef<{ append: (x: number, y: number) => void } | null>(null);
+  const seriesRef = useRef<XyDataSeries | null>(null);
+  const lastAppendedMs = useRef<number>(-Infinity);
 
   useEffect(() => {
-    if (!seriesRef.current || !trendValues.length) return;
-    const last = trendValues[trendValues.length - 1];
-    seriesRef.current.append(new Date(last.timestamp).getTime(), last.value);
+    const s = seriesRef.current;
+    if (!s || !trendValues.length) return;
+    try {
+      for (const v of trendValues) {
+        const t = new Date(v.timestamp).getTime();
+        if (!Number.isFinite(t) || t <= lastAppendedMs.current) continue;
+        s.append(t, v.value);
+        lastAppendedMs.current = t;
+      }
+    } catch { /* series disposed during StrictMode unmount — next initChart will reset */ }
   }, [trendValues]);
 
   const initChart = useCallback(async (rootElement: string | HTMLDivElement) => {
     const { sciChartSurface, wasmContext } = await SciChartSurface.create(
       rootElement as HTMLDivElement, { theme: new SciChartJsNavyTheme() }
     );
-    sciChartSurface.xAxes.add(new NumericAxis(wasmContext));
+    sciChartSurface.xAxes.add(new DateTimeNumericAxis(wasmContext));
     sciChartSurface.yAxes.add(new NumericAxis(wasmContext));
     const dataSeries = new XyDataSeries(wasmContext, { fifoCapacity: 500 });
     seriesRef.current = dataSeries;
+    lastAppendedMs.current = -Infinity; // reset so all buffered values are re-appended
     sciChartSurface.renderableSeries.add(
       new FastLineRenderableSeries(wasmContext, { dataSeries, strokeThickness: 2 })
     );

@@ -11,7 +11,8 @@ export function useTrendWebSocket(baseUrl: string): TrendWebSocketState {
   const [connected, setConnected] = useState(false);
 
   useEffect(() => {
-    const wsUrl = baseUrl.replace(/^http/, "ws") + "/api/trends/ws";
+    const wsBase = baseUrl || `${window.location.protocol === "https:" ? "wss" : "ws"}://${window.location.host}`;
+    const wsUrl = wsBase.replace(/^http/, "ws") + "/api/trends/ws";
     const ws = new WebSocket(wsUrl);
 
     ws.onopen  = () => setConnected(true);
