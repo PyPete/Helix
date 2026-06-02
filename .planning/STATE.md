@@ -2,21 +2,21 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: Phase 9 -- Docusaurus Documentation (Plan 2 of 5 complete)
+current_phase: Phase 9 -- Docusaurus Documentation (Complete -- all 5 plans done)
 status: in-progress
-last_updated: "2026-06-02T16:00:16.003Z"
+last_updated: "2026-06-02T20:30:00.000Z"
 progress:
   total_phases: 11
-  completed_phases: 5
+  completed_phases: 7
   total_plans: 23
-  completed_plans: 25
-  percent: 45
+  completed_plans: 28
+  percent: 60
 ---
 
 # Project State
 
 **Last updated:** 2026-06-02
-**Current phase:** Phase 9 -- Docusaurus Documentation (Plan 2 of 5 complete)
+**Current phase:** Phase 9 -- Docusaurus Documentation (Complete -- all 5 plans done)
 **Workflow:** YOLO mode, fine granularity, parallel execution enabled
 
 ---
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-05-26)
 
 **Core value:** A scientist can build a workflow, connect real lab hardware, execute an experiment, and see the results without writing code.
 
-**Current focus:** Phase 6.1 complete Ã¯Â¿Â½ Phase 7 (Site-Level React Dashboard) is next
+**Current focus:** Phase 9 complete -- Phase 10 (Deployment + Setup Scripts) is next
 
 ---
 
@@ -104,10 +104,13 @@ See: .planning/PROJECT.md (updated 2026-05-26)
 - docusaurus-plugin-redoc v2.5.0 cannot be used standalone -- requires redocusaurus preset for @theme/ApiDoc; fallback to endpoint summary table in rest-api.md (F4 satisfied)
 - MDX in Docusaurus parses {id} in table cells as JSX expressions -- use HTML entity escaping (&#123;id&#125;) for path parameters
 - dotnet-tools.json command name for swashbuckle.aspnetcore.cli is "swagger" (not "dotnet-swagger")
+- Phase 9 complete (2026-06-02): Docusaurus 3 site at docs-site/ with 9 content pages; npm run build exits 0; all F1-F5 requirements satisfied; human checkpoint approved
 
 ---
 
 ## Next Steps
+
+Phase 9 complete (2026-06-02). All 5 plans done: Docusaurus 3 site at docs-site/ with 9 content pages, npm run build exits 0, F1-F5 all satisfied, human checkpoint approved. Phase 10 (Deployment + Setup Scripts) is next.
 
 Phase 9 Plan 03 complete (2026-06-02). REST API reference (rest-api.md), gRPC reference (grpc-reference.md), OpenAPI generation script (generate-openapi.js), Swashbuckle CLI tooling. docusaurus-plugin-redoc fallback applied (endpoint table satisfies F4). npm run build exits 0.
 
@@ -134,7 +137,8 @@ driver-port Plan 03 complete (2026-06-01). 8 special/facade drivers ported: Atla
 | 4. Integration Test Coverage | Complete | 2026-05-27 |
 | 5. Tauri Desktop App Foundation | Complete | 2026-05-28 |
 | 6. Tauri Desktop App - Workflow Builder + Execution | Complete | 2026-05-30 |
-| 6.1. Desktop App Polish Ã¯Â¿Â½ Device Controls, Status Events & Chart Foundation | Complete | 2026-05-30 |
+| 6.1. Desktop App Polish -- Device Controls, Status Events & Chart Foundation | Complete | 2026-05-30 |
+| 9. Docusaurus Documentation | Complete | 2026-06-02 |
 
 ---
 
@@ -160,6 +164,8 @@ driver-port Plan 03 complete (2026-06-01). 8 special/facade drivers ported: Atla
 | phase-6.2 | 01 | ~15 min | 2/2 | 6 |
 | phase-6.2 | 02 | ~25 min | 2/2 | 8 |
 | phase-9 | 03 | ~25 min | 2/2 | 7 |
+| phase-9 | 04 | ~4 min | 2/2 | 5 |
+| phase-9 | 05 | ~5 min | 3/3 | 1 |
 
 ---
 
