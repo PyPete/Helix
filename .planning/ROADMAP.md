@@ -387,7 +387,7 @@ Plans:
 | 6.1. Desktop App Polish — Device Controls, Status Events & Chart Foundation | 2/2 | Complete 2026-05-30 | - |
 | 7. Site-Level React Dashboard | 1/1 | Complete | 2026-06-02 |
 | 8. CI Hardening + Full Test Coverage | 3/3 | Complete | 2026-06-02 |
-| 9. Docusaurus Documentation | 0/5 | Not started | - |
+| 9. Docusaurus Documentation | 1/5 | In progress | - |
 | 10. Deployment + Setup Scripts | 0/6 | Not started | - |
 
 ---
@@ -434,7 +434,7 @@ Plans:
 | E4 | Phase 7 | Pending |
 | E5 | Phase 7 | Pending |
 | E6 | Phase 7 | Pending |
-| F1 | Phase 9 | Pending |
+| F1 | Phase 9 | In Progress (09-01 scaffold complete) |
 | F2 | Phase 9 | Pending |
 | F3 | Phase 9 | Pending |
 | F4 | Phase 9 | Pending |

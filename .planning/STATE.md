@@ -1,22 +1,22 @@
-﻿---
+---
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: Phase 7 -- Site-Level React Dashboard (context captured, ready to plan)
-status: unknown
-last_updated: "2026-06-01T21:15:00.000Z"
+current_phase: Phase 9 -- Docusaurus Documentation (1 of 5 plans complete)
+status: in-progress
+last_updated: "2026-06-02T00:00:00.000Z"
 progress:
   total_phases: 11
-  completed_phases: 3
-  total_plans: 16
-  completed_plans: 17
-  percent: 27
+  completed_phases: 5
+  total_plans: 23
+  completed_plans: 23
+  percent: 45
 ---
 
 # Project State
 
-**Last updated:** 2026-05-30
-**Current phase:** Phase driver-port -- PopNextGen Driver Port (3 of 3 plans complete, VERIFIED)
+**Last updated:** 2026-06-02
+**Current phase:** Phase 9 -- Docusaurus Documentation (Plan 1 of 5 complete)
 **Workflow:** YOLO mode, fine granularity, parallel execution enabled
 
 ---
@@ -96,12 +96,17 @@ See: .planning/PROJECT.md (updated 2026-05-26)
 - IRunspaceEventEmitter namespace is Helix.Orchestration.Agent.Events (not Streaming) -- confirmed by build
 - CapabilityRegistry.GetAllCapabilityNames() used to enumerate adapters in DeviceHealthPollLoopAsync (no per-adapter registry needed)
 - SciChart wrapper layer (charts/index.ts) is pure re-export in Step 1 -- no npm install scichart, no App.tsx changes
+- Docusaurus 3.10.1 docs site: organizationName=PyPete (from git remote), @docusaurus/theme-mermaid installed separately (not bundled in preset-classic)
+- markdown.hooks.onBrokenMarkdownLinks used instead of deprecated top-level onBrokenMarkdownLinks (Docusaurus v4 migration)
+- Docusaurus home page index.tsx updated to link to /docs/developer/intro + /docs/operator/intro (deleted /docs/intro)
 - MockWebSocket class pattern (stub global.WebSocket) used in WorkflowBuilder.test.tsx for execution state test -- adding vi.mock() calls to this file crashes the Vitest worker with V8 address space exhaustion (4 large module mocks already present)
 - NodeTimingFooter execution state tests placed in HelixNodes.test.tsx (new) to avoid WorkflowBuilder.test.tsx V8 crash
 
 ---
 
 ## Next Steps
+
+Phase 9 Plan 01 complete (2026-06-02). Docusaurus 3 scaffold at docs-site/ with Developer/Operator sections and CI docs build job. npm run build exits 0. Ready for Wave 1 content plans (09-02 through 09-05).
 
 Phase 7 context captured (2026-06-01). Ready to plan.
 
@@ -132,6 +137,7 @@ driver-port Plan 03 complete (2026-06-01). 8 special/facade drivers ported: Atla
 
 | Phase | Plan | Duration | Tasks | Files |
 |-------|------|----------|-------|-------|
+| phase-9 | 01 | ~8 min | 2/2 | 32 |
 | phase-5 | 01 | ~30 min | 2/2 | 18 |
 | phase-5 | 02 | ~20 min | 4/4 | 11 |
 | phase-5 | 03 | ~5 min | 1/1 | 1 |
@@ -180,4 +186,3 @@ driver-port Plan 03 complete (2026-06-01). 8 special/facade drivers ported: Atla
 - `Helix.Orchestration.Core/Capabilities/CapabilityDescriptor.cs` -- CapabilityDescriptor schema types (Phase 6.1)
 - `helix-desktop/src/components/DeviceManualControl/DeviceManualControl.tsx` -- schema-driven manual control panel (Phase 6.1)
 - `helix-desktop/src/components/charts/index.ts` -- SciChart wrapper re-export layer (Phase 6.1)
-
