@@ -115,8 +115,10 @@ public sealed class TcpTransportTests
             },
             NullLogger<TcpDeviceTransport>.Instance);
 
+        // Subscribe before connecting so the push cannot race past the subscription.
+        var payloadTask = transport.DataReceived.FirstAsync().ToTask();
         await transport.ConnectAsync();
-        var payload = await transport.DataReceived.FirstAsync().ToTask();
+        var payload = await payloadTask.WaitAsync(TimeSpan.FromSeconds(5));
 
         Assert.Equal("PUSH", Encoding.ASCII.GetString(payload));
         await serverTask;
