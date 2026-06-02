@@ -1,4 +1,5 @@
 using Helix.Orchestration.Core.WSL;
+using Helix.Orchestration.Infrastructure.Persistence;
 using Helix.Orchestration.SiteServer.Agent;
 using Helix.Orchestration.SiteServer.Contracts;
 
@@ -13,6 +14,39 @@ public static class ExperimentEndpoints
     {
         var group = app.MapGroup("/api/experiments")
             .WithTags("Experiments");
+
+        // GET /api/experiments — List all experiments (history browser, E4)
+        group.MapGet("/", async Task<IResult> (
+            IExperimentRepository experimentRepository,
+            CancellationToken ct) =>
+        {
+            try
+            {
+                var records = await experimentRepository.GetAllAsync(ct);
+                var dtos = records.Select(r => new ExperimentSummaryDto
+                {
+                    RunspaceId   = r.RunspaceId,
+                    CampaignId   = r.CampaignId,
+                    Name         = r.Name,
+                    Status       = r.Status,
+                    CreatedAt    = r.CreatedAt,
+                    StartedAt    = r.StartedAt,
+                    EndedAt      = r.EndedAt,
+                    FaultMessage = r.FaultMessage,
+                });
+                return Results.Ok(dtos);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem(
+                    title: "Failed to retrieve experiment list",
+                    detail: ex.Message, statusCode: 500);
+            }
+        })
+        .WithName("GetAllExperiments")
+        .WithSummary("List all experiments (history browser)")
+        .Produces<IEnumerable<ExperimentSummaryDto>>(StatusCodes.Status200OK)
+        .ProducesProblem(StatusCodes.Status500InternalServerError);
 
         // POST /api/experiments — Submit new experiment for execution
         group.MapPost("/", async Task<IResult> (

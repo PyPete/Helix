@@ -21,6 +21,19 @@ public sealed record SubmitExperimentRequest
     public string? ExperimentName { get; init; }
 }
 
+/// <summary>Summary DTO for experiment history list (GET /api/experiments).</summary>
+public sealed record ExperimentSummaryDto
+{
+    public required string RunspaceId   { get; init; }
+    public string?         CampaignId   { get; init; }
+    public required string Name         { get; init; }
+    public required string Status       { get; init; }
+    public required DateTimeOffset CreatedAt  { get; init; }
+    public DateTimeOffset? StartedAt    { get; init; }
+    public DateTimeOffset? EndedAt      { get; init; }
+    public string?         FaultMessage { get; init; }
+}
+
 /// <summary>
 /// Response containing experiment/runspace status.
 /// </summary>
