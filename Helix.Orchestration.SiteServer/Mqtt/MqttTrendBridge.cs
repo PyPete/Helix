@@ -7,6 +7,7 @@ using Microsoft.Extensions.Options;
 using MQTTnet;
 using MQTTnet.Client;
 using Helix.Orchestration.Core.Trends;
+using Helix.Orchestration.SiteServer.WebSockets;
 
 namespace Helix.Orchestration.SiteServer.Mqtt;
 
@@ -17,6 +18,7 @@ namespace Helix.Orchestration.SiteServer.Mqtt;
 public sealed class MqttTrendBridge : BackgroundService
 {
     private readonly ITrendProvider _trendProvider;
+    private readonly TrendWebSocketManager _trendWsManager;
     private readonly IOptions<MqttBridgeOptions> _options;
     private readonly ILogger<MqttTrendBridge> _logger;
     private IMqttClient? _mqttClient;
@@ -24,10 +26,12 @@ public sealed class MqttTrendBridge : BackgroundService
 
     public MqttTrendBridge(
         ITrendProvider trendProvider,
+        TrendWebSocketManager trendWsManager,
         IOptions<MqttBridgeOptions> options,
         ILogger<MqttTrendBridge> logger)
     {
         _trendProvider = trendProvider;
+        _trendWsManager = trendWsManager;
         _options = options;
         _logger = logger;
     }
@@ -109,6 +113,18 @@ public sealed class MqttTrendBridge : BackgroundService
 
             // Fire-and-forget publish (async void is acceptable here within a subscription callback)
             _ = _mqttClient.PublishAsync(message, ct);
+
+            // Relay to connected WebSocket dashboard clients (E5 / D-02)
+            if (value is ScalarValue<double> scalar)
+            {
+                var dto = new TrendValueWireDto(
+                    Type:      "trend-value",
+                    TrendName: trend.TrendName,
+                    Value:     scalar.Value,
+                    Unit:      trend.Units ?? "",
+                    Timestamp: DateTimeOffset.UtcNow.ToString("O"));
+                _ = _trendWsManager.BroadcastAsync(dto, ct);
+            }
 
             _logger.LogTrace("MqttTrendBridge: Published {TrendId} to {Topic}", trend.TrendId, topic);
         }

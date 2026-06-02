@@ -4,6 +4,8 @@ using Helix.Orchestration.SiteServer.Agent;
 using Helix.Orchestration.SiteServer.Campaigns;
 using Helix.Orchestration.SiteServer.Endpoints;
 using Helix.Orchestration.SiteServer.Mqtt;
+using Helix.Orchestration.SiteServer.WebSockets;
+using Microsoft.AspNetCore.WebSockets;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -33,6 +35,14 @@ builder.Services.AddSingleton<ICampaignManager, CampaignManager>();
 builder.Services.Configure<MqttBridgeOptions>(builder.Configuration.GetSection("MqttBridge"));
 builder.Services.AddHostedService<MqttTrendBridge>();
 
+// Register WebSocket services for live trend streaming (E5)
+builder.Services.AddSingleton<TrendWebSocketManager>();
+builder.Services.AddWebSockets(options =>
+{
+    options.AllowedOrigins.Add("http://localhost:5174");
+    options.KeepAliveInterval = TimeSpan.FromSeconds(30);
+});
+
 // Register PostgreSQL repositories for campaigns and experiments
     builder.Services.AddHelixInfrastructure(builder.Configuration);
 
@@ -47,11 +57,33 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+// UseWebSockets MUST come before any app.Map* calls
+app.UseWebSockets();
+
 // Map endpoint groups
 app.MapExperimentEndpoints();
 app.MapDeviceEndpoints();
 app.MapTrendEndpoints();
 app.MapCampaignEndpoints();
+
+// WebSocket endpoint for live trend streaming (E5 / D-02)
+var trendWsManager = app.Services.GetRequiredService<TrendWebSocketManager>();
+app.Use(async (context, next) =>
+{
+    if (context.Request.Path == "/api/trends/ws")
+    {
+        if (context.WebSockets.IsWebSocketRequest)
+        {
+            using var ws = await context.WebSockets.AcceptWebSocketAsync();
+            await trendWsManager.HandleClientAsync(ws, context.RequestAborted);
+        }
+        else
+        {
+            context.Response.StatusCode = StatusCodes.Status400BadRequest;
+        }
+    }
+    else { await next(context); }
+});
 
 app.Run();
 
