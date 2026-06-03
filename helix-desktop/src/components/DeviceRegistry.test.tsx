@@ -18,14 +18,14 @@ describe("DeviceRegistry", () => {
     expect(screen.getByText("Loading...")).toBeInTheDocument();
   });
 
-  it("renders adapter list when fetch returns { status: 'Healthy' }", async () => {
+  it("renders adapter list when fetch returns devices array", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn(() =>
         Promise.resolve({
           ok: true,
           status: 200,
-          text: () => Promise.resolve("Healthy"),
+          json: () => Promise.resolve([{ adapterId: "simulator", capabilities: ["simulator.SetFlow"] }]),
         } as unknown as Response)
       )
     );
@@ -33,9 +33,9 @@ describe("DeviceRegistry", () => {
     render(<DeviceRegistry agentBaseUrl="http://localhost:5080" />);
 
     await waitFor(() => {
-      expect(screen.getByText(/agent/i)).toBeInTheDocument();
+      expect(screen.getByText(/simulator/i)).toBeInTheDocument();
     });
-    expect(screen.getByText(/Healthy/)).toBeInTheDocument();
+    expect(screen.getByText("Manual Control")).toBeInTheDocument();
   });
 
   it("shows error message when fetch returns non-200", async () => {
@@ -45,7 +45,6 @@ describe("DeviceRegistry", () => {
         Promise.resolve({
           ok: false,
           status: 503,
-          text: () => Promise.resolve(""),
         } as unknown as Response)
       )
     );
@@ -72,19 +71,14 @@ describe("DeviceRegistry", () => {
     expect(screen.getByRole("alert")).toHaveTextContent("Failed to connect");
   });
 
-  it("shows 'No adapters found' when fetch returns { status: 'Degraded' }", async () => {
-    // Degraded maps to healthy=false — the adapter IS listed but shows Unhealthy
-    // Per the plan: "shows 'No adapters found' when fetch returns { status: 'Degraded' } (healthy=false)"
-    // However the component always adds 1 adapter entry regardless of health status.
-    // The "No adapters found" message only shows when devices.length === 0.
-    // This test verifies the adapter is shown as Unhealthy (consistent with component behavior).
+  it("shows No adapters found when fetch returns empty array", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn(() =>
         Promise.resolve({
           ok: true,
           status: 200,
-          text: () => Promise.resolve("Degraded"),
+          json: () => Promise.resolve([]),
         } as unknown as Response)
       )
     );
@@ -92,8 +86,7 @@ describe("DeviceRegistry", () => {
     render(<DeviceRegistry agentBaseUrl="http://localhost:5080" />);
 
     await waitFor(() => {
-      expect(screen.getByText(/Unhealthy/)).toBeInTheDocument();
+      expect(screen.getByText(/No adapters found/i)).toBeInTheDocument();
     });
-    expect(screen.getByText(/Degraded/)).toBeInTheDocument();
   });
 });

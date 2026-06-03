@@ -6,15 +6,13 @@ interface DeviceRegistryProps {
   agentBaseUrl: string;
 }
 
-function mapHealthToAdapters(data: { status?: string }): DeviceAdapter[] {
-  return [
-    {
-      adapterId: "agent",
-      healthy: data.status === "Healthy",
-      message: data.status ?? "Unknown",
-      capabilities: [],
-    },
-  ];
+function mapDevicesToAdapters(data: { adapterId: string; capabilities: string[] }[]): DeviceAdapter[] {
+  return data.map(d => ({
+    adapterId: d.adapterId,
+    healthy: true,
+    message: "registered",
+    capabilities: d.capabilities,
+  }));
 }
 
 export default function DeviceRegistry({ agentBaseUrl }: DeviceRegistryProps) {
@@ -27,11 +25,10 @@ export default function DeviceRegistry({ agentBaseUrl }: DeviceRegistryProps) {
     const poll = async () => {
       setLoading(true);
       try {
-        const res = await fetch(`${agentBaseUrl}/health`);
+        const res = await fetch(`${agentBaseUrl}/devices`);
         if (!res.ok) throw new Error(`Agent returned ${res.status}`);
-        const text = await res.text();
-        const data: { status?: string } = { status: text.trim() };
-        setDevices(mapHealthToAdapters(data));
+        const data: { adapterId: string; capabilities: string[] }[] = await res.json();
+        setDevices(mapDevicesToAdapters(data));
         setError(null);
       } catch (e) {
         setError((e as Error).message);
