@@ -83,6 +83,7 @@ app.MapExperimentEndpoints();
 app.MapDeviceEndpoints();
 app.MapTrendEndpoints();
 app.MapCampaignEndpoints();
+app.MapFumehoodEndpoints();
 
 app.Run();
 
