@@ -1,4 +1,4 @@
-# Helix Pre-flight Check Script
+﻿# Helix Pre-flight Check Script
 # Usage: .\preflight.ps1 [optional overrides]
 # Exit codes: 0=PASS, 1=WARN, 2=FAIL
 # Run before starting an experiment to verify all infrastructure is reachable.
@@ -8,7 +8,7 @@ param(
     [int]$PostgresPort = 5432,
     [string]$MqttHost = "localhost",
     [int]$MqttPort = 1883,
-    [string]$MinioEndpoint = "http://localhost:9000",
+    [string]$MinioEndpoint = "http://localhost:19000",
     [string]$AgentGrpcHost = "localhost",
     [int]$AgentGrpcPort = 5080
 )
@@ -117,3 +117,4 @@ if ($failCount -gt 0) {
     Write-Host "Result: PASS (all $($results.Count) checks green)"
     exit 0
 }
+

@@ -1,15 +1,15 @@
-# Helix Orchestration — local dev services
+﻿# Helix Orchestration â€” local dev services
 # Usage:
 #   docker compose up -d          start all services
 #   docker compose down -v        stop and remove containers + volumes
 #
 # Services:
-#   mosquitto         MQTT broker — plain TCP 1883, MQTT-over-WebSocket 9001
-#   postgres          PostgreSQL 16 — experiment/campaign persistence on 5432
-#   minio             MinIO object storage — API 9000, console 9002
-#   helix-agent       Agent service — gRPC + HTTP /health on 5080
-#   helix-siteserver  SiteServer — REST/WebSocket API on 5090
-#   helix-recorder    Recorder worker — MQTT subscriber → MinIO storage
+#   mosquitto         MQTT broker â€” plain TCP 1883, MQTT-over-WebSocket 9001
+#   postgres          PostgreSQL 16 â€” experiment/campaign persistence on 5432
+#   minio             MinIO object storage â€” API 9000, console 9002
+#   helix-agent       Agent service â€” gRPC + HTTP /health on 5080
+#   helix-siteserver  SiteServer â€” REST/WebSocket API on 5090
+#   helix-recorder    Recorder worker â€” MQTT subscriber â†’ MinIO storage
 
 services:
   mosquitto:
@@ -17,8 +17,8 @@ services:
     container_name: helix-mosquitto
     restart: unless-stopped
     ports:
-      - "1883:1883"   # MQTT/TCP — used by Agent and Recorder
-      - "9001:9001"   # MQTT over WebSocket — used by Tauri/React clients
+      - "1883:1883"   # MQTT/TCP â€” used by Agent and Recorder
+      - "9001:9001"   # MQTT over WebSocket â€” used by Tauri/React clients
     volumes:
       - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
       - mosquitto_data:/mosquitto/data
@@ -55,8 +55,8 @@ services:
     command: server /data --console-address ":9002"
     restart: unless-stopped
     ports:
-      - "9000:9000"   # MinIO S3-compatible API
-      - "9002:9002"   # MinIO web console
+      - "19000:9000"   # MinIO S3-compatible API
+      - "19002:9002"   # MinIO web console
     environment:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin
@@ -143,10 +143,11 @@ services:
         condition: service_healthy
       minio:
         condition: service_healthy
-    # No healthcheck — Recorder is a Worker with no HTTP port
+    # No healthcheck â€” Recorder is a Worker with no HTTP port
 
 volumes:
   mosquitto_data:
   mosquitto_log:
   postgres_data:
   minio_data:
+

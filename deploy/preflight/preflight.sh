@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+﻿#!/usr/bin/env bash
 # Helix Pre-flight Check Script (Linux)
 # Usage: ./preflight.sh
 # Exit codes: 0=PASS, 1=WARN, 2=FAIL
@@ -11,7 +11,7 @@ POSTGRES_HOST=${POSTGRES_HOST:-localhost}
 POSTGRES_PORT=${POSTGRES_PORT:-5432}
 MQTT_HOST=${MQTT_HOST:-localhost}
 MQTT_PORT=${MQTT_PORT:-1883}
-MINIO_ENDPOINT=${MINIO_ENDPOINT:-http://localhost:9000}
+MINIO_ENDPOINT=${MINIO_ENDPOINT:-http://localhost:19000}
 AGENT_GRPC_HOST=${AGENT_GRPC_HOST:-localhost}
 AGENT_GRPC_PORT=${AGENT_GRPC_PORT:-5080}
 
@@ -114,3 +114,4 @@ else
     echo "Result: PASS (all checks green)"
     exit 0
 fi
+
