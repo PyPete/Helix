@@ -20,6 +20,7 @@
 | 6.1 | Desktop App Polish — Device Controls, Status Events & Chart Foundation | CapabilityDescriptor schema, manual control endpoint, DeviceStatusEvent, SciChart wrapper layer | 6 | S |
 | 6.2 | Workflow Builder — Device Palette, Hybrid Ports & Live Execution | Production-quality ReactFlow node canvas: device action palette, hybrid static/dataflow ports, live traffic-light execution state | 6.1 | L |
 | 6.3 | Close Gap: Device Integration Bugs (C1, C4, C7-C9) (INSERTED) | Fix DeviceRegistry.tsx /health→/devices, bridge CapabilityRegistry→DeviceRegistry, fix POST /devices/{id}/execute 404 | 6.2 | S |
+| 6.4 | Close Gap: Remaining Audit Items (E1-E4, D5, D6, G2) (INSERTED) | docker-compose SiteServer env fix, helix-desktop CI tests, Agent gRPC server stub, SiteOverviewPage live data | 6.3 | M |
 | 7 | Site-Level React Dashboard | Vite + TypeScript SPA with site overview, campaigns, history, and live trends | 2 | M |
 | 8 | CI Hardening + Full Test Coverage | All projects build and test in CI; coverage report; no skipped tests | 1, 4, 6, 7 | M |
 | 9 | Docusaurus Documentation | Scaffold and populate developer + scientist docs; auto-generate API reference | 7, 8 | M |
@@ -296,6 +297,35 @@ Plans:
 Plans:
 - [ ] 6.3-01-PLAN.md -- Backend fixes: DeviceEndpoints.cs prefix-match guard + InvokeAsync full key (C7/C9); Program.cs CapabilityRegistry->DeviceRegistry bridge (C4/C8); new xUnit tests
 - [ ] 6.3-02-PLAN.md -- Frontend fix: DeviceRegistry.tsx fetch /devices + JSON parse + rewrite 4 tests (C1)
+
+---
+
+## Phase 6.4: Close Gap: Remaining Audit Items (E1-E4, D5, D6, G2) (INSERTED)
+
+**Goal:** Close all remaining gaps from the v0.1 milestone audit. Four root causes: (1) docker-compose.yml missing ConnectionStrings__HelixOrchestration for helix-siteserver — crashes SiteServer on startup (E3, E4, G2); (2) helix-desktop unit tests not run in CI — D5/D6 partial; (3) Agent has no gRPC server — GrpcAgentProxy in SiteServer fails every RPC call (E4); (4) SiteOverviewPage uses hardcoded static data instead of live /api/fumehoods (E1, E2).
+
+**Deliverables:**
+- docker-compose.yml helix-siteserver environment block: add ConnectionStrings__HelixOrchestration pointing to the postgres service
+- ci.yml: helix-desktop test job — add npm test --run step alongside existing tauri-build job
+- Agent gRPC server: AddGrpc() + MapGrpcService<AgentGrpcService>() in Program.cs; AgentGrpcService stub in gRPC/Server/ implementing the IAgentService proto contract (enough for SiteServer GrpcAgentProxy to connect without error)
+- SiteOverviewPage: replace hardcoded PLACEHOLDER_FUMEHOODS array with GET /api/fumehoods API call; add /api/fumehoods endpoint to SiteServer returning connected Agent adapter names
+
+**Requirements covered:** D5, D6, E1, E2, E3, E4, G2
+
+**Dependencies:** Phase 6.3 (device integration fixes complete)
+
+**Success criteria:**
+- [ ] docker-compose up: helix-siteserver starts without crash (ConnectionStrings env var present)
+- [ ] ci.yml: helix-desktop test step runs npm test --run and passes
+- [ ] Agent starts with gRPC server listening; SiteServer GrpcAgentProxy no longer fails on startup
+- [ ] SiteOverviewPage renders fumehood names from GET /api/fumehoods (not PLACEHOLDER_FUMEHOODS)
+- [ ] All four broken flows from the audit are unblocked: site dashboard, experiment submission, manual device control, experiment history
+
+**Plans:** 2 plans
+
+Plans:
+- [ ] 6.4-01-PLAN.md -- Infrastructure: docker-compose ConnectionStrings + Http1AndHttp2 + helix-desktop-test CI job + AgentGrpcService (D5, D6, E3, E4, G2)
+- [ ] 6.4-02-PLAN.md -- Live dashboard data: FumehoodEndpoints.cs + SiteOverviewPage fetch hook + test rewrites (E1, E2)
 
 ## Phase 7: Site-Level React Dashboard
 
