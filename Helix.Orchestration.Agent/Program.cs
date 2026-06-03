@@ -220,8 +220,27 @@ try
     builder.Services.AddSingleton<WslExecutionAdapter>();
 
     // WSL compilation + device registry
+    // DeviceRegistry is populated from CapabilityRegistry at first resolve (lazy factory).
+    // CapabilityRegistry is registered by AddMigratedDeviceAdapters() above, so DI ordering is safe.
     builder.Services.AddSingleton<IWslCompiler, WslCompiler>();
-    builder.Services.AddSingleton<DeviceRegistry>();
+    builder.Services.AddSingleton<DeviceRegistry>(sp =>
+    {
+        var capRegistry = sp.GetRequiredService<CapabilityRegistry>();
+        var deviceRegistry = new DeviceRegistry();
+        var prefixes = capRegistry.GetAllCapabilityNames()
+            .Select(name => { var dot = name.IndexOf('.'); return dot > 0 ? name[..dot] : name; })
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        foreach (var prefix in prefixes)
+        {
+            var caps = capRegistry.GetAllCapabilityNames()
+                .Where(n => { var dot = n.IndexOf('.'); return string.Equals(dot > 0 ? n[..dot] : n, prefix, StringComparison.OrdinalIgnoreCase); })
+                .Select(n => { var dot = n.IndexOf('.'); return dot > 0 ? n[(dot + 1)..] : n; })
+                .ToList();
+            deviceRegistry.Register(new DeviceDescriptor(prefix, prefix, "device", caps, new Dictionary<string, object?>()));
+        }
+        return deviceRegistry;
+    });
 
     // Event bus
     builder.Services.AddSingleton<IRunspaceEventEmitter, RunspaceEventEmitter>();
