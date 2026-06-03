@@ -1,13 +1,5 @@
+import { useState, useEffect } from "react";
 import type { FumehoodStatus } from "../types/dashboard";
-
-const PLACEHOLDER_FUMEHOODS: FumehoodStatus[] = [
-  { id: "fh-001", name: "Fumehood A", status: "running",
-    activeExperimentName: "Vapourtec R4 Test", lastSeenAt: new Date().toISOString() },
-  { id: "fh-002", name: "Fumehood B", status: "idle",
-    lastSeenAt: new Date().toISOString() },
-  { id: "fh-003", name: "Fumehood C", status: "faulted",
-    lastSeenAt: new Date(Date.now() - 300_000).toISOString() },
-];
 
 const STATUS_COLOR: Record<FumehoodStatus["status"], string> = {
   running: "var(--color-busy)",
@@ -16,8 +8,25 @@ const STATUS_COLOR: Record<FumehoodStatus["status"], string> = {
   offline: "var(--color-offline)",
 };
 
-export function SiteOverviewPage() {
-  const activeCount = PLACEHOLDER_FUMEHOODS.filter((fh) => fh.status === "running").length;
+interface SiteOverviewPageProps {
+  baseUrl: string;
+}
+
+export function SiteOverviewPage({ baseUrl }: SiteOverviewPageProps) {
+  const [fumehoods, setFumehoods] = useState<FumehoodStatus[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const activeCount = fumehoods.filter((fh) => fh.status === "running").length;
+
+  useEffect(() => {
+    setLoading(true);
+    setError(null);
+    fetch(baseUrl + "/api/fumehoods")
+      .then((res) => { if (!res.ok) throw new Error(res.statusText); return res.json() as Promise<FumehoodStatus[]>; })
+      .then(setFumehoods)
+      .catch((e: Error) => setError(e.message))
+      .finally(() => setLoading(false));
+  }, [baseUrl]);
 
   return (
     <section aria-label="Site Overview" data-testid="site-overview-page">
@@ -31,12 +40,14 @@ export function SiteOverviewPage() {
           {activeCount}
         </span>
       </p>
+      {loading && <p style={{ color: "var(--color-text-muted)" }}>Loading...</p>}
+      {error && <p style={{ color: "var(--color-danger)" }}>{error}</p>}
       <div style={{
         display: "grid",
         gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
         gap: "var(--space-4)", marginTop: "var(--space-4)",
       }}>
-        {PLACEHOLDER_FUMEHOODS.map((fh) => (
+        {fumehoods.map((fh) => (
           <div key={fh.id} data-testid="fumehood-card"
             style={{
               background: "var(--color-surface)",

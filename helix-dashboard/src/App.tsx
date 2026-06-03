@@ -14,7 +14,7 @@ export function App() {
   return (
     <Routes>
       <Route element={<Layout connected={connected} />}>
-        <Route index element={<SiteOverviewPage />} />
+        <Route index element={<SiteOverviewPage baseUrl={baseUrl} />} />
         <Route path="campaigns" element={<CampaignsPage baseUrl={baseUrl} />} />
         <Route path="history" element={<HistoryPage baseUrl={baseUrl} />} />
         <Route path="trends" element={<TrendsPage trendValues={trendValues} />} />
