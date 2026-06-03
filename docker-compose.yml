@@ -83,9 +83,9 @@ services:
       ConnectionStrings__HelixOrchestration: Host=helix-postgres;Port=5432;Database=helix_orchestration;Username=helix;Password=helix_dev_password
     depends_on:
       postgres:
-        condition: service_healthy
+        condition: service_started
       mosquitto:
-        condition: service_healthy
+        condition: service_started
     healthcheck:
       # Agent has /health endpoint registered (AddHealthChecks + MapHealthChecks in Program.cs)
       test: ["CMD", "curl", "-f", "http://localhost:5080/health"]
@@ -148,6 +148,7 @@ volumes:
   mosquitto_log:
   postgres_data:
   minio_data:
+
 
 
 
