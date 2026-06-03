@@ -4,9 +4,12 @@
 #   docker compose down -v        stop and remove containers + volumes
 #
 # Services:
-#   mosquitto   MQTT broker — plain TCP 1883, MQTT-over-WebSocket 9001
-#   postgres    PostgreSQL 16 — experiment/campaign persistence on 5432
-#   minio       MinIO object storage — API 9000, console 9002
+#   mosquitto         MQTT broker — plain TCP 1883, MQTT-over-WebSocket 9001
+#   postgres          PostgreSQL 16 — experiment/campaign persistence on 5432
+#   minio             MinIO object storage — API 9000, console 9002
+#   helix-agent       Agent service — gRPC + HTTP /health on 5080
+#   helix-siteserver  SiteServer — REST/WebSocket API on 5090
+#   helix-recorder    Recorder worker — MQTT subscriber → MinIO storage
 
 services:
   mosquitto:
@@ -20,6 +23,12 @@ services:
       - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
       - mosquitto_data:/mosquitto/data
       - mosquitto_log:/mosquitto/log
+    healthcheck:
+      test: ["CMD", "mosquitto_pub", "-h", "localhost", "-p", "1883", "-t", "helix/healthcheck", "-m", "ping", "-q", "1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
 
   postgres:
     image: postgres:16
@@ -58,6 +67,83 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+
+  helix-agent:
+    build:
+      context: .
+      dockerfile: Helix.Orchestration.Agent/Dockerfile
+    container_name: helix-agent
+    restart: unless-stopped
+    ports:
+      - "5080:5080"
+    environment:
+      Kestrel__Endpoints__Http__Url: http://0.0.0.0:5080
+      Mqtt__BrokerHost: helix-mosquitto
+      Mqtt__BrokerPort: 1883
+      ConnectionStrings__HelixOrchestration: Host=helix-postgres;Port=5432;Database=helix_orchestration;Username=helix;Password=helix_dev_password
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mosquitto:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    healthcheck:
+      # Agent has /health endpoint registered (AddHealthChecks + MapHealthChecks in Program.cs)
+      test: ["CMD", "curl", "-f", "http://localhost:5080/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  helix-siteserver:
+    build:
+      context: .
+      dockerfile: Helix.Orchestration.SiteServer/Dockerfile
+    container_name: helix-siteserver
+    restart: unless-stopped
+    ports:
+      - "5090:5090"
+    environment:
+      ASPNETCORE_URLS: http://+:5090
+      AgentProxy__Mode: grpc
+      AgentProxy__GrpcAddress: http://helix-agent:5080
+      MqttBridge__BrokerHost: helix-mosquitto
+      MqttBridge__BrokerPort: 1883
+      MqttBridge__SiteId: site1
+      MqttBridge__FumehoodId: fh1
+    depends_on:
+      helix-agent:
+        condition: service_healthy
+      mosquitto:
+        condition: service_healthy
+    healthcheck:
+      # SiteServer has no /health endpoint; use TCP probe
+      test: ["CMD-SHELL", "nc -z localhost 5090 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  helix-recorder:
+    build:
+      context: .
+      dockerfile: Helix.Orchestration.Recorder/Dockerfile
+    container_name: helix-recorder
+    restart: unless-stopped
+    environment:
+      Recorder__MqttBrokerHost: helix-mosquitto
+      Recorder__MqttBrokerPort: 1883
+      Minio__ServiceUrl: http://helix-minio:9000
+      Minio__AccessKey: minioadmin
+      Minio__SecretKey: minioadmin
+      Minio__DefaultBucket: helix-recordings
+    depends_on:
+      mosquitto:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    # No healthcheck — Recorder is a Worker with no HTTP port
 
 volumes:
   mosquitto_data:
