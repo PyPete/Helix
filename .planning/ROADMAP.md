@@ -397,7 +397,7 @@ Plans:
 | 7. Site-Level React Dashboard | 1/1 | Complete | 2026-06-02 |
 | 8. CI Hardening + Full Test Coverage | 3/3 | Complete | 2026-06-02 |
 | 9. Docusaurus Documentation | 5/5 | Complete | 2026-06-02 |
-| 10. Deployment + Setup Scripts | 0/6 | Not started | - |
+| 10. Deployment + Setup Scripts | 1/6 | In progress | 2026-06-03 |
 
 ---
 
@@ -448,7 +448,7 @@ Plans:
 | F3 | Phase 9 | Complete |
 | F4 | Phase 9 | Complete |
 | F5 | Phase 9 | Complete |
-| G1 | Phase 10 | Pending |
+| G1 | Phase 10 | Complete |
 | G2 | Phase 10 | Pending |
 | G3 | Phase 10 | Pending |
 | G4 | Phase 10 | Pending |

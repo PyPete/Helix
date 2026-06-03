@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: Phase 10 -- Deployment + Setup Scripts (not started)
+current_phase: Phase 10 -- Deployment + Setup Scripts (in progress, 1/6 plans done)
 status: in-progress
-last_updated: "2026-06-02T21:00:00.000Z"
+last_updated: "2026-06-03T00:00:00.000Z"
 progress:
   total_phases: 11
   completed_phases: 8
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-05-26)
 
 **Core value:** A scientist can build a workflow, connect real lab hardware, execute an experiment, and see the results without writing code.
 
-**Current focus:** Phase 9 complete -- Phase 10 (Deployment + Setup Scripts) is next
+**Current focus:** Phase 10 in progress -- Plan 01 (Dockerfiles + docker-compose) complete
 
 ---
 
@@ -103,12 +103,17 @@ See: .planning/PROJECT.md (updated 2026-05-26)
 - NodeTimingFooter execution state tests placed in HelixNodes.test.tsx (new) to avoid WorkflowBuilder.test.tsx V8 crash
 - docusaurus-plugin-redoc v2.5.0 cannot be used standalone -- requires redocusaurus preset for @theme/ApiDoc; fallback to endpoint summary table in rest-api.md (F4 satisfied)
 - MDX in Docusaurus parses {id} in table cells as JSX expressions -- use HTML entity escaping (&#123;id&#125;) for path parameters
+- depends_on uses service names (mosquitto/postgres/minio) not container names (helix-*) -- Docker Compose depends_on requires service names; container_name provides DNS alias but cannot be used in depends_on
+- AgentProxy__Mode=grpc set in SiteServer environment (not real) -- code checks StringComparison.OrdinalIgnoreCase for "grpc"
+- Recorder uses dotnet/runtime:10.0 not aspnet:10.0 -- Worker-only service has no HTTP listener, smaller image
 - dotnet-tools.json command name for swashbuckle.aspnetcore.cli is "swagger" (not "dotnet-swagger")
 - Phase 9 complete (2026-06-02): Docusaurus 3 site at docs-site/ with 9 content pages; npm run build exits 0; all F1-F5 requirements satisfied; human checkpoint approved
 
 ---
 
 ## Next Steps
+
+Phase 10 Plan 01 complete (2026-06-03). Multi-stage Dockerfiles for Agent/SiteServer/Recorder. docker-compose.yml expanded to six services (mosquitto healthcheck added, three new .NET services). docker compose config exits 0. G1 closed.
 
 Phase 9 complete (2026-06-02). All 5 plans done: Docusaurus 3 site at docs-site/ with 9 content pages, npm run build exits 0, F1-F5 all satisfied, human checkpoint approved. Phase 10 (Deployment + Setup Scripts) is next.
 
@@ -166,6 +171,7 @@ driver-port Plan 03 complete (2026-06-01). 8 special/facade drivers ported: Atla
 | phase-9 | 03 | ~25 min | 2/2 | 7 |
 | phase-9 | 04 | ~4 min | 2/2 | 5 |
 | phase-9 | 05 | ~5 min | 3/3 | 1 |
+| phase-10 | 01 | ~5 min | 2/2 | 4 |
 
 ---
 
