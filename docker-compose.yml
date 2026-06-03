@@ -24,7 +24,7 @@ services:
       - mosquitto_data:/mosquitto/data
       - mosquitto_log:/mosquitto/log
     healthcheck:
-      test: ["CMD", "mosquitto_pub", "-h", "localhost", "-p", "1883", "-t", "helix/healthcheck", "-m", "ping", "-q", "1"]
+      test: ["CMD-SHELL", "nc -z localhost 1883 || exit 1"]  # mosquitto_pub not in image; TCP probe
       interval: 10s
       timeout: 5s
       retries: 5
@@ -150,4 +150,5 @@ volumes:
   mosquitto_log:
   postgres_data:
   minio_data:
+
 
