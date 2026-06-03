@@ -21,10 +21,10 @@ function Add-Result {
 }
 
 function Test-TcpPort {
-    param([string]$Host, [int]$Port, [int]$TimeoutMs = 3000)
+    param([string]$Hostname, [int]$Port, [int]$TimeoutMs = 3000)
     try {
         $tcp = New-Object System.Net.Sockets.TcpClient
-        $connect = $tcp.BeginConnect($Host, $Port, $null, $null)
+        $connect = $tcp.BeginConnect($Hostname, $Port, $null, $null)
         $wait = $connect.AsyncWaitHandle.WaitOne($TimeoutMs, $false)
         if ($wait) { $tcp.EndConnect($connect); $tcp.Close(); return $true }
         $tcp.Close(); return $false
@@ -33,7 +33,7 @@ function Test-TcpPort {
 
 # Check 1: PostgreSQL TCP
 Write-Host "Checking PostgreSQL ($PostgresHost`:$PostgresPort)..."
-if (Test-TcpPort -Host $PostgresHost -Port $PostgresPort) {
+if (Test-TcpPort -Hostname $PostgresHost -Port $PostgresPort) {
     Add-Result "PostgreSQL TCP" "PASS" "$PostgresHost`:$PostgresPort reachable"
 } else {
     Add-Result "PostgreSQL TCP" "FAIL" "$PostgresHost`:$PostgresPort unreachable"
@@ -41,7 +41,7 @@ if (Test-TcpPort -Host $PostgresHost -Port $PostgresPort) {
 
 # Check 2: MQTT Broker TCP
 Write-Host "Checking MQTT broker ($MqttHost`:$MqttPort)..."
-if (Test-TcpPort -Host $MqttHost -Port $MqttPort) {
+if (Test-TcpPort -Hostname $MqttHost -Port $MqttPort) {
     Add-Result "MQTT Broker TCP" "PASS" "$MqttHost`:$MqttPort reachable"
 } else {
     Add-Result "MQTT Broker TCP" "FAIL" "$MqttHost`:$MqttPort unreachable"
@@ -117,4 +117,5 @@ if ($failCount -gt 0) {
     Write-Host "Result: PASS (all $($results.Count) checks green)"
     exit 0
 }
+
 
