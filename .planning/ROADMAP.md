@@ -1,4 +1,4 @@
-﻿# Roadmap
+# Roadmap
 
 **Project:** Helix Orchestration Platform
 **Milestone:** 1 -- Hardware-ready platform with local UI, full test coverage, documentation, and deployment scripts
@@ -19,6 +19,7 @@
 | 6 | Tauri Desktop App - Workflow Builder + Execution | Agent REST API + WebSocket layer, WSL compiler completions, Rete.js node editor, execution panel, live trends, safety display | 5 | XL |
 | 6.1 | Desktop App Polish — Device Controls, Status Events & Chart Foundation | CapabilityDescriptor schema, manual control endpoint, DeviceStatusEvent, SciChart wrapper layer | 6 | S |
 | 6.2 | Workflow Builder — Device Palette, Hybrid Ports & Live Execution | Production-quality ReactFlow node canvas: device action palette, hybrid static/dataflow ports, live traffic-light execution state | 6.1 | L |
+| 6.3 | Close Gap: Device Integration Bugs (C1, C4, C7-C9) (INSERTED) | Fix DeviceRegistry.tsx /health→/devices, bridge CapabilityRegistry→DeviceRegistry, fix POST /devices/{id}/execute 404 | 6.2 | S |
 | 7 | Site-Level React Dashboard | Vite + TypeScript SPA with site overview, campaigns, history, and live trends | 2 | M |
 | 8 | CI Hardening + Full Test Coverage | All projects build and test in CI; coverage report; no skipped tests | 1, 4, 6, 7 | M |
 | 9 | Docusaurus Documentation | Scaffold and populate developer + scientist docs; auto-generate API reference | 7, 8 | M |
@@ -265,6 +266,36 @@ Plans:
 **UI hint**: yes
 
 ---
+
+---
+
+## Phase 6.3: Close Gap: Device Integration Bugs (C1, C4, C7-C9) (INSERTED)
+
+**Goal:** Close the four device integration gaps identified in the v0.1 milestone audit: DeviceRegistry.tsx fetches /health instead of /devices (C1), CapabilityRegistry and DeviceRegistry singletons are disconnected so WslCompiler rejects all DeviceAction nodes (C4, C8), and POST /devices/{id}/execute always returns 404 due to wrong key form (C7, C9).
+
+**Deliverables:**
+- DeviceRegistry.tsx updated to fetch GET /devices (not /health); displays real adapter list from CapabilityRegistry
+- Agent Program.cs: bridging service or startup code populates DeviceRegistry from CapabilityRegistry so WslCompiler.ValidateDeviceBindings no longer rejects DeviceAction nodes
+- DeviceEndpoints.cs: POST /devices/{id}/execute guard and InvokeAsync call corrected to use full capability key form (e.g. simulator.SetFlow); returns 200 for valid capability invocations
+- Manual device control round-trip verified end-to-end from DeviceManualControl panel
+- helix-desktop vitest suite passes (76 tests); affected integration tests updated
+
+**Requirements covered:** C1, C4, C7, C8, C9
+
+**Dependencies:** Phase 6.2 (all desktop and Agent device endpoints in place)
+
+**Success criteria:**
+- [ ] DeviceRegistry.tsx shows real adapters (not a phantom 'agent' row) when Agent is running with SimReactor registered
+- [ ] A workflow containing a DeviceActionNode compiles successfully via POST /workflows/compile
+- [ ] POST /devices/simulator.SetFlow/execute returns 200 (not 404) with valid parameters
+- [ ] DeviceManualControl panel can invoke at least one SimReactor capability without a 404 error
+- [ ] 76 helix-desktop unit tests pass with no [skip]
+
+**Plans:** 2 plans
+
+Plans:
+- [ ] 6.3-01-PLAN.md -- Backend fixes: DeviceEndpoints.cs prefix-match guard + InvokeAsync full key (C7/C9); Program.cs CapabilityRegistry->DeviceRegistry bridge (C4/C8); new xUnit tests
+- [ ] 6.3-02-PLAN.md -- Frontend fix: DeviceRegistry.tsx fetch /devices + JSON parse + rewrite 4 tests (C1)
 
 ## Phase 7: Site-Level React Dashboard
 
