@@ -381,6 +381,13 @@ Plans:
 - [ ] Pre-flight script exits with pass for all checks against the compose stack (no real hardware required)
 - [ ] Production hardening guide in Docusaurus is accurate: TLS + credential rotation steps are followable without consulting source code
 
+**Plans:** 3 plans
+
+Plans:
+- [ ] 10-01-PLAN.md -- Dockerfiles (Agent, SiteServer, Recorder) + full six-service docker-compose.yml [Wave 1]
+- [x] 10-02-PLAN.md -- setup.ps1 (Windows) + setup.sh (Linux) bootstrap scripts [Wave 1]
+- [ ] 10-03-PLAN.md -- Windows service scripts, systemd unit files, pre-flight check, production hardening docs [Wave 2]
+
 ---
 
 ## Progress
@@ -456,5 +463,6 @@ Plans:
 | G6 | Phase 10 | Pending |
 
 **Coverage: 49/49 requirements mapped (100%)**
+
 
 

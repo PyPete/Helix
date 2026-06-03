@@ -2,21 +2,21 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: Phase 10 -- Deployment + Setup Scripts (not started)
-status: in-progress
-last_updated: "2026-06-02T21:00:00.000Z"
+current_phase: Phase 10 -- Deployment + Setup Scripts (planned, ready to execute)
+status: unknown
+last_updated: "2026-06-03T09:08:41.174Z"
 progress:
-  total_phases: 11
-  completed_phases: 8
-  total_plans: 23
+  total_phases: 12
+  completed_phases: 6
+  total_plans: 26
   completed_plans: 28
-  percent: 73
+  percent: 50
 ---
 
 # Project State
 
 **Last updated:** 2026-06-02
-**Current phase:** Phase 10 -- Deployment + Setup Scripts (not started)
+**Current phase:** Phase 10 -- Deployment + Setup Scripts (planned, ready to execute)
 **Workflow:** YOLO mode, fine granularity, parallel execution enabled
 
 ---
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-05-26)
 
 **Core value:** A scientist can build a workflow, connect real lab hardware, execute an experiment, and see the results without writing code.
 
-**Current focus:** Phase 9 complete -- Phase 10 (Deployment + Setup Scripts) is next
+**Current focus:** Phase 10 (Deployment + Setup Scripts) -- 3 plans ready to execute
 
 ---
 
@@ -110,7 +110,9 @@ See: .planning/PROJECT.md (updated 2026-05-26)
 
 ## Next Steps
 
-Phase 9 complete (2026-06-02). All 5 plans done: Docusaurus 3 site at docs-site/ with 9 content pages, npm run build exits 0, F1-F5 all satisfied, human checkpoint approved. Phase 10 (Deployment + Setup Scripts) is next.
+Phase 10 Plan 02 complete (2026-06-03). setup.ps1 (Windows, winget-based) and setup.sh (Linux/Raspberry Pi, apt + systemd) bootstrap scripts at repo root. Closes G2.
+
+Phase 10 plans created (2026-06-03). 3 plans ready to execute: 10-01 (Dockerfiles + compose), 10-02 (setup scripts), 10-03 (service scripts + pre-flight + hardening docs). Run /gsd:execute-phase 10 to begin.
 
 Phase 9 Plan 03 complete (2026-06-02). REST API reference (rest-api.md), gRPC reference (grpc-reference.md), OpenAPI generation script (generate-openapi.js), Swashbuckle CLI tooling. docusaurus-plugin-redoc fallback applied (endpoint table satisfies F4). npm run build exits 0.
 
@@ -166,6 +168,7 @@ driver-port Plan 03 complete (2026-06-01). 8 special/facade drivers ported: Atla
 | phase-9 | 03 | ~25 min | 2/2 | 7 |
 | phase-9 | 04 | ~4 min | 2/2 | 5 |
 | phase-9 | 05 | ~5 min | 3/3 | 1 |
+| phase-10 | 02 | ~2 min | 2/2 | 2 |
 
 ---
 
