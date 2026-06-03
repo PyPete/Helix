@@ -24,7 +24,7 @@ services:
       - mosquitto_data:/mosquitto/data
       - mosquitto_log:/mosquitto/log
     healthcheck:
-      test: ["CMD-SHELL", "nc -z localhost 1883 || exit 1"]  # mosquitto_pub not in image; TCP probe
+      test: ["CMD-SHELL", "timeout 3 sh -c 'echo > /dev/tcp/localhost/1883' 2>/dev/null"]  # /dev/tcp works in alpine sh; no nc needed
       interval: 10s
       timeout: 5s
       retries: 5
@@ -119,7 +119,7 @@ services:
         condition: service_healthy
     healthcheck:
       # SiteServer has no /health endpoint; use TCP probe
-      test: ["CMD-SHELL", "nc -z localhost 5090 || exit 1"]
+      test: ["CMD-SHELL", "timeout 3 sh -c 'echo > /dev/tcp/localhost/5090' 2>/dev/null"]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -150,5 +150,7 @@ volumes:
   mosquitto_log:
   postgres_data:
   minio_data:
+
+
 
 
