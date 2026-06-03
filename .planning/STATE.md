@@ -1,16 +1,16 @@
----
+﻿---
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: "Phase 6.3 -- Close Gap: Device Integration Bugs (executed, human verification pending)"
+current_phase: "Phase 6.4 -- Close Gap: Remaining Audit Items (executed)"
 status: in-progress
-last_updated: "2026-06-03T13:49:12.014Z"
+last_updated: "2026-06-03T00:00:00.000Z"
 progress:
   total_phases: 14
-  completed_phases: 8
+  completed_phases: 9
   total_plans: 30
-  completed_plans: 33
-  percent: 57
+  completed_plans: 35
+  percent: 64
 ---
 
 # Project State
@@ -59,8 +59,8 @@ See: .planning/PROJECT.md (updated 2026-05-26)
 | Phase 6.1 Plan 02 | Executed -- TS CapabilityDescriptor types, device-status WebSocket dispatch, DeviceManualControl panel (53/53 tests), SciChart wrapper placeholder complete |
 | Phase 6.2 Plan 01 | Executed -- DeviceActionNodeComponent (8th ReactFlow node type), PORT_COLOURS, DevicePalette, handleDrop, addDeviceActionNode, exportWsl Step mapping (62/62 tests) complete |
 | Phase 6.2 Plan 02 | Executed -- useNodeExecutionState hook, NodeTimingFooter on all 8 node types, WorkflowBuilder live execution wiring, EstimatedDurationMs C# + TS types (76/76 tests) complete |
-| Phase 6.3 Plan 01 | Executed -- DeviceEndpoints.cs execute-404 fix (C7/C9), CapabilityRegistry→DeviceRegistry bridge in Program.cs (C4/C8), 6 new xUnit tests (588 pass) |
-| Phase 6.3 Plan 02 | Executed -- DeviceRegistry.tsx /health→/devices fix, mapDevicesToAdapters, 5 DeviceRegistry tests pass (C1) |
+| Phase 6.3 Plan 01 | Executed -- DeviceEndpoints.cs execute-404 fix (C7/C9), CapabilityRegistryâ†’DeviceRegistry bridge in Program.cs (C4/C8), 6 new xUnit tests (588 pass) |
+| Phase 6.3 Plan 02 | Executed -- DeviceRegistry.tsx /healthâ†’/devices fix, mapDevicesToAdapters, 5 DeviceRegistry tests pass (C1) |
 
 ---
 
@@ -118,28 +118,9 @@ See: .planning/PROJECT.md (updated 2026-05-26)
 
 ## Next Steps
 
-Phase 6.4 Plan 02 complete (2026-06-03). FumehoodEndpoints.cs created; GET /api/fumehoods returns live FumehoodDto derived from MqttBridgeOptions.FumehoodId. SiteOverviewPage replaces PLACEHOLDER_FUMEHOODS with useEffect fetch hook. All 6 SiteOverviewPage tests pass with vi.stubGlobal fetch mock. 32/32 dashboard tests pass.
+Phase 6.4 complete (2026-06-03). Plans 6.4-01 and 6.4-02 both done. docker-compose postgres env + CI vitest job + AgentGrpcService + FumehoodEndpoints + SiteOverviewPage live API fetch all complete. Solution builds clean (0 errors). 32/32 dashboard tests pass.
 
-Phase 6.3 complete (2026-06-03). Plans 6.3-01 (backend: DeviceEndpoints.cs 404 fix + Program.cs bridge) and 6.3-02 (frontend: DeviceRegistry.tsx /devices fix) done. C1/C4/C7/C8/C9 all addressed. 588 .NET tests pass. 2 human checkpoints pending: (1) POST /workflows/compile with DeviceAction node returns 200; (2) DeviceManualControl round-trip returns 200. Verify with running Agent+Tauri stack.
-
-Phase 10 complete (2026-06-03). All 3 plans done: 10-01 (Dockerfiles + docker-compose.yml), 10-02 (setup.ps1 + setup.sh), 10-03 (service scripts, systemd units, preflight checks, production hardening docs). G1-G6 all closed. Phase 11 next.
-
-Phase 10 Wave 1 complete (2026-06-03). Plans 10-01 (Dockerfiles + docker-compose.yml) and 10-02 (setup.ps1 + setup.sh) done. G1 and G2 closed. Wave 2 (Plan 10-03) next.
-
-Phase 9 Plan 03 complete (2026-06-02). REST API reference (rest-api.md), gRPC reference (grpc-reference.md), OpenAPI generation script (generate-openapi.js), Swashbuckle CLI tooling. docusaurus-plugin-redoc fallback applied (endpoint table satisfies F4). npm run build exits 0.
-
-Phase 9 Plan 01 complete (2026-06-02). Docusaurus 3 scaffold at docs-site/ with Developer/Operator sections and CI docs build job. npm run build exits 0. Ready for Wave 1 content plans (09-02 through 09-05).
-
-Phase 7 context captured (2026-06-01). Ready to plan.
-
-Phase 6.2 Plan 01 complete (2026-06-01). DeviceAction node (8th ReactFlow node type), DevicePalette drag-to-canvas, hybrid ports, exportWsl Step mapping. 62 tests passing.
-
-Phase 6.1 Plan 02 complete. Phase 6.1 all 2 plans complete.
-
-driver-port Plan 03 complete (2026-06-01). 8 special/facade drivers ported: AtlasReactionSystem, Crystalline, IfmMasterController, OceanViewDriver, OceanViewUv, OceanViewNir, PicoTc08LowLevelWrapper, PicoTc08. 262 tests passing. NetOceanDirect and usbtc08.dll still need to be added for production runtime.
-
----
-
+Human checkpoints from Phase 6.3 still pending: (1) POST /workflows/compile with DeviceAction node; (2) DeviceManualControl round-trip. Requires running Agent+Tauri stack.
 ## Phase History
 
 | Phase | Status | Completed |
@@ -152,7 +133,8 @@ driver-port Plan 03 complete (2026-06-01). 8 special/facade drivers ported: Atla
 | 5. Tauri Desktop App Foundation | Complete | 2026-05-28 |
 | 6. Tauri Desktop App - Workflow Builder + Execution | Complete | 2026-05-30 |
 | 6.1. Desktop App Polish -- Device Controls, Status Events & Chart Foundation | Complete | 2026-05-30 |
-| 6.3. Close Gap: Device Integration Bugs (C1, C4, C7-C9) | Executed | 2026-06-03 |
+| 6.3. Close Gap: Device Integration Bugs (C1, C4, C7-C9) |
+| 6.4. Close Gap: Remaining Audit Items (D5, D6, E1-E4, G2) | Executed | 2026-06-03 | Executed | 2026-06-03 |
 | 9. Docusaurus Documentation | Complete | 2026-06-02 |
 
 ---
@@ -184,6 +166,7 @@ driver-port Plan 03 complete (2026-06-01). 8 special/facade drivers ported: Atla
 | phase-10 | 01 | ~5 min | 2/2 | 4 |
 | phase-10 | 02 | ~2 min | 2/2 | 2 |
 | phase-10 | 03 | ~4 min | 2/2 | 8 |
+| phase-6.4 | 01 | ~10 min | 3/3 | 4 |
 | phase-6.4 | 02 | ~12 min | 2/2 | 5 |
 
 ---
@@ -217,3 +200,6 @@ driver-port Plan 03 complete (2026-06-01). 8 special/facade drivers ported: Atla
 - `Helix.Orchestration.Core/Capabilities/CapabilityDescriptor.cs` -- CapabilityDescriptor schema types (Phase 6.1)
 - `helix-desktop/src/components/DeviceManualControl/DeviceManualControl.tsx` -- schema-driven manual control panel (Phase 6.1)
 - `helix-desktop/src/components/charts/index.ts` -- SciChart wrapper re-export layer (Phase 6.1)
+
+
+
