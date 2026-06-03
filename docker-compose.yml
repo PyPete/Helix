@@ -64,7 +64,7 @@ services:
       - minio_data:/data
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
-      interval: 30s
+      interval: 10s
       timeout: 10s
       retries: 3
 
@@ -85,8 +85,6 @@ services:
       postgres:
         condition: service_healthy
       mosquitto:
-        condition: service_healthy
-      minio:
         condition: service_healthy
     healthcheck:
       # Agent has /health endpoint registered (AddHealthChecks + MapHealthChecks in Program.cs)
@@ -150,6 +148,8 @@ volumes:
   mosquitto_log:
   postgres_data:
   minio_data:
+
+
 
 
 
