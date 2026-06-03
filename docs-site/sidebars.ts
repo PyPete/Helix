@@ -1,4 +1,4 @@
-import type {SidebarsConfig} from '@docusaurus/plugin-content-docs';
+﻿import type {SidebarsConfig} from '@docusaurus/plugin-content-docs';
 
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
 
@@ -35,10 +35,10 @@ const sidebars: SidebarsConfig = {
         'operator/device-capabilities',
         'operator/experiment-setup',
         'operator/deployment-setup',
+        'operator/production-hardening',
       ],
     },
   ],
 };
 
 export default sidebars;
-

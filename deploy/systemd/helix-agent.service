@@ -1,0 +1,31 @@
+[Unit]
+Description=Helix Orchestration Agent
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+# Type=simple is used because the Agent does not call UseSystemd().
+# Type=notify would cause systemctl start to timeout waiting for a readiness signal.
+Type=simple
+User=helix
+Group=helix
+WorkingDirectory=/opt/helix/agent
+ExecStart=/usr/bin/dotnet /opt/helix/agent/Helix.Orchestration.Agent.dll
+Restart=on-failure
+RestartSec=10
+KillSignal=SIGTERM
+TimeoutStopSec=30
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=helix-agent
+
+Environment=DOTNET_ENVIRONMENT=Production
+Environment=Kestrel__Endpoints__Http__Url=http://localhost:5080
+Environment=Mqtt__BrokerHost=localhost
+Environment=Mqtt__BrokerPort=1883
+# Replace CHANGE_ME with production credentials before deploying.
+# For production, prefer EnvironmentFile=/etc/helix/agent-secrets (mode 0600) over inline Environment= lines.
+Environment=ConnectionStrings__HelixOrchestration=Host=localhost;Port=5432;Database=helix_orchestration;Username=helix;Password=CHANGE_ME
+
+[Install]
+WantedBy=multi-user.target

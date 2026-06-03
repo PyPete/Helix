@@ -1,0 +1,30 @@
+[Unit]
+Description=Helix Orchestration Recorder
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=helix
+Group=helix
+WorkingDirectory=/opt/helix/recorder
+ExecStart=/usr/bin/dotnet /opt/helix/recorder/Helix.Orchestration.Recorder.dll
+Restart=on-failure
+RestartSec=10
+KillSignal=SIGTERM
+TimeoutStopSec=30
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=helix-recorder
+
+Environment=DOTNET_ENVIRONMENT=Production
+Environment=Recorder__MqttBrokerHost=localhost
+Environment=Recorder__MqttBrokerPort=1883
+# Replace CHANGE_ME with production credentials before deploying.
+Environment=Minio__ServiceUrl=http://localhost:9000
+Environment=Minio__AccessKey=CHANGE_ME
+Environment=Minio__SecretKey=CHANGE_ME
+Environment=Minio__DefaultBucket=helix-recordings
+
+[Install]
+WantedBy=multi-user.target
