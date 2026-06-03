@@ -2,6 +2,7 @@ using Helix.Orchestration.Agent.Events;
 using Helix.Orchestration.Devices.Drivers;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using CapabilityDescriptor = Helix.Orchestration.Core.Capabilities.CapabilityDescriptor;
 using CapabilityCategory = Helix.Orchestration.Core.Capabilities.CapabilityCategory;
@@ -15,7 +16,7 @@ namespace Helix.Orchestration.Agent.Api;
 /// </summary>
 /// <param name="Capability">The capability verb name to invoke.</param>
 /// <param name="Parameters">Optional parameters passed to the capability.</param>
-internal sealed record ExecuteRequest(string Capability, Dictionary<string, object>? Parameters);
+public sealed record ExecuteRequest(string Capability, Dictionary<string, object>? Parameters);
 
 /// <summary>
 /// Minimal API endpoint group for device and capability discovery.
@@ -71,7 +72,7 @@ public static class DeviceEndpoints
 
         // GET /devices/{id}/capabilities — return CapabilityDescriptor[] for one adapter
         group.MapGet("/{id}/capabilities", IResult (string id, CapabilityRegistry registry,
-            SimulatorDevice? simulator) =>
+            [FromServices] SimulatorDevice? simulator) =>
         {
             try
             {
@@ -129,15 +130,24 @@ public static class DeviceEndpoints
             string id,
             ExecuteRequest request,
             CapabilityRegistry registry,
-            IRunspaceEventEmitter? emitter) =>
+            [FromServices] IRunspaceEventEmitter? emitter) =>
         {
             try
             {
-                var allNames = registry.GetAllCapabilityNames().ToHashSet(StringComparer.OrdinalIgnoreCase);
-                if (!allNames.Contains(id))
+                // Guard: check that at least one capability key has this adapter prefix.
+                // allNames contains full keys like "simulator.SetFlow"; id is the prefix ("simulator").
+                var adapterExists = registry.GetAllCapabilityNames()
+                    .Any(name =>
+                    {
+                        var dot = name.IndexOf('.');
+                        return string.Equals(dot > 0 ? name[..dot] : name, id, StringComparison.OrdinalIgnoreCase);
+                    });
+                if (!adapterExists)
                     return Results.NotFound(new { Error = $"Device '{id}' not found." });
 
-                var invocationResult = await registry.InvokeAsync(request.Capability, request.Parameters);
+                // Invoke using the full capability key (adapter prefix + "." + verb name).
+                var fullKey = $"{id}.{request.Capability}";
+                var invocationResult = await registry.InvokeAsync(fullKey, request.Parameters);
 
                 emitter?.Publish(new ManualActionEvent(
                     id,
