@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: Phase 6.3 -- Close Gap: Device Integration Bugs (complete, 2/2 plans done)
+current_phase: "Phase 6.3 -- Close Gap: Device Integration Bugs (executed, human verification pending)"
 status: in-progress
-last_updated: "2026-06-03T09:30:00.000Z"
+last_updated: "2026-06-03T13:49:12.014Z"
 progress:
-  total_phases: 12
-  completed_phases: 7
-  total_plans: 26
-  completed_plans: 31
-  percent: 62
+  total_phases: 14
+  completed_phases: 8
+  total_plans: 30
+  completed_plans: 33
+  percent: 57
 ---
 
 # Project State
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-05-26)
 
 **Core value:** A scientist can build a workflow, connect real lab hardware, execute an experiment, and see the results without writing code.
 
-**Current focus:** Phase 6.3 complete -- C1/C4/C7/C8/C9 fixes executed. 5/5 code truths verified. 2 human checkpoints pending (workflow compile + manual device control round-trip).
+**Current focus:** Phase 6.4 Plan 02 complete -- FumehoodEndpoints.cs + SiteOverviewPage live API fetch. GET /api/fumehoods live; PLACEHOLDER_FUMEHOODS removed. All 32 dashboard tests pass. Both .NET builds clean.
 
 ---
 
@@ -118,6 +118,8 @@ See: .planning/PROJECT.md (updated 2026-05-26)
 
 ## Next Steps
 
+Phase 6.4 Plan 02 complete (2026-06-03). FumehoodEndpoints.cs created; GET /api/fumehoods returns live FumehoodDto derived from MqttBridgeOptions.FumehoodId. SiteOverviewPage replaces PLACEHOLDER_FUMEHOODS with useEffect fetch hook. All 6 SiteOverviewPage tests pass with vi.stubGlobal fetch mock. 32/32 dashboard tests pass.
+
 Phase 6.3 complete (2026-06-03). Plans 6.3-01 (backend: DeviceEndpoints.cs 404 fix + Program.cs bridge) and 6.3-02 (frontend: DeviceRegistry.tsx /devices fix) done. C1/C4/C7/C8/C9 all addressed. 588 .NET tests pass. 2 human checkpoints pending: (1) POST /workflows/compile with DeviceAction node returns 200; (2) DeviceManualControl round-trip returns 200. Verify with running Agent+Tauri stack.
 
 Phase 10 complete (2026-06-03). All 3 plans done: 10-01 (Dockerfiles + docker-compose.yml), 10-02 (setup.ps1 + setup.sh), 10-03 (service scripts, systemd units, preflight checks, production hardening docs). G1-G6 all closed. Phase 11 next.
@@ -182,6 +184,7 @@ driver-port Plan 03 complete (2026-06-01). 8 special/facade drivers ported: Atla
 | phase-10 | 01 | ~5 min | 2/2 | 4 |
 | phase-10 | 02 | ~2 min | 2/2 | 2 |
 | phase-10 | 03 | ~4 min | 2/2 | 8 |
+| phase-6.4 | 02 | ~12 min | 2/2 | 5 |
 
 ---
 
