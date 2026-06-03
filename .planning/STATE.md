@@ -2,7 +2,7 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: Phase 10 -- Deployment + Setup Scripts (complete, 3/3 plans done)
+current_phase: Phase 6.3 -- Close Gap: Device Integration Bugs (complete, 2/2 plans done)
 status: in-progress
 last_updated: "2026-06-03T09:30:00.000Z"
 progress:
@@ -16,7 +16,7 @@ progress:
 # Project State
 
 **Last updated:** 2026-06-02
-**Current phase:** Phase 10 -- Deployment + Setup Scripts (planned, ready to execute)
+**Current phase:** Phase 6.3 -- Close Gap: Device Integration Bugs (executed, human verification pending)
 **Workflow:** YOLO mode, fine granularity, parallel execution enabled
 
 ---
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-05-26)
 
 **Core value:** A scientist can build a workflow, connect real lab hardware, execute an experiment, and see the results without writing code.
 
-**Current focus:** Phase 10 complete -- All 3 plans done (G1-G6 closed). Phase 11 next.
+**Current focus:** Phase 6.3 complete -- C1/C4/C7/C8/C9 fixes executed. 5/5 code truths verified. 2 human checkpoints pending (workflow compile + manual device control round-trip).
 
 ---
 
@@ -59,6 +59,8 @@ See: .planning/PROJECT.md (updated 2026-05-26)
 | Phase 6.1 Plan 02 | Executed -- TS CapabilityDescriptor types, device-status WebSocket dispatch, DeviceManualControl panel (53/53 tests), SciChart wrapper placeholder complete |
 | Phase 6.2 Plan 01 | Executed -- DeviceActionNodeComponent (8th ReactFlow node type), PORT_COLOURS, DevicePalette, handleDrop, addDeviceActionNode, exportWsl Step mapping (62/62 tests) complete |
 | Phase 6.2 Plan 02 | Executed -- useNodeExecutionState hook, NodeTimingFooter on all 8 node types, WorkflowBuilder live execution wiring, EstimatedDurationMs C# + TS types (76/76 tests) complete |
+| Phase 6.3 Plan 01 | Executed -- DeviceEndpoints.cs execute-404 fix (C7/C9), CapabilityRegistry→DeviceRegistry bridge in Program.cs (C4/C8), 6 new xUnit tests (588 pass) |
+| Phase 6.3 Plan 02 | Executed -- DeviceRegistry.tsx /health→/devices fix, mapDevicesToAdapters, 5 DeviceRegistry tests pass (C1) |
 
 ---
 
@@ -73,7 +75,7 @@ See: .planning/PROJECT.md (updated 2026-05-26)
 - LazyStore (sync constructor) used instead of Store (private constructor) in @tauri-apps/plugin-store v2.4.3
 - vi.useFakeTimers() removed from hook tests -- conflicts with @testing-library/react waitFor
 - vi.hoisted() required for vitest constructor mocks referencing module-level variables
-- DeviceRegistry registered as singleton in Agent DI (AddMigratedDeviceAdapters does not register it)
+- DeviceRegistry populated via factory lambda from CapabilityRegistry.GetAllCapabilityNames() in Program.cs -- no longer empty singleton. Bridge extracts unique adapter prefixes (split on "."), registers one DeviceDescriptor per prefix.
 - IRunspaceEventEmitter injected as nullable in RunspaceEndpoints (emitter?.Publish) for wave-ordering safety
 - Use BaseSchemes (not ClassicPreset.Schemes) as NodeEditor type parameter -- ClassicPreset.Schemes does not exist in rete@2.0.6
 - ClassicScheme + ReactArea2D imported directly from rete-react-plugin (not as ReactPlugin.* namespace)
@@ -116,6 +118,8 @@ See: .planning/PROJECT.md (updated 2026-05-26)
 
 ## Next Steps
 
+Phase 6.3 complete (2026-06-03). Plans 6.3-01 (backend: DeviceEndpoints.cs 404 fix + Program.cs bridge) and 6.3-02 (frontend: DeviceRegistry.tsx /devices fix) done. C1/C4/C7/C8/C9 all addressed. 588 .NET tests pass. 2 human checkpoints pending: (1) POST /workflows/compile with DeviceAction node returns 200; (2) DeviceManualControl round-trip returns 200. Verify with running Agent+Tauri stack.
+
 Phase 10 complete (2026-06-03). All 3 plans done: 10-01 (Dockerfiles + docker-compose.yml), 10-02 (setup.ps1 + setup.sh), 10-03 (service scripts, systemd units, preflight checks, production hardening docs). G1-G6 all closed. Phase 11 next.
 
 Phase 10 Wave 1 complete (2026-06-03). Plans 10-01 (Dockerfiles + docker-compose.yml) and 10-02 (setup.ps1 + setup.sh) done. G1 and G2 closed. Wave 2 (Plan 10-03) next.
@@ -146,6 +150,7 @@ driver-port Plan 03 complete (2026-06-01). 8 special/facade drivers ported: Atla
 | 5. Tauri Desktop App Foundation | Complete | 2026-05-28 |
 | 6. Tauri Desktop App - Workflow Builder + Execution | Complete | 2026-05-30 |
 | 6.1. Desktop App Polish -- Device Controls, Status Events & Chart Foundation | Complete | 2026-05-30 |
+| 6.3. Close Gap: Device Integration Bugs (C1, C4, C7-C9) | Executed | 2026-06-03 |
 | 9. Docusaurus Documentation | Complete | 2026-06-02 |
 
 ---
