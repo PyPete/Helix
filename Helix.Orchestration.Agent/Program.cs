@@ -17,6 +17,7 @@ using Helix.Orchestration.Core.State;
 using Helix.Orchestration.Core.Trends;
 using Helix.Orchestration.Core.WorkflowEngine;
 using Helix.Orchestration.Agent.Api;
+using Helix.Orchestration.Agent.GrpcServer;
 using Helix.Orchestration.Core.Devices;
 using Helix.Orchestration.Core.WSL;
 using Microsoft.AspNetCore.Builder;
@@ -276,10 +277,14 @@ try
         options.AllowedOrigins.Add("https://tauri.localhost");
     });
 
+    // gRPC
+    builder.Services.AddGrpc();
+
     var app = builder.Build();
 
     app.UseCors();
     app.UseWebSockets();
+    app.MapGrpcService<AgentGrpcService>();
     app.MapHealthChecks("/health");
     app.MapWorkflowEndpoints();
     app.MapRunspaceEndpoints();

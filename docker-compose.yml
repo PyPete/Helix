@@ -78,6 +78,7 @@ services:
       - "5080:5080"
     environment:
       Kestrel__Endpoints__Http__Url: http://0.0.0.0:5080
+      Kestrel__Endpoints__Http__Protocols: Http1AndHttp2
       Mqtt__BrokerHost: helix-mosquitto
       Mqtt__BrokerPort: 1883
       ConnectionStrings__HelixOrchestration: Host=helix-postgres;Port=5432;Database=helix_orchestration;Username=helix;Password=helix_dev_password
@@ -110,11 +111,14 @@ services:
       MqttBridge__BrokerPort: 1883
       MqttBridge__SiteId: site1
       MqttBridge__FumehoodId: fh1
+      ConnectionStrings__HelixOrchestration: Host=helix-postgres;Port=5432;Database=helix_orchestration;Username=helix;Password=helix_dev_password
     depends_on:
       helix-agent:
         condition: service_healthy
       mosquitto:
         condition: service_healthy
+      postgres:
+        condition: service_started
     healthcheck:
       # SiteServer has no /health endpoint; use TCP probe
       test: ["CMD-SHELL", "bash -c '</dev/tcp/localhost/5090' 2>/dev/null"]
