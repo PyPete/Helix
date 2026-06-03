@@ -384,9 +384,9 @@ Plans:
 **Plans:** 3 plans
 
 Plans:
-- [ ] 10-01-PLAN.md -- Dockerfiles (Agent, SiteServer, Recorder) + full six-service docker-compose.yml [Wave 1]
+- [x] 10-01-PLAN.md -- Dockerfiles (Agent, SiteServer, Recorder) + full six-service docker-compose.yml [Wave 1]
 - [x] 10-02-PLAN.md -- setup.ps1 (Windows) + setup.sh (Linux) bootstrap scripts [Wave 1]
-- [ ] 10-03-PLAN.md -- Windows service scripts, systemd unit files, pre-flight check, production hardening docs [Wave 2]
+- [x] 10-03-PLAN.md -- Windows service scripts, systemd unit files, pre-flight check, production hardening docs [Wave 2]
 
 ---
 
@@ -456,11 +456,11 @@ Plans:
 | F4 | Phase 9 | Complete |
 | F5 | Phase 9 | Complete |
 | G1 | Phase 10 | Complete |
-| G2 | Phase 10 | Pending |
-| G3 | Phase 10 | Pending |
-| G4 | Phase 10 | Pending |
-| G5 | Phase 10 | Pending |
-| G6 | Phase 10 | Pending |
+| G2 | Phase 10 | Complete |
+| G3 | Phase 10 | Complete |
+| G4 | Phase 10 | Complete |
+| G5 | Phase 10 | Complete |
+| G6 | Phase 10 | Complete |
 
 **Coverage: 49/49 requirements mapped (100%)**
 

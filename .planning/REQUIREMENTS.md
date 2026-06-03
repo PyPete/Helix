@@ -126,10 +126,10 @@ A scientist or technician can build a visual workflow, connect real lab hardware
 |----|-------------|----------|
 | G1 | Docker Compose full-stack script: Agent + Site Server + Recorder + Postgres + Mosquitto + MinIO | Must Have |
 | G2 | One-command dev environment bootstrap: `setup.ps1` (Windows) + `setup.sh` (Linux) | Must Have |
-| G3 | Windows service install script for Agent and Recorder | Must Have |
-| G4 | systemd unit files for Agent and Recorder on Linux | Must Have |
-| G5 | Hardware pre-flight check: validates device connections, transport health, credential config before experiment start | Should Have |
-| G6 | Production deployment guide: TLS for MQTT, MinIO auth hardening, PostgreSQL credentials rotation | Should Have |
+| G3 | Windows service install script for Agent and Recorder -- **Complete (Phase 10 Plan 03, deploy/windows/install-agent-service.ps1 + install-recorder-service.ps1, NSSM-based)** | Must Have |
+| G4 | systemd unit files for Agent and Recorder on Linux -- **Complete (Phase 10 Plan 03, deploy/systemd/helix-agent.service + helix-recorder.service)** | Must Have |
+| G5 | Hardware pre-flight check: validates device connections, transport health, credential config before experiment start -- **Complete (Phase 10 Plan 03, deploy/preflight/preflight.ps1 + preflight.sh, 6 checks PASS/WARN/FAIL)** | Should Have |
+| G6 | Production deployment guide: TLS for MQTT, MinIO auth hardening, PostgreSQL credentials rotation -- **Complete (Phase 10 Plan 03, docs-site/docs/operator/production-hardening.md)** | Should Have |
 
 ---
 

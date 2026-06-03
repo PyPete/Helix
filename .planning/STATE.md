@@ -1,16 +1,16 @@
-﻿---
+---
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: Phase 10 -- Deployment + Setup Scripts (in progress, 2/3 plans done)
+current_phase: Phase 10 -- Deployment + Setup Scripts (complete, 3/3 plans done)
 status: in-progress
 last_updated: "2026-06-03T09:30:00.000Z"
 progress:
   total_phases: 12
-  completed_phases: 6
+  completed_phases: 7
   total_plans: 26
-  completed_plans: 28
-  percent: 50
+  completed_plans: 31
+  percent: 62
 ---
 
 # Project State
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-05-26)
 
 **Core value:** A scientist can build a workflow, connect real lab hardware, execute an experiment, and see the results without writing code.
 
-**Current focus:** Phase 10 in progress -- Plans 10-01 and 10-02 complete, Wave 2 (10-03) next
+**Current focus:** Phase 10 complete -- All 3 plans done (G1-G6 closed). Phase 11 next.
 
 ---
 
@@ -103,6 +103,9 @@ See: .planning/PROJECT.md (updated 2026-05-26)
 - NodeTimingFooter execution state tests placed in HelixNodes.test.tsx (new) to avoid WorkflowBuilder.test.tsx V8 crash
 - docusaurus-plugin-redoc v2.5.0 cannot be used standalone -- requires redocusaurus preset for @theme/ApiDoc; fallback to endpoint summary table in rest-api.md (F4 satisfied)
 - MDX in Docusaurus parses {id} in table cells as JSX expressions -- use HTML entity escaping (&#123;id&#125;) for path parameters
+- systemd units use Type=simple (not notify) -- Agent does not call UseSystemd() so Type=notify would timeout waiting for readiness signal
+- CHANGE_ME placeholders in systemd Environment= lines with comment directing to EnvironmentFile=/etc/helix/agent-secrets (mode 0600)
+- preflight.sh uses nc for TCP checks with fallback apt-get install netcat-openbsd if missing
 - depends_on uses service names (mosquitto/postgres/minio) not container names (helix-*) -- Docker Compose depends_on requires service names; container_name provides DNS alias but cannot be used in depends_on
 - AgentProxy__Mode=grpc set in SiteServer environment (not real) -- code checks StringComparison.OrdinalIgnoreCase for "grpc"
 - Recorder uses dotnet/runtime:10.0 not aspnet:10.0 -- Worker-only service has no HTTP listener, smaller image
@@ -112,6 +115,8 @@ See: .planning/PROJECT.md (updated 2026-05-26)
 ---
 
 ## Next Steps
+
+Phase 10 complete (2026-06-03). All 3 plans done: 10-01 (Dockerfiles + docker-compose.yml), 10-02 (setup.ps1 + setup.sh), 10-03 (service scripts, systemd units, preflight checks, production hardening docs). G1-G6 all closed. Phase 11 next.
 
 Phase 10 Wave 1 complete (2026-06-03). Plans 10-01 (Dockerfiles + docker-compose.yml) and 10-02 (setup.ps1 + setup.sh) done. G1 and G2 closed. Wave 2 (Plan 10-03) next.
 
@@ -171,6 +176,7 @@ driver-port Plan 03 complete (2026-06-01). 8 special/facade drivers ported: Atla
 | phase-9 | 05 | ~5 min | 3/3 | 1 |
 | phase-10 | 01 | ~5 min | 2/2 | 4 |
 | phase-10 | 02 | ~2 min | 2/2 | 2 |
+| phase-10 | 03 | ~4 min | 2/2 | 8 |
 
 ---
 
@@ -203,4 +209,3 @@ driver-port Plan 03 complete (2026-06-01). 8 special/facade drivers ported: Atla
 - `Helix.Orchestration.Core/Capabilities/CapabilityDescriptor.cs` -- CapabilityDescriptor schema types (Phase 6.1)
 - `helix-desktop/src/components/DeviceManualControl/DeviceManualControl.tsx` -- schema-driven manual control panel (Phase 6.1)
 - `helix-desktop/src/components/charts/index.ts` -- SciChart wrapper re-export layer (Phase 6.1)
-
