@@ -1,10 +1,23 @@
 import 'rc-dock/dist/rc-dock.css';
 import '../styles/helix-dock.css';
 
-import React, { useRef, useImperativeHandle } from 'react';
+import React, { useRef, useImperativeHandle, useMemo, useCallback } from 'react';
 import DockLayout from 'rc-dock';
 import type { LayoutBase, LayoutData, TabData, TabBase, TabGroup } from 'rc-dock';
 import type { RunspaceEvent, TrendValue, SafetyEvent, WslDocument } from '../types/agent';
+import { useTrendRegistry } from '../hooks/useTrendRegistry';
+
+// Panel components
+import { DeviceExplorer } from './panels/DeviceExplorer';
+import { TrendExplorer } from './panels/TrendExplorer';
+import { ChartPanel } from './panels/ChartPanel';
+import { LogOutput } from './panels/LogOutput';
+
+// Main-area components
+import { WorkflowBuilder } from '../components/WorkflowBuilder/WorkflowBuilder';
+import { ExecutionPanel } from '../components/ExecutionPanel/ExecutionPanel';
+import { SafetyPanel } from '../components/SafetyPanel/SafetyPanel';
+import DeviceManualControl from '../components/DeviceManualControl/DeviceManualControl';
 
 // ---------------------------------------------------------------------------
 // Props + Handle
@@ -26,6 +39,7 @@ export interface WorkspaceLayoutHandle {
   saveLayout(): LayoutBase;
   loadLayout(lb: LayoutBase): void;
   openChartPanel(trendName: string): void;
+  openDeviceTab(adapterId: string): void;
 }
 
 // ---------------------------------------------------------------------------
@@ -103,62 +117,107 @@ const PANEL_GROUPS: Record<string, TabGroup> = {
 };
 
 // ---------------------------------------------------------------------------
-// TAB_REGISTRY — Wave 1 stubs (Plan 03 replaces with real panel imports)
-// Factory signature: (props: WorkspaceLayoutProps) => TabData
-// ---------------------------------------------------------------------------
-
-const TAB_REGISTRY: Record<string, (props: WorkspaceLayoutProps) => TabData> = {
-  'device-explorer': (_props) => ({
-    id: 'device-explorer',
-    title: 'Devices',
-    content: <div data-testid="device-explorer-stub" />,
-    group: 'sidebar',
-    closable: false,
-  }),
-  'trend-explorer': (_props) => ({
-    id: 'trend-explorer',
-    title: 'Trends',
-    content: <div data-testid="trend-explorer-stub" />,
-    group: 'sidebar',
-    closable: false,
-  }),
-  'workflow-editor': (_props) => ({
-    id: 'workflow-editor',
-    title: 'Workflow Builder',
-    content: <div data-testid="workflow-editor-stub" />,
-    group: 'main',
-    closable: true,
-  }),
-  'execution-panel': (_props) => ({
-    id: 'execution-panel',
-    title: 'Execution',
-    content: <div data-testid="execution-panel-stub" />,
-    group: 'main',
-    closable: true,
-  }),
-  'output': (_props) => ({
-    id: 'output',
-    title: 'Output',
-    content: <div data-testid="output-stub" />,
-    group: 'main',
-    closable: false,
-  }),
-  'safety-log': (_props) => ({
-    id: 'safety-log',
-    title: 'Safety Log',
-    content: <div data-testid="safety-log-stub" />,
-    group: 'main',
-    closable: false,
-  }),
-};
-
-// ---------------------------------------------------------------------------
 // WorkspaceLayout component
 // ---------------------------------------------------------------------------
 
 export const WorkspaceLayout = React.forwardRef<WorkspaceLayoutHandle, WorkspaceLayoutProps>(
   (props, ref) => {
     const dockRef = useRef<DockLayout>(null);
+
+    // Accumulate trend names from live trendValues stream (D-07)
+    const trendNames = useTrendRegistry(props.trendValues);
+
+    // openDeviceTab: creates a DeviceManualControl tab and docks it in panel-main
+    const openDeviceTab = useCallback(
+      (adapterId: string) => {
+        const id = `device-control-${adapterId}`;
+        const newTab: TabData = {
+          id,
+          title: `${adapterId}`,
+          content: <DeviceManualControl deviceId={adapterId} baseUrl={props.baseUrl} />,
+          group: 'main',
+          closable: true,
+        };
+        dockRef.current?.dockMove(newTab, 'panel-main', 'middle');
+      },
+      [props.baseUrl]
+    );
+
+    // tabRegistry: memoized factory map for all registered tab ids.
+    // Rebuilds when any prop that affects panel content changes.
+    const tabRegistry = useMemo(
+      () => ({
+        'device-explorer': (): TabData => ({
+          id: 'device-explorer',
+          title: 'Devices',
+          content: (
+            <DeviceExplorer baseUrl={props.baseUrl} onOpenDevice={openDeviceTab} />
+          ),
+          group: 'sidebar',
+          closable: false,
+        }),
+        'trend-explorer': (): TabData => ({
+          id: 'trend-explorer',
+          title: 'Trends',
+          content: <TrendExplorer trendNames={trendNames} />,
+          group: 'sidebar',
+          closable: false,
+        }),
+        'workflow-editor': (): TabData => ({
+          id: 'workflow-editor',
+          title: 'Workflow Builder',
+          content: (
+            <WorkflowBuilder
+              baseUrl={props.baseUrl}
+              onExport={props.onWorkflowExport}
+            />
+          ),
+          group: 'main',
+          closable: true,
+        }),
+        'execution-panel': (): TabData => ({
+          id: 'execution-panel',
+          title: 'Execution',
+          content: (
+            <ExecutionPanel
+              baseUrl={props.baseUrl}
+              definition={props.currentWorkflow}
+              runspaceEvents={props.runspaceEvents}
+            />
+          ),
+          group: 'main',
+          closable: true,
+        }),
+        'output': (): TabData => ({
+          id: 'output',
+          title: 'Output',
+          content: (
+            <LogOutput
+              runspaceEvents={props.runspaceEvents}
+              safetyEvents={props.safetyEvents}
+            />
+          ),
+          group: 'main',
+          closable: false,
+        }),
+        'safety-log': (): TabData => ({
+          id: 'safety-log',
+          title: 'Safety Log',
+          content: <SafetyPanel safetyEvents={props.safetyEvents} />,
+          group: 'main',
+          closable: false,
+        }),
+      }),
+      [
+        props.baseUrl,
+        props.currentWorkflow,
+        props.runspaceEvents,
+        props.safetyEvents,
+        props.onWorkflowExport,
+        trendNames,
+        openDeviceTab,
+      ]
+    );
 
     useImperativeHandle(ref, () => ({
       saveLayout(): LayoutBase {
@@ -169,16 +228,22 @@ export const WorkspaceLayout = React.forwardRef<WorkspaceLayoutHandle, Workspace
         dockRef.current?.loadLayout(lb);
       },
       openChartPanel(trendName: string): void {
-        const id = `chart-${trendName}`;
+        const id = trendName ? `chart-${trendName}` : `chart-${Date.now()}`;
         const newTab: TabData = {
           id,
-          title: `${trendName}`,
-          content: <div data-testid={`chart-panel-${trendName}-stub`} />,
+          title: `${trendName ?? 'Chart'}`,
+          content: (
+            <ChartPanel
+              initialTrendName={trendName || undefined}
+              trendValues={props.trendValues}
+            />
+          ),
           group: 'main',
           closable: true,
         };
         dockRef.current?.dockMove(newTab, 'panel-main', 'middle');
       },
+      openDeviceTab,
     }));
 
     // saveTab: persist only the id (content is not JSON serializable)
@@ -186,18 +251,51 @@ export const WorkspaceLayout = React.forwardRef<WorkspaceLayoutHandle, Workspace
       return { id: tab.id };
     }
 
-    // loadTab: look up TAB_REGISTRY; return fallback for unknown ids (T-11-05 mitigation)
+    // loadTab: use memoized tabRegistry; handle dynamic chart-* and device-control-* ids
     function loadTab(tab: TabBase): TabData {
       const tabId = tab.id ?? 'unknown';
-      const factory = TAB_REGISTRY[tabId];
+
+      const factory = tabRegistry[tabId as keyof typeof tabRegistry];
       if (factory) {
-        return factory(props);
+        return factory();
       }
+
+      // Dynamic chart panels: id = "chart-{trendName}"
+      if (tabId.startsWith('chart-')) {
+        const trendName = tabId.slice(6);
+        return {
+          id: tabId,
+          title: `${trendName}`,
+          content: (
+            <ChartPanel
+              initialTrendName={trendName}
+              trendValues={props.trendValues}
+            />
+          ),
+          group: 'main',
+          closable: true,
+        };
+      }
+
+      // Dynamic device control panels: id = "device-control-{adapterId}"
+      if (tabId.startsWith('device-control-')) {
+        const adapterId = tabId.slice('device-control-'.length);
+        return {
+          id: tabId,
+          title: `${adapterId}`,
+          content: (
+            <DeviceManualControl deviceId={adapterId} baseUrl={props.baseUrl} />
+          ),
+          group: 'main',
+          closable: true,
+        };
+      }
+
       // Safe placeholder for unrecognised tab ids — no eval, no dangerouslySetInnerHTML
       return {
         id: tabId,
         title: tabId,
-        content: <div>Unknown panel: {tabId}</div>,
+        content: <div data-testid="unknown-panel">Unknown panel: {tabId}</div>,
       };
     }
 
