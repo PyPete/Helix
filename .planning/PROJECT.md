@@ -2,149 +2,117 @@
 
 ## What This Is
 
-A distributed lab automation platform that enables scientists and technicians to build visual workflows, connect real laboratory hardware (reactors, pumps, HPLC, spectrometers), execute automated experiments, and visualise live data — all without writing code. The system runs two tiers: a per-fumehood Agent (local execution, device control, safety) and a Site Server (aggregation, campaign management, dashboards). A Tauri desktop app provides the local workflow authoring and monitoring experience; a React web app provides site-wide operations visibility.
+A distributed lab automation platform that enables scientists and technicians to build visual workflows, connect real laboratory hardware (reactors, pumps, HPLC, spectrometers), execute automated experiments, and visualise live data — all without writing code.
+
+**Two tiers:**
+- **Agent** — per-fumehood service: local execution, device control, safety engine, gRPC + REST API
+- **Site Server** — site-wide aggregation, campaign management, React dashboard
+
+**Clients:**
+- **Tauri desktop app** (helix-desktop) — visual workflow authoring (Rete.js), execution panel, live trends, device manual control
+- **React web app** (helix-dashboard) — site-wide operations: fumehood overview, campaigns, experiment history
 
 ## Core Value
 
 A scientist can build a workflow, connect real lab hardware, execute an experiment, and see the results — without writing code.
 
-## Requirements
+---
 
-### Validated
+## Current State (v0.1 — SHIPPED 2026-06-03)
 
-<!-- Capabilities confirmed built and tested across 14 phases -->
+### Shipped
 
-- ✓ Core domain: workflow engine (WorkflowExecutor, WorkflowContext, IWorkflow, WorkflowRegistry) — existing
-- ✓ Capability invocation: CapabilityRegistry dispatch, ICapabilityInvoker — existing
-- ✓ Stratified trend model: ITrend hierarchy, TrendWindow<T>, TrendFunctions, InMemoryScalarTrend — existing
-- ✓ Safety engine: InterlockRule evaluation, EmergencyStopToken broadcast — existing
-- ✓ Device leasing: IDeviceLeasingService, InMemoryDeviceLeasingService, heartbeat expiry — existing
-- ✓ WSL contract: WslDocument, RunspaceDefinition, IWslCompiler, diagnostics — existing
-- ✓ Experiment lifecycle: ExperimentContext, ExperimentLifecycle state machine — existing
-- ✓ Durable runspace: DurableRunspace via Cleipnir, RunspaceManager — existing
-- ✓ Variable management: workflow-scoped, global/campaign-scoped, WSL substitution — existing
-- ✓ Agent runtime: gRPC server, adapter discovery/proxy, LeaseExpiryWorker, MqttTrendPublisher — existing
-- ✓ Site Server: REST API, CampaignManager, IAgentProxy (sim/gRPC), Swagger — existing
-- ✓ Simulation mode: SimReactor, SimPump, SimSpectrometer, SimAgentProxy — existing
-- ✓ PostgreSQL persistence: experiment/campaign repositories, EF Core migrations — existing
-- ✓ Recorder Worker Service: MQTT ingestion, JSONL batch flushing, MinIO via IObjectStorageSink — existing
-- ✓ Device transport layer: IModbusTransport, ITcpTransport, IOpcTransport, ISerialTransport — existing
-- ✓ Typed analytical data model: Spectrum1D/2D, NMR/MS/FTIR metadata records — existing
+- **48 device drivers** ported from POP.DeviceCore to DeviceAdapterBase (VapourtecR4, KnauerAzura, SystagOpcUaClient, AtlasReactionSystem, Crystalline, IfmMasterController, OceanView UV/NIR, PicoTc08, and all remaining audited drivers)
+- **Tauri desktop app** (helix-desktop): Rete.js node-flow workflow builder (7 node types + DeviceAction), execution panel (start/pause/abort), live ScalarTrendChart + SpectralChart + SafetyPanel, DeviceManualControl, workflow library (save/load/duplicate via tauri-plugin-fs)
+- **Agent REST + gRPC API**: WorkflowEndpoints, RunspaceEndpoints, DeviceEndpoints (with capability invocation), AgentGrpcService (SubmitExperiment, GetRunspaceStatus, AbortRunspace), durable Cleipnir PostgreSQL runspace store
+- **Site Server**: FumehoodEndpoints (GET /api/fumehoods), ExperimentEndpoints, CampaignEndpoints, TrendEndpoints, DeviceEndpoints, WebSocket trend bridge, GrpcAgentProxy
+- **Site dashboard** (helix-dashboard): SiteOverviewPage (live API fetch), CampaignsPage, HistoryPage, live trend WebSocket
+- **Test coverage**: 1,262 .NET xUnit tests, 76 helix-desktop Vitest tests (all in CI), 32 helix-dashboard Vitest tests (all in CI)
+- **Docusaurus documentation**: developer architecture guide, adapter authoring guide, REST/gRPC API reference, workflow authoring guide, deployment guide
+- **Docker Compose** full stack (6 services: Agent, SiteServer, Recorder, Postgres, Mosquitto, MinIO)
+- **Setup scripts**: setup.ps1 (Windows), setup.sh (Linux), preflight.ps1/preflight.sh, systemd units, Windows service install scripts
 
-### Active
+### Known Gaps (deferred to v0.2)
 
-<!-- Current work cycle — building toward these -->
+- CORS policy not configured in SiteServer (production deployment requires AddCors/UseCors)
+- SciChart integration — placeholder wrapper; recharts used in production
+- DeviceStatusEvent emits full capability key as deviceId (e.g. "simulator.SetFlow") instead of adapter prefix
+- WorkflowBuilder.tsx async useState cleanup (functional but stale closure risk)
+- Phases 1–3 have SUMMARY-only verification (no formal VERIFICATION.md)
+- Human verification items outstanding: Tauri runtime UI tests (5), Docusaurus rendered site (2), docker-compose live run (4), systemd on Debian 12 (1)
 
-#### Phase A — Technical Debt Resolution (prerequisite)
-- [ ] Merge root-level Recorder implementation into solution (replace placeholder Worker.cs)
-- [ ] Resolve IObjectStorageSink interface divergence (single canonical interface + client library)
-- [ ] Populate CapabilityRegistry in DeviceAdapterExtensions (currently registers nothing)
-- [ ] Replace InMemoryFunctionStore with Cleipnir PostgreSQL store in Agent Program.cs
-- [ ] Remove Opc.UaFx.Advanced commercial dependency; complete migration to OPC Foundation library
-- [ ] Replace FormatterServices.GetUninitializedObject with Activator.CreateInstance<T>()
-- [ ] Wire IExperimentRepository + ICampaignRepository into SiteServer DI
-- [ ] Fix solution build configuration (Debug build excludes Agent, Recorder, Infrastructure, Devices)
+---
 
-#### Phase B — Device Driver Audit + Port
-- [ ] Audit POP.DeviceCore/Drivers — catalogue all drivers, protocols, command vocabularies
-- [ ] Port VapourtecR4 using new DeviceAdapterBase composition model
-- [ ] Port KnauerAzura (HPLC pump)
-- [ ] Port SystagOpcUaClient (OPC UA reactor)
-- [ ] Port remaining drivers identified in audit
-- [ ] Fix ISerialTransport.Open signature to accept baudRate parameter
-- [ ] Fix DI lifetime mismatch (transports registered Transient, captured by Singleton registry)
+## Architecture
 
-#### Phase C — Local Fumehood Desktop App (Tauri + Rete.js)
-- [ ] Tauri app scaffold (cross-platform: Windows + Linux)
-- [ ] Rete.js workflow builder (visual node-flow editor generating WSL JSON)
-- [ ] Experiment execution panel (start, pause, abort runspace)
-- [ ] Live data dashboard (scalar trends, spectral charts, device status)
-- [ ] Safety status and interlock display
-- [ ] Standalone mode (direct Agent REST/gRPC, no Site Server required)
-- [ ] Device registry and adapter status view
-
-#### Phase D — Test Coverage
-- [ ] Unit tests for all device adapters and capability dispatch
-- [ ] Integration tests for transport layer (hardware simulation, no real device)
-- [ ] E2E workflow execution tests (submit WSL → execute steps → verify trend output)
-- [ ] UI component tests (Tauri/React workflow builder, dashboards)
-- [ ] Fix CI build to include all test projects (Devices, Infrastructure, Recorder)
-- [ ] Remove [Fact(Skip)] from PostgreSQL repository tests; add Docker Compose test harness
-
-#### Phase E — Site-Level React Dashboard
-- [ ] React app scaffold (Vite + TypeScript)
-- [ ] Site overview: fumehood status, active experiments, device health
-- [ ] Campaign management UI (create, monitor, abort campaigns)
-- [ ] Experiment history and result browser
-- [ ] MQTT-backed live trend visualisation (WebSocket/SignalR bridge)
-- [ ] Analytical data viewer (spectra, DAD chromatograms)
-
-#### Phase F — Docusaurus Documentation
-- [ ] Docusaurus site scaffold (GitHub Pages deployment)
-- [ ] Developer section: architecture, adapter authoring guide, API reference
-- [ ] Scientist/operator section: workflow authoring guide, device capability reference
-- [ ] Deployment and setup guide (local + production)
-- [ ] Auto-generated API docs from XML comments / OpenAPI spec
-
-#### Phase G — Local Deployment + Setup Scripts
-- [ ] Docker Compose full-stack script (Agent + Site Server + Recorder + Postgres + MQTT + MinIO)
-- [ ] One-command dev environment bootstrap (Windows + Linux)
-- [ ] Production deployment guide (systemd services, Windows service install)
-- [ ] Hardware pre-flight check script (validates device connections before experiment start)
-
-### Out of Scope
-
-- Cloud-level orchestration across multiple sites — architecture supports it but not in scope for v1
-- Mobile app — desktop (Tauri) + web (React) covers target users
-- AI/ML-driven optimisation loop — Campaign Manager seam exists; ML integration is a future milestone
-- SiLA 2 adapters — protocol seam exists; not in current driver list
-- ELN/LIMS integration — WSL authoring seam exists; connector work deferred
-
-## Context
-
-- 14 development phases completed; ~107 tests passing at last known-good state
-- Significant mid-flight refactor in progress on `dev` branch: old inheritance-based device base classes deleted, new composition-based DeviceAdapterBase model introduced but no concrete drivers yet written
-- Several critical gaps exist before hardware can be controlled: CapabilityRegistry is empty, InMemoryFunctionStore means runspace state is lost on restart, and there are zero concrete device driver implementations in the solution tree
-- POP.DeviceCore is the legacy device driver library (C:\Users搶64\source\repos\CSharpGitLab\PopNextGen\POP.DeviceCore\Drivers) — the driver logic exists there and needs to be ported to the new DeviceAdapterBase architecture
-- Local UI (Tauri) must work standalone without a Site Server, since fumehoods may operate in isolated network segments
-- Primary deployment target: Windows PCs in chemistry labs, with Linux (Raspberry Pi or similar) as secondary target for embedded fumehood controllers
+```
+[helix-desktop (Tauri)]          [helix-dashboard (React/Vite)]
+        |                                    |
+  Agent REST/gRPC                     SiteServer REST
+  localhost:5080                      localhost:5090
+        |                                    |
+  Helix.Orchestration.Agent      Helix.Orchestration.SiteServer
+  - WorkflowExecutor             - CampaignManager
+  - DurableRunspace (Cleipnir)   - IAgentProxy (gRPC/sim)
+  - CapabilityRegistry           - FumehoodEndpoints
+  - DeviceAdapterBase drivers    - WebSocket trend bridge
+  - AgentGrpcService             - PostgreSQL repositories
+        |
+  Helix.Orchestration.Devices
+  - 48 device adapters (serial, TCP, OPC UA, MQTT, Modbus)
+  - Transport seam (ISerialTransport, ITcpTransport, etc.)
+        |
+  Helix.Orchestration.Recorder (Worker Service)
+  - MQTT ingestion, JSONL batch flushing, MinIO storage
+        |
+  [PostgreSQL] [MinIO] [Mosquitto MQTT]
+```
 
 ## Constraints
 
-- **Safety**: Safety engine must evaluate locally — never depends on network connectivity or Site Server availability
-- **Standalone mode**: Local Tauri UI must connect directly to Agent without requiring Site Server
-- **Cross-platform**: Tauri app must run on Windows 11 and Linux (Debian/Ubuntu)
-- **Protocol fidelity**: Device drivers must exactly match legacy POP.DeviceCore command vocabularies — lab instruments have strict protocol requirements
-- **Durable execution**: Runspace state must survive Agent process restart (PostgreSQL-backed Cleipnir store)
-- **No breaking changes to WSL contract**: WSL JSON schema is a public authoring contract; changes must be additive
+- Safety engine evaluates locally — never depends on network connectivity
+- Standalone mode: Tauri UI connects directly to Agent without requiring Site Server
+- Cross-platform: Tauri app runs on Windows 11 and Linux (Debian/Ubuntu)
+- Protocol fidelity: device drivers exactly match legacy POP.DeviceCore command vocabularies
+- Durable execution: runspace state survives Agent process restart (PostgreSQL-backed Cleipnir)
+- No breaking changes to WSL contract: WSL JSON schema changes must be additive
 
-## Key Decisions
+## Key Decisions (v0.1)
 
-| Decision | Rationale | Outcome |
-|----------|-----------|---------|
-| Tauri + Rete.js for local UI | Cross-platform desktop wrapping Agent gRPC/REST; Rete.js provides visual node-flow authoring matching WSL graph model | — Pending |
-| React (Vite) for site dashboard | Standard SPA stack; separate from Tauri to allow web browser access from any machine on site network | — Pending |
-| Docusaurus for docs | GitHub Pages deployment; developer + scientist sections; can auto-generate from OpenAPI and XML comments | — Pending |
-| Composition over inheritance for device adapters | DeviceAdapterBase with injected transport rather than per-protocol base classes; enables testing transports independently | — Pending |
-| OPC Foundation library over Opc.UaFx.Advanced | Open-source; removes commercial licence dependency from production deployments | — Pending |
-| Cleipnir PostgreSQL store for durable execution | Survives Agent process restart; consistent with existing PostgreSQL infrastructure choice | — Pending |
+| Decision | Rationale |
+|----------|-----------|
+| DeviceAdapterBase composition model | Enables transport seam testing without real hardware |
+| Tauri + Rete.js for local UI | Cross-platform desktop; Rete.js graph model matches WSL |
+| Cleipnir PostgreSQL for durable execution | Runspace state survives Agent restart |
+| OPC Foundation library | Replaced Opc.UaFx.Advanced commercial dependency |
+| tauri-plugin-fs for workflow library | Built-in persistence, type-safe, no custom Rust needed |
+| recharts for production charts | SciChart wrapper placeholder; full integration deferred |
+| BaseSchemes as NodeEditor type parameter | ClassicPreset.Schemes does not exist in rete@2.0.6 |
+| vi.hoisted() + vi.mock("recharts") | SVG renderer errors in jsdom require hoisted module mock |
+| depends_on uses service names not container_name | Docker Compose requirement |
+| DeviceRegistry populated via CapabilityRegistry factory lambda | Adapter prefix split on "." |
 
-## Evolution
+## Out of Scope (v0.1)
 
-This document evolves at phase transitions and milestone boundaries.
-
-**After each phase transition** (via `/gsd-transition`):
-1. Requirements invalidated? → Move to Out of Scope with reason
-2. Requirements validated? → Move to Validated with phase reference
-3. New requirements emerged? → Add to Active
-4. Decisions to log? → Add to Key Decisions
-5. "What This Is" still accurate? → Update if drifted
-
-**After each milestone** (via `/gsd:complete-milestone`):
-1. Full review of all sections
-2. Core Value check — still the right priority?
-3. Audit Out of Scope — reasons still valid?
-4. Update Context with current state
+- Cloud orchestration across multiple sites (architecture supports it)
+- Mobile app
+- AI/ML optimisation loop integration (Campaign Manager seam exists)
+- SiLA 2 protocol adapters (transport seam exists)
+- ELN/LIMS connector (WSL authoring seam exists)
+- Multi-tenant Site Server
 
 ---
-*Last updated: 2026-05-26 after initialization*
+
+## Next Milestone (v0.2)
+
+Start planning with `/gsd:new-milestone` to define requirements and roadmap.
+
+Candidates:
+- Production hardening: CORS, SciChart, DeviceStatusEvent fix
+- Human verification pass for outstanding live-stack tests
+- Cloud multi-site orchestration (Phase 11+)
+- SiLA 2 adapters, ELN/LIMS connector
+
+---
+
+*Last updated: 2026-06-03 after v0.1 milestone close*

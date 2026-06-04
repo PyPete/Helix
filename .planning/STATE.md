@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: "Phase 6.4 -- Close Gap: Remaining Audit Items (executed)"
+current_phase: "v0.1 SHIPPED -- starting v0.2 planning"
 status: in-progress
-last_updated: "2026-06-03T00:00:00.000Z"
+last_updated: "2026-06-03T15:30:00.000Z"
 progress:
   total_phases: 14
-  completed_phases: 9
+  completed_phases: 15
   total_plans: 30
-  completed_plans: 35
-  percent: 64
+  completed_plans: 38
+  percent: 100
 ---
 
 # Project State
@@ -118,9 +118,9 @@ See: .planning/PROJECT.md (updated 2026-05-26)
 
 ## Next Steps
 
-Phase 6.4 complete (2026-06-03). Plans 6.4-01 and 6.4-02 both done. docker-compose postgres env + CI vitest job + AgentGrpcService + FumehoodEndpoints + SiteOverviewPage live API fetch all complete. Solution builds clean (0 errors). 32/32 dashboard tests pass.
+Milestone v0.1 SHIPPED (2026-06-03). All 49 requirements addressed. All 5 audit blockers closed. 38 plans complete across 15 phases.
 
-Human checkpoints from Phase 6.3 still pending: (1) POST /workflows/compile with DeviceAction node; (2) DeviceManualControl round-trip. Requires running Agent+Tauri stack.
+Next: run /gsd:new-milestone to plan v0.2. Candidates: SiteServer CORS, SciChart integration, live-stack human verification pass, cloud multi-site orchestration.
 ## Phase History
 
 | Phase | Status | Completed |
@@ -134,7 +134,8 @@ Human checkpoints from Phase 6.3 still pending: (1) POST /workflows/compile with
 | 6. Tauri Desktop App - Workflow Builder + Execution | Complete | 2026-05-30 |
 | 6.1. Desktop App Polish -- Device Controls, Status Events & Chart Foundation | Complete | 2026-05-30 |
 | 6.3. Close Gap: Device Integration Bugs (C1, C4, C7-C9) |
-| 6.4. Close Gap: Remaining Audit Items (D5, D6, E1-E4, G2) | Executed | 2026-06-03 | Executed | 2026-06-03 |
+
+| **v0.1 MILESTONE** | **SHIPPED** | **2026-06-03** | Executed | 2026-06-03 | Executed | 2026-06-03 |
 | 9. Docusaurus Documentation | Complete | 2026-06-02 |
 
 ---
@@ -200,6 +201,7 @@ Human checkpoints from Phase 6.3 still pending: (1) POST /workflows/compile with
 - `Helix.Orchestration.Core/Capabilities/CapabilityDescriptor.cs` -- CapabilityDescriptor schema types (Phase 6.1)
 - `helix-desktop/src/components/DeviceManualControl/DeviceManualControl.tsx` -- schema-driven manual control panel (Phase 6.1)
 - `helix-desktop/src/components/charts/index.ts` -- SciChart wrapper re-export layer (Phase 6.1)
+
 
 
 
