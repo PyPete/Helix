@@ -27,11 +27,11 @@
 }
 
 .status-dot.healthy {
-  background: var(--color-success, #50fa7b);
+  background: var(--color-success);
 }
 
 .status-dot.unhealthy {
-  background: var(--color-danger, #ff5555);
+  background: var(--color-danger);
 }
 
 .status-dot.connecting {
