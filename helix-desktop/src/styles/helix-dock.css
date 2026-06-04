@@ -1,0 +1,122 @@
+/* helix-dock.css — Helix CSS variable override layer for rc-dock v3.3.2 */
+/* Import AFTER rc-dock/dist/rc-dock.css — order matters for cascade */
+/* Source: ticlo/rc-dock style/panel.less + style/tabs.less + style/predefined-panels.less */
+
+/* -- Root layout container -- */
+.dock-layout {
+  background: var(--color-bg);
+}
+
+/* -- Box containers -- */
+.dock-box,
+.dock-hbox,
+.dock-vbox {
+  background: var(--color-bg);
+}
+
+/* -- Panel (dock-panel = a named panel that contains tabs) -- */
+.dock-panel {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+
+/* -- Tab bar (dock-bar = the horizontal strip of tab buttons) -- */
+.dock-bar {
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+/* -- Individual tab -- */
+.dock-tab {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  font-family: var(--font-sans);
+  background: transparent;
+}
+.dock-tab:hover {
+  color: var(--color-text);
+  background: var(--color-surface-overlay);
+}
+
+/* -- Active tab (2px top border per design spec) -- */
+.dock-tab-active {
+  color: var(--color-text);
+  background: var(--color-bg);
+  border-top: 2px solid var(--color-primary);
+}
+
+/* -- Tab close button -- */
+.dock-tab-close-btn {
+  color: var(--color-text-dim);
+}
+.dock-tab-close-btn:hover {
+  color: var(--color-text);
+}
+
+/* -- Ink bar (active underline indicator — hide in favour of border-top) -- */
+.dock-ink-bar {
+  display: none;
+}
+
+/* -- Tab pane content area -- */
+.dock-tabpane {
+  background: var(--color-surface);
+}
+.dock-content,
+.dock-content-holder {
+  background: var(--color-surface);
+}
+
+/* -- Divider/splitter -- */
+.dock-divider {
+  background: var(--color-border);
+  transition: background 0.12s;
+}
+.dock-divider:hover {
+  background: var(--color-primary);
+}
+
+/* -- Drop indicators -- */
+.dock-drop-square-box {
+  border-color: var(--color-primary);
+  background: var(--color-primary-dim);
+  opacity: 0.6;
+}
+.dock-drop-square-dropping {
+  background: var(--color-primary-dim);
+  opacity: 0.85;
+}
+
+/* -- Panel max/min buttons -- */
+.dock-panel-max-btn,
+.dock-panel-min-btn {
+  color: var(--color-text-muted);
+}
+.dock-panel-max-btn:hover,
+.dock-panel-min-btn:hover {
+  color: var(--color-text);
+}
+
+/* -- Floating panel -- */
+.dock-fbox .dock-panel {
+  box-shadow: var(--shadow-lg);
+  border-color: var(--color-border-strong);
+}
+
+/* -- Predefined panel style: headless (used for sidebars with no visible tab bar by default) -- */
+.dock-style-headless .dock-bar {
+  opacity: 0;
+  height: 20px;
+}
+.dock-style-headless .dock-panel:hover .dock-bar,
+.dock-style-headless .dock-panel:focus-within .dock-bar {
+  opacity: 1;
+  height: 31px;
+}
+
+/* -- Predefined panel style: main (used for document tab area) -- */
+.dock-style-main .dock-bar {
+  background: transparent;
+  border-bottom: 1px solid var(--color-border);
+}
