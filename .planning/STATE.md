@@ -1,16 +1,16 @@
 ﻿---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: milestone
-current_phase: "v0.1 SHIPPED -- starting v0.2 planning"
-status: in-progress
-last_updated: "2026-06-03T15:30:00.000Z"
+milestone: v0.2
+milestone_name: Production-Grade Platform
+current_phase: "Phase 11 — not started (defining requirements)"
+status: planning
+last_updated: "2026-06-03T16:00:00.000Z"
 progress:
   total_phases: 14
-  completed_phases: 15
+  completed_phases: 0
   total_plans: 30
-  completed_plans: 38
-  percent: 100
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -118,9 +118,9 @@ See: .planning/PROJECT.md (updated 2026-05-26)
 
 ## Next Steps
 
-Milestone v0.1 SHIPPED (2026-06-03). All 49 requirements addressed. All 5 audit blockers closed. 38 plans complete across 15 phases.
+Milestone v0.2 started (2026-06-03). Defining requirements and roadmap. Phase 11 (Ribbon + Docking Workspace Shell) is the foundation — all UI work builds inside it.
 
-Next: run /gsd:new-milestone to plan v0.2. Candidates: SiteServer CORS, SciChart integration, live-stack human verification pass, cloud multi-site orchestration.
+Run /gsd:discuss-phase 11 to start Phase 11 planning.
 ## Phase History
 
 | Phase | Status | Completed |
@@ -201,6 +201,7 @@ Next: run /gsd:new-milestone to plan v0.2. Candidates: SiteServer CORS, SciChart
 - `Helix.Orchestration.Core/Capabilities/CapabilityDescriptor.cs` -- CapabilityDescriptor schema types (Phase 6.1)
 - `helix-desktop/src/components/DeviceManualControl/DeviceManualControl.tsx` -- schema-driven manual control panel (Phase 6.1)
 - `helix-desktop/src/components/charts/index.ts` -- SciChart wrapper re-export layer (Phase 6.1)
+
 
 
 

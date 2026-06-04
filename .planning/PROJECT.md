@@ -18,6 +18,22 @@ A scientist can build a workflow, connect real lab hardware, execute an experime
 
 ---
 
+## Current Milestone: v0.2 — Production-Grade Platform
+
+**Goal:** Rebuild helix-desktop on a professional IDE shell with a coherent experiment model, three-mode workflow authoring, real-time charting, autodiscovery, Python API, and a hardened production stack.
+
+**Target features:**
+- Ribbon + Docking Workspace Shell (SEED-001) — VS-Ribbon, activity bar, VS-Split panels, document tabs, dockable panels, workspace layout save/restore
+- Experiment as Top-Level Scope (SEED-003) — experimentId container, pre/main/post phases, full replayability, Agent ExperimentManager
+- Three Workflow Modes (SEED-004) — Start/Stop (operator), Kanban (SOP-writer), Node-Flow (power user); WSL is canonical, mode is a view
+- ReactFlow Node Canvas (SEED-005) — full Rete.js migration; dark IDE / Blender/UE theme; live execution traffic lights; strict authoring
+- SciChart Integration — replaces recharts in helix-desktop + helix-dashboard; Chart Panel docks; Trend Explorer drag-and-drop
+- Device Autodiscovery Layer + Developer Debugger — Identify() lifecycle, capability validation, dockable Debugger panel, Developer Mode Ribbon tab
+- Real-Time Trend System — naming protocol, TrendAggregator windowing + downsampling, record/replay, Python engine integration
+- Python API — scripted experiment submission/monitoring + programmatic WSL construction; Python sidecar
+- Production Hardening — SiteServer CORS, auth layer, structured logging (Serilog/OpenTelemetry), live-stack verification
+
+---
 ## Current State (v0.1 — SHIPPED 2026-06-03)
 
 ### Shipped
@@ -116,3 +132,4 @@ Candidates:
 ---
 
 *Last updated: 2026-06-03 after v0.1 milestone close*
+
