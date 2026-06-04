@@ -1,15 +1,34 @@
+import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import HelixShell from './HelixShell';
 
-// --- Mock rc-dock (class component with required render) ---
+// --- Mock rc-dock (class component — use forwardRef-compatible function mock) ---
+// DockLayout is a class component; React invokes it via `new` in class mode.
+// We stub it as a React function component that renders null to keep tests fast.
 vi.mock('rc-dock', () => {
-  const DockLayoutMock = vi.fn(function (this: Record<string, unknown>) {
-    this.saveLayout = vi.fn().mockReturnValue({ dockbox: { mode: 'horizontal', children: [] } });
-    this.loadLayout = vi.fn();
-    this.dockMove = vi.fn();
-  });
-  DockLayoutMock.prototype.render = () => null;
+  const { forwardRef } = require('react') as typeof import('react');
+
+  // Provide a stable instance with methods that WorkspaceLayout's useImperativeHandle can call.
+  const instanceMethods = {
+    saveLayout: vi.fn().mockReturnValue({ dockbox: { mode: 'horizontal', children: [] } }),
+    loadLayout: vi.fn(),
+    dockMove: vi.fn(),
+    getLayout: vi.fn().mockReturnValue({ dockbox: { mode: 'horizontal', children: [] } }),
+  };
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const DockLayoutMock = forwardRef<typeof instanceMethods, Record<string, unknown>>(
+    (_props, ref) => {
+      if (typeof ref === 'function') {
+        ref(instanceMethods);
+      } else if (ref && typeof ref === 'object') {
+        (ref as React.MutableRefObject<typeof instanceMethods>).current = instanceMethods;
+      }
+      return null;
+    }
+  );
+  DockLayoutMock.displayName = 'DockLayoutMock';
   return { default: DockLayoutMock };
 });
 
