@@ -233,7 +233,7 @@ export function WorkflowBuilder({ baseUrl, onExport }: WorkflowBuilderProps) {
   const nodeCount = nodes.length;
 
   return (
-    <section aria-label="Workflow Builder" data-testid="workflow-builder" style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
+    <section aria-label="Workflow Builder" data-testid="workflow-builder" style={{ position: "absolute", top: 0, right: 0, bottom: 0, left: 0, display: "flex", flexDirection: "column", overflow: "hidden" }}>
       {error && <p role="alert" className="error">{error}</p>}
 
       {/* Toolbar */}

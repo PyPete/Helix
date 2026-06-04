@@ -40,6 +40,7 @@ export interface WorkspaceLayoutHandle {
   loadLayout(lb: LayoutBase): void;
   openChartPanel(trendName: string): void;
   openDeviceTab(adapterId: string): void;
+  activateTab(tabId: string): void;
 }
 
 // ---------------------------------------------------------------------------
@@ -244,6 +245,12 @@ export const WorkspaceLayout = React.forwardRef<WorkspaceLayoutHandle, Workspace
         dockRef.current?.dockMove(newTab, 'panel-main', 'middle');
       },
       openDeviceTab,
+      activateTab(tabId: string): void {
+        const found = dockRef.current?.find(tabId);
+        if (found && 'id' in found) {
+          dockRef.current?.updateTab(tabId, found as TabData, true);
+        }
+      },
     }));
 
     // saveTab: persist only the id (content is not JSON serializable)

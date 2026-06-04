@@ -88,8 +88,23 @@ export default function HelixShell() {
     workspaceRef.current?.openChartPanel('new-chart-' + Date.now());
   };
 
+  // Map activity bar button ids → dock tab ids
+  const ACTIVITY_BAR_TAB_MAP: Record<string, string> = {
+    explorer: 'device-explorer',
+    trends:   'trend-explorer',
+  };
+
   const handlePanelToggle = (panelId: string) => {
     setActivePanel((prev) => (prev === panelId ? null : panelId));
+    // Navigate the dock to the corresponding tab (if mapped)
+    const dockTabId = ACTIVITY_BAR_TAB_MAP[panelId];
+    if (dockTabId) {
+      workspaceRef.current?.activateTab(dockTabId);
+    }
+    // Settings button switches the ribbon to the Settings tab instead
+    if (panelId === 'settings') {
+      setActiveRibbonTab('Settings');
+    }
   };
 
   return (
