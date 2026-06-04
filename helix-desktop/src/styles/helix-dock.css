@@ -68,13 +68,16 @@
   background: var(--color-surface);
 }
 
-/* -- Divider/splitter -- */
+/* -- Divider/splitter — must be explicitly visible; rc-dock defaults to transparent -- */
 .dock-divider {
   background: var(--color-border);
   transition: background 0.12s;
+  /* rc-dock sets flex: 0 0 4px; override to give it a clear visual gutter */
+  flex: 0 0 5px !important;
 }
 .dock-divider:hover {
   background: var(--color-primary);
+  cursor: col-resize;
 }
 
 /* -- Drop indicators -- */

@@ -223,7 +223,7 @@ export function WorkflowBuilder({ baseUrl, onExport }: WorkflowBuilderProps) {
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", onUp);
     };
-  }, [addDeviceActionNode]); // stable — never re-registers
+  }, [addDeviceActionNode]); // stable ï¿½ never re-registers
 
   const handleAddNode = (type: HelixNodeType) => {
     addNode(type, ctxMenu?.flowPosition);
@@ -233,7 +233,7 @@ export function WorkflowBuilder({ baseUrl, onExport }: WorkflowBuilderProps) {
   const nodeCount = nodes.length;
 
   return (
-    <section aria-label="Workflow Builder" data-testid="workflow-builder">
+    <section aria-label="Workflow Builder" data-testid="workflow-builder" style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
       {error && <p role="alert" className="error">{error}</p>}
 
       {/* Toolbar */}
@@ -279,7 +279,7 @@ export function WorkflowBuilder({ baseUrl, onExport }: WorkflowBuilderProps) {
       </div>
 
       {/* Canvas with device palette */}
-      <div style={{ display: "flex", height: "600px" }}>
+      <div style={{ display: "flex", flex: 1, minHeight: 0 }}>
         <DevicePalette
           baseUrl={baseUrl}
           onDragStart={(adapterId, capability, descriptor) =>
@@ -397,7 +397,7 @@ export function WorkflowBuilder({ baseUrl, onExport }: WorkflowBuilderProps) {
           )}
         </div>
       </div>
-      {/* Drag ghost — follows cursor while a capability card is being dragged */}
+      {/* Drag ghost ï¿½ follows cursor while a capability card is being dragged */}
       {activeDrag && activeDrag.x !== 0 && (
         <div
           style={{
@@ -415,7 +415,7 @@ export function WorkflowBuilder({ baseUrl, onExport }: WorkflowBuilderProps) {
             boxShadow: "0 4px 12px rgba(0,0,0,0.5)",
           }}
         >
-          {activeDrag.adapterId} › {activeDrag.capability}
+          {activeDrag.adapterId} ï¿½ {activeDrag.capability}
         </div>
       )}
     </section>
