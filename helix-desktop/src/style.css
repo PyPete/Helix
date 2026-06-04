@@ -1,5 +1,5 @@
-:root {
-  /* ── Helix design tokens ── */
+﻿:root {
+  /* â”€â”€ Helix design tokens â”€â”€ */
 
   /* Backgrounds */
   --color-bg:             #1e1e2e;
@@ -40,7 +40,7 @@
   --radius-md:   6px;
   --shadow-lg:   0 8px 32px rgba(0, 0, 0, 0.6);
 
-  /* ── Base typography ── */
+  /* â”€â”€ Base typography â”€â”€ */
   font-family: var(--font-sans);
   font-size: var(--text-base);
   line-height: 1.5;
@@ -94,7 +94,7 @@ h1 {
   text-align: center;
 }
 
-/* Reset browser defaults for form elements — shell components style these themselves */
+/* Reset browser defaults for form elements â€” shell components style these themselves */
 input,
 button,
 select {
@@ -102,4 +102,11 @@ select {
   font-size: inherit;
   outline: none;
   box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--color-bg);
+  color: var(--color-text);
 }

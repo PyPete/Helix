@@ -1,6 +1,5 @@
-/* helix-dock.css — Helix CSS variable override layer for rc-dock v3.3.2 */
+﻿/* helix-dock.css — Helix CSS variable override layer for rc-dock v3.3.2 */
 /* Import AFTER rc-dock/dist/rc-dock.css — order matters for cascade */
-/* Source: ticlo/rc-dock style/panel.less + style/tabs.less + style/predefined-panels.less */
 
 /* -- Root layout container -- */
 .dock-layout {
@@ -14,35 +13,45 @@
   background: var(--color-bg);
 }
 
-/* -- Panel (dock-panel = a named panel that contains tabs) -- */
+/* -- Panel — override rc-dock light defaults (background:#fff, color:rgba(0,0,0,0.85), border:#ddd) -- */
 .dock-panel {
   background: var(--color-surface);
+  color: var(--color-text);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
 }
 
-/* -- Tab bar (dock-bar = the horizontal strip of tab buttons) -- */
+/* -- Tab bar -- */
 .dock-bar {
   background: var(--color-surface);
   border-bottom: 1px solid var(--color-border);
 }
 
-/* -- Individual tab -- */
+/* -- Individual tab — override rc-dock default background:#fafafd -- */
 .dock-tab {
+  background: transparent;
   color: var(--color-text-muted);
   font-size: var(--text-sm);
   font-family: var(--font-sans);
-  background: transparent;
-}
-.dock-tab:hover {
-  color: var(--color-text);
-  background: var(--color-surface-overlay);
+  border-bottom: none;
 }
 
-/* -- Active tab (2px top border per design spec) -- */
-.dock-tab-active {
+/* -- Tab inner text div -- */
+.dock-tab > div {
+  color: inherit;
+}
+
+/* -- Tab hover — override rc-dock default color:#349fec -- */
+.dock-tab:hover {
+  background: var(--color-surface-overlay);
   color: var(--color-text);
+}
+
+/* -- Active tab — override rc-dock default color:#108ee9 -- */
+.dock-tab-active,
+.dock-tab-active:hover {
   background: var(--color-bg);
+  color: var(--color-text);
   border-top: 2px solid var(--color-primary);
 }
 
@@ -54,7 +63,7 @@
   color: var(--color-text);
 }
 
-/* -- Ink bar (active underline indicator — hide in favour of border-top) -- */
+/* -- Ink bar (active underline — hide in favour of border-top) -- */
 .dock-ink-bar {
   display: none;
 }
@@ -62,22 +71,28 @@
 /* -- Tab pane content area -- */
 .dock-tabpane {
   background: var(--color-surface);
+  color: var(--color-text);
 }
 .dock-content,
 .dock-content-holder {
   background: var(--color-surface);
 }
 
-/* -- Divider/splitter — must be explicitly visible; rc-dock defaults to transparent -- */
+/* -- Divider/splitter — override rc-dock default background:rgba(0,0,0,0) -- */
 .dock-divider {
   background: var(--color-border);
   transition: background 0.12s;
-  /* rc-dock sets flex: 0 0 4px; override to give it a clear visual gutter */
   flex: 0 0 5px !important;
 }
 .dock-divider:hover {
   background: var(--color-primary);
-  cursor: col-resize;
+}
+/* keep correct resize cursors rc-dock sets via transform+cursor */
+.dock-hbox > .dock-divider {
+  cursor: ew-resize;
+}
+.dock-vbox > .dock-divider {
+  cursor: ns-resize;
 }
 
 /* -- Drop indicators -- */
@@ -107,7 +122,7 @@
   border-color: var(--color-border-strong);
 }
 
-/* -- Predefined panel style: headless (used for sidebars with no visible tab bar by default) -- */
+/* -- Headless style (sidebar panels without permanent tab bar) -- */
 .dock-style-headless .dock-bar {
   opacity: 0;
   height: 20px;
@@ -118,7 +133,7 @@
   height: 31px;
 }
 
-/* -- Predefined panel style: main (used for document tab area) -- */
+/* -- Main style -- */
 .dock-style-main .dock-bar {
   background: transparent;
   border-bottom: 1px solid var(--color-border);
