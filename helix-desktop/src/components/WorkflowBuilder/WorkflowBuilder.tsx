@@ -32,7 +32,7 @@ interface CtxMenu {
 const CANVAS_STYLE: React.CSSProperties = {
   background: "#141420",
   width: "100%",
-  height: "100%",
+  height: "100%",   /* parent is position:absolute inset:0 so this resolves correctly */
   borderRadius: 6,
   border: "1px solid #2a2a3e",
 };
@@ -279,16 +279,18 @@ export function WorkflowBuilder({ baseUrl, onExport }: WorkflowBuilderProps) {
       </div>
 
       {/* Canvas with device palette */}
-      <div style={{ display: "flex", flex: 1, minHeight: 0 }}>
+      <div style={{ display: "flex", flex: 1, minHeight: 0, overflow: "hidden" }}>
         <DevicePalette
           baseUrl={baseUrl}
           onDragStart={(adapterId, capability, descriptor) =>
             setActiveDrag({ adapterId, capability, descriptor, x: 0, y: 0 })
           }
         />
+        {/* Wrap in a position:relative div so the inner absolute fill gets a concrete size */}
+        <div style={{ flex: 1, position: "relative", minWidth: 0 }}>
         <div
           ref={canvasWrapperRef}
-          style={{ flex: 1, position: "relative" }}
+          style={{ position: "absolute", inset: 0, overflow: "hidden" }}
           data-testid="rete-canvas"
         >
           <ReactFlow
@@ -396,6 +398,7 @@ export function WorkflowBuilder({ baseUrl, onExport }: WorkflowBuilderProps) {
             </div>
           )}
         </div>
+        </div> {/* position:relative wrapper */}
       </div>
       {/* Drag ghost � follows cursor while a capability card is being dragged */}
       {activeDrag && activeDrag.x !== 0 && (
