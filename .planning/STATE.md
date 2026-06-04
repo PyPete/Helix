@@ -1,12 +1,12 @@
-﻿---
+---
 gsd_state_version: 1.0
 milestone: v0.2
 milestone_name: Production-Grade Platform
 current_phase: "Phase 11 — not started (defining requirements)"
 status: planning
-last_updated: "2026-06-03T16:00:00.000Z"
+last_updated: "2026-06-04T00:00:00.000Z"
 progress:
-  total_phases: 14
+  total_phases: 9
   completed_phases: 0
   total_plans: 30
   completed_plans: 0
@@ -15,8 +15,8 @@ progress:
 
 # Project State
 
-**Last updated:** 2026-06-02
-**Current phase:** Phase 6.3 -- Close Gap: Device Integration Bugs (executed, human verification pending)
+**Last updated:** 2026-06-04
+**Current phase:** Phase 11 -- Ribbon + Docking Workspace Shell (not started)
 **Workflow:** YOLO mode, fine granularity, parallel execution enabled
 
 ---
@@ -133,10 +133,23 @@ Run /gsd:discuss-phase 11 to start Phase 11 planning.
 | 5. Tauri Desktop App Foundation | Complete | 2026-05-28 |
 | 6. Tauri Desktop App - Workflow Builder + Execution | Complete | 2026-05-30 |
 | 6.1. Desktop App Polish -- Device Controls, Status Events & Chart Foundation | Complete | 2026-05-30 |
-| 6.3. Close Gap: Device Integration Bugs (C1, C4, C7-C9) |
-
-| **v0.1 MILESTONE** | **SHIPPED** | **2026-06-03** | Executed | 2026-06-03 | Executed | 2026-06-03 |
+| 6.2. Workflow Builder - Device Palette, Hybrid Ports and Live Execution | Complete | 2026-05-30 |
+| 6.3. Close Gap: Device Integration Bugs (C1, C4, C7-C9) | Complete | 2026-06-03 |
+| 6.4. Close Gap: Remaining Audit Items (D5, D6, E1-E4, G2) | Complete | 2026-06-03 |
+| 7. Site-Level React Dashboard | Complete | 2026-05-31 |
+| 8. Test Coverage | Complete | 2026-05-31 |
 | 9. Docusaurus Documentation | Complete | 2026-06-02 |
+| 10. Deployment + Setup Scripts | Complete | 2026-06-03 |
+| **v0.1 MILESTONE** | **SHIPPED** | **2026-06-03** |
+| 11. Ribbon + Docking Workspace Shell | Not started | -- |
+| 12. Experiment as Top-Level Scope | Not started | -- |
+| 13. Three Workflow Modes | Not started | -- |
+| 14. ReactFlow Node Canvas | Not started | -- |
+| 15. SciChart Integration | Not started | -- |
+| 16. Device Autodiscovery + Developer Debugger | Not started | -- |
+| 17. Real-Time Trend System | Not started | -- |
+| 18. Python API | Not started | -- |
+| 19. Production Hardening | Not started | -- |
 
 ---
 
