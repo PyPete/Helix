@@ -1,4 +1,4 @@
-import 'rc-dock/dist/rc-dock.css';
+﻿import 'rc-dock/dist/rc-dock.css';
 import '../styles/helix-dock.css';
 
 import React, { useRef, useImperativeHandle, useMemo, useCallback } from 'react';
@@ -44,10 +44,10 @@ export interface WorkspaceLayoutHandle {
 }
 
 // ---------------------------------------------------------------------------
-// DEFAULT_LAYOUT — 3-column structure (per D-02 + RESEARCH.md Pattern 2)
+// DEFAULT_LAYOUT â€” 3-column structure (per D-02 + RESEARCH.md Pattern 2)
 // ---------------------------------------------------------------------------
 
-// LayoutBase is sufficient for defaultLayout — rc-dock materializes BoxBase → BoxData internally.
+// LayoutBase is sufficient for defaultLayout â€” rc-dock materializes BoxBase â†’ BoxData internally.
 // We pass it as LayoutData (which the prop requires) using a type assertion on assignment.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const DEFAULT_LAYOUT: LayoutBase = {
@@ -246,10 +246,7 @@ export const WorkspaceLayout = React.forwardRef<WorkspaceLayoutHandle, Workspace
       },
       openDeviceTab,
       activateTab(tabId: string): void {
-        const found = dockRef.current?.find(tabId);
-        if (found && 'id' in found) {
-          dockRef.current?.updateTab(tabId, found as TabData, true);
-        }
+        dockRef.current?.updateTab(tabId, null, true);
       },
     }));
 
@@ -298,7 +295,7 @@ export const WorkspaceLayout = React.forwardRef<WorkspaceLayoutHandle, Workspace
         };
       }
 
-      // Safe placeholder for unrecognised tab ids — no eval, no dangerouslySetInnerHTML
+      // Safe placeholder for unrecognised tab ids â€” no eval, no dangerouslySetInnerHTML
       return {
         id: tabId,
         title: tabId,
@@ -322,3 +319,5 @@ export const WorkspaceLayout = React.forwardRef<WorkspaceLayoutHandle, Workspace
 );
 
 WorkspaceLayout.displayName = 'WorkspaceLayout';
+
+

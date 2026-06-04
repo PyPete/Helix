@@ -1,5 +1,5 @@
-/* shell.css — outer shell structural CSS for HelixShell */
-/* All colour values use var(--color-*) tokens — no hardcoded hex */
+﻿/* shell.css â€” outer shell structural CSS for HelixShell */
+/* All colour values use var(--color-*) tokens â€” no hardcoded hex */
 
 /* Ensure full-height layout from root down (T-11-06 mitigation) */
 html,
@@ -41,4 +41,6 @@ body,
   flex-direction: row;
   min-height: 0;
   overflow: hidden;
+  position: relative;
 }
+
