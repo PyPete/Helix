@@ -3,9 +3,9 @@ import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import App from './App';
 
-// --- Mock rc-dock (class component) ---
+// --- Mock rc-dock (class component --- use forwardRef-compatible function mock) ---
 vi.mock('rc-dock', () => {
-  const { forwardRef } = require('react');
+  const { forwardRef } = require('react') as typeof import('react');
 
   const instanceMethods = {
     saveLayout: vi.fn().mockReturnValue({ dockbox: { mode: 'horizontal', children: [] } }),
@@ -14,21 +14,24 @@ vi.mock('rc-dock', () => {
     getLayout: vi.fn().mockReturnValue({ dockbox: { mode: 'horizontal', children: [] } }),
   };
 
-  const DockLayoutMock = forwardRef((_props, ref) => {
-    if (typeof ref === 'function') {
-      ref(instanceMethods);
-    } else if (ref && typeof ref === 'object') {
-      ref.current = instanceMethods;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const DockLayoutMock = forwardRef<typeof instanceMethods, Record<string, unknown>>(
+    (_props: Record<string, unknown>, ref: React.ForwardedRef<typeof instanceMethods>) => {
+      if (typeof ref === 'function') {
+        ref(instanceMethods);
+      } else if (ref && typeof ref === 'object') {
+        (ref as React.MutableRefObject<typeof instanceMethods>).current = instanceMethods;
+      }
+      return null;
     }
-    return null;
-  });
+  );
   DockLayoutMock.displayName = 'DockLayoutMock';
   return { default: DockLayoutMock };
 });
 
 // --- Mock @tauri-apps/plugin-store ---
 vi.mock('@tauri-apps/plugin-store', () => {
-  const LazyStore = vi.fn(function () {
+  const LazyStore = vi.fn(function (this: Record<string, unknown>) {
     this.get = vi.fn().mockResolvedValue(null);
     this.set = vi.fn().mockResolvedValue(undefined);
     this.save = vi.fn().mockResolvedValue(undefined);
@@ -54,7 +57,7 @@ vi.mock('./hooks/useAgentHealth', () => ({
 
 // --- Mock ConnectionConfig to avoid LazyStore module-level side effects ---
 vi.mock('./components/ConnectionConfig', () => ({
-  default: () => React.createElement('div', { 'data-testid': 'connection-config-stub' }),
+  default: () => <div data-testid="connection-config-stub" />,
 }));
 
 describe('App', () => {
@@ -67,22 +70,22 @@ describe('App', () => {
   });
 
   it('renders HelixShell container', () => {
-    render(React.createElement(App));
+    render(<App />);
     expect(screen.getByTestId('helix-shell')).toBeInTheDocument();
   });
 
   it('renders ribbon tabs', () => {
-    render(React.createElement(App));
+    render(<App />);
     expect(screen.getAllByTestId(/ribbon-tab-/).length).toBeGreaterThan(0);
   });
 
   it('renders activity bar', () => {
-    render(React.createElement(App));
+    render(<App />);
     expect(screen.getByTestId('activity-bar')).toBeInTheDocument();
   });
 
   it('renders status bar', () => {
-    render(React.createElement(App));
+    render(<App />);
     expect(screen.getByTestId('status-bar')).toBeInTheDocument();
   });
 });
