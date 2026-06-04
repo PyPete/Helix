@@ -1,0 +1,68 @@
+/* panels.css — shared structural styles for all dock panel components
+   All values use CSS custom properties (var(--color-*), etc.)
+   No hardcoded hex values allowed. */
+
+.panel-empty {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  padding: 16px;
+  text-align: center;
+}
+
+.trend-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.trend-item {
+  padding: 4px 8px;
+  cursor: grab;
+  font-size: var(--text-sm);
+  color: var(--color-text);
+  border-radius: var(--radius-sm);
+}
+
+.trend-item:hover {
+  background: var(--color-surface-overlay);
+}
+
+.chart-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 4px;
+  border: 1px solid transparent;
+  transition: border-color 0.12s;
+}
+
+.chart-panel.drag-over {
+  border-color: var(--color-primary);
+  background: var(--color-primary-dim, rgba(157, 127, 255, 0.08));
+}
+
+.log-list {
+  list-style: none;
+  margin: 0;
+  padding: 4px 8px;
+  overflow-y: auto;
+  max-height: 100%;
+}
+
+.log-entry {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  padding: 1px 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.log-entry--runspace {
+  color: var(--color-text-muted);
+}
+
+.log-entry--safety {
+  color: var(--color-danger);
+}
