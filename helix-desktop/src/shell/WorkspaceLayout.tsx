@@ -84,14 +84,19 @@ export const DEFAULT_LAYOUT: LayoutBase = {
         ],
       },
       {
-        // Right sidebar: Trend Explorer
+        // Right sidebar: Trend Explorer + default Chart Panel
         mode: 'vertical',
         size: 200,
         children: [
           {
-            id: 'panel-right',
+            id: 'panel-right-top',
             tabs: [{ id: 'trend-explorer' }],
             activeId: 'trend-explorer',
+          },
+          {
+            id: 'panel-right-bottom',
+            tabs: [{ id: 'chart-0' }],
+            activeId: 'chart-0',
           },
         ],
       },
@@ -207,6 +212,18 @@ export const WorkspaceLayout = React.forwardRef<WorkspaceLayoutHandle, Workspace
           group: 'main',
           closable: false,
         }),
+        'chart-0': (): TabData => ({
+          id: 'chart-0',
+          title: 'Chart',
+          content: (
+            <ChartPanel
+              initialTrendName={undefined}
+              trendValues={props.trendValues}
+            />
+          ),
+          group: 'main',
+          closable: false,
+        }),
       }),
       [
         props.baseUrl,
@@ -214,10 +231,22 @@ export const WorkspaceLayout = React.forwardRef<WorkspaceLayoutHandle, Workspace
         props.runspaceEvents,
         props.safetyEvents,
         props.onWorkflowExport,
+        props.trendValues,
         trendNames,
         openDeviceTab,
       ]
     );
+
+    // Push updated streaming content into already-docked tabs.
+    // rc-dock stores TabData.content in its own state at mount time and doesn't
+    // re-call loadTab when parent props change — updateTab is the only way to refresh.
+    useEffect(() => {
+      if (!dockRef.current) return;
+      dockRef.current.updateTab('output', tabRegistry['output'](), false);
+      dockRef.current.updateTab('safety-log', tabRegistry['safety-log'](), false);
+      dockRef.current.updateTab('execution-panel', tabRegistry['execution-panel'](), false);
+      dockRef.current.updateTab('chart-0', tabRegistry['chart-0'](), false);
+    }, [tabRegistry]);
 
     useImperativeHandle(ref, () => ({
       saveLayout(): LayoutBase {

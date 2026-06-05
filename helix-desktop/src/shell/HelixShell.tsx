@@ -1,5 +1,5 @@
 import './shell.css';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { DEFAULT_CONNECTION } from '../types/agent';
 import type { AgentConnection, WslDocument } from '../types/agent';
 import { useAgentHealth } from '../hooks/useAgentHealth';
@@ -43,6 +43,13 @@ export default function HelixShell() {
 
   // --- Workspace layout persistence ---
   const { saveLayout, loadLayouts, listLayoutNames } = useWorkspaceLayouts();
+
+  // Load saved layout names on mount so the Load dropdown is populated after restart
+  useEffect(() => {
+    void listLayoutNames().then(setSavedLayoutNames).catch(() => {});
+  // listLayoutNames is a stable function reference from the hook
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // --- DockLayout handle ---
   const workspaceRef = useRef<WorkspaceLayoutHandle>(null);

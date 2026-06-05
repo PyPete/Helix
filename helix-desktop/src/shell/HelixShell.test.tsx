@@ -14,6 +14,7 @@ vi.mock('rc-dock', () => {
     saveLayout: vi.fn().mockReturnValue({ dockbox: { mode: 'horizontal', children: [] } }),
     loadLayout: vi.fn(),
     dockMove: vi.fn(),
+    updateTab: vi.fn(),
     getLayout: vi.fn().mockReturnValue({ dockbox: { mode: 'horizontal', children: [] } }),
   };
 
