@@ -304,21 +304,25 @@ export const WorkspaceLayout = React.forwardRef<WorkspaceLayoutHandle, Workspace
     }
 
     return (
-      <DockLayout
-        ref={dockRef}
-        // LayoutBase is compatible with LayoutData for defaultLayout (rc-dock materialises it)
-        defaultLayout={DEFAULT_LAYOUT as LayoutData}
-        groups={PANEL_GROUPS}
-        saveTab={saveTab}
-        loadTab={loadTab}
-        style={{ position: 'absolute', inset: 0 }}
-        data-testid="dock-layout"
-      />
+      <div style={{ flex: '1 1 0', position: 'relative', minWidth: 0, minHeight: 0, overflow: 'hidden' }}>
+        <DockLayout
+          ref={dockRef}
+          // LayoutBase is compatible with LayoutData for defaultLayout (rc-dock materialises it)
+          defaultLayout={DEFAULT_LAYOUT as LayoutData}
+          groups={PANEL_GROUPS}
+          saveTab={saveTab}
+          loadTab={loadTab}
+          style={{ position: 'absolute', inset: 0, overflow: 'hidden' }}
+          data-testid="dock-layout"
+        />
+      </div>
     );
   }
 );
 
 WorkspaceLayout.displayName = 'WorkspaceLayout';
+
+
 
 
 
