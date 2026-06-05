@@ -324,6 +324,14 @@ export const WorkspaceLayout = React.forwardRef<WorkspaceLayoutHandle, Workspace
         '.dock-tab-close-btn { color: #a090e0 !important; }',
       ].join('\n');
       document.head.appendChild(el);
+      // diagnostic: log dock-layout computed height
+      setTimeout(() => {
+        const dl = document.querySelector('.dock-layout') as HTMLElement;
+        console.log('[helix-dock] .dock-layout dimensions:', dl?.offsetWidth, 'x', dl?.offsetHeight, '| style:', dl?.getAttribute('style'));
+        console.log('[helix-dock] .dock-panel count:', document.querySelectorAll('.dock-panel').length);
+        const panel = document.querySelector('.dock-panel') as HTMLElement;
+        console.log('[helix-dock] first panel computed bg:', panel ? getComputedStyle(panel).background : 'N/A');
+      }, 500);
     }, []);
 
     return (
