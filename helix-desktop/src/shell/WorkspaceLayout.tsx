@@ -308,14 +308,12 @@ export const WorkspaceLayout = React.forwardRef<WorkspaceLayoutHandle, Workspace
       const el = document.createElement('style');
       el.id = id;
       el.textContent = [
-        '/* DIAGNOSTIC: bright colours to confirm injection */',
-        '.dock-layout { flex: 1 !important; outline: 4px solid orange !important; }',
-        '.dock-panel { background: hotpink !important; color: black !important; border: 3px solid red !important; }',
-        '.dock-bar, .dock-top .dock-bar, .dock-panel .dock-bar { background: lime !important; border-bottom: 3px solid yellow !important; }',
-        '.dock-tab { background: yellow !important; color: black !important; }',
-        '.dock-tab-active, .dock-tab-active:hover { background: cyan !important; color: black !important; }',
-        '.dock-tabpane, .dock-content, .dock-content-holder { background: lightblue !important; }',
-        '.dock-divider { background: orange !important; flex: 0 0 10px !important; }',
+        '.dock-layout { flex: 1 !important; }',        '.dock-panel { background: #252535 !important; color: #cdd6f4 !important; border: 1px solid #3a3a52 !important; border-radius: 4px !important; }',        '.dock-bar, .dock-top .dock-bar, .dock-panel .dock-bar { background: #1e1e2e !important; border-bottom: 1px solid #3a3a52 !important; padding-left: 4px !important; }',        '.dock-tab { background: transparent !important; color: #cdd6f4 !important; border-bottom: none !important; }',
+        '.dock-tab > div { color: inherit !important; padding: 4px 12px !important; }',
+        '.dock-tab:hover { color: #cdd6f4 !important; background: #2e2e42 !important; }',        '.dock-tab-active, .dock-tab-active:hover { color: #9d7fff !important; background: #252535 !important; border-top: 2px solid #9d7fff !important; }',
+        '.dock-ink-bar { background-color: #9d7fff !important; }',        '.dock-tabpane, .dock-content, .dock-content-holder { background: #252535 !important; color: #cdd6f4 !important; }',        '.dock-layout, .dock-box, .dock-hbox, .dock-vbox { background: #1e1e2e !important; }',        '.dock-divider { background: #3a3a52 !important; flex: 0 0 5px !important; }',
+        '.dock-divider:hover { background: #9d7fff !important; }',        '.dock-panel-max-btn, .dock-panel-min-btn { color: #7e8ba8 !important; }',
+        '.dock-tab-close-btn { color: #7e8ba8 !important; }',
       ].join('\n');
       document.head.appendChild(el);
     }, []);
