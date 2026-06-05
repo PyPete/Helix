@@ -21,10 +21,12 @@
   border-radius: var(--radius-sm);
 }
 
-/* -- Tab bar -- */
-.dock-bar {
+/* -- Tab bar — must beat .dock-top .dock-bar { background:#fafafd } in rc-dock -- */
+.dock-bar,
+.dock-top .dock-bar {
   background: var(--color-surface);
   border-bottom: 1px solid var(--color-border);
+  padding-left: 0;
 }
 
 /* -- Individual tab — override rc-dock default background:#fafafd -- */
@@ -138,3 +140,4 @@
   background: transparent;
   border-bottom: 1px solid var(--color-border);
 }
+
