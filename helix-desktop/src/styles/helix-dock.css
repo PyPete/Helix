@@ -1,84 +1,74 @@
-﻿/* helix-dock.css — Helix accent overrides on top of rc-dock-dark.css */
-/* rc-dock-dark.css provides the dark theme base (#141414 panels, white text) */
-/* We only need to: tint backgrounds to match Helix palette + swap blue -> purple accent */
+﻿/* helix-dock.css — forced dark overrides for rc-dock, loaded after rc-dock-dark.css */
 
-/* -- Sizing: dock-layout must fill its flex container -- */
+/* -- Sizing -- */
 .dock-layout {
-  flex: 1;
-  height: 100%;
+  flex: 1 !important;
+  height: 100% !important;
 }
 
-/* -- Tint panel/bar backgrounds to Helix dark palette -- */
+/* -- Panel backgrounds -- */
 .dock-panel {
-  background: var(--color-surface);
-  border-color: var(--color-border);
+  background: var(--color-surface) !important;
+  color: var(--color-text) !important;
+  border: 1px solid var(--color-border) !important;
 }
 
+/* -- Tab bar -- */
 .dock-bar,
 .dock-top .dock-bar {
-  background: var(--color-surface);
-  border-bottom-color: var(--color-border);
+  background: var(--color-surface) !important;
+  border-bottom: 1px solid var(--color-border) !important;
 }
 
+/* -- Individual tabs -- */
 .dock-tab {
-  background: var(--color-surface);
-  color: var(--color-text-muted);
-  font-size: var(--text-sm);
-  font-family: var(--font-sans);
+  background: transparent !important;
+  color: var(--color-text-muted) !important;
+  font-size: var(--text-sm) !important;
+  font-family: var(--font-sans) !important;
+}
+
+.dock-tab > div {
+  color: inherit !important;
 }
 
 .dock-tab:hover {
-  color: var(--color-text);
-  background: var(--color-surface-overlay);
+  color: var(--color-text) !important;
+  background: var(--color-surface-overlay) !important;
 }
 
-/* Override rc-dock-dark's blue #108ee9 active tab with our purple */
 .dock-tab-active,
 .dock-tab-active:hover {
   color: var(--color-primary) !important;
+  background: var(--color-bg) !important;
 }
 
+/* -- Ink bar -- */
 .dock-ink-bar {
   background-color: var(--color-primary) !important;
 }
 
-/* Tab pane and content background */
+/* -- Content areas -- */
 .dock-tabpane,
 .dock-content,
 .dock-content-holder {
-  background: var(--color-surface);
+  background: var(--color-surface) !important;
+  color: var(--color-text) !important;
 }
 
-/* Dividers — override rc-dock transparent default */
+/* -- Layout and box containers -- */
+.dock-layout,
+.dock-box,
+.dock-hbox,
+.dock-vbox {
+  background: var(--color-bg) !important;
+}
+
+/* -- Dividers -- */
 .dock-divider {
   background: var(--color-border) !important;
   flex: 0 0 5px !important;
 }
 .dock-divider:hover {
   background: var(--color-primary) !important;
-}
-
-/* Box containers */
-.dock-layout,
-.dock-box,
-.dock-hbox,
-.dock-vbox {
-  background: var(--color-bg);
-}
-
-/* Panel buttons */
-.dock-panel-max-btn:before,
-.dock-panel-min-btn:before {
-  border-color: var(--color-text-muted);
-}
-
-/* Drop indicators - swap blue to purple */
-.dock-layout > .dock-drop-indicator {
-  border-color: var(--color-primary);
-  background: var(--color-primary-dim);
-}
-
-.dock-drop-layer .dock-drop-square-dropping {
-  background: var(--color-primary-dim);
-  color: var(--color-text);
 }
