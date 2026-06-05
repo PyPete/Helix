@@ -310,18 +310,18 @@ export const WorkspaceLayout = React.forwardRef<WorkspaceLayoutHandle, Workspace
       el.id = id;
       el.textContent = [
         '.dock-layout { flex: 1 !important; }',
-        '.dock-layout, .dock-box, .dock-hbox, .dock-vbox { background: #1e1e2e !important; }',
-        '.dock-panel { background: #252535 !important; color: #cdd6f4 !important; border: 1px solid #3a3a52 !important; border-radius: 4px !important; }',
-        '.dock-bar, .dock-top .dock-bar, .dock-panel .dock-bar { background: #1e1e2e !important; border-bottom: 1px solid #3a3a52 !important; padding-left: 4px !important; }',
-        '.dock-tab { background: transparent !important; color: #cdd6f4 !important; border-bottom: none !important; }',
+        '.dock-layout, .dock-box, .dock-hbox, .dock-vbox { background: #14142a !important; }',
+        '.dock-panel { background: #2a2a45 !important; color: #ffffff !important; border: 2px solid #5050a0 !important; border-radius: 4px !important; }',
+        '.dock-bar, .dock-top .dock-bar, .dock-panel .dock-bar { background: #1e1e38 !important; border-bottom: 2px solid #5050a0 !important; padding-left: 4px !important; }',
+        '.dock-tab { background: transparent !important; color: #ffffff !important; border-bottom: none !important; }',
         '.dock-tab > div { color: inherit !important; padding: 4px 12px !important; }',
-        '.dock-tab:hover { color: #cdd6f4 !important; background: #2e2e42 !important; }',
-        '.dock-tab-active, .dock-tab-active:hover { color: #9d7fff !important; background: #252535 !important; border-top: 2px solid #9d7fff !important; }',
+        '.dock-tab:hover { color: #ffffff !important; background: #35355a !important; }',
+        '.dock-tab-active, .dock-tab-active:hover { color: #b090ff !important; background: #2a2a45 !important; border-top: 3px solid #b090ff !important; }',
         '.dock-ink-bar { display: none !important; }',
-        '.dock-tabpane, .dock-content, .dock-content-holder { background: #252535 !important; color: #cdd6f4 !important; }',
-        '.dock-divider { background: #3a3a52 !important; flex: 0 0 5px !important; }',
-        '.dock-divider:hover { background: #9d7fff !important; }',
-        '.dock-tab-close-btn { color: #7e8ba8 !important; }',
+        '.dock-tabpane, .dock-content, .dock-content-holder { background: #2a2a45 !important; color: #ffffff !important; }',
+        '.dock-divider { background: #5050a0 !important; flex: 0 0 6px !important; }',
+        '.dock-divider:hover { background: #b090ff !important; }',
+        '.dock-tab-close-btn { color: #a0a0d0 !important; }',
       ].join('\n');
       document.head.appendChild(el);
 
