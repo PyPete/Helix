@@ -1,6 +1,6 @@
 ﻿import '../styles/helix-dock.css';
 
-import React, { useRef, useImperativeHandle, useMemo, useCallback } from 'react';
+import React, { useRef, useImperativeHandle, useMemo, useCallback, useEffect } from 'react';
 import DockLayout from 'rc-dock';
 import type { LayoutBase, LayoutData, TabData, TabBase, TabGroup } from 'rc-dock';
 import type { RunspaceEvent, TrendValue, SafetyEvent, WslDocument } from '../types/agent';
@@ -302,18 +302,38 @@ export const WorkspaceLayout = React.forwardRef<WorkspaceLayoutHandle, Workspace
       };
     }
 
+    useEffect(() => {
+      const id = 'helix-dock-styles';
+      if (document.getElementById(id)) return;
+      const el = document.createElement('style');
+      el.id = id;
+      el.textContent = [
+        '.dock-layout { flex: 1 !important; }',
+        '.dock-panel { background: #252535 !important; color: #cdd6f4 !important; border: 1px solid #3a3a52 !important; }',
+        '.dock-bar, .dock-top .dock-bar, .dock-panel .dock-bar { background: #1e1e2e !important; border-bottom: 1px solid #3a3a52 !important; }',
+        '.dock-tab { background: transparent !important; color: #7e8ba8 !important; border-bottom: none !important; }',
+        '.dock-tab > div { color: inherit !important; }',
+        '.dock-tab:hover { color: #cdd6f4 !important; background: #2e2e42 !important; }',
+        '.dock-tab-active, .dock-tab-active:hover { color: #9d7fff !important; }',
+        '.dock-ink-bar { background-color: #9d7fff !important; }',
+        '.dock-tabpane, .dock-content, .dock-content-holder { background: #252535 !important; }',
+        '.dock-layout, .dock-box, .dock-hbox, .dock-vbox { background: #1e1e2e !important; }',
+        '.dock-divider { background: #3a3a52 !important; flex: 0 0 5px !important; }',
+        '.dock-divider:hover { background: #9d7fff !important; }',
+      ].join('\n');
+      document.head.appendChild(el);
+    }, []);
+
     return (
-      <div style={{ flex: '1 1 0', minWidth: 0, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        <DockLayout
-          ref={dockRef}
-          defaultLayout={DEFAULT_LAYOUT as LayoutData}
-          groups={PANEL_GROUPS}
-          saveTab={saveTab}
-          loadTab={loadTab}
-          style={{ flex: 1, overflow: 'hidden' }}
-          data-testid="dock-layout"
-        />
-      </div>
+      <DockLayout
+        ref={dockRef}
+        defaultLayout={DEFAULT_LAYOUT as LayoutData}
+        groups={PANEL_GROUPS}
+        saveTab={saveTab}
+        loadTab={loadTab}
+        style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}
+        data-testid="dock-layout"
+      />
     );
   }
 );
