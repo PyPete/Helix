@@ -4,6 +4,8 @@
 /* -- Root layout container -- */
 .dock-layout {
   background: var(--color-bg);
+  flex: 1;
+  height: 100%;
 }
 
 /* -- Box containers -- */

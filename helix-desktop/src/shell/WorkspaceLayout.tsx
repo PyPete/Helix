@@ -304,15 +304,14 @@ export const WorkspaceLayout = React.forwardRef<WorkspaceLayoutHandle, Workspace
     }
 
     return (
-      <div style={{ flex: '1 1 0', position: 'relative', minWidth: 0, minHeight: 0, overflow: 'hidden' }}>
+      <div style={{ flex: '1 1 0', minWidth: 0, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         <DockLayout
           ref={dockRef}
-          // LayoutBase is compatible with LayoutData for defaultLayout (rc-dock materialises it)
           defaultLayout={DEFAULT_LAYOUT as LayoutData}
           groups={PANEL_GROUPS}
           saveTab={saveTab}
           loadTab={loadTab}
-          style={{ position: 'absolute', inset: 0, overflow: 'hidden' }}
+          style={{ flex: 1, height: 0, overflow: 'hidden' }}
           data-testid="dock-layout"
         />
       </div>
