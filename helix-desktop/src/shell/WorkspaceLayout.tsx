@@ -309,34 +309,38 @@ export const WorkspaceLayout = React.forwardRef<WorkspaceLayoutHandle, Workspace
       const el = document.createElement('style');
       el.id = id;
       el.textContent = [
-        '.dock-layout { flex: 1 !important; }',
-        '.dock-layout, .dock-box, .dock-hbox, .dock-vbox { background: #14142a !important; }',
-        '.dock-panel { background: #2a2a45 !important; color: #ffffff !important; border: 2px solid #5050a0 !important; border-radius: 4px !important; }',
-        '.dock-bar, .dock-top .dock-bar, .dock-panel .dock-bar { background: #1e1e38 !important; border-bottom: 2px solid #5050a0 !important; padding-left: 4px !important; }',
-        '.dock-tab { background: transparent !important; color: #ffffff !important; border-bottom: none !important; }',
+        /* panel body */
+        '.dock-panel { background: #252540 !important; color: #cdd6f4 !important; border: 1px solid #5a5aaa !important; border-radius: 3px !important; }',
+        /* tab bar — slightly darker than panel body */
+        '.dock-bar, .dock-top .dock-bar { background: #1a1a35 !important; border-bottom: 1px solid #5a5aaa !important; padding-left: 4px !important; }',
+        '.dock-tab { background: transparent !important; color: #7e8ba8 !important; }',
         '.dock-tab > div { color: inherit !important; padding: 4px 12px !important; }',
-        '.dock-tab:hover { color: #ffffff !important; background: #35355a !important; }',
-        '.dock-tab-active, .dock-tab-active:hover { color: #b090ff !important; background: #2a2a45 !important; border-top: 3px solid #b090ff !important; }',
+        '.dock-tab:hover { color: #cdd6f4 !important; background: #2e2e50 !important; }',
+        '.dock-tab-active > div, .dock-tab-active:hover > div { color: #cdd6f4 !important; }',
+        '.dock-tab-active { background: #252540 !important; border-top: 2px solid #9d7fff !important; }',
         '.dock-ink-bar { display: none !important; }',
-        '.dock-tabpane, .dock-content, .dock-content-holder { background: #2a2a45 !important; color: #ffffff !important; }',
-        '.dock-divider { background: #5050a0 !important; flex: 0 0 6px !important; }',
-        '.dock-divider:hover { background: #b090ff !important; }',
-        '.dock-tab-close-btn { color: #a0a0d0 !important; }',
+        '.dock-tabpane, .dock-content, .dock-content-holder { background: #252540 !important; color: #cdd6f4 !important; }',
+        '.dock-divider { background: #3a3a70 !important; flex: 0 0 4px !important; }',
+        '.dock-divider:hover { background: #9d7fff !important; }',
+        '.dock-tab-close-btn { color: #7e8ba8 !important; }',
+        '.dock-panel-max-btn { color: #7e8ba8 !important; }',
       ].join('\n');
       document.head.appendChild(el);
 
     }, []);
 
     return (
-      <DockLayout
-        ref={dockRef}
-        defaultLayout={DEFAULT_LAYOUT as LayoutData}
-        groups={PANEL_GROUPS}
-        saveTab={saveTab}
-        loadTab={loadTab}
-        style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}
-        data-testid="dock-layout"
-      />
+      <div style={{ flex: 1, minWidth: 0, position: 'relative', overflow: 'hidden' }}>
+        <DockLayout
+          ref={dockRef}
+          defaultLayout={DEFAULT_LAYOUT as LayoutData}
+          groups={PANEL_GROUPS}
+          saveTab={saveTab}
+          loadTab={loadTab}
+          style={{ position: 'absolute', inset: 0 }}
+          data-testid="dock-layout"
+        />
+      </div>
     );
   }
 );

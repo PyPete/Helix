@@ -1,10 +1,10 @@
----
+﻿---
 gsd_state_version: 1.0
 milestone: v0.2
 milestone_name: Production-Grade Platform
-current_phase: Phase 11 -- Ribbon + Docking Workspace Shell (not started)
-status: planning
-last_updated: "2026-06-04T12:16:03.357Z"
+current_phase: Phase 11 -- Ribbon + Docking Workspace Shell (planned)
+status: ready_to_execute
+last_updated: "2026-06-04T14:30:00.000Z"
 progress:
   total_phases: 9
   completed_phases: 0
@@ -59,8 +59,8 @@ See: .planning/PROJECT.md (updated 2026-05-26)
 | Phase 6.1 Plan 02 | Executed -- TS CapabilityDescriptor types, device-status WebSocket dispatch, DeviceManualControl panel (53/53 tests), SciChart wrapper placeholder complete |
 | Phase 6.2 Plan 01 | Executed -- DeviceActionNodeComponent (8th ReactFlow node type), PORT_COLOURS, DevicePalette, handleDrop, addDeviceActionNode, exportWsl Step mapping (62/62 tests) complete |
 | Phase 6.2 Plan 02 | Executed -- useNodeExecutionState hook, NodeTimingFooter on all 8 node types, WorkflowBuilder live execution wiring, EstimatedDurationMs C# + TS types (76/76 tests) complete |
-| Phase 6.3 Plan 01 | Executed -- DeviceEndpoints.cs execute-404 fix (C7/C9), CapabilityRegistryâ†’DeviceRegistry bridge in Program.cs (C4/C8), 6 new xUnit tests (588 pass) |
-| Phase 6.3 Plan 02 | Executed -- DeviceRegistry.tsx /healthâ†’/devices fix, mapDevicesToAdapters, 5 DeviceRegistry tests pass (C1) |
+| Phase 6.3 Plan 01 | Executed -- DeviceEndpoints.cs execute-404 fix (C7/C9), CapabilityRegistryÃ¢â€ â€™DeviceRegistry bridge in Program.cs (C4/C8), 6 new xUnit tests (588 pass) |
+| Phase 6.3 Plan 02 | Executed -- DeviceRegistry.tsx /healthÃ¢â€ â€™/devices fix, mapDevicesToAdapters, 5 DeviceRegistry tests pass (C1) |
 
 ---
 
@@ -118,7 +118,7 @@ See: .planning/PROJECT.md (updated 2026-05-26)
 
 ## Next Steps
 
-Milestone v0.2 started (2026-06-03). Defining requirements and roadmap. Phase 11 (Ribbon + Docking Workspace Shell) is the foundation — all UI work builds inside it.
+Milestone v0.2 started (2026-06-03). Defining requirements and roadmap. Phase 11 (Ribbon + Docking Workspace Shell) is the foundation â€” all UI work builds inside it.
 
 Run /gsd:discuss-phase 11 to start Phase 11 planning.
 
@@ -215,3 +215,4 @@ Run /gsd:discuss-phase 11 to start Phase 11 planning.
 - `Helix.Orchestration.Core/Capabilities/CapabilityDescriptor.cs` -- CapabilityDescriptor schema types (Phase 6.1)
 - `helix-desktop/src/components/DeviceManualControl/DeviceManualControl.tsx` -- schema-driven manual control panel (Phase 6.1)
 - `helix-desktop/src/components/charts/index.ts` -- SciChart wrapper re-export layer (Phase 6.1)
+

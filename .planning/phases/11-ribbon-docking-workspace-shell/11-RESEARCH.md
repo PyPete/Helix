@@ -1,4 +1,4 @@
-# Phase 11: Ribbon + Docking Workspace Shell - Research
+﻿# Phase 11: Ribbon + Docking Workspace Shell - Research
 
 **Researched:** 2026-06-04
 **Domain:** rc-dock, React IDE shell architecture, HTML5 DnD, Vitest class-component mocking
@@ -12,7 +12,7 @@
 ### Locked Decisions
 
 - **D-01:** Use `rc-dock` as docking and split-panel library.
-- **D-02:** Hardcoded `DEFAULT_LAYOUT` — left 220px, right 200px, bottom 140px, center flex-1.
+- **D-02:** Hardcoded `DEFAULT_LAYOUT` â€” left 220px, right 200px, bottom 140px, center flex-1.
 - **D-03:** CSS variable override layer (`helix-dock.css`) maps rc-dock class names to Helix CSS variables.
 - **D-04:** Big-bang replacement of App.tsx (wholesale rewrite).
 - **D-05:** Home and Devices ribbon tabs wired with real content; remaining tabs placeholder.
@@ -31,24 +31,24 @@
 
 ### Deferred Ideas (OUT OF SCOPE)
 
-- Multi-Mode Workflow Authoring — Phase 13
-- SciChart full integration — Phase 15
-- ReactFlow node canvas — Phase 14
-- Trend Explorer replay mode — Phase 17
-- Developer Debugger panel — Phase 16
+- Multi-Mode Workflow Authoring â€” Phase 13
+- SciChart full integration â€” Phase 15
+- ReactFlow node canvas â€” Phase 14
+- Trend Explorer replay mode â€” Phase 17
+- Developer Debugger panel â€” Phase 16
 </user_constraints>
 
 ---
 
 ## Summary
 
-Phase 11 replaces `App.tsx` with a VS-style IDE shell. The docking backbone is `rc-dock` v3.3.2 (the stable `latest` tag on npm resolves to `4.0.0-alpha.2` — but `3.3.2` is the last stable release; install with `rc-dock@3.3.2`). `DockLayout` is a **class component** — refs use `React.createRef<DockLayout>()` without `forwardRef`. The layout tree is a nested `BoxData` / `PanelData` structure passed as `defaultLayout`. Workspace state is read via `dockRef.current.getLayout()` and restored via `dockRef.current.loadLayout(saved)`. Layout serialization strips React content (functions are not JSON-serializable); `saveTab`/`loadTab` props are required to preserve tab identity across reloads.
+Phase 11 replaces `App.tsx` with a VS-style IDE shell. The docking backbone is `rc-dock` v3.3.2 (the stable `latest` tag on npm resolves to `4.0.0-alpha.2` â€” but `3.3.2` is the last stable release; install with `rc-dock@3.3.2`). `DockLayout` is a **class component** â€” refs use `React.createRef<DockLayout>()` without `forwardRef`. The layout tree is a nested `BoxData` / `PanelData` structure passed as `defaultLayout`. Workspace state is read via `dockRef.current.getLayout()` and restored via `dockRef.current.loadLayout(saved)`. Layout serialization strips React content (functions are not JSON-serializable); `saveTab`/`loadTab` props are required to preserve tab identity across reloads.
 
 CSS override is achieved by importing `rc-dock/dist/rc-dock.css` first, then `helix-dock.css` which reassigns colours and borders using the Helix CSS variables. All rc-dock visual classes are in the `dock-*` namespace and listed in detail below.
 
 The `useTrendRegistry` hook wraps `trendValues: TrendValue[]` from `useAgentWebSocket` and accumulates unique `trendName` strings into a `Set<string>` using `useRef` to avoid re-render on each incoming value, exposing a stable `string[]` via `useState`.
 
-HTML5 DnD and rc-dock's internal drag system operate on separate event paths — rc-dock uses pointer events and a custom `DragManager`, while HTML5 `draggable` uses native browser events. They do not conflict. Custom `onDrop` handlers on tab content divs work normally.
+HTML5 DnD and rc-dock's internal drag system operate on separate event paths â€” rc-dock uses pointer events and a custom `DragManager`, while HTML5 `draggable` uses native browser events. They do not conflict. Custom `onDrop` handlers on tab content divs work normally.
 
 **Primary recommendation:** Install `rc-dock@3.3.2`, use uncontrolled `defaultLayout` mode (not the controlled `layout` prop), wire all panels via `saveTab`/`loadTab` for layout persistence, and keep the entire shell outside rc-dock (titlebar, ribbon, activity bar, status bar as plain divs above/below `DockLayout`).
 
@@ -58,12 +58,12 @@ HTML5 DnD and rc-dock's internal drag system operate on separate event paths —
 
 | Capability | Primary Tier | Secondary Tier | Rationale |
 |------------|-------------|----------------|-----------|
-| Shell chrome (title, ribbon, activity bar, status) | Frontend (React) | — | Pure presentation; no data, no server |
-| rc-dock workspace | Frontend (React) | — | All layout is client-side state |
+| Shell chrome (title, ribbon, activity bar, status) | Frontend (React) | â€” | Pure presentation; no data, no server |
+| rc-dock workspace | Frontend (React) | â€” | All layout is client-side state |
 | Panel content (WorkflowBuilder, etc.) | Frontend (React) | API (backend data) | Components unchanged; only hosting changes |
 | useTrendRegistry accumulation | Frontend hook | WebSocket stream | Client-side Set accumulation from existing WS data |
-| Workspace layout persistence | Tauri plugin-store | — | Already pattern-matched in ConnectionConfig.tsx |
-| HTML5 DnD (Trend → Chart) | Browser/Frontend | — | Native events + React state only |
+| Workspace layout persistence | Tauri plugin-store | â€” | Already pattern-matched in ConnectionConfig.tsx |
+| HTML5 DnD (Trend â†’ Chart) | Browser/Frontend | â€” | Native events + React state only |
 
 ---
 
@@ -79,8 +79,8 @@ HTML5 DnD and rc-dock's internal drag system operate on separate event paths —
 ### Version Verification
 
 ```
-npm view rc-dock version          → 4.0.0-alpha.2 (dist-tag: latest = alpha!)
-npm view rc-dock@3.3.2 version    → 3.3.2 (last stable, published 2025-12-10)
+npm view rc-dock version          â†’ 4.0.0-alpha.2 (dist-tag: latest = alpha!)
+npm view rc-dock@3.3.2 version    â†’ 3.3.2 (last stable, published 2025-12-10)
 ```
 
 **Critical:** The npm `latest` tag currently resolves to `4.0.0-alpha.2`. Pin to `3.3.2` explicitly.
@@ -103,9 +103,9 @@ npm install rc-dock@3.3.2
 
 | Package | Registry | Age | Downloads | Source Repo | slopcheck | Disposition |
 |---------|----------|-----|-----------|-------------|-----------|-------------|
-| `rc-dock` | npm | ~7 yrs (2017) | ~13,700/wk | github.com/ticlo/rc-dock | OK (npm verified; slopcheck checked pypi only — npm existence confirmed via `npm view`) | Approved |
+| `rc-dock` | npm | ~7 yrs (2017) | ~13,700/wk | github.com/ticlo/rc-dock | OK (npm verified; slopcheck checked pypi only â€” npm existence confirmed via `npm view`) | Approved |
 
-`slopcheck` defaulted to PyPI check (not npm) and correctly reported `rc-dock` absent from PyPI — that is expected. The npm registry entry was confirmed directly via `npm view rc-dock@3.3.2`.
+`slopcheck` defaulted to PyPI check (not npm) and correctly reported `rc-dock` absent from PyPI â€” that is expected. The npm registry entry was confirmed directly via `npm view rc-dock@3.3.2`.
 
 **Packages removed due to slopcheck [SLOP] verdict:** none
 **Packages flagged as suspicious [SUS]:** none
@@ -117,25 +117,25 @@ npm install rc-dock@3.3.2
 ### System Architecture Diagram
 
 ```
-┌─ titlebar (30px) ──────────────────────────────────┐
-├─ ribbon-tabs (26px) ───────────────────────────────┤
-├─ ribbon-band (68px) ───────────────────────────────┤
-├─ workspace (flex-row, fill) ───────────────────────┤
-│  ┌─actbar─┐ ┌─ DockLayout (flex-1) ──────────────┐ │
-│  │ 40px   │ │  BoxData{mode:horizontal}           │ │
-│  │        │ │  ├─ PanelData{id:left, size:220}    │ │
-│  │        │ │  │   TabData{id:device-explorer}    │ │
-│  │        │ │  ├─ BoxData{mode:vertical, flex-1}  │ │
-│  │        │ │  │   ├─ PanelData{id:main-tabs}     │ │
-│  │        │ │  │   │   TabData{id:workflow-editor}│ │
-│  │        │ │  │   │   TabData{id:chart-*}        │ │
-│  │        │ │  │   └─ PanelData{id:bottom,sz:140} │ │
-│  │        │ │  │       TabData{id:output}         │ │
-│  │        │ │  └─ PanelData{id:right, size:200}   │ │
-│  └────────┘ │       TabData{id:trend-explorer}    │ │
-│             └────────────────────────────────────┘ │
-├─ statusbar (22px) ─────────────────────────────────┤
-└────────────────────────────────────────────────────┘
+â”Œâ”€ titlebar (30px) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”œâ”€ ribbon-tabs (26px) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤
+â”œâ”€ ribbon-band (68px) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤
+â”œâ”€ workspace (flex-row, fill) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤
+â”‚  â”Œâ”€actbarâ”€â” â”Œâ”€ DockLayout (flex-1) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â” â”‚
+â”‚  â”‚ 40px   â”‚ â”‚  BoxData{mode:horizontal}           â”‚ â”‚
+â”‚  â”‚        â”‚ â”‚  â”œâ”€ PanelData{id:left, size:220}    â”‚ â”‚
+â”‚  â”‚        â”‚ â”‚  â”‚   TabData{id:device-explorer}    â”‚ â”‚
+â”‚  â”‚        â”‚ â”‚  â”œâ”€ BoxData{mode:vertical, flex-1}  â”‚ â”‚
+â”‚  â”‚        â”‚ â”‚  â”‚   â”œâ”€ PanelData{id:main-tabs}     â”‚ â”‚
+â”‚  â”‚        â”‚ â”‚  â”‚   â”‚   TabData{id:workflow-editor}â”‚ â”‚
+â”‚  â”‚        â”‚ â”‚  â”‚   â”‚   TabData{id:chart-*}        â”‚ â”‚
+â”‚  â”‚        â”‚ â”‚  â”‚   â””â”€ PanelData{id:bottom,sz:140} â”‚ â”‚
+â”‚  â”‚        â”‚ â”‚  â”‚       TabData{id:output}         â”‚ â”‚
+â”‚  â”‚        â”‚ â”‚  â””â”€ PanelData{id:right, size:200}   â”‚ â”‚
+â”‚  â””â”€â”€â”€â”€â”€â”€â”€â”€â”˜ â”‚       TabData{id:trend-explorer}    â”‚ â”‚
+â”‚             â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜ â”‚
+â”œâ”€ statusbar (22px) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 ```
 
 Notes:
@@ -147,24 +147,24 @@ Notes:
 
 ```
 helix-desktop/src/
-├── shell/
-│   ├── Shell.tsx              # top-level composition root (replaces App.tsx role)
-│   ├── TitleBar.tsx           # 30px OS title bar
-│   ├── Ribbon.tsx             # ribbon-tabs + ribbon-band (68px)
-│   ├── ActivityBar.tsx        # 40px icon column
-│   ├── StatusBar.tsx          # 22px status strip
-│   ├── WorkspaceLayout.tsx    # DockLayout wrapper + DEFAULT_LAYOUT + ref + save/load
-│   └── shell.css              # shell chrome styles (non-rc-dock)
-├── hooks/
-│   ├── useTrendRegistry.ts    # NEW: accumulates trendName strings
-│   └── useWorkspaceLayout.ts  # NEW: LazyStore save/restore wrapper
-├── panels/
-│   ├── DeviceExplorerPanel.tsx
-│   ├── TrendExplorerPanel.tsx
-│   ├── ChartDockPanel.tsx
-│   ├── OutputPanel.tsx
-│   └── index.ts
-└── helix-dock.css             # rc-dock CSS variable overrides
+â”œâ”€â”€ shell/
+â”‚   â”œâ”€â”€ Shell.tsx              # top-level composition root (replaces App.tsx role)
+â”‚   â”œâ”€â”€ TitleBar.tsx           # 30px OS title bar
+â”‚   â”œâ”€â”€ Ribbon.tsx             # ribbon-tabs + ribbon-band (68px)
+â”‚   â”œâ”€â”€ ActivityBar.tsx        # 40px icon column
+â”‚   â”œâ”€â”€ StatusBar.tsx          # 22px status strip
+â”‚   â”œâ”€â”€ WorkspaceLayout.tsx    # DockLayout wrapper + DEFAULT_LAYOUT + ref + save/load
+â”‚   â””â”€â”€ shell.css              # shell chrome styles (non-rc-dock)
+â”œâ”€â”€ hooks/
+â”‚   â”œâ”€â”€ useTrendRegistry.ts    # NEW: accumulates trendName strings
+â”‚   â””â”€â”€ useWorkspaceLayout.ts  # NEW: LazyStore save/restore wrapper
+â”œâ”€â”€ panels/
+â”‚   â”œâ”€â”€ DeviceExplorerPanel.tsx
+â”‚   â”œâ”€â”€ TrendExplorerPanel.tsx
+â”‚   â”œâ”€â”€ ChartDockPanel.tsx
+â”‚   â”œâ”€â”€ OutputPanel.tsx
+â”‚   â””â”€â”€ index.ts
+â””â”€â”€ helix-dock.css             # rc-dock CSS variable overrides
 ```
 
 ### Pattern 1: DockLayout with defaultLayout (Uncontrolled)
@@ -177,7 +177,7 @@ import DockLayout from 'rc-dock';
 import type { LayoutBase } from 'rc-dock';
 import { useRef } from 'react';
 
-// DockLayout is a class component — use React.createRef or useRef<DockLayout>
+// DockLayout is a class component â€” use React.createRef or useRef<DockLayout>
 const dockRef = useRef<DockLayout>(null);
 
 // Retrieve layout for persistence:
@@ -270,31 +270,31 @@ Sizing: rc-dock treats `size` as a flex weight when in `horizontal`/`vertical` b
 
 ### Pattern 3: saveTab / loadTab for Layout Persistence
 
-rc-dock's serializer strips React content (`title`, `content`) — only `id` and structural fields survive. Use `saveTab`/`loadTab` to reconstruct content from a static registry:
+rc-dock's serializer strips React content (`title`, `content`) â€” only `id` and structural fields survive. Use `saveTab`/`loadTab` to reconstruct content from a static registry:
 
 ```typescript
 // Source: https://raw.githubusercontent.com/ticlo/rc-dock/master/src/Serializer.ts
 import type { TabData, TabBase } from 'rc-dock';
 
-// Static registry mapping id → full TabData factory
+// Static registry mapping id â†’ full TabData factory
 const TAB_REGISTRY: Record<string, () => TabData> = {
   'device-explorer': () => ({
     id: 'device-explorer',
-    title: '🖥 Devices',
+    title: 'ðŸ–¥ Devices',
     content: <DeviceExplorerPanel />,
     group: 'sidebar',
     closable: false,
   }),
   'trend-explorer': () => ({
     id: 'trend-explorer',
-    title: '📈 Trends',
+    title: 'ðŸ“ˆ Trends',
     content: <TrendExplorerPanel />,
     group: 'sidebar',
     closable: false,
   }),
   'workflow-editor': () => ({
     id: 'workflow-editor',
-    title: '⬡ Workflow Builder',
+    title: 'â¬¡ Workflow Builder',
     content: <WorkflowBuilder ... />,
     group: 'main',
     closable: true,
@@ -303,7 +303,7 @@ const TAB_REGISTRY: Record<string, () => TabData> = {
 };
 
 function saveTab(tab: TabData): TabBase {
-  // Only persist the id — content is not serializable
+  // Only persist the id â€” content is not serializable
   return { id: tab.id };
 }
 
@@ -335,7 +335,7 @@ function openChartPanel(trendName: string) {
   const id = `chart-${trendName}`;
   const newTab: TabData = {
     id,
-    title: `📈 ${trendName}`,
+    title: `ðŸ“ˆ ${trendName}`,
     content: <ChartDockPanel trendName={trendName} />,
     group: 'main',
     closable: true,
@@ -371,7 +371,7 @@ Groups control which panels can float, be maximized, or open as new windows. The
 ### Anti-Patterns to Avoid
 
 - **Using `layout` (controlled) prop instead of `defaultLayout`:** The controlled `layout` prop requires every `onLayoutChange` to sync back a new layout object. This causes unnecessary re-renders and complicates persistence. Use `defaultLayout` and read state imperatively via `getLayout()` only when saving.
-- **Calling `loadLayout()` on every render:** `loadLayout()` is a one-shot restore call. Never put it in `useEffect` without a guard — it fires the re-render cycle and can loop.
+- **Calling `loadLayout()` on every render:** `loadLayout()` is a one-shot restore call. Never put it in `useEffect` without a guard â€” it fires the re-render cycle and can loop.
 - **JSON.stringify(getLayout()) without saveTab/loadTab:** The raw `LayoutData` contains React elements which are not JSON serializable. Always use `saveLayout()` (which calls your `saveTab` hook and strips non-serializable fields) rather than `getLayout()` directly for persistence.
 - **Placing Ribbon / ActivityBar / StatusBar inside DockLayout:** These belong outside rc-dock as sibling divs. DockLayout should only own the panel workspace area.
 - **Hardcoding hex colors in helix-dock.css:** All color overrides must use `var(--color-*)`. No raw hex.
@@ -387,7 +387,7 @@ Groups control which panels can float, be maximized, or open as new windows. The
 | Layout serialization | manual JSON traversal | rc-dock `saveLayout()` + `loadTab` | Serializer handles float position, z-index, active tab, nested box modes |
 | Panel float window | HTML dialog/popup | rc-dock `floatbox` (mode: 'float') | rc-dock tracks z-order, resize handles, and window-mode (detached window) |
 
-**Key insight:** rc-dock's serialization model is intentionally thin — it only stores structural metadata, not React content. This is correct by design. The `saveTab`/`loadTab` bridge is the intended extension point; fighting it with custom serialization wastes effort and breaks upgradability.
+**Key insight:** rc-dock's serialization model is intentionally thin â€” it only stores structural metadata, not React content. This is correct by design. The `saveTab`/`loadTab` bridge is the intended extension point; fighting it with custom serialization wastes effort and breaks upgradability.
 
 ---
 
@@ -403,40 +403,40 @@ import 'rc-dock/dist/rc-dock.css';   /* base rc-dock styles */
 import './helix-dock.css';           /* Helix variable overrides */
 ```
 
-The dist folder ships `rc-dock.css` (light) and `rc-dock-dark.css` (dark base). Either can be imported — the Helix overrides will supersede theme colours regardless.
+The dist folder ships `rc-dock.css` (light) and `rc-dock-dark.css` (dark base). Either can be imported â€” the Helix overrides will supersede theme colours regardless.
 
 ### Complete class inventory for helix-dock.css
 
 ```css
-/* helix-dock.css — Helix CSS variable override layer for rc-dock */
+/* helix-dock.css â€” Helix CSS variable override layer for rc-dock */
 /* Source: ticlo/rc-dock style/panel.less + style/tabs.less */
 
-/* ── Root layout container ── */
+/* â”€â”€ Root layout container â”€â”€ */
 .dock-layout {
   background: var(--color-bg);
 }
 
-/* ── Box containers ── */
+/* â”€â”€ Box containers â”€â”€ */
 .dock-box,
 .dock-hbox,
 .dock-vbox {
   background: var(--color-bg);
 }
 
-/* ── Panel (dock-panel = a named panel that contains tabs) ── */
+/* â”€â”€ Panel (dock-panel = a named panel that contains tabs) â”€â”€ */
 .dock-panel {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
 }
 
-/* ── Tab bar (dock-bar = the horizontal strip of tab buttons) ── */
+/* â”€â”€ Tab bar (dock-bar = the horizontal strip of tab buttons) â”€â”€ */
 .dock-bar {
   background: var(--color-surface);
   border-bottom: 1px solid var(--color-border);
 }
 
-/* ── Individual tab ── */
+/* â”€â”€ Individual tab â”€â”€ */
 .dock-tab {
   color: var(--color-text-muted);
   font-size: var(--text-sm);
@@ -448,14 +448,14 @@ The dist folder ships `rc-dock.css` (light) and `rc-dock-dark.css` (dark base). 
   background: var(--color-surface-overlay);
 }
 
-/* ── Active tab (2px top border per design spec) ── */
+/* â”€â”€ Active tab (2px top border per design spec) â”€â”€ */
 .dock-tab-active {
   color: var(--color-text);
   background: var(--color-bg);
   border-top: 2px solid var(--color-primary);
 }
 
-/* ── Tab close button ── */
+/* â”€â”€ Tab close button â”€â”€ */
 .dock-tab-close-btn {
   color: var(--color-text-dim);
 }
@@ -463,12 +463,12 @@ The dist folder ships `rc-dock.css` (light) and `rc-dock-dark.css` (dark base). 
   color: var(--color-text);
 }
 
-/* ── Ink bar (active underline indicator — hide in favour of border-top) ── */
+/* â”€â”€ Ink bar (active underline indicator â€” hide in favour of border-top) â”€â”€ */
 .dock-ink-bar {
   display: none;
 }
 
-/* ── Tab pane content area ── */
+/* â”€â”€ Tab pane content area â”€â”€ */
 .dock-tabpane {
   background: var(--color-surface);
 }
@@ -477,7 +477,7 @@ The dist folder ships `rc-dock.css` (light) and `rc-dock-dark.css` (dark base). 
   background: var(--color-surface);
 }
 
-/* ── Divider/splitter ── */
+/* â”€â”€ Divider/splitter â”€â”€ */
 .dock-divider {
   background: var(--color-border);
   transition: background 0.12s;
@@ -486,7 +486,7 @@ The dist folder ships `rc-dock.css` (light) and `rc-dock-dark.css` (dark base). 
   background: var(--color-primary);
 }
 
-/* ── Drop indicators ── */
+/* â”€â”€ Drop indicators â”€â”€ */
 .dock-drop-square-box {
   border-color: var(--color-primary);
   background: var(--color-primary-dim);
@@ -497,7 +497,7 @@ The dist folder ships `rc-dock.css` (light) and `rc-dock-dark.css` (dark base). 
   opacity: 0.85;
 }
 
-/* ── Panel max/min buttons ── */
+/* â”€â”€ Panel max/min buttons â”€â”€ */
 .dock-panel-max-btn,
 .dock-panel-min-btn {
   color: var(--color-text-muted);
@@ -507,13 +507,13 @@ The dist folder ships `rc-dock.css` (light) and `rc-dock-dark.css` (dark base). 
   color: var(--color-text);
 }
 
-/* ── Floating panel ── */
+/* â”€â”€ Floating panel â”€â”€ */
 .dock-fbox .dock-panel {
   box-shadow: var(--shadow-lg);
   border-color: var(--color-border-strong);
 }
 
-/* ── Predefined panel style: headless (used for sidebars with no visible tab bar by default) ── */
+/* â”€â”€ Predefined panel style: headless (used for sidebars with no visible tab bar by default) â”€â”€ */
 .dock-style-headless .dock-bar {
   opacity: 0;
   height: 20px;
@@ -524,7 +524,7 @@ The dist folder ships `rc-dock.css` (light) and `rc-dock-dark.css` (dark base). 
   height: 31px;
 }
 
-/* ── Predefined panel style: main (used for document tab area) ── */
+/* â”€â”€ Predefined panel style: main (used for document tab area) â”€â”€ */
 .dock-style-main .dock-bar {
   background: transparent;
   border-bottom: 1px solid var(--color-border);
@@ -567,7 +567,7 @@ export function useTrendRegistry(trendValues: TrendValue[]): string[] {
       // Snapshot the Set into a stable sorted array
       setTrendNames(Array.from(seenRef.current).sort());
     }
-    // trendValues is the only dep — seenRef is stable by design
+    // trendValues is the only dep â€” seenRef is stable by design
   }, [trendValues]);
 
   return trendNames;
@@ -590,7 +590,7 @@ const trendNames = useTrendRegistry(trendValues);
 
 ### Conflict Analysis
 
-rc-dock's internal drag system uses `pointer events` via its own `DragManager` (`src/dragdrop/`). HTML5 `draggable` uses the native browser drag-and-drop event API (`dragstart`, `dragover`, `drop`). These are **separate event systems** — pointer events do not fire during a native drag, and native drag events do not fire during pointer-event drag sequences. There is no known conflict.
+rc-dock's internal drag system uses `pointer events` via its own `DragManager` (`src/dragdrop/`). HTML5 `draggable` uses the native browser drag-and-drop event API (`dragstart`, `dragover`, `drop`). These are **separate event systems** â€” pointer events do not fire during a native drag, and native drag events do not fire during pointer-event drag sequences. There is no known conflict.
 
 **Confirmed pattern (D-08):**
 - Trend Explorer items: `<div draggable onDragStart={...}>`
@@ -600,7 +600,7 @@ rc-dock's internal drag system uses `pointer events` via its own `DragManager` (
 ### DnD Wire-up Pattern
 
 ```typescript
-// TrendExplorerPanel.tsx — draggable items
+// TrendExplorerPanel.tsx â€” draggable items
 function TrendItem({ name }: { name: string }) {
   function handleDragStart(e: React.DragEvent) {
     e.dataTransfer.setData('text/x-trend-name', name);
@@ -619,7 +619,7 @@ function TrendItem({ name }: { name: string }) {
 ```
 
 ```typescript
-// ChartDockPanel.tsx — drop zone wrapping chart content
+// ChartDockPanel.tsx â€” drop zone wrapping chart content
 interface ChartDockPanelProps {
   trendName?: string;          // initial trend (from tab id)
   onAddTrend: (name: string) => void;
@@ -660,7 +660,7 @@ function ChartDockPanel({ trendName, onAddTrend }: ChartDockPanelProps) {
 }
 ```
 
-**Note:** The `onDrop` handler lives on the **content element inside the rc-dock panel**, not on a rc-dock panel prop. rc-dock has no built-in `onDrop` prop — the content is a React element you own entirely.
+**Note:** The `onDrop` handler lives on the **content element inside the rc-dock panel**, not on a rc-dock panel prop. rc-dock has no built-in `onDrop` prop â€” the content is a React element you own entirely.
 
 ---
 
@@ -742,7 +742,7 @@ This is sufficient for unit tests of the save/load logic. Integration tests (whi
 
 ## Common Pitfalls
 
-### Pitfall 1: npm latest → alpha
+### Pitfall 1: npm latest â†’ alpha
 
 **What goes wrong:** `npm install rc-dock` installs `4.0.0-alpha.2` (the current `latest` dist-tag is pointing at an alpha). The alpha has breaking API changes from `3.3.2`.
 
@@ -756,9 +756,9 @@ This is sufficient for unit tests of the save/load logic. Integration tests (whi
 
 **What goes wrong:** Calling `JSON.stringify(dockRef.current!.getLayout())` throws `TypeError: Converting circular structure to JSON` because `LayoutData` contains `parent` back-references and React element objects.
 
-**Why it happens:** `getLayout()` returns the live `LayoutData` which has circular parent→child references and React elements in `TabData.content`.
+**Why it happens:** `getLayout()` returns the live `LayoutData` which has circular parentâ†’child references and React elements in `TabData.content`.
 
-**How to avoid:** Use `saveLayout()` (not `getLayout()`) for persistence — it calls your `saveTab` hook and strips non-serializable fields. Then `JSON.stringify(dockRef.current!.saveLayout())`.
+**How to avoid:** Use `saveLayout()` (not `getLayout()`) for persistence â€” it calls your `saveTab` hook and strips non-serializable fields. Then `JSON.stringify(dockRef.current!.saveLayout())`.
 
 **Warning signs:** JSON serialization errors when clicking Save Layout.
 
@@ -776,7 +776,7 @@ This is sufficient for unit tests of the save/load logic. Integration tests (whi
 
 **What goes wrong:** Helix CSS variable overrides are overridden by rc-dock's own styles.
 
-**Why it happens:** If `helix-dock.css` is imported before `rc-dock/dist/rc-dock.css`, the specificity battle is lost — rc-dock's rules come after and win.
+**Why it happens:** If `helix-dock.css` is imported before `rc-dock/dist/rc-dock.css`, the specificity battle is lost â€” rc-dock's rules come after and win.
 
 **How to avoid:** Always import `rc-dock/dist/rc-dock.css` first, then `helix-dock.css`. In the workspace component file, the import order is the cascade order.
 
@@ -798,7 +798,7 @@ This is sufficient for unit tests of the save/load logic. Integration tests (whi
 
 **Why it happens:** `useAgentWebSocket` creates a new array with spread (`[...prev.slice(-200), frame]`), so every message produces a new reference.
 
-**How to avoid:** This is expected — the `useEffect` in `useTrendRegistry` runs on each new `trendValues` array, but only calls `setTrendNames` when new names are found. The `Set` in `useRef` makes the scan O(n) per message but the state update O(1) for duplicates. No optimization needed at typical WS rates.
+**How to avoid:** This is expected â€” the `useEffect` in `useTrendRegistry` runs on each new `trendValues` array, but only calls `setTrendNames` when new names are found. The `Set` in `useRef` makes the scan O(n) per message but the state update O(1) for duplicates. No optimization needed at typical WS rates.
 
 ---
 
@@ -844,7 +844,7 @@ interface TabBase {
 export interface LayoutProps {
   dockId?: string;
   defaultLayout?: LayoutData;
-  layout?: LayoutBase;           // controlled mode — avoid for this phase
+  layout?: LayoutBase;           // controlled mode â€” avoid for this phase
   groups?: {[key: string]: TabGroup};
   onLayoutChange?(newLayout: LayoutBase, currentTabId?: string, direction?: DropDirection): void;
   dropMode?: 'default' | 'edge';
@@ -896,14 +896,14 @@ dockRef.current?.dockMove(source, target, direction);
 
 | # | Claim | Section | Risk if Wrong |
 |---|-------|---------|---------------|
-| A1 | rc-dock `3.3.2` is the last stable release; `4.0.0-alpha.2` is the npm `latest` tag | Standard Stack | Low — confirmed via `npm view rc-dock dist-tags` |
-| A2 | HTML5 DnD and rc-dock pointer-event drag system do not conflict | HTML5 DnD section | Medium — if conflict found, add `e.stopPropagation()` on dragstart from inside dock panel content |
-| A3 | `DockLayout.saveLayout()` strips React elements and circular refs (thus safe for JSON.stringify) | Pattern 3 / Pitfall 2 | High — if wrong, persistence will throw at runtime; fallback: manual traversal stripping `content`/`parent` fields |
-| A4 | `loadLayout()` does not trigger `onLayoutChange` | Pitfall 3 | Low — documented in API; verified in source read |
+| A1 | rc-dock `3.3.2` is the last stable release; `4.0.0-alpha.2` is the npm `latest` tag | Standard Stack | Low â€” confirmed via `npm view rc-dock dist-tags` |
+| A2 | HTML5 DnD and rc-dock pointer-event drag system do not conflict | HTML5 DnD section | Medium â€” if conflict found, add `e.stopPropagation()` on dragstart from inside dock panel content |
+| A3 | `DockLayout.saveLayout()` strips React elements and circular refs (thus safe for JSON.stringify) | Pattern 3 / Pitfall 2 | High â€” if wrong, persistence will throw at runtime; fallback: manual traversal stripping `content`/`parent` fields |
+| A4 | `loadLayout()` does not trigger `onLayoutChange` | Pitfall 3 | Low â€” documented in API; verified in source read |
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **rc-dock 4.0.0-alpha API breakage**
    - What we know: `latest` on npm points to alpha; we pin `3.3.2`
@@ -921,12 +921,12 @@ dockRef.current?.dockMove(source, target, direction);
 
 | Dependency | Required By | Available | Version | Fallback |
 |------------|------------|-----------|---------|----------|
-| `rc-dock` | Docking workspace | Must install | `3.3.2` | — |
-| `@tauri-apps/plugin-store` | Layout persistence | Already installed | `2.4.3` | — |
-| Node.js / npm | Package install | Available | (project already building) | — |
+| `rc-dock` | Docking workspace | Must install | `3.3.2` | â€” |
+| `@tauri-apps/plugin-store` | Layout persistence | Already installed | `2.4.3` | â€” |
+| Node.js / npm | Package install | Available | (project already building) | â€” |
 
 **Missing dependencies with no fallback:**
-- `rc-dock` — not yet in `package.json`; must be installed before any implementation starts
+- `rc-dock` â€” not yet in `package.json`; must be installed before any implementation starts
 
 ---
 
@@ -941,28 +941,28 @@ dockRef.current?.dockMove(source, target, direction);
 | Quick run command | `npm test -- --run` |
 | Full suite command | `npm test` |
 
-### Phase Requirements → Test Map
+### Phase Requirements â†’ Test Map
 
 | Req ID | Behavior | Test Type | Automated Command | File Exists? |
 |--------|----------|-----------|-------------------|-------------|
-| H3/H4 | DEFAULT_LAYOUT renders correct panel structure | unit | `npm test -- --run useTrendRegistry` | No — Wave 0 |
-| H7 | useTrendRegistry accumulates unique trend names | unit | `npm test -- --run useTrendRegistry` | No — Wave 0 |
-| H7/D-08 | Trend DnD passes trendName via dataTransfer | unit | `npm test -- --run TrendExplorer` | No — Wave 0 |
-| H10 | useWorkspaceLayout: save calls getLayout + LazyStore.set | unit | `npm test -- --run useWorkspaceLayout` | No — Wave 0 |
-| H10 | useWorkspaceLayout: load calls LazyStore.get + loadLayout | unit | `npm test -- --run useWorkspaceLayout` | No — Wave 0 |
-| H11 | CSS variables used; no hardcoded hex in new files | lint/review | manual grep | No — Wave 0 |
+| H3/H4 | DEFAULT_LAYOUT renders correct panel structure | unit | `npm test -- --run useTrendRegistry` | No â€” Wave 0 |
+| H7 | useTrendRegistry accumulates unique trend names | unit | `npm test -- --run useTrendRegistry` | No â€” Wave 0 |
+| H7/D-08 | Trend DnD passes trendName via dataTransfer | unit | `npm test -- --run TrendExplorer` | No â€” Wave 0 |
+| H10 | useWorkspaceLayout: save calls getLayout + LazyStore.set | unit | `npm test -- --run useWorkspaceLayout` | No â€” Wave 0 |
+| H10 | useWorkspaceLayout: load calls LazyStore.get + loadLayout | unit | `npm test -- --run useWorkspaceLayout` | No â€” Wave 0 |
+| H11 | CSS variables used; no hardcoded hex in new files | lint/review | manual grep | No â€” Wave 0 |
 
 ### Wave 0 Gaps
 
-- [ ] `helix-desktop/src/hooks/useTrendRegistry.test.ts` — covers H7 accumulation logic
-- [ ] `helix-desktop/src/hooks/useWorkspaceLayout.test.ts` — covers H10 save/load; needs LazyStore mock (pattern from ConnectionConfig.test.tsx)
-- [ ] `helix-desktop/src/shell/WorkspaceLayout.test.tsx` — covers rc-dock ref mock pattern
+- [ ] `helix-desktop/src/hooks/useTrendRegistry.test.ts` â€” covers H7 accumulation logic
+- [ ] `helix-desktop/src/hooks/useWorkspaceLayout.test.ts` â€” covers H10 save/load; needs LazyStore mock (pattern from ConnectionConfig.test.tsx)
+- [ ] `helix-desktop/src/shell/WorkspaceLayout.test.tsx` â€” covers rc-dock ref mock pattern
 
 ---
 
 ## Security Domain
 
-`security_enforcement` not explicitly set in config.json — treated as enabled.
+`security_enforcement` not explicitly set in config.json â€” treated as enabled.
 
 ### Applicable ASVS Categories
 
@@ -971,7 +971,7 @@ dockRef.current?.dockMove(source, target, direction);
 | V2 Authentication | No | Phase 11 is UI shell only |
 | V3 Session Management | No | No session tokens in scope |
 | V4 Access Control | No | Single-user desktop app |
-| V5 Input Validation | Yes (low risk) | Trend names from WS frames — `trendName` is a string used as React key and data-transfer text only; no eval, no DOM injection |
+| V5 Input Validation | Yes (low risk) | Trend names from WS frames â€” `trendName` is a string used as React key and data-transfer text only; no eval, no DOM injection |
 | V6 Cryptography | No | Layout JSON stored locally via Tauri plugin-store |
 
 ### Known Threat Patterns for This Stack
@@ -987,18 +987,18 @@ dockRef.current?.dockMove(source, target, direction);
 
 ### Primary (HIGH confidence)
 
-- `github.com/ticlo/rc-dock` (master branch) — `src/DockData.ts`, `src/DockLayout.tsx`, `src/Serializer.ts`, `src/DockPanel.tsx`, `src/DockTabBar.tsx`, `src/DockBox.tsx`, `src/DockTabs.tsx`, `style/panel.less`, `style/tabs.less`, `style/predefined-panels.less` — all read directly via raw.githubusercontent.com
-- `npm view rc-dock@3.3.2` — version, peer deps, repository URL, publish date (2025-12-10)
-- `npm view rc-dock dist-tags` — confirmed alpha situation with latest tag
-- `api.npmjs.org/downloads/point/last-week/rc-dock` — 13,702 downloads/week
+- `github.com/ticlo/rc-dock` (master branch) â€” `src/DockData.ts`, `src/DockLayout.tsx`, `src/Serializer.ts`, `src/DockPanel.tsx`, `src/DockTabBar.tsx`, `src/DockBox.tsx`, `src/DockTabs.tsx`, `style/panel.less`, `style/tabs.less`, `style/predefined-panels.less` â€” all read directly via raw.githubusercontent.com
+- `npm view rc-dock@3.3.2` â€” version, peer deps, repository URL, publish date (2025-12-10)
+- `npm view rc-dock dist-tags` â€” confirmed alpha situation with latest tag
+- `api.npmjs.org/downloads/point/last-week/rc-dock` â€” 13,702 downloads/week
 
 ### Secondary (MEDIUM confidence)
 
-- `app.unpkg.com/rc-dock@3.3.2/files/dist` — confirmed dist CSS file names (`rc-dock.css`, `rc-dock-dark.css`)
+- `app.unpkg.com/rc-dock@3.3.2/files/dist` â€” confirmed dist CSS file names (`rc-dock.css`, `rc-dock-dark.css`)
 
 ### Tertiary (LOW confidence)
 
-- None — all critical claims verified against source code
+- None â€” all critical claims verified against source code
 
 ---
 
@@ -1006,11 +1006,12 @@ dockRef.current?.dockMove(source, target, direction);
 
 **Confidence breakdown:**
 
-- Standard stack: HIGH — npm registry + source code confirmed
-- Architecture: HIGH — class component pattern confirmed from source; LayoutBase types directly read
-- CSS classes: HIGH — read directly from LESS source files in GitHub repo
-- Pitfalls: MEDIUM — pitfall 2 (saveLayout vs getLayout) inferred from Serializer.ts source; pitfall 1 confirmed from dist-tags
-- DnD conflict analysis: MEDIUM — no conflict observed in source; pointer/native event separation is well-known browser behavior
+- Standard stack: HIGH â€” npm registry + source code confirmed
+- Architecture: HIGH â€” class component pattern confirmed from source; LayoutBase types directly read
+- CSS classes: HIGH â€” read directly from LESS source files in GitHub repo
+- Pitfalls: MEDIUM â€” pitfall 2 (saveLayout vs getLayout) inferred from Serializer.ts source; pitfall 1 confirmed from dist-tags
+- DnD conflict analysis: MEDIUM â€” no conflict observed in source; pointer/native event separation is well-known browser behavior
 
 **Research date:** 2026-06-04
 **Valid until:** 2026-07-04 (rc-dock is slow-moving; CSS classes are stable within a minor version)
+
