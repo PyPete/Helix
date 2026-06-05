@@ -1,4 +1,4 @@
-﻿import 'rc-dock/dist/rc-dock.css';
+﻿import 'rc-dock/dist/rc-dock-dark.css';
 import '../styles/helix-dock.css';
 
 import React, { useRef, useImperativeHandle, useMemo, useCallback } from 'react';
