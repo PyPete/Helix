@@ -1,37 +1,48 @@
-import { LazyStore } from "@tauri-apps/plugin-store";
 import type { LayoutBase } from "rc-dock";
 
-// Separate store file from helix-config.json (per D-10)
-const store = new LazyStore("workspace-layouts.json");
+const STORAGE_KEY = "helix:workspace-layouts";
 
-/**
- * Provides save/load/list operations for named workspace layouts,
- * persisted via Tauri plugin-store under key "workspace-layouts".
- */
-export function useWorkspaceLayouts() {
-  /**
-   * Save a named layout. Merges into existing stored layouts (does not overwrite).
-   */
-  const saveLayout = async (name: string, layout: LayoutBase): Promise<void> => {
-    const existing =
-      (await store.get<Record<string, LayoutBase>>("workspace-layouts")) ?? {};
-    existing[name] = layout;
-    await store.set("workspace-layouts", existing);
-    await store.save();
-  };
+// Use Tauri plugin-store when running inside the desktop app; fall back to
+// localStorage so save/load works during browser-based `npm run dev` sessions.
+const isTauri = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 
-  /**
-   * Load all saved layouts. Returns {} if none stored yet.
-   */
-  const loadLayouts = async (): Promise<Record<string, LayoutBase>> => {
+async function readStore(): Promise<Record<string, LayoutBase>> {
+  if (isTauri) {
+    const { LazyStore } = await import("@tauri-apps/plugin-store");
+    const store = new LazyStore("workspace-layouts.json");
     return (await store.get<Record<string, LayoutBase>>("workspace-layouts")) ?? {};
+  }
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "{}") as Record<string, LayoutBase>;
+  } catch {
+    return {};
+  }
+}
+
+async function writeStore(layouts: Record<string, LayoutBase>): Promise<void> {
+  if (isTauri) {
+    const { LazyStore } = await import("@tauri-apps/plugin-store");
+    const store = new LazyStore("workspace-layouts.json");
+    await store.set("workspace-layouts", layouts);
+    await store.save();
+    return;
+  }
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(layouts));
+}
+
+export function useWorkspaceLayouts() {
+  const saveLayout = async (name: string, layout: LayoutBase): Promise<void> => {
+    const existing = await readStore();
+    existing[name] = layout;
+    await writeStore(existing);
   };
 
-  /**
-   * List sorted names of all saved layouts.
-   */
+  const loadLayouts = async (): Promise<Record<string, LayoutBase>> => {
+    return readStore();
+  };
+
   const listLayoutNames = async (): Promise<string[]> => {
-    const layouts = await loadLayouts();
+    const layouts = await readStore();
     return Object.keys(layouts).sort();
   };
 
