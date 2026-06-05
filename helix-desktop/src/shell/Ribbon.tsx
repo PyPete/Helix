@@ -1,4 +1,4 @@
-import './Ribbon.css';
+﻿import './Ribbon.css';
 import { useState } from 'react';
 
 export type RibbonTab = 'Home' | 'Devices' | 'Trends' | 'Workflows' | 'Charts' | 'Developer' | 'Settings';
@@ -97,22 +97,18 @@ export function Ribbon({
                   className="ribbon-select"
                   data-testid="layout-load-select"
                   value={loadSelectValue}
-                  onChange={(e) => setLoadSelectValue(e.target.value)}
+                  onChange={(e) => {
+                    setLoadSelectValue(e.target.value);
+                    if (e.target.value) onLoadLayout(e.target.value);
+                  }}
                 >
-                  <option value="">-- select --</option>
+                  <option value="">-- load layout --</option>
                   {savedLayoutNames.map((name) => (
                     <option key={name} value={name}>
                       {name}
                     </option>
                   ))}
                 </select>
-                <button
-                  className="ribbon-btn"
-                  data-testid="ribbon-load-layout-btn"
-                  onClick={() => onLoadLayout(loadSelectValue)}
-                >
-                  Load
-                </button>
               </div>
               <span className="ribbon-group-label">Workspace</span>
             </div>
@@ -144,7 +140,7 @@ export function Ribbon({
             className="ribbon-band ribbon-band--empty"
             data-testid={`ribbon-band-${lowerTab}`}
           >
-            <span className="ribbon-band-coming-soon">— coming soon —</span>
+            <span className="ribbon-band-coming-soon">â€” coming soon â€”</span>
           </div>
         );
       }
@@ -171,3 +167,4 @@ export function Ribbon({
     </>
   );
 }
+

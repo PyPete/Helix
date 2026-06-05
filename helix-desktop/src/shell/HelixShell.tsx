@@ -1,4 +1,4 @@
-import './shell.css';
+﻿import './shell.css';
 import { useState, useRef, useEffect } from 'react';
 import { DEFAULT_CONNECTION } from '../types/agent';
 import type { AgentConnection, WslDocument } from '../types/agent';
@@ -14,9 +14,9 @@ import { WorkspaceLayout } from './WorkspaceLayout';
 import type { WorkspaceLayoutHandle } from './WorkspaceLayout';
 
 /**
- * HelixShell — composition root for the Helix IDE shell (Wave 1).
+ * HelixShell â€” composition root for the Helix IDE shell (Wave 1).
  * Replaces App.tsx as the top-level component when mounted.
- * App.tsx is not modified in Wave 1 — HelixShell is standalone.
+ * App.tsx is not modified in Wave 1 â€” HelixShell is standalone.
  */
 export default function HelixShell() {
   // --- Connection & health ---
@@ -75,19 +75,26 @@ export default function HelixShell() {
   const handleSaveLayout = async (name: string) => {
     if (!name.trim()) return;
     const layout = workspaceRef.current?.saveLayout();
+    console.log('[Layout] saveLayout returned:', layout);
     if (layout) {
       await saveLayout(name, layout);
       const names = await listLayoutNames();
+      console.log('[Layout] saved. names:', names);
       setSavedLayoutNames(names);
     }
   };
 
   const handleLoadLayout = async (name: string) => {
     if (!name) return;
+    console.log('[Layout] load:', name);
     const layouts = await loadLayouts();
+    console.log('[Layout] stored layouts:', Object.keys(layouts));
     const lb = layouts[name];
     if (lb) {
+      console.log('[Layout] calling loadLayout');
       workspaceRef.current?.loadLayout(lb);
+    } else {
+      console.warn('[Layout] no layout found for:', name);
     }
   };
 
@@ -95,7 +102,7 @@ export default function HelixShell() {
     workspaceRef.current?.openChartPanel('new-chart-' + Date.now());
   };
 
-  // Map activity bar button ids → dock tab ids
+  // Map activity bar button ids â†’ dock tab ids
   const ACTIVITY_BAR_TAB_MAP: Record<string, string> = {
     explorer: 'device-explorer',
     trends:   'trend-explorer',
@@ -159,4 +166,5 @@ export default function HelixShell() {
     </div>
   );
 }
+
 
