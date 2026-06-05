@@ -1,6 +1,7 @@
-import React from "react";
+﻿import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
+import "rc-dock/dist/rc-dock-dark.css";
 import "./style.css";
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(

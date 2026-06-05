@@ -1,5 +1,4 @@
-﻿import 'rc-dock/dist/rc-dock-dark.css';
-import '../styles/helix-dock.css';
+﻿import '../styles/helix-dock.css';
 
 import React, { useRef, useImperativeHandle, useMemo, useCallback } from 'react';
 import DockLayout from 'rc-dock';
@@ -311,7 +310,7 @@ export const WorkspaceLayout = React.forwardRef<WorkspaceLayoutHandle, Workspace
           groups={PANEL_GROUPS}
           saveTab={saveTab}
           loadTab={loadTab}
-          style={{ flex: 1, height: 0, overflow: 'hidden' }}
+          style={{ flex: 1, overflow: 'hidden' }}
           data-testid="dock-layout"
         />
       </div>
