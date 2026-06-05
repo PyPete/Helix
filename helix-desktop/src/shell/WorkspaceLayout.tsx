@@ -311,7 +311,7 @@ export const WorkspaceLayout = React.forwardRef<WorkspaceLayoutHandle, Workspace
         groups={PANEL_GROUPS}
         saveTab={saveTab}
         loadTab={loadTab}
-        style={{ flex: '1 1 0', height: '100%', overflow: 'hidden', minHeight: 0 }}
+        style={{ position: 'absolute', inset: 0 }}
         data-testid="dock-layout"
       />
     );
@@ -319,6 +319,7 @@ export const WorkspaceLayout = React.forwardRef<WorkspaceLayoutHandle, Workspace
 );
 
 WorkspaceLayout.displayName = 'WorkspaceLayout';
+
 
 
 
