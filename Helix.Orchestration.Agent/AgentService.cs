@@ -1,4 +1,4 @@
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
@@ -19,6 +19,7 @@ namespace Helix.Orchestration.Agent;
 /// </summary>
 public sealed class AgentService(
     IRunspaceEventEmitter emitter,
+    IExperimentEventChannel experimentEventChannel,
     TrendAggregator trendAggregator,
     ISafetyEngine safetyEngine,
     CapabilityRegistry registry,
@@ -133,6 +134,9 @@ public sealed class AgentService(
                         _clients.TryRemove(clientId, out _);
                     }
                 }
+
+                if (evt.ExperimentId is not null)
+                    experimentEventChannel.Publish(evt);
             }
         }
         catch (OperationCanceledException)
@@ -258,3 +262,4 @@ public sealed class AgentService(
         }
     }
 }
+

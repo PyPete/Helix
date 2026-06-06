@@ -1,4 +1,4 @@
-using Helix.Orchestration.Infrastructure.Persistence;
+﻿using Helix.Orchestration.Infrastructure.Persistence;
 using Npgsql;
 using Testcontainers.PostgreSql;
 using Xunit;
@@ -119,6 +119,7 @@ public sealed class PostgresRepositoriesTests
         var repo = new PostgresExperimentRepository(_fixture.ConnectionFactory);
         var record = new ExperimentRecord(
             RunspaceId: "runspace-1",
+            ExperimentId: "runspace-1",
             CampaignId: null,
             DefinitionId: "def-1",
             Name: "Experiment 1",
@@ -178,3 +179,4 @@ public sealed class PostgresRepositoriesTests
         Assert.Equal("Pending", loaded.Iterations[0].Status);
     }
 }
+

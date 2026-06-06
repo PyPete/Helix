@@ -14,6 +14,7 @@ public static class InfrastructureServiceExtensions
                 ?? throw new InvalidOperationException("Connection string 'HelixOrchestration' is not configured.")));
         services.AddScoped<IExperimentRepository, PostgresExperimentRepository>();
         services.AddScoped<ICampaignRepository, PostgresCampaignRepository>();
+        services.AddScoped<IExperimentEventRepository, PostgresExperimentEventRepository>();
 
         return services;
     }
@@ -32,3 +33,4 @@ public static class InfrastructureServiceExtensions
         return services;
     }
 }
+

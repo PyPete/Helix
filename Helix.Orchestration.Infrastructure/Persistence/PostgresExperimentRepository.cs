@@ -1,4 +1,4 @@
-using Dapper;
+﻿using Dapper;
 
 namespace Helix.Orchestration.Infrastructure.Persistence;
 
@@ -8,14 +8,15 @@ public sealed class PostgresExperimentRepository(DbConnectionFactory connectionF
     {
         const string sql = """
             INSERT INTO experiments (
-                runspace_id, campaign_id, definition_id, name, status,
+                runspace_id, experiment_id, campaign_id, definition_id, name, status,
                 created_at, started_at, ended_at, fault_message, definition_json
             )
             VALUES (
-                @RunspaceId, @CampaignId, @DefinitionId, @Name, @Status,
+                @RunspaceId, @ExperimentId, @CampaignId, @DefinitionId, @Name, @Status,
                 @CreatedAt, @StartedAt, @EndedAt, @FaultMessage, @DefinitionJson::jsonb
             )
             ON CONFLICT (runspace_id) DO UPDATE SET
+                experiment_id = EXCLUDED.experiment_id,
                 campaign_id = EXCLUDED.campaign_id,
                 definition_id = EXCLUDED.definition_id,
                 name = EXCLUDED.name,
@@ -35,7 +36,7 @@ public sealed class PostgresExperimentRepository(DbConnectionFactory connectionF
     {
         const string sql = """
             SELECT
-                runspace_id, campaign_id, definition_id, name, status,
+                runspace_id, experiment_id, campaign_id, definition_id, name, status,
                 created_at, started_at, ended_at, fault_message, definition_json
             FROM experiments
             WHERE runspace_id = @runspaceId;
@@ -47,11 +48,27 @@ public sealed class PostgresExperimentRepository(DbConnectionFactory connectionF
         return row?.ToRecord();
     }
 
+    public async Task<ExperimentRecord?> GetByExperimentIdAsync(string experimentId, CancellationToken ct = default)
+    {
+        const string sql = """
+            SELECT
+                runspace_id, experiment_id, campaign_id, definition_id, name, status,
+                created_at, started_at, ended_at, fault_message, definition_json
+            FROM experiments
+            WHERE experiment_id = @experimentId;
+            """;
+
+        await using var connection = connectionFactory.Create();
+        await connection.OpenAsync(ct);
+        var row = await connection.QuerySingleOrDefaultAsync<ExperimentRow>(new CommandDefinition(sql, new { experimentId }, cancellationToken: ct));
+        return row?.ToRecord();
+    }
+
     public async Task<IReadOnlyList<ExperimentRecord>> GetByCampaignIdAsync(string campaignId, CancellationToken ct = default)
     {
         const string sql = """
             SELECT
-                runspace_id, campaign_id, definition_id, name, status,
+                runspace_id, experiment_id, campaign_id, definition_id, name, status,
                 created_at, started_at, ended_at, fault_message, definition_json
             FROM experiments
             WHERE campaign_id = @campaignId
@@ -68,7 +85,7 @@ public sealed class PostgresExperimentRepository(DbConnectionFactory connectionF
     {
         const string sql = """
             SELECT
-                runspace_id, campaign_id, definition_id, name, status,
+                runspace_id, experiment_id, campaign_id, definition_id, name, status,
                 created_at, started_at, ended_at, fault_message, definition_json
             FROM experiments
             ORDER BY created_at DESC;
@@ -83,6 +100,7 @@ public sealed class PostgresExperimentRepository(DbConnectionFactory connectionF
     private sealed class ExperimentRow
     {
         public string RunspaceId { get; set; } = "";
+        public string ExperimentId { get; set; } = "";
         public string? CampaignId { get; set; }
         public string DefinitionId { get; set; } = "";
         public string Name { get; set; } = "";
@@ -94,7 +112,7 @@ public sealed class PostgresExperimentRepository(DbConnectionFactory connectionF
         public string DefinitionJson { get; set; } = "";
 
         public ExperimentRecord ToRecord() => new(
-            RunspaceId, CampaignId, DefinitionId, Name, Status,
+            RunspaceId, ExperimentId, CampaignId, DefinitionId, Name, Status,
             CreatedAt, StartedAt, EndedAt, FaultMessage, DefinitionJson);
     }
 }

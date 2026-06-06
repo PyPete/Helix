@@ -1,4 +1,4 @@
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using Helix.Orchestration.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
@@ -19,11 +19,11 @@ public sealed class HelixWebApplicationFactory : WebApplicationFactory<Program>
     {
         builder.ConfigureServices(services =>
         {
-            // Remove real MqttTrendBridge — no live broker in tests
+            // Remove real MqttTrendBridge â€” no live broker in tests
             services.RemoveAll<IHostedService>();
             services.AddHostedService<NoOpHostedService>();
 
-            // Replace PostgreSQL repositories with in-memory stubs — no connection string needed
+            // Replace PostgreSQL repositories with in-memory stubs â€” no connection string needed
             services.RemoveAll<IExperimentRepository>();
             services.RemoveAll<ICampaignRepository>();
             services.RemoveAll<DbConnectionFactory>();
@@ -50,6 +50,9 @@ public sealed class HelixWebApplicationFactory : WebApplicationFactory<Program>
 
         public Task<ExperimentRecord?> GetByRunspaceIdAsync(string runspaceId, CancellationToken ct = default)
             => Task.FromResult(_store.TryGetValue(runspaceId, out var r) ? r : null);
+
+        public Task<ExperimentRecord?> GetByExperimentIdAsync(string experimentId, CancellationToken ct = default)
+            => Task.FromResult(_store.Values.FirstOrDefault(r => r.ExperimentId == experimentId));
 
         public Task<IReadOnlyList<ExperimentRecord>> GetByCampaignIdAsync(string campaignId, CancellationToken ct = default)
             => Task.FromResult<IReadOnlyList<ExperimentRecord>>(
@@ -82,3 +85,4 @@ public sealed class HelixWebApplicationFactory : WebApplicationFactory<Program>
         }
     }
 }
+

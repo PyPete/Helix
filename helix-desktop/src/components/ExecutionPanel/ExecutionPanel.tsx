@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import type { WslDocument, RunspaceEvent } from "../../types/agent";
 
 interface ExecutionPanelProps {
@@ -32,16 +32,16 @@ export function ExecutionPanel({
   definition,
   runspaceEvents,
 }: ExecutionPanelProps) {
-  const [runspaceId, setRunspaceId] = useState<string | null>(null);
+  const [experimentId, setExperimentId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const eventsForRunspace = runspaceEvents.filter(
-    (e: RunspaceEvent) => e.runspaceId === runspaceId
+    (e: RunspaceEvent) => e.experimentId === experimentId
   );
 
   const eventsForStatus = runspaceEvents.filter(
-    (e: RunspaceEvent) => e.runspaceId === runspaceId
+    (e: RunspaceEvent) => e.experimentId === experimentId
   );
   const lastEvent =
     eventsForStatus.length > 0
@@ -94,17 +94,17 @@ export function ExecutionPanel({
       if (runspaceDef === null) {
         return;
       }
-      const res = await fetch(baseUrl + "/runspaces", {
+      const res = await fetch(baseUrl + "/experiments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(runspaceDef),
+        body: JSON.stringify({ name: definition.name ?? "Experiment" }),
       });
       if (!res.ok) {
-        setError("Failed to start runspace: " + res.statusText);
+        setError("Failed to start experiment: " + res.statusText);
         return;
       }
       const data = await res.json();
-      setRunspaceId(data.runspaceId);
+      setExperimentId(data.experimentId);
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -113,9 +113,9 @@ export function ExecutionPanel({
   };
 
   const handlePause = async () => {
-    if (!runspaceId) return;
+    if (!experimentId) return;
     try {
-      const res = await fetch(baseUrl + "/runspaces/" + runspaceId + "/pause", {
+      const res = await fetch(baseUrl + "/experiments/" + experimentId + "/pause", {
         method: "POST",
       });
       if (!res.ok) setError("Failed to pause: " + res.statusText);
@@ -125,10 +125,10 @@ export function ExecutionPanel({
   };
 
   const handleResume = async () => {
-    if (!runspaceId) return;
+    if (!experimentId) return;
     try {
       const res = await fetch(
-        baseUrl + "/runspaces/" + runspaceId + "/resume",
+        baseUrl + "/experiments/" + experimentId + "/resume",
         { method: "POST" }
       );
       if (!res.ok) setError("Failed to resume: " + res.statusText);
@@ -138,9 +138,9 @@ export function ExecutionPanel({
   };
 
   const handleAbort = async () => {
-    if (!runspaceId) return;
+    if (!experimentId) return;
     try {
-      const res = await fetch(baseUrl + "/runspaces/" + runspaceId + "/abort", {
+      const res = await fetch(baseUrl + "/experiments/" + experimentId + "/abort", {
         method: "POST",
       });
       if (!res.ok) setError("Failed to abort: " + res.statusText);
@@ -192,7 +192,7 @@ export function ExecutionPanel({
         </button>
         <button
           onClick={handleAbort}
-          disabled={!runspaceId || (!isRunning && !isPaused)}
+          disabled={!experimentId || (!isRunning && !isPaused)}
           data-testid="abort-btn"
         >
           Abort
@@ -209,9 +209,9 @@ export function ExecutionPanel({
           {statusLabel}
         </span>
       </div>
-      {runspaceId && (
-        <p data-testid="runspace-id" style={{ fontSize: "0.75rem", color: "#6c7086" }}>
-          Runspace: {runspaceId}
+      {experimentId && (
+        <p data-testid="experiment-id" style={{ fontSize: "0.75rem", color: "#6c7086" }}>
+          Experiment: {experimentId}
         </p>
       )}
       <ul data-testid="step-list" style={{ listStyle: "none", padding: 0, margin: "8px 0" }}>

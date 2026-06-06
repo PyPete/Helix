@@ -3,7 +3,7 @@
 import React, { useRef, useImperativeHandle, useMemo, useCallback, useEffect } from 'react';
 import DockLayout from 'rc-dock';
 import type { LayoutBase, LayoutData, TabData, TabBase, TabGroup } from 'rc-dock';
-import type { RunspaceEvent, TrendValue, SafetyEvent, WslDocument } from '../types/agent';
+import type { RunspaceEvent, TrendValue, SafetyEvent, WslDocument, ExperimentEvent } from '../types/agent';
 import { useTrendRegistry } from '../hooks/useTrendRegistry';
 
 // Panel components
@@ -11,6 +11,7 @@ import { DeviceExplorer } from './panels/DeviceExplorer';
 import { TrendExplorer } from './panels/TrendExplorer';
 import { ChartPanel } from './panels/ChartPanel';
 import { LogOutput } from './panels/LogOutput';
+import { ExperimentTimeline } from './panels/ExperimentTimeline';
 
 // Main-area components
 import { WorkflowBuilder } from '../components/WorkflowBuilder/WorkflowBuilder';
@@ -30,6 +31,8 @@ export interface WorkspaceLayoutProps {
   runspaceEvents: RunspaceEvent[];
   trendValues: TrendValue[];
   safetyEvents: SafetyEvent[];
+  experimentEvents: ExperimentEvent[];
+  activeExperimentId: string | null;
   currentWorkflow: WslDocument | null;
   onWorkflowExport: (doc: WslDocument) => void;
 }
@@ -72,7 +75,7 @@ export const DEFAULT_LAYOUT: LayoutBase = {
         children: [
           {
             id: 'panel-main',
-            tabs: [{ id: 'workflow-editor' }, { id: 'execution-panel' }],
+            tabs: [{ id: 'workflow-editor' }, { id: 'execution-panel' }, { id: 'experiment-timeline' }],
             activeId: 'workflow-editor',
           },
           {
@@ -224,12 +227,27 @@ export const WorkspaceLayout = React.forwardRef<WorkspaceLayoutHandle, Workspace
           group: 'main',
           closable: false,
         }),
+        'experiment-timeline': (): TabData => ({
+          id: 'experiment-timeline',
+          title: 'Timeline',
+          content: (
+            <ExperimentTimeline
+              runspaceEvents={props.runspaceEvents}
+              experimentEvents={props.experimentEvents}
+              activeExperimentId={props.activeExperimentId}
+            />
+          ),
+          group: 'main',
+          closable: false,
+        }),
       }),
       [
         props.baseUrl,
         props.currentWorkflow,
         props.runspaceEvents,
         props.safetyEvents,
+        props.experimentEvents,
+        props.activeExperimentId,
         props.onWorkflowExport,
         props.trendValues,
         trendNames,
@@ -246,6 +264,7 @@ export const WorkspaceLayout = React.forwardRef<WorkspaceLayoutHandle, Workspace
       dockRef.current.updateTab('safety-log', tabRegistry['safety-log'](), false);
       dockRef.current.updateTab('execution-panel', tabRegistry['execution-panel'](), false);
       dockRef.current.updateTab('chart-0', tabRegistry['chart-0'](), false);
+      dockRef.current.updateTab('experiment-timeline', tabRegistry['experiment-timeline'](), false);
     }, [tabRegistry]);
 
     useImperativeHandle(ref, () => ({

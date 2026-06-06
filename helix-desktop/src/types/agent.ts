@@ -59,6 +59,8 @@ export interface RunspaceEvent {
   runspaceId: string;
   timestamp: string;
   estimatedDurationMs?: number;
+  experimentId?: string;
+  experimentPhase?: string;
   [key: string]: unknown;
 }
 export interface TrendValue {
@@ -110,4 +112,47 @@ export interface DeviceStatusEvent {
   deviceId: string;
   status: "online" | "offline";
   capabilities: string[];
+}
+
+// Phase 12: Experiment event types
+export interface ExperimentStartedEvent {
+  type: "experiment-started";
+  experimentId: string;
+  name: string;
+  experimentPhase: string;
+  timestamp: string;
+}
+
+export interface ExperimentPhaseChangedEvent {
+  type: "experiment-phase-changed";
+  experimentId: string;
+  experimentPhase: string;
+  timestamp: string;
+}
+
+export interface ExperimentCompletedEvent {
+  type: "experiment-completed";
+  experimentId: string;
+  timestamp: string;
+}
+
+export interface ExperimentFailedEvent {
+  type: "experiment-failed";
+  experimentId: string;
+  reason?: string;
+  timestamp: string;
+}
+
+export type ExperimentEvent =
+  | ExperimentStartedEvent
+  | ExperimentPhaseChangedEvent
+  | ExperimentCompletedEvent
+  | ExperimentFailedEvent;
+
+export interface ExperimentRecord {
+  experimentId: string;
+  name: string;
+  lifecycle: string;
+  activePhase: string | null;
+  activeRunspaceId: string | null;
 }

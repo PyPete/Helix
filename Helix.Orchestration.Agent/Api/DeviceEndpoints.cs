@@ -1,4 +1,5 @@
-using Helix.Orchestration.Agent.Events;
+﻿using Helix.Orchestration.Agent.Events;
+using Helix.Orchestration.Agent.Experiments;
 using Helix.Orchestration.Devices.Drivers;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -31,12 +32,12 @@ public static class DeviceEndpoints
         var group = app.MapGroup("/devices")
             .WithTags("Devices");
 
-        // GET /devices — return one entry per adapter, only if at least one capability is available
+        // GET /devices â€” return one entry per adapter, only if at least one capability is available
         group.MapGet("/", async Task<IResult> (CapabilityRegistry registry) =>
         {
             try
             {
-                // Group capability keys by adapter prefix (e.g. "simulator.SetFlow" → "simulator")
+                // Group capability keys by adapter prefix (e.g. "simulator.SetFlow" â†’ "simulator")
                 var groups = registry.GetAllCapabilityNames()
                     .GroupBy(name =>
                     {
@@ -70,7 +71,7 @@ public static class DeviceEndpoints
         .Produces<IEnumerable<object>>(StatusCodes.Status200OK)
         .ProducesProblem(StatusCodes.Status500InternalServerError);
 
-        // GET /devices/{id}/capabilities — return CapabilityDescriptor[] for one adapter
+        // GET /devices/{id}/capabilities â€” return CapabilityDescriptor[] for one adapter
         group.MapGet("/{id}/capabilities", IResult (string id, CapabilityRegistry registry,
             [FromServices] SimulatorDevice? simulator) =>
         {
@@ -125,12 +126,13 @@ public static class DeviceEndpoints
         .Produces(StatusCodes.Status404NotFound)
         .ProducesProblem(StatusCodes.Status500InternalServerError);
 
-        // POST /devices/{id}/execute — invoke a capability on a device adapter
+        // POST /devices/{id}/execute â€” invoke a capability on a device adapter
         group.MapPost("/{id}/execute", async Task<IResult> (
             string id,
             ExecuteRequest request,
             CapabilityRegistry registry,
-            [FromServices] IRunspaceEventEmitter? emitter) =>
+            [FromServices] IRunspaceEventEmitter? emitter,
+            [FromServices] IExperimentManager? experimentManager) =>
         {
             try
             {
@@ -149,13 +151,16 @@ public static class DeviceEndpoints
                 var fullKey = $"{id}.{request.Capability}";
                 var invocationResult = await registry.InvokeAsync(fullKey, request.Parameters);
 
+                var activeExp = experimentManager?.GetActive();
                 emitter?.Publish(new ManualActionEvent(
                     id,
                     request.Capability,
                     request.Parameters ?? new Dictionary<string, object>(),
                     invocationResult.Success,
                     invocationResult.ReturnValue,
-                    invocationResult.ErrorMessage));
+                    invocationResult.ErrorMessage,
+                    ExperimentId: activeExp?.ExperimentId,
+                    ExperimentPhase: activeExp?.ActivePhase?.ToString()?.ToLowerInvariant()));
 
                 return Results.Ok(new
                 {
@@ -179,3 +184,5 @@ public static class DeviceEndpoints
         .ProducesProblem(StatusCodes.Status500InternalServerError);
     }
 }
+
+

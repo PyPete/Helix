@@ -1,4 +1,4 @@
-using Cleipnir.ResilientFunctions;
+﻿using Cleipnir.ResilientFunctions;
 using Cleipnir.ResilientFunctions.PostgreSQL;
 using Cleipnir.ResilientFunctions.Storage;
 using Helix.Orchestration.Agent;
@@ -17,6 +17,8 @@ using Helix.Orchestration.Core.State;
 using Helix.Orchestration.Core.Trends;
 using Helix.Orchestration.Core.WorkflowEngine;
 using Helix.Orchestration.Agent.Api;
+using Helix.Orchestration.Agent.Experiments;
+using Helix.Orchestration.Infrastructure.Persistence;
 using Helix.Orchestration.Agent.GrpcServer;
 using Helix.Orchestration.Core.Devices;
 using Helix.Orchestration.Core.WSL;
@@ -65,7 +67,7 @@ try
     // Capability invoker + migrated device adapters
     builder.Services.AddMigratedDeviceAdapters();
 
-    // Durable workflow execution — PostgreSQL-backed (survives process restart)
+    // Durable workflow execution â€” PostgreSQL-backed (survives process restart)
     var connectionString = builder.Configuration.GetConnectionString("HelixOrchestration")
         ?? throw new InvalidOperationException(
             "Connection string 'HelixOrchestration' is required for Cleipnir PostgreSQL store. " +
@@ -91,7 +93,7 @@ try
         var execLogger   = sp.GetRequiredService<ILogger<RunspaceManager>>();
         var simulator    = sp.GetService<Helix.Orchestration.Devices.Drivers.SimulatorDevice>();
 
-        // Build a lookup: full capability key → EstimatedDurationMs
+        // Build a lookup: full capability key â†’ EstimatedDurationMs
         var estimatedDurations = new Dictionary<string, int?>(StringComparer.OrdinalIgnoreCase);
         if (simulator != null)
         {
@@ -245,6 +247,11 @@ try
 
     // Event bus
     builder.Services.AddSingleton<IRunspaceEventEmitter, RunspaceEventEmitter>();
+    builder.Services.AddSingleton<IExperimentEventChannel, ExperimentEventChannel>();
+    builder.Services.AddSingleton<IExperimentManager, ExperimentManager>();
+
+    // Infrastructure repositories (scoped, via connection string)
+    builder.Services.AddHelixInfrastructure(builder.Configuration);
 
     // AgentService registered as singleton so it is resolvable as the concrete type
     // (AddHostedService<T> only registers as IHostedService, which prevents GetRequiredService<AgentService>())
@@ -253,12 +260,13 @@ try
 
     // Hosted services
     builder.Services.AddHostedService<LeaseExpiryWorker>();
+    builder.Services.AddHostedService<ExperimentEventPersistenceWorker>();
     builder.Services.AddHostedService<MqttTrendIngestionService>();
 
     // Health checks
     builder.Services.AddHealthChecks();
 
-    // CORS — allow Tauri webview origins (dev: Vite on 5173, prod: tauri://localhost)
+    // CORS â€” allow Tauri webview origins (dev: Vite on 5173, prod: tauri://localhost)
     builder.Services.AddCors(options =>
     {
         options.AddDefaultPolicy(policy =>
@@ -289,6 +297,7 @@ try
     app.MapWorkflowEndpoints();
     app.MapRunspaceEndpoints();
     app.MapDeviceEndpoints();
+    app.MapExperimentEndpoints();
 
     // WebSocket /ws endpoint
     var agentService = app.Services.GetRequiredService<AgentService>();
@@ -325,3 +334,5 @@ finally
 }
 
 return 0;
+
+

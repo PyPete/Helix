@@ -1,4 +1,4 @@
-namespace Helix.Orchestration.Agent.Events;
+﻿namespace Helix.Orchestration.Agent.Events;
 
 /// <summary>
 /// Abstract base record for all runspace and step lifecycle events emitted by the Agent.
@@ -6,7 +6,14 @@ namespace Helix.Orchestration.Agent.Events;
 /// <param name="Type">Machine-readable event type discriminator (e.g. "runspace-started").</param>
 /// <param name="RunspaceId">The runspace this event belongs to. Empty string for non-runspace events.</param>
 /// <param name="Timestamp">UTC timestamp when the event occurred.</param>
-public abstract record RunspaceEvent(string Type, string RunspaceId, DateTimeOffset Timestamp);
+/// <param name="ExperimentId">Optional experiment correlation identifier.</param>
+/// <param name="ExperimentPhase">Optional experiment phase name at the time of the event.</param>
+public abstract record RunspaceEvent(
+    string Type,
+    string RunspaceId,
+    DateTimeOffset Timestamp,
+    string? ExperimentId = null,
+    string? ExperimentPhase = null);
 
 // ─── Runspace lifecycle ────────────────────────────────────────────────────────
 
@@ -93,7 +100,7 @@ public sealed record SafetyEvent(
 
 /// <summary>
 /// Emitted when an adapter's availability status changes (online/offline).
-/// Not scoped to any runspace — RunspaceId is empty string.
+/// Not scoped to any runspace – RunspaceId is empty string.
 /// </summary>
 /// <param name="DeviceId">The adapter/capability name that changed status.</param>
 /// <param name="Status">New status: "online" or "offline".</param>
@@ -103,7 +110,7 @@ public sealed record DeviceStatusEvent(string DeviceId, string Status, string[] 
 
 /// <summary>
 /// Emitted when a scientist manually invokes a capability outside of a workflow.
-/// Not scoped to any runspace — RunspaceId is empty string.
+/// Not scoped to any runspace – RunspaceId is empty string.
 /// </summary>
 /// <param name="DeviceId">The adapter/capability name that was invoked.</param>
 /// <param name="Capability">The capability verb name that was executed.</param>
@@ -111,11 +118,40 @@ public sealed record DeviceStatusEvent(string DeviceId, string Status, string[] 
 /// <param name="Success">Whether the invocation succeeded.</param>
 /// <param name="Result">Return value from the invocation. Null if no return value or failed.</param>
 /// <param name="Error">Error message if invocation failed. Null on success.</param>
+/// <param name="ExperimentId">Optional experiment correlation identifier.</param>
+/// <param name="ExperimentPhase">Optional experiment phase name at the time of invocation.</param>
 public sealed record ManualActionEvent(
     string DeviceId,
     string Capability,
     Dictionary<string, object> Parameters,
     bool Success,
     object? Result,
-    string? Error)
-    : RunspaceEvent("manual-action", "", DateTimeOffset.UtcNow);
+    string? Error,
+    string? ExperimentId = null,
+    string? ExperimentPhase = null)
+    : RunspaceEvent("manual-action", "", DateTimeOffset.UtcNow, ExperimentId, ExperimentPhase);
+
+// ─── Experiment lifecycle events ───────────────────────────────────────────────
+
+/// <summary>Emitted when an experiment is started.</summary>
+/// <param name="ExperimentId">Unique identifier of the experiment.</param>
+/// <param name="Name">Human-readable name of the experiment.</param>
+public sealed record ExperimentStartedEvent(string ExperimentId, string Name)
+    : RunspaceEvent("experiment-started", "", DateTimeOffset.UtcNow, ExperimentId, null);
+
+/// <summary>Emitted when an experiment transitions to a new phase.</summary>
+/// <param name="ExperimentId">Unique identifier of the experiment.</param>
+/// <param name="Phase">The new phase name.</param>
+public sealed record ExperimentPhaseChangedEvent(string ExperimentId, string Phase)
+    : RunspaceEvent("experiment-phase-changed", "", DateTimeOffset.UtcNow, ExperimentId, Phase);
+
+/// <summary>Emitted when an experiment completes successfully.</summary>
+/// <param name="ExperimentId">Unique identifier of the experiment.</param>
+public sealed record ExperimentCompletedEvent(string ExperimentId)
+    : RunspaceEvent("experiment-completed", "", DateTimeOffset.UtcNow, ExperimentId, null);
+
+/// <summary>Emitted when an experiment fails or is aborted.</summary>
+/// <param name="ExperimentId">Unique identifier of the experiment.</param>
+/// <param name="Reason">Human-readable reason for the failure.</param>
+public sealed record ExperimentFailedEvent(string ExperimentId, string Reason)
+    : RunspaceEvent("experiment-failed", "", DateTimeOffset.UtcNow, ExperimentId, null);

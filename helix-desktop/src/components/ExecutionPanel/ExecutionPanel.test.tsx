@@ -1,4 +1,4 @@
-﻿import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { ExecutionPanel } from './ExecutionPanel';
 import type { WslDocument, RunspaceEvent } from '../../types/agent';
@@ -43,7 +43,7 @@ describe('ExecutionPanel', () => {
     expect(screen.getByTestId('start-btn')).toBeDisabled();
   });
 
-  it('calls POST /workflows/compile then POST /runspaces on Start click and shows runspaceId', async () => {
+  it('calls POST /workflows/compile then POST /experiments on Start click and shows experimentId', async () => {
     const mockFetch = vi
       .fn()
       .mockResolvedValueOnce({
@@ -54,7 +54,7 @@ describe('ExecutionPanel', () => {
       .mockResolvedValueOnce({
         ok: true,
         status: 200,
-        json: () => Promise.resolve({ runspaceId: 'abc123' }),
+        json: () => Promise.resolve({ experimentId: 'exp-abc123', name: 'Test Workflow', lifecycle: 'Running', activePhase: 'main', activeRunspaceId: null }),
       } as unknown as Response);
     vi.stubGlobal('fetch', mockFetch);
 
@@ -69,7 +69,7 @@ describe('ExecutionPanel', () => {
     fireEvent.click(screen.getByTestId('start-btn'));
 
     await waitFor(() =>
-      expect(screen.getByTestId('runspace-id')).toHaveTextContent('abc123')
+      expect(screen.getByTestId('experiment-id')).toHaveTextContent('exp-abc123')
     );
 
     expect(mockFetch).toHaveBeenCalledWith(
@@ -77,7 +77,7 @@ describe('ExecutionPanel', () => {
       expect.anything()
     );
     expect(mockFetch).toHaveBeenCalledWith(
-      expect.stringContaining('/runspaces'),
+      expect.stringContaining('/experiments'),
       expect.anything()
     );
   });
@@ -105,24 +105,24 @@ describe('ExecutionPanel', () => {
     );
 
     expect(screen.getByRole('alert')).toHaveTextContent('Compile errors');
-    // POST /runspaces must NOT have been called
+    // POST /experiments must NOT have been called
     expect(mockFetch).not.toHaveBeenCalledWith(
-      expect.stringContaining('/runspaces'),
+      expect.stringContaining('/experiments'),
       expect.anything()
     );
   });
 
-  it('calls POST /runspaces/{id}/abort on Abort click', async () => {
-    const runspaceId = 'rs-999';
+  it('calls POST /experiments/{id}/abort when Abort is clicked', async () => {
+    const experimentId = 'exp-999';
     const events: RunspaceEvent[] = [
       {
         type: 'runspace-started',
-        runspaceId,
+        runspaceId: 'rs-999',
         timestamp: '2026-01-01T00:00:00Z',
+        experimentId,
       },
     ];
 
-    // First render: mock compile + start so we get a runspaceId
     const mockFetch = vi
       .fn()
       .mockResolvedValueOnce({
@@ -133,7 +133,7 @@ describe('ExecutionPanel', () => {
       .mockResolvedValueOnce({
         ok: true,
         status: 200,
-        json: () => Promise.resolve({ runspaceId }),
+        json: () => Promise.resolve({ experimentId, name: 'Test Workflow', lifecycle: 'Running', activePhase: 'main', activeRunspaceId: null }),
       } as unknown as Response)
       .mockResolvedValueOnce({
         ok: true,
@@ -152,7 +152,7 @@ describe('ExecutionPanel', () => {
 
     fireEvent.click(screen.getByTestId('start-btn'));
     await waitFor(() =>
-      expect(screen.getByTestId('runspace-id')).toHaveTextContent(runspaceId)
+      expect(screen.getByTestId('experiment-id')).toHaveTextContent(experimentId)
     );
 
     // Rerender with the runspace-started event so isRunning = true
@@ -174,19 +174,22 @@ describe('ExecutionPanel', () => {
     );
   });
 
-  it('displays RunspaceEvents in step list', () => {
-    const runspaceId = 'rs-display-test';
+  it('filters step events by experimentId', () => {
+    const experimentId = 'exp-display-test';
     const events: RunspaceEvent[] = [
       {
         type: 'step-started',
-        runspaceId,
+        runspaceId: 'rs-1',
         timestamp: '2026-01-01T00:00:00Z',
+        experimentId,
+      },
+      {
+        type: 'step-started',
+        runspaceId: 'rs-2',
+        timestamp: '2026-01-01T00:01:00Z',
+        experimentId: 'exp-other',
       },
     ];
-
-    // Render without a runspaceId set -- events filter to nothing until we simulate the start
-    // Instead, test the event display directly by giving a started runspace id via initial state
-    // We achieve this by mocking a successful start flow then rerendering with events
 
     const mockFetch = vi
       .fn()
@@ -198,7 +201,7 @@ describe('ExecutionPanel', () => {
       .mockResolvedValueOnce({
         ok: true,
         status: 200,
-        json: () => Promise.resolve({ runspaceId }),
+        json: () => Promise.resolve({ experimentId, name: 'Test Workflow', lifecycle: 'Running', activePhase: 'main', activeRunspaceId: null }),
       } as unknown as Response);
     vi.stubGlobal('fetch', mockFetch);
 
@@ -213,7 +216,7 @@ describe('ExecutionPanel', () => {
     fireEvent.click(screen.getByTestId('start-btn'));
 
     return waitFor(() =>
-      expect(screen.getByTestId('runspace-id')).toHaveTextContent(runspaceId)
+      expect(screen.getByTestId('experiment-id')).toHaveTextContent(experimentId)
     ).then(() => {
       rerender(
         <ExecutionPanel
@@ -222,7 +225,9 @@ describe('ExecutionPanel', () => {
           runspaceEvents={events}
         />
       );
-      expect(screen.getByTestId('step-event-step-started')).toBeInTheDocument();
+      // Should show only 1 step-started (from the active experiment)
+      const stepItems = screen.getAllByTestId('step-event-step-started');
+      expect(stepItems).toHaveLength(1);
     });
   });
 });

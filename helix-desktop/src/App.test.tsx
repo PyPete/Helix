@@ -47,6 +47,8 @@ vi.mock('./hooks/useAgentWebSocket', () => ({
     trendValues: [],
     safetyEvents: [],
     deviceStatusEvents: [],
+    experimentEvents: [],
+    activeExperimentId: null,
     connected: false,
   })),
 }));

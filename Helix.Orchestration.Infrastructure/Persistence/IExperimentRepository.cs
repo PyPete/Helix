@@ -1,10 +1,12 @@
-namespace Helix.Orchestration.Infrastructure.Persistence;
+﻿namespace Helix.Orchestration.Infrastructure.Persistence;
 
 public interface IExperimentRepository
 {
     Task SaveAsync(ExperimentRecord record, CancellationToken ct = default);
 
     Task<ExperimentRecord?> GetByRunspaceIdAsync(string runspaceId, CancellationToken ct = default);
+
+    Task<ExperimentRecord?> GetByExperimentIdAsync(string experimentId, CancellationToken ct = default);
 
     Task<IReadOnlyList<ExperimentRecord>> GetByCampaignIdAsync(string campaignId, CancellationToken ct = default);
 
@@ -13,6 +15,7 @@ public interface IExperimentRepository
 
 public sealed record ExperimentRecord(
     string RunspaceId,
+    string ExperimentId,
     string? CampaignId,
     string DefinitionId,
     string Name,

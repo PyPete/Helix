@@ -25,7 +25,7 @@ export default function HelixShell() {
   const health = useAgentHealth(baseUrl);
 
   // --- WebSocket data stream ---
-  const { runspaceEvents, trendValues, safetyEvents, connected } = useAgentWebSocket(baseUrl);
+  const { runspaceEvents, trendValues, safetyEvents, experimentEvents, activeExperimentId, connected } = useAgentWebSocket(baseUrl);
 
   // --- Derived state ---
   const currentStatus = runspaceEvents[runspaceEvents.length - 1]?.type ?? null;
@@ -147,6 +147,8 @@ export default function HelixShell() {
           runspaceEvents={runspaceEvents}
           trendValues={trendValues}
           safetyEvents={safetyEvents}
+          experimentEvents={experimentEvents}
+          activeExperimentId={activeExperimentId}
           currentWorkflow={currentWorkflow}
           onWorkflowExport={setCurrentWorkflow}
         />
