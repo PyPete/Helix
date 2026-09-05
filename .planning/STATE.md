@@ -1,22 +1,23 @@
-﻿---
+---
 gsd_state_version: 1.0
 milestone: v0.2
-milestone_name: Production-Grade Platform
-current_phase: Phase 11 -- Ribbon + Docking Workspace Shell (planned)
+milestone_name: Phase Overview
+current_phase: Phase 12 -- Experiment as Top-Level Scope (not started)
 status: ready_to_execute
-last_updated: "2026-06-04T14:30:00.000Z"
+last_updated: "2026-09-05T18:00:00.000Z"
+state_head: 9452e0d
 progress:
-  total_phases: 9
-  completed_phases: 0
-  total_plans: 30
-  completed_plans: 0
-  percent: 0
+  total_phases: 10
+  completed_phases: 1
+  total_plans: 10
+  completed_plans: 7
+  percent: 10
 ---
 
 # Project State
 
-**Last updated:** 2026-06-04
-**Current phase:** Phase 11 -- Ribbon + Docking Workspace Shell (not started)
+**Last updated:** 2026-09-05
+**Current phase:** Phase 12 -- Experiment as Top-Level Scope (not started)
 **Workflow:** YOLO mode, fine granularity, parallel execution enabled
 
 ---
@@ -27,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-05-26)
 
 **Core value:** A scientist can build a workflow, connect real lab hardware, execute an experiment, and see the results without writing code.
 
-**Current focus:** Phase 6.4 Plan 02 complete -- FumehoodEndpoints.cs + SiteOverviewPage live API fetch. GET /api/fumehoods live; PLACEHOLDER_FUMEHOODS removed. All 32 dashboard tests pass. Both .NET builds clean.
+**Current focus:** Phase 11.1 COMPLETE (2026-09-05). All 8 backend execution GAPs closed across 3 plans. 602/602 tests pass. Phase 12 (Experiment as Top-Level Scope) is next.
 
 ---
 
@@ -118,9 +119,9 @@ See: .planning/PROJECT.md (updated 2026-05-26)
 
 ## Next Steps
 
-Milestone v0.2 started (2026-06-03). Defining requirements and roadmap. Phase 11 (Ribbon + Docking Workspace Shell) is the foundation â€” all UI work builds inside it.
+Phase 11.1 complete (2026-09-05). All 8 backend execution GAPs closed. Backend is now a standalone service with gRPC agent control, in-memory trend storage, cooperative runspace pause/resume, WSL document compilation, campaign persistence, and live device listing.
 
-Run /gsd:discuss-phase 11 to start Phase 11 planning.
+Run /gsd-discuss-phase 12 or /gsd-plan-phase 12 to start Phase 12 (Experiment as Top-Level Scope).
 
 ## Phase History
 
@@ -143,6 +144,7 @@ Run /gsd:discuss-phase 11 to start Phase 11 planning.
 | 10. Deployment + Setup Scripts | Complete | 2026-06-03 |
 | **v0.1 MILESTONE** | **SHIPPED** | **2026-06-03** |
 | 11. Ribbon + Docking Workspace Shell | Not started | -- |
+| 11.1. Remove UI / Backend Focus (GAPs 1-8) | **Complete** | **2026-09-05** |
 | 12. Experiment as Top-Level Scope | Not started | -- |
 | 13. Three Workflow Modes | Not started | -- |
 | 14. ReactFlow Node Canvas | Not started | -- |
@@ -216,3 +218,8 @@ Run /gsd:discuss-phase 11 to start Phase 11 planning.
 - `helix-desktop/src/components/DeviceManualControl/DeviceManualControl.tsx` -- schema-driven manual control panel (Phase 6.1)
 - `helix-desktop/src/components/charts/index.ts` -- SciChart wrapper re-export layer (Phase 6.1)
 
+## Accumulated Context
+
+### Roadmap Evolution
+
+- Phase 11.1 inserted after Phase 11: remove ui components and focus on backend (remove tauri etc) (URGENT)
