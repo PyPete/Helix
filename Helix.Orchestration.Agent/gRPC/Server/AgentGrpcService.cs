@@ -54,13 +54,33 @@ public class AgentGrpcService : AgentControl.AgentControlBase
 
     public override async Task<CommandAck> PauseRunspace(RunspaceCommand request, ServerCallContext context)
     {
-        await Task.CompletedTask;
-        return new CommandAck { Success = true, Message = "Pause not implemented" };
+        var rs = _runspaceManager.Get(request.RunspaceId);
+        if (rs is null)
+            return new CommandAck { Success = false, Message = $"Runspace '{request.RunspaceId}' not found" };
+        try
+        {
+            await rs.PauseAsync(context.CancellationToken);
+            return new CommandAck { Success = true, Message = "Paused" };
+        }
+        catch (Exception ex)
+        {
+            return new CommandAck { Success = false, Message = ex.Message };
+        }
     }
 
     public override async Task<CommandAck> ResumeRunspace(RunspaceCommand request, ServerCallContext context)
     {
-        await Task.CompletedTask;
-        return new CommandAck { Success = true, Message = "Resume not implemented" };
+        var rs = _runspaceManager.Get(request.RunspaceId);
+        if (rs is null)
+            return new CommandAck { Success = false, Message = $"Runspace '{request.RunspaceId}' not found" };
+        try
+        {
+            await rs.ResumeAsync(context.CancellationToken);
+            return new CommandAck { Success = true, Message = "Resumed" };
+        }
+        catch (Exception ex)
+        {
+            return new CommandAck { Success = false, Message = ex.Message };
+        }
     }
 }
