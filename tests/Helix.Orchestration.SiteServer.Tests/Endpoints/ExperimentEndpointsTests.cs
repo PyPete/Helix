@@ -20,12 +20,22 @@ public class ExperimentEndpointsTests : IClassFixture<HelixWebApplicationFactory
         _client = factory.CreateClient();
     }
 
+    private static string MinimalWslJson(string name = "Test Experiment") =>
+        System.Text.Json.JsonSerializer.Serialize(new
+        {
+            documentId = Guid.NewGuid().ToString("N"),
+            name,
+            schemaVersion = "1.0",
+            nodes = Array.Empty<object>(),
+            edges = Array.Empty<object>()
+        });
+
     [Fact]
     public async Task PostExperiment_ValidRequest_Returns200WithRunspaceId()
     {
         var request = new SubmitExperimentRequest
         {
-            WslSource = "experiment test { }",
+            WslSource = MinimalWslJson(),
             ExperimentId = "integration-test-1",
             ExperimentName = "Integration Test"
         };
@@ -43,7 +53,7 @@ public class ExperimentEndpointsTests : IClassFixture<HelixWebApplicationFactory
     {
         var request = new SubmitExperimentRequest
         {
-            WslSource = "experiment test { }",
+            WslSource = MinimalWslJson(),
             ExperimentName = "Status Test"
         };
 
@@ -75,7 +85,7 @@ public class ExperimentEndpointsTests : IClassFixture<HelixWebApplicationFactory
     {
         var request = new SubmitExperimentRequest
         {
-            WslSource = "experiment test { }",
+            WslSource = MinimalWslJson(),
             ExperimentName = "Abort Test"
         };
 

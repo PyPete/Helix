@@ -22,4 +22,7 @@ public sealed class GrpcAgentControlClient : IAgentControlClient
 
     public async Task<CommandAck> AbortRunspaceAsync(RunspaceCommand request, CancellationToken ct = default)
         => await _inner.AbortRunspaceAsync(request, cancellationToken: ct);
+
+    public async Task<ListDevicesResponse> ListDevicesAsync(ListDevicesRequest request, CancellationToken ct = default)
+        => await _inner.ListDevicesAsync(request, cancellationToken: ct);
 }

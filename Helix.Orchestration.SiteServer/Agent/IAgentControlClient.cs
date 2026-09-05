@@ -9,4 +9,6 @@ public interface IAgentControlClient
     Task<RunspaceStatusResponse> GetRunspaceStatusAsync(RunspaceQuery request, CancellationToken ct = default);
 
     Task<CommandAck> AbortRunspaceAsync(RunspaceCommand request, CancellationToken ct = default);
+
+    Task<ListDevicesResponse> ListDevicesAsync(ListDevicesRequest request, CancellationToken ct = default);
 }

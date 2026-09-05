@@ -64,11 +64,10 @@ public sealed class SimAgentProxy : IAgentProxy
         await runspace.AbortAsync(ct);
     }
 
-    public IEnumerable<DeviceDescriptorDto> GetRegisteredDevices()
+    public Task<IEnumerable<DeviceDescriptorDto>> GetRegisteredDevicesAsync(CancellationToken ct = default)
     {
-        // Phase 9: return simulated device descriptors
-        return new[]
-        {
+        IEnumerable<DeviceDescriptorDto> devices =
+        [
             new DeviceDescriptorDto(
                 DeviceId: "sim-reactor-001",
                 DeviceName: "Simulated Reactor",
@@ -87,6 +86,7 @@ public sealed class SimAgentProxy : IAgentProxy
                 DeviceKind: "Spectrometer",
                 Capabilities: new[] { "AcquireSpectrum", "GetLatestSpectrum" }
             )
-        };
+        ];
+        return Task.FromResult(devices);
     }
 }

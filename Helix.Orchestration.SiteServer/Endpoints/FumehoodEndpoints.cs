@@ -1,8 +1,9 @@
+using Helix.Orchestration.Infrastructure.Persistence;
+using Helix.Orchestration.SiteServer.Agent;
+using Helix.Orchestration.SiteServer.Mqtt;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
-using Helix.Orchestration.SiteServer.Agent;
-using Helix.Orchestration.SiteServer.Mqtt;
 
 namespace Helix.Orchestration.SiteServer.Endpoints;
 
@@ -26,17 +27,28 @@ public static class FumehoodEndpoints
         var group = app.MapGroup("/api/fumehoods").WithTags("Fumehoods");
 
         // GET /api/fumehoods — Return configured fumehood(s) with live reachability status
-        group.MapGet("/", (IOptions<MqttBridgeOptions> mqttOptions, IAgentProxy agentProxy) =>
+        group.MapGet("/", async Task<IResult> (
+            IOptions<MqttBridgeOptions> mqttOptions,
+            IAgentProxy agentProxy,
+            IExperimentRepository experimentRepository,
+            CancellationToken ct) =>
         {
             var fumehoodId = mqttOptions.Value.FumehoodId;
 
             string status;
+            string? activeExperimentName = null;
             try
             {
-                var devices = agentProxy.GetRegisteredDevices();
-                // Any registered devices means the agent is reachable; no running-experiment
-                // tracking in v0.1, so always report "idle" when reachable.
-                status = devices.Any() ? "idle" : "idle";
+                var devices = await agentProxy.GetRegisteredDevicesAsync(ct);
+                status = devices.Any() ? "online" : "offline";
+
+                if (status == "online")
+                {
+                    var experiments = await experimentRepository.GetAllAsync(ct);
+                    var running = experiments.FirstOrDefault(e =>
+                        string.Equals(e.Status, "Running", StringComparison.OrdinalIgnoreCase));
+                    activeExperimentName = running?.Name;
+                }
             }
             catch
             {
@@ -47,7 +59,7 @@ public static class FumehoodEndpoints
                 Id: fumehoodId,
                 Name: $"Fumehood {fumehoodId}",
                 Status: status,
-                ActiveExperimentName: null,
+                ActiveExperimentName: activeExperimentName,
                 LastSeenAt: DateTime.UtcNow.ToString("o"));
 
             return Results.Ok(new[] { dto });

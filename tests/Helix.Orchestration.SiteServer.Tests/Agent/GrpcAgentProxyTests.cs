@@ -123,4 +123,34 @@ public class GrpcAgentProxyTests
         Assert.Equal("Running", status.Status);
         Assert.Null(status.FaultMessage);
     }
+
+    [Fact]
+    public async Task GetRegisteredDevicesAsync_ReturnsDevicesFromAgent()
+    {
+        var client = new Mock<IAgentControlClient>();
+        var response = new ListDevicesResponse();
+        var device = new DeviceInfo
+        {
+            DeviceId = "pump-001",
+            DeviceName = "Lab Pump",
+            DeviceKind = "Pump"
+        };
+        device.Capabilities.Add("SetFlowRate");
+        device.Capabilities.Add("GetFlowRate");
+        response.Devices.Add(device);
+
+        client
+            .Setup(c => c.ListDevicesAsync(It.IsAny<ListDevicesRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(response);
+
+        var proxy = new GrpcAgentProxy(client.Object);
+
+        var devices = (await proxy.GetRegisteredDevicesAsync()).ToList();
+
+        Assert.Single(devices);
+        Assert.Equal("pump-001", devices[0].DeviceId);
+        Assert.Equal("Lab Pump", devices[0].DeviceName);
+        Assert.Equal("Pump", devices[0].DeviceKind);
+        Assert.Contains("SetFlowRate", devices[0].Capabilities);
+    }
 }

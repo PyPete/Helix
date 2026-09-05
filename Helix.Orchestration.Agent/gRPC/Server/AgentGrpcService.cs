@@ -1,5 +1,6 @@
 using Grpc.Core;
 using Helix.Orchestration.Contracts.Control;
+using Helix.Orchestration.Core.Devices;
 using Helix.Orchestration.Core.Runspace;
 using Helix.Orchestration.Core.WSL;
 using System.Text.Json;
@@ -9,10 +10,12 @@ namespace Helix.Orchestration.Agent.GrpcServer;
 public class AgentGrpcService : AgentControl.AgentControlBase
 {
     private readonly IRunspaceManager _runspaceManager;
+    private readonly DeviceRegistry _deviceRegistry;
 
-    public AgentGrpcService(IRunspaceManager runspaceManager)
+    public AgentGrpcService(IRunspaceManager runspaceManager, DeviceRegistry deviceRegistry)
     {
         _runspaceManager = runspaceManager;
+        _deviceRegistry = deviceRegistry;
     }
 
     public override async Task<SubmissionAck> SubmitExperiment(ExperimentSubmission request, ServerCallContext context)
@@ -82,5 +85,22 @@ public class AgentGrpcService : AgentControl.AgentControlBase
         {
             return new CommandAck { Success = false, Message = ex.Message };
         }
+    }
+
+    public override Task<ListDevicesResponse> ListDevices(ListDevicesRequest request, ServerCallContext context)
+    {
+        var response = new ListDevicesResponse();
+        foreach (var device in _deviceRegistry.GetAllDevices())
+        {
+            var info = new DeviceInfo
+            {
+                DeviceId = device.DeviceId,
+                DeviceName = device.DeviceAlias,
+                DeviceKind = device.DeviceType,
+            };
+            info.Capabilities.AddRange(device.CapabilityNames);
+            response.Devices.Add(info);
+        }
+        return Task.FromResult(response);
     }
 }

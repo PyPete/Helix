@@ -26,9 +26,11 @@ public sealed class HelixWebApplicationFactory : WebApplicationFactory<Program>
             // Replace PostgreSQL repositories with in-memory stubs â€” no connection string needed
             services.RemoveAll<IExperimentRepository>();
             services.RemoveAll<ICampaignRepository>();
+            services.RemoveAll<IExperimentEventRepository>();
             services.RemoveAll<DbConnectionFactory>();
             services.AddScoped<IExperimentRepository, InMemoryExperimentRepository>();
             services.AddScoped<ICampaignRepository, InMemoryCampaignRepository>();
+            services.AddScoped<IExperimentEventRepository, InMemoryExperimentEventRepository>();
         });
     }
 
@@ -83,6 +85,18 @@ public sealed class HelixWebApplicationFactory : WebApplicationFactory<Program>
             _store.TryRemove(campaignId, out _);
             return Task.CompletedTask;
         }
+    }
+
+    private sealed class InMemoryExperimentEventRepository : IExperimentEventRepository
+    {
+        public Task AppendAsync(ExperimentEventRecord record, CancellationToken ct = default)
+            => Task.CompletedTask;
+
+        public Task<IReadOnlyList<ExperimentEventRecord>> GetByExperimentIdAsync(string experimentId, CancellationToken ct = default)
+            => Task.FromResult<IReadOnlyList<ExperimentEventRecord>>(Array.Empty<ExperimentEventRecord>());
+
+        public Task<IReadOnlyList<ExperimentEventRecord>> GetReplayLogAsync(string experimentId, CancellationToken ct = default)
+            => Task.FromResult<IReadOnlyList<ExperimentEventRecord>>(Array.Empty<ExperimentEventRecord>());
     }
 }
 

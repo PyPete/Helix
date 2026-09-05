@@ -1,3 +1,5 @@
+using Helix.Orchestration.Core.Devices;
+using Helix.Orchestration.Core.WSL;
 using Helix.Orchestration.Infrastructure.Persistence;
 using Helix.Orchestration.Simulation;
 using Helix.Orchestration.SiteServer.Agent;
@@ -27,9 +29,22 @@ builder.Services.AddHelixSimulation();
 // Register switchable agent proxy (sim or gRPC)
 builder.Services.AddHelixAgentProxy(builder.Configuration);
 
+// WSL compiler and device registry (devices seeded from agent proxy at startup)
+builder.Services.AddSingleton<IWslCompiler, WslCompiler>();
+builder.Services.AddSingleton<DeviceRegistry>(sp =>
+{
+    var proxy = sp.GetRequiredService<IAgentProxy>();
+    var registry = new DeviceRegistry();
+    var devices = proxy.GetRegisteredDevicesAsync().GetAwaiter().GetResult();
+    foreach (var d in devices)
+        registry.Register(new DeviceDescriptor(d.DeviceId, d.DeviceId, d.DeviceKind, d.Capabilities.ToList(),
+            new Dictionary<string, object?>()));
+    return registry;
+});
+
 // Register campaign services
 builder.Services.AddSingleton<ICampaignIterationStrategy, SequentialStrategy>();
-builder.Services.AddSingleton<ICampaignManager, CampaignManager>();
+builder.Services.AddScoped<ICampaignManager, CampaignManager>();
 
 // Register MQTT trend bridge as hosted service
 builder.Services.Configure<MqttBridgeOptions>(builder.Configuration.GetSection("MqttBridge"));

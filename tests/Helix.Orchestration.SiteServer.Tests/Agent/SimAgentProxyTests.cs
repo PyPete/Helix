@@ -87,11 +87,11 @@ public class SimAgentProxyTests
     }
 
     [Fact]
-    public void GetRegisteredDevices_ReturnsThreeSimDevices()
+    public async Task GetRegisteredDevicesAsync_ReturnsThreeSimDevices()
     {
         var proxy = CreateProxy();
 
-        var devices = proxy.GetRegisteredDevices().ToList();
+        var devices = (await proxy.GetRegisteredDevicesAsync()).ToList();
 
         Assert.Equal(3, devices.Count);
         Assert.Contains(devices, d => d.DeviceKind == "Reactor");
@@ -100,11 +100,12 @@ public class SimAgentProxyTests
     }
 
     [Fact]
-    public void GetRegisteredDevices_ReactorHasExpectedCapabilities()
+    public async Task GetRegisteredDevicesAsync_ReactorHasExpectedCapabilities()
     {
         var proxy = CreateProxy();
 
-        var reactor = proxy.GetRegisteredDevices().Single(d => d.DeviceKind == "Reactor");
+        var devices = await proxy.GetRegisteredDevicesAsync();
+        var reactor = devices.Single(d => d.DeviceKind == "Reactor");
 
         Assert.Contains("SetTemperature", reactor.Capabilities);
         Assert.Contains("GetTemperature", reactor.Capabilities);

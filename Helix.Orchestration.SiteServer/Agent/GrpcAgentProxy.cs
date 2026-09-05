@@ -67,6 +67,13 @@ public sealed class GrpcAgentProxy(IAgentControlClient client) : IAgentProxy
         }
     }
 
-    public IEnumerable<DeviceDescriptorDto> GetRegisteredDevices()
-        => Array.Empty<DeviceDescriptorDto>();
+    public async Task<IEnumerable<DeviceDescriptorDto>> GetRegisteredDevicesAsync(CancellationToken ct = default)
+    {
+        var response = await client.ListDevicesAsync(new ListDevicesRequest(), ct);
+        return response.Devices.Select(d => new DeviceDescriptorDto(
+            DeviceId: d.DeviceId,
+            DeviceName: d.DeviceName,
+            DeviceKind: d.DeviceKind,
+            Capabilities: d.Capabilities.ToList()));
+    }
 }

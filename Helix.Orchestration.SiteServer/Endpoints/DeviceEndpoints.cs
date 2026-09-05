@@ -13,11 +13,11 @@ public static class DeviceEndpoints
             .WithTags("Devices");
 
         // GET /api/devices — List all registered devices
-        group.MapGet("/", IResult (IAgentProxy agentProxy) =>
+        group.MapGet("/", async Task<IResult> (IAgentProxy agentProxy, CancellationToken ct) =>
         {
             try
             {
-                var devices = agentProxy.GetRegisteredDevices();
+                var devices = await agentProxy.GetRegisteredDevicesAsync(ct);
                 return Results.Ok(devices);
             }
             catch (Exception ex)

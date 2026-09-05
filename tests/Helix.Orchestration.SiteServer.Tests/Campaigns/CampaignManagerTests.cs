@@ -1,4 +1,5 @@
 using Helix.Orchestration.Core.WSL;
+using Helix.Orchestration.Infrastructure.Persistence;
 using Helix.Orchestration.SiteServer.Agent;
 using Helix.Orchestration.SiteServer.Campaigns;
 using Moq;
@@ -12,7 +13,9 @@ public class CampaignManagerTests
     public async Task CreateAsync_WithParameterSets_CreatesDraftCampaignWithIterations()
     {
         var agentProxy = new Mock<IAgentProxy>();
-        var manager = new CampaignManager(agentProxy.Object, new SequentialStrategy());
+        var repo = new Mock<ICampaignRepository>();
+        repo.Setup(r => r.SaveAsync(It.IsAny<CampaignRecord>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        var manager = new CampaignManager(agentProxy.Object, new SequentialStrategy(), repo.Object);
 
         var campaign = await manager.CreateAsync(
             "Campaign A",
@@ -38,7 +41,9 @@ public class CampaignManagerTests
             .Setup(a => a.SubmitExperimentAsync(It.IsAny<RunspaceDefinition>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(() => $"runspace-{++submissionCounter}");
 
-        var manager = new CampaignManager(agentProxy.Object, new SequentialStrategy());
+        var repo = new Mock<ICampaignRepository>();
+        repo.Setup(r => r.SaveAsync(It.IsAny<CampaignRecord>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        var manager = new CampaignManager(agentProxy.Object, new SequentialStrategy(), repo.Object);
 
         var created = await manager.CreateAsync(
             "Campaign B",
@@ -75,7 +80,9 @@ public class CampaignManagerTests
                 throw new InvalidOperationException("submit failed");
             });
 
-        var manager = new CampaignManager(agentProxy.Object, new SequentialStrategy());
+        var repo = new Mock<ICampaignRepository>();
+        repo.Setup(r => r.SaveAsync(It.IsAny<CampaignRecord>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        var manager = new CampaignManager(agentProxy.Object, new SequentialStrategy(), repo.Object);
 
         var created = await manager.CreateAsync(
             "Campaign C",
@@ -98,7 +105,11 @@ public class CampaignManagerTests
     public async Task DeleteAsync_RemovesCampaign()
     {
         var agentProxy = new Mock<IAgentProxy>();
-        var manager = new CampaignManager(agentProxy.Object, new SequentialStrategy());
+        var repo = new Mock<ICampaignRepository>();
+        repo.Setup(r => r.SaveAsync(It.IsAny<CampaignRecord>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        repo.Setup(r => r.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        repo.Setup(r => r.GetByIdAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((CampaignRecord?)null);
+        var manager = new CampaignManager(agentProxy.Object, new SequentialStrategy(), repo.Object);
 
         var created = await manager.CreateAsync("Campaign D", null, new List<Dictionary<string, object?>>());
 

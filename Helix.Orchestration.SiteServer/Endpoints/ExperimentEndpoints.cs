@@ -1,3 +1,5 @@
+using System.Text.Json;
+using Helix.Orchestration.Core.Devices;
 using Helix.Orchestration.Core.WSL;
 using Helix.Orchestration.Infrastructure.Persistence;
 using Helix.Orchestration.SiteServer.Agent;
@@ -52,19 +54,30 @@ public static class ExperimentEndpoints
         group.MapPost("/", async Task<IResult> (
             SubmitExperimentRequest request,
             IAgentProxy agentProxy,
+            IWslCompiler wslCompiler,
+            DeviceRegistry deviceRegistry,
             CancellationToken ct) =>
         {
             try
             {
-                // Phase 9: Parse and compile WSL (stub: create minimal RunspaceDefinition)
-                var definition = new RunspaceDefinition(
-                    DefinitionId: request.ExperimentId ?? Guid.NewGuid().ToString("N"),
-                    Name: request.ExperimentName ?? "Unnamed Experiment",
-                    Nodes: Array.Empty<WslNode>(),
-                    Edges: Array.Empty<WslEdge>(),
-                    Metadata: new Dictionary<string, object?>());
+                // Deserialize WslSource as a WslDocument JSON payload.
+                WslDocument document;
+                try
+                {
+                    document = JsonSerializer.Deserialize<WslDocument>(request.WslSource,
+                        new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
+                        ?? throw new InvalidOperationException("WslSource deserialized to null.");
+                }
+                catch (Exception ex)
+                {
+                    return Results.BadRequest(new { Error = "Invalid WslSource JSON", Detail = ex.Message });
+                }
 
-                var runspaceId = await agentProxy.SubmitExperimentAsync(definition, ct);
+                var compiled = wslCompiler.Compile(document, deviceRegistry);
+                if (!compiled.Success)
+                    return Results.BadRequest(new { Errors = compiled.Diagnostics });
+
+                var runspaceId = await agentProxy.SubmitExperimentAsync(compiled.Definition!, ct);
 
                 return Results.Ok(new { RunspaceId = runspaceId });
             }

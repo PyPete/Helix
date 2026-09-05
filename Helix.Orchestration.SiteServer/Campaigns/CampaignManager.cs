@@ -1,16 +1,19 @@
 using System.Collections.Concurrent;
+using System.Text.Json;
 using Helix.Orchestration.Core.WSL;
+using Helix.Orchestration.Infrastructure.Persistence;
 using Helix.Orchestration.SiteServer.Agent;
 
 namespace Helix.Orchestration.SiteServer.Campaigns;
 
 public sealed class CampaignManager(
     IAgentProxy agentProxy,
-    ICampaignIterationStrategy iterationStrategy) : ICampaignManager
+    ICampaignIterationStrategy iterationStrategy,
+    ICampaignRepository repository) : ICampaignManager
 {
     private readonly ConcurrentDictionary<string, Campaign> _campaigns = new();
 
-    public Task<Campaign> CreateAsync(
+    public async Task<Campaign> CreateAsync(
         string name,
         string? description,
         IReadOnlyList<Dictionary<string, object?>> parameterSets,
@@ -42,19 +45,28 @@ public sealed class CampaignManager(
         }
 
         _campaigns[campaignId] = campaign;
-        return Task.FromResult(campaign);
+        await repository.SaveAsync(ToCampaignRecord(campaign), ct);
+        return campaign;
     }
 
-    public Task<Campaign?> GetByIdAsync(string campaignId, CancellationToken ct = default)
+    public async Task<Campaign?> GetByIdAsync(string campaignId, CancellationToken ct = default)
     {
-        _campaigns.TryGetValue(campaignId, out var campaign);
-        return Task.FromResult(campaign);
+        if (_campaigns.TryGetValue(campaignId, out var cached))
+            return cached;
+
+        var record = await repository.GetByIdAsync(campaignId, ct);
+        if (record is null) return null;
+        var campaign = FromCampaignRecord(record);
+        _campaigns[campaignId] = campaign;
+        return campaign;
     }
 
-    public Task<IReadOnlyList<Campaign>> GetAllAsync(CancellationToken ct = default)
+    public async Task<IReadOnlyList<Campaign>> GetAllAsync(CancellationToken ct = default)
     {
-        var list = _campaigns.Values.OrderBy(c => c.CreatedAt).ToList();
-        return Task.FromResult<IReadOnlyList<Campaign>>(list);
+        var records = await repository.GetAllAsync(ct);
+        foreach (var rec in records)
+            _campaigns.TryAdd(rec.CampaignId, FromCampaignRecord(rec));
+        return _campaigns.Values.OrderBy(c => c.CreatedAt).ToList();
     }
 
     public async Task<Campaign> StartAsync(string campaignId, CancellationToken ct = default)
@@ -113,15 +125,70 @@ public sealed class CampaignManager(
 
                 campaign.Status = CampaignStatus.Failed;
                 campaign.EndedAt = DateTimeOffset.UtcNow;
+                await repository.SaveAsync(ToCampaignRecord(campaign), ct);
                 return campaign;
             }
         }
 
         campaign.Status = CampaignStatus.Completed;
         campaign.EndedAt = DateTimeOffset.UtcNow;
+        await repository.SaveAsync(ToCampaignRecord(campaign), ct);
         return campaign;
     }
 
-    public Task<bool> DeleteAsync(string campaignId, CancellationToken ct = default)
-        => Task.FromResult(_campaigns.TryRemove(campaignId, out _));
+    public async Task<bool> DeleteAsync(string campaignId, CancellationToken ct = default)
+    {
+        var removed = _campaigns.TryRemove(campaignId, out _);
+        await repository.DeleteAsync(campaignId, ct);
+        return removed;
+    }
+
+    private static CampaignRecord ToCampaignRecord(Campaign campaign) =>
+        new(
+            CampaignId: campaign.CampaignId,
+            Name: campaign.Name,
+            Description: campaign.Description,
+            Status: campaign.Status.ToString(),
+            CreatedAt: campaign.CreatedAt,
+            StartedAt: campaign.StartedAt,
+            EndedAt: campaign.EndedAt,
+            Iterations: campaign.Iterations.Select(i => new CampaignIterationRecord(
+                CampaignId: campaign.CampaignId,
+                IterationIndex: i.Index,
+                ParametersJson: JsonSerializer.Serialize(i.Parameters),
+                RunspaceId: i.RunspaceId,
+                Status: i.Status.ToString(),
+                Message: i.Message,
+                CreatedAt: i.CreatedAt,
+                StartedAt: i.StartedAt,
+                EndedAt: i.EndedAt)).ToList());
+
+    private static Campaign FromCampaignRecord(CampaignRecord record)
+    {
+        var campaign = new Campaign
+        {
+            CampaignId = record.CampaignId,
+            Name = record.Name,
+            Description = record.Description,
+            Status = Enum.TryParse<CampaignStatus>(record.Status, out var s) ? s : CampaignStatus.Draft,
+            CreatedAt = record.CreatedAt,
+            StartedAt = record.StartedAt,
+            EndedAt = record.EndedAt
+        };
+        foreach (var iter in record.Iterations)
+        {
+            var parameters = JsonSerializer.Deserialize<Dictionary<string, object?>>(iter.ParametersJson)
+                ?? new Dictionary<string, object?>();
+            campaign.Iterations.Add(new CampaignIteration(
+                Index: iter.IterationIndex,
+                Parameters: parameters,
+                RunspaceId: iter.RunspaceId,
+                Status: Enum.TryParse<CampaignIterationStatus>(iter.Status, out var is2) ? is2 : CampaignIterationStatus.Pending,
+                Message: iter.Message,
+                CreatedAt: iter.CreatedAt,
+                StartedAt: iter.StartedAt,
+                EndedAt: iter.EndedAt));
+        }
+        return campaign;
+    }
 }

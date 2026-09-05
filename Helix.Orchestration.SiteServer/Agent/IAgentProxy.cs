@@ -24,9 +24,9 @@ public interface IAgentProxy
     Task AbortRunspaceAsync(string runspaceId, CancellationToken ct = default);
 
     /// <summary>
-    /// Lists all registered devices (for Phase 9, returns sim device descriptors).
+    /// Lists all registered devices known to the agent.
     /// </summary>
-    IEnumerable<DeviceDescriptorDto> GetRegisteredDevices();
+    Task<IEnumerable<DeviceDescriptorDto>> GetRegisteredDevicesAsync(CancellationToken ct = default);
 }
 
 /// <summary>

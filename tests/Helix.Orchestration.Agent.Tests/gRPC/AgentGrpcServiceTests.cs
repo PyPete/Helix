@@ -1,6 +1,7 @@
 using Grpc.Core;
 using Helix.Orchestration.Agent.GrpcServer;
 using Helix.Orchestration.Contracts.Control;
+using Helix.Orchestration.Core.Devices;
 using Helix.Orchestration.Core.Runspace;
 using Moq;
 using Xunit;
@@ -20,7 +21,7 @@ public sealed class AgentGrpcServiceTests
         var manager = new Mock<IRunspaceManager>();
         manager.Setup(m => m.Get("rs-1")).Returns(mockRunspace.Object);
 
-        var svc = new AgentGrpcService(manager.Object);
+        var svc = new AgentGrpcService(manager.Object, new DeviceRegistry());
         var ack = await svc.PauseRunspace(new RunspaceCommand { RunspaceId = "rs-1" }, FakeContext());
 
         Assert.True(ack.Success);
@@ -34,7 +35,7 @@ public sealed class AgentGrpcServiceTests
         var manager = new Mock<IRunspaceManager>();
         manager.Setup(m => m.Get("unknown")).Returns((IRunspace?)null);
 
-        var svc = new AgentGrpcService(manager.Object);
+        var svc = new AgentGrpcService(manager.Object, new DeviceRegistry());
         var ack = await svc.PauseRunspace(new RunspaceCommand { RunspaceId = "unknown" }, FakeContext());
 
         Assert.False(ack.Success);
@@ -51,7 +52,7 @@ public sealed class AgentGrpcServiceTests
         var manager = new Mock<IRunspaceManager>();
         manager.Setup(m => m.Get("rs-2")).Returns(mockRunspace.Object);
 
-        var svc = new AgentGrpcService(manager.Object);
+        var svc = new AgentGrpcService(manager.Object, new DeviceRegistry());
         var ack = await svc.PauseRunspace(new RunspaceCommand { RunspaceId = "rs-2" }, FakeContext());
 
         Assert.False(ack.Success);
@@ -67,7 +68,7 @@ public sealed class AgentGrpcServiceTests
         var manager = new Mock<IRunspaceManager>();
         manager.Setup(m => m.Get("rs-3")).Returns(mockRunspace.Object);
 
-        var svc = new AgentGrpcService(manager.Object);
+        var svc = new AgentGrpcService(manager.Object, new DeviceRegistry());
         var ack = await svc.ResumeRunspace(new RunspaceCommand { RunspaceId = "rs-3" }, FakeContext());
 
         Assert.True(ack.Success);
@@ -81,7 +82,7 @@ public sealed class AgentGrpcServiceTests
         var manager = new Mock<IRunspaceManager>();
         manager.Setup(m => m.Get("unknown")).Returns((IRunspace?)null);
 
-        var svc = new AgentGrpcService(manager.Object);
+        var svc = new AgentGrpcService(manager.Object, new DeviceRegistry());
         var ack = await svc.ResumeRunspace(new RunspaceCommand { RunspaceId = "unknown" }, FakeContext());
 
         Assert.False(ack.Success);

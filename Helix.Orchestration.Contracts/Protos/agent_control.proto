@@ -16,4 +16,10 @@ message RunspaceQuery { string runspace_id = 1; }
 
 message RunspaceStatusResponse { string runspace_id = 1; string status = 2; string message = 3; }
 
-service AgentControl { rpc SubmitExperiment (ExperimentSubmission) returns (SubmissionAck); rpc PauseRunspace (RunspaceCommand) returns (CommandAck); rpc ResumeRunspace (RunspaceCommand) returns (CommandAck); rpc AbortRunspace (RunspaceCommand) returns (CommandAck); rpc GetRunspaceStatus (RunspaceQuery) returns (RunspaceStatusResponse); }
+message ListDevicesRequest {}
+
+message DeviceInfo { string device_id = 1; string device_name = 2; string device_kind = 3; repeated string capabilities = 4; }
+
+message ListDevicesResponse { repeated DeviceInfo devices = 1; }
+
+service AgentControl { rpc SubmitExperiment (ExperimentSubmission) returns (SubmissionAck); rpc PauseRunspace (RunspaceCommand) returns (CommandAck); rpc ResumeRunspace (RunspaceCommand) returns (CommandAck); rpc AbortRunspace (RunspaceCommand) returns (CommandAck); rpc GetRunspaceStatus (RunspaceQuery) returns (RunspaceStatusResponse); rpc ListDevices (ListDevicesRequest) returns (ListDevicesResponse); }
