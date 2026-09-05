@@ -209,7 +209,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 11. Ribbon + Docking Workspace Shell | 0/? | Not started | â€” |
-| 12. Experiment as Top-Level Scope | 0/? | Not started | â€” |
+| 12. Experiment as Top-Level Scope | 3/3 | Complete    | 2026-09-05 |
 | 13. Three Workflow Modes | 0/? | Not started | â€” |
 | 14. ReactFlow Node Canvas | 0/? | Not started | â€” |
 | 15. SciChart Integration | 0/? | Not started | â€” |
