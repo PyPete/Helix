@@ -88,13 +88,14 @@ try
     builder.Services.AddSingleton<TrendAggregator>();
     builder.Services.AddSingleton<IRunspaceManager>(sp =>
     {
-        var capRegistry       = sp.GetRequiredService<CapabilityRegistry>();
-        var emitter           = sp.GetService<IRunspaceEventEmitter>();
-        var execLogger        = sp.GetRequiredService<ILogger<RunspaceManager>>();
-        var simulator         = sp.GetService<Helix.Orchestration.Devices.Drivers.SimulatorDevice>();
-        var workflowState     = sp.GetRequiredService<IWorkflowStateStore>();
-        var globalState       = sp.GetRequiredService<IGlobalStateStore>();
-        var capabilityInvoker = sp.GetRequiredService<ICapabilityInvoker>();
+        var capRegistry        = sp.GetRequiredService<CapabilityRegistry>();
+        var emitter            = sp.GetService<IRunspaceEventEmitter>();
+        var experimentManager  = sp.GetService<IExperimentManager>();
+        var execLogger         = sp.GetRequiredService<ILogger<RunspaceManager>>();
+        var simulator          = sp.GetService<Helix.Orchestration.Devices.Drivers.SimulatorDevice>();
+        var workflowState      = sp.GetRequiredService<IWorkflowStateStore>();
+        var globalState        = sp.GetRequiredService<IGlobalStateStore>();
+        var capabilityInvoker  = sp.GetRequiredService<ICapabilityInvoker>();
 
         // Build a lookup: full capability key â†’ EstimatedDurationMs
         var estimatedDurations = new Dictionary<string, int?>(StringComparer.OrdinalIgnoreCase);
@@ -113,6 +114,10 @@ try
 
             body = async (token) =>
             {
+                // Resolve the experiment that owns this runspace so step events carry ExperimentId.
+                var experimentId = experimentManager?.ListActive()
+                    .FirstOrDefault(x => x.ActiveRunspaceId == runspaceId)?.ExperimentId;
+
                 // BFS walk from entry nodes (no incoming edges).
                 // Only exec edges determine execution order; data edges are ignored for sequencing.
                 var execEdges = definition.Edges.Where(e =>
@@ -157,7 +162,8 @@ try
                         {
                             eta = d;
                         }
-                        emitter?.Publish(new StepStartedEvent(runspaceId, node.NodeId, node.Label, eta));
+                        emitter?.Publish(new StepStartedEvent(runspaceId, node.NodeId, node.Label, eta)
+                            with { ExperimentId = experimentId });
                     }
 
                     try
@@ -181,7 +187,8 @@ try
                             if (!result.Success)
                             {
                                 emitter?.Publish(new StepFaultedEvent(runspaceId, node.NodeId,
-                                    result.ErrorMessage ?? $"Capability '{capName}' failed."));
+                                    result.ErrorMessage ?? $"Capability '{capName}' failed.")
+                                    with { ExperimentId = experimentId });
                                 return;
                             }
                         }
@@ -197,13 +204,15 @@ try
                         }
 
                         if (isStep)
-                            emitter?.Publish(new StepCompletedEvent(runspaceId, node.NodeId));
+                            emitter?.Publish(new StepCompletedEvent(runspaceId, node.NodeId)
+                                with { ExperimentId = experimentId });
                     }
                     catch (OperationCanceledException) { throw; }
                     catch (Exception ex)
                     {
                         execLogger.LogError(ex, "Step {NodeId} faulted", node.NodeId);
-                        emitter?.Publish(new StepFaultedEvent(runspaceId, node.NodeId, ex.Message));
+                        emitter?.Publish(new StepFaultedEvent(runspaceId, node.NodeId, ex.Message)
+                            with { ExperimentId = experimentId });
                         return;
                     }
 
@@ -218,7 +227,8 @@ try
                     }
                 }
 
-                emitter?.Publish(new RunspaceCompletedEvent(runspaceId));
+                emitter?.Publish(new RunspaceCompletedEvent(runspaceId)
+                    with { ExperimentId = experimentId });
             };
 
             return await Task.FromResult(runspace);

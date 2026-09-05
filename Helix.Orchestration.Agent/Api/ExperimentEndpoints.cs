@@ -44,7 +44,8 @@ public static class ExperimentEndpoints
                     Metadata: new Dictionary<string, object?>());
 
                 var runspace = await runspaceManager.CreateAsync(definition, ct);
-                emitter.Publish(new RunspaceStartedEvent(runspace.RunspaceId));
+                emitter.Publish(new RunspaceStartedEvent(runspace.RunspaceId)
+                    with { ExperimentId = ctx.ExperimentId });
                 await runspace.StartAsync(ct);
 
                 experimentManager.SetActiveRunspace(ctx.ExperimentId, runspace.RunspaceId);
