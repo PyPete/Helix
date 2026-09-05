@@ -1,129 +1,129 @@
 # Coding Conventions
 
-**Analysis Date:** 2026-05-26
+**Analysis Date:** 2026-09-05
 
-## Naming Conventions
+## Naming Patterns
 
-**Classes:**
-- PascalCase throughout
-- Concrete service/component classes are almost always `sealed`: `public sealed class DeviceLease`, `public sealed class CapabilityRegistry`, `public sealed class DurableRunspace`
-- Non-sealed classes are the exception (used for `TransportFaultException`, `Worker`, `MinioObjectStorageSink`)
-- Exception classes extend `Exception` and are `sealed`: `DeviceAlreadyLeasedException`, `CircuitBreakerOpenException`
+**Files:**
+- React components: PascalCase matching the exported component name — `ConnectionConfig.tsx`, `ExecutionPanel.tsx`, `SafetyPanel.tsx`
+- React hooks: camelCase with `use` prefix — `useAgentHealth.ts`, `useAgentWebSocket.ts`, `useNodeExecutionState.ts`
+- Test files: co-located with source, `.test.tsx` or `.test.ts` suffix — `ConnectionConfig.test.tsx`, `useAgentHealth.test.ts`
+- Type/domain files: camelCase for modules — `agent.ts`, `workflowLibrary.ts`
+- Shell sub-components: PascalCase in `src/shell/` — `HelixShell.tsx`, `Ribbon.tsx`, `ActivityBar.tsx`
+- Barrel files: `index.ts` used in `src/components/charts/index.ts`
 
-**Interfaces:**
-- `I`-prefix: `IDeviceLeasingService`, `IWorkflowExecutor`, `IRunspaceManager`, `ICapabilityInvoker`
-- One interface per file, named to describe the capability not the implementation
+**Functions and Components:**
+- Default exports for top-level page/root components — `export default function App()`, `export default function ConnectionConfig()`
+- Named exports for sub-components and hooks — `export function ExecutionPanel()`, `export function useAgentHealth()`
+- Handler functions prefixed with `handle` — `handleSave`, `handleStart`, `handleAbort`, `handleCompile`
+- Async event handlers declared as `async` arrow functions or `async` function declarations
 
-**Methods:**
-- PascalCase for all public and private methods
-- Async methods always use `Async` suffix: `AcquireAsync`, `ExecuteAsync`, `RenewAsync`, `ForceReleaseAsync`
-- Factory/static helper methods use verb-noun: `CapabilityInvocationResult.Succeeded(...)`, `CapabilityInvocationResult.Failed(...)`
+**Variables:**
+- camelCase for all local variables and state — `experimentId`, `submitting`, `baseUrl`
+- UPPER_SNAKE_CASE for module-level constant lookup tables — `STATUS_LABELS`, `STATUS_COLORS`
+- Module-level singletons using `const` — `const store = new LazyStore("helix-config.json")`
 
-**Fields and Properties:**
-- Private instance fields: `_camelCase` prefix with underscore: `_leasingService`, `_workflowExecutor`, `_leases`, `_lock`
-- Public properties: PascalCase: `LeaseId`, `HolderName`, `ExpiresAt`
-- Static readonly fields (telemetry, singletons): PascalCase: `HelixTelemetry.TrendsPublished`, `EmptyObservable<T>.Instance`
+**Types and Interfaces:**
+- `interface` for component props with `Props` suffix — `ConnectionConfigProps`, `ExecutionPanelProps`
+- `interface` for domain objects — `AgentConnection`, `WslDocument`, `RunspaceEvent`
+- `type` for union types — `ExperimentEvent`, `ParameterType`, `CapabilityCategory`
+- Types co-located in `src/types/agent.ts` as the single domain type file per package
+- Interface properties use camelCase throughout
 
-**Enums:**
-- PascalCase type and member names: `LeaseMode.Exclusive`, `LeaseMode.Shared`, `RunspaceStatus.Idle`, `CircuitBreakerState.Open`
+## Code Style
 
-**Records:**
-- `public sealed record` for immutable data/value objects: `DeviceDescriptor`, `CapabilityInvocationResult`, `TrendValue`, `Spectrum1D`, `WorkflowState`
-- Positional syntax used for simple records: `public sealed record DiodeArraySlice(DateTimeOffset Timestamp, double[] Intensities)`
-- Property-initialiser syntax used when XML doc comments are needed per-property
+**Formatting:**
+- No Prettier config detected — formatting is handled by the developer/editor; TypeScript strict mode enforced by `tsc`
+- Strings: double quotes in `.tsx`/`.ts` files (observed consistently)
+- Semicolons: present on all statements
 
-## Namespaces
+**Linting:**
+- Tool: ESLint with `eslint.config.js` flat config (`helix-dashboard/eslint.config.js`)
+- Extends: `@eslint/js` recommended, `typescript-eslint` recommended, `eslint-plugin-react-hooks` recommended, `eslint-plugin-react-refresh`
+- Scope: `**/*.{ts,tsx}` files, `dist/` ignored
+- `eslint-disable` comments used sparingly and only with explanation:
+  ```typescript
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  ```
 
-- File-scoped namespace declarations (C# 10+): `namespace Helix.Orchestration.Agent.Execution;`
-- Namespace mirrors directory structure under the assembly root: `Helix.Orchestration.Agent/Execution/WslExecutionAdapter.cs` → `namespace Helix.Orchestration.Agent.Execution`
-- One type per file (enforced by structure)
+## Import Organization
 
-## Code Organisation
+**Order (observed pattern):**
+1. React/framework imports — `import { useState, useEffect } from "react"`
+2. Third-party packages — `import { LazyStore } from "@tauri-apps/plugin-store"`
+3. Internal type imports — `import type { AgentConnection } from "../types/agent"`
+4. Internal module imports — `import { useAgentHealth } from '../hooks/useAgentHealth'`
+5. CSS/style imports — `import './shell.css'` (placed first in shell files)
 
-- Feature folder layout inside each project: `Leasing/`, `Execution/`, `Runspace/`, `Trends/`, `Safety/`, `State/`
-- Extension methods for DI registration placed in dedicated `*Extensions.cs` files in the same folder: `DeviceAdapterExtensions.cs`, `InfrastructureServiceExtensions.cs`
-- `static` extension classes named `{Feature}Extensions` or `{Service}Extensions`
+**Path style:** Relative paths only (`../types/agent`, `./ConnectionConfig`). No path aliases configured.
+
+**Type-only imports:** `import type { ... }` used consistently for type-only imports — never mixing value and type in the same import when the value is unused.
 
 ## Error Handling
 
-**Guard clauses:**
-Two styles are used, sometimes within the same class:
-- Newer .NET 7+ style: `ArgumentNullException.ThrowIfNull(document)`, `ArgumentException.ThrowIfNullOrWhiteSpace(holderName)` — preferred in method bodies
-- Inline null-coalescing throw in constructors: `_leasingService = leasingService ?? throw new ArgumentNullException(nameof(leasingService))`
+**Async fetch pattern:**
+```typescript
+try {
+  const res = await fetch(baseUrl + "/endpoint", { method: "POST", ... });
+  if (!res.ok) {
+    setError("Failed: " + res.statusText);
+    return;
+  }
+  const data = await res.json();
+} catch (e) {
+  setError((e as Error).message);
+} finally {
+  setSubmitting(false);
+}
+```
 
-**Domain exceptions:**
-- Custom sealed exception classes for domain violations: `DeviceAlreadyLeasedException`, `CircuitBreakerOpenException`, `TransportFaultException`
-- Exceptions carry context properties: `DeviceAlreadyLeasedException.DeviceId`, `.RequestedMode`
+**Error state:** Errors surface to UI state via `useState<string | null>(null)`, rendered as `<p role="alert" className="error">{error}</p>`.
 
-**Result pattern:**
-- `CapabilityInvocationResult` is a sealed record with `Success`, `ErrorMessage`, `Exception`, and `ReturnValue` — used for capability invocations instead of throwing
-- `static CapabilityInvocationResult.Succeeded(...)` and `.Failed(...)` factory methods
+**Error casting:** Unknown errors cast with `(e as Error).message` — no utility wrapper used.
 
-**Exception propagation:**
-- Exceptions are caught selectively; `OperationCanceledException` is handled distinctly from general `Exception` in `DurableRunspace.ExecuteAsync`
-- Catch-and-rethrow used in `WslExecutionAdapter.ExecuteAsync` to ensure lease cleanup before propagation
+**HTTP status checks:** `res.ok` for general checks; specific status codes for semantic cases (e.g., `res.status === 422` for compile validation errors).
+
+**WebSocket resilience:** Malformed JSON frames caught silently — the hook parses inside a try/catch and drops bad frames without throwing.
 
 ## Logging
 
-**Framework:** Serilog with `Microsoft.Extensions.Logging.ILogger<T>` abstraction
+**Framework:** `console` only — no structured logging library.
 
-**Setup:** Serilog configured at bootstrap in `Program.cs` via `builder.Host.UseSerilog(...)`, writing compact JSON to console and rolling daily file (`logs/helix-agent-.log`)
+**Pattern:** No systematic logging observed in production code. Tests do not assert on console output.
 
-**Injection pattern:** `ILogger<T>` injected via constructor or primary constructor:
-```csharp
-public sealed class AgentService(ILogger<AgentService> logger) : IHostedService
-```
+## Comments
 
-**Structured logging:** Message templates with named placeholders used throughout:
-```csharp
-logger.LogInformation("Purged {PurgedLeaseCount} expired leases", purged);
-logger.LogWarning("Ignoring message with unrecognized topic structure: {Topic}", topic);
-```
+**When to comment:**
+- Phase markers used in `src/types/agent.ts` to track which domain types arrived in each development phase: `// Phase 6.1 additions`
+- Cross-file contract notes: `// mirrors AgentProxyOptions.cs defaults`
+- Intentional no-op comments in tests: `/* intentionally never resolves */`
+- JSDoc-style `/** ... */` block comments on exported shell components: `/** HelixShell – composition root... */`
 
-**Test logging:** `NullLogger<T>.Instance` and `NullLogger.Instance` used in tests — no log output asserted
+**JSDoc/TSDoc:**
+- Used on major shell component default exports (`HelixShell`)
+- Not used consistently on hooks or smaller components — no enforced TSDoc policy
 
-## Async Patterns
+## Function Design
 
-- All async methods return `Task` or `Task<T>`; `ValueTask`/`ValueTask<T>` used only for `IAsyncDisposable.DisposeAsync()` implementations
-- `.ConfigureAwait(false)` used on await calls in library/service code that does not need a synchronisation context: `WslExecutionAdapter.ExecuteAsync`
-- `CancellationToken` is the last parameter in all async signatures with a default of `default`
-- `await using` used for `IAsyncDisposable` resources (leases in tests and production)
-- Top-level `await app.RunAsync()` in `Program.cs` (minimal hosting model)
+**Size:** Functions kept short; complex orchestration split into named sub-handlers (`handleCompile`, `handleStart` call each other).
 
-## Dependency Injection
+**Parameters:** Props are destructured at the function signature: `function ExecutionPanel({ baseUrl, definition, runspaceEvents }: ExecutionPanelProps)`.
 
-**Registration style:** `Microsoft.Extensions.DependencyInjection` throughout
+**Return values:** Hooks return plain objects with named fields, not arrays — `return state` for `useAgentHealth`, `return { connected, runspaceEvents, trendValues, ... }` for `useAgentWebSocket`.
 
-**Lifetimes:**
-- `AddSingleton` for stateful long-lived services: `InMemoryDeviceLeasingService`, `RunspaceManager`, `TrendAggregator`, `CapabilityRegistry`
-- `AddScoped` for per-request repositories: `PostgresExperimentRepository`, `PostgresCampaignRepository`
-- `AddTransient` for transports: `SerialTransport`, `ModbusTransport`, `TcpTransport`, `OpcTransport`
-- `AddHostedService` for background workers: `AgentService`, `LeaseExpiryWorker`, `MqttTrendIngestionService`
+**Async:** Handlers are `async` functions assigned to event props. Hooks use `useEffect` with inner `async` function (`const check = async () => { ... }`).
 
-**Extension methods:** DI wiring collected into feature extension methods on `IServiceCollection`:
-```csharp
-services.AddMigratedDeviceAdapters();   // DeviceAdapterExtensions.cs
-services.AddHelixInfrastructure(config); // InfrastructureServiceExtensions.cs
-```
+## Module Design
 
-**Interface aliasing:** Where a concrete type needs both direct and interface resolution, both registrations are made explicitly:
-```csharp
-builder.Services.AddSingleton<InMemoryDeviceLeasingService>();
-builder.Services.AddSingleton<IDeviceLeasingService>(sp => sp.GetRequiredService<InMemoryDeviceLeasingService>());
-```
+**Exports:** Mix of default (top-level components) and named (hooks, sub-components, utilities).
 
-## Thread Safety
+**Barrel files:** Used in `src/components/charts/index.ts`. Not used globally — most modules export directly.
 
-- Shared mutable state protected with `lock` on a dedicated `private readonly object _lock = new()` field
-- `ConcurrentDictionary<K,V>` used for read-heavy, low-contention registries
-- `SemaphoreSlim` used as an async gate in `DurableRunspace` for state transitions
+**Constants files:** Module-level constant objects (`STATUS_LABELS`, `STATUS_COLORS`) co-located in the component file that uses them.
 
-## XML Documentation
-
-- `/// <summary>` on all public types and public/internal members
-- `/// <inheritdoc/>` used on interface implementation members to avoid duplication
-- `/// <param name="...">` and `/// <exception cref="...">` used where relevant
+**Domain types:** All agent/domain types consolidated in `src/types/agent.ts` — the single source of truth per package. Dashboard has its own equivalent.
 
 ---
 
-*Convention analysis: 2026-05-26*
+*Convention analysis: 2026-09-05*

@@ -1,246 +1,260 @@
-# Testing Strategy
+# Testing Patterns
 
-**Analysis Date:** 2026-05-26
+**Analysis Date:** 2026-09-05
 
-## Test Projects
+## Test Framework
 
-| Project | Type | Location | Covers |
-|---------|------|----------|--------|
-| `Helix.Orchestration.Core.Tests` | Unit | `Helix.Orchestration/tests/` | Leasing, execution, runspace, safety, state, trends, WSL compiler/document |
-| `Helix.Orchestration.Agent.Tests` | Unit | `Helix.Orchestration/tests/` | DurableRunspace, WslExecutionAdapter, LeaseExpiryWorker, InMemory trend providers |
-| `Helix.Orchestration.Devices.Tests` | Unit | `Helix.Orchestration/tests/` | Transport abstractions, Modbus/OPC/Serial/TCP/CDll transports, CircuitBreaker, ReconnectPolicy, TransportWatchdog |
-| `Helix.Orchestration.SiteServer.Tests` | Integration | `Helix.Orchestration/tests/` | HTTP endpoints (experiments, campaigns, devices, trends), CampaignManager, GrpcAgentProxy, SimAgentProxy, simulation |
-| `Helix.Orchestration.Infrastructure.Tests` | Integration (Docker) | `Helix.Orchestration/tests/` | PostgresExperimentRepository, PostgresCampaignRepository |
-| `Helix.Orchestration.Recorder.Tests` | Unit | `Helix.Orchestration/tests/` | RecordedEvent parsing, RecorderWriterService flush logic |
+**Runner:**
+- Vitest (both packages)
+- `helix-desktop`: `vitest` ^4.x — config at `helix-desktop/vitest.config.ts`
+- `helix-dashboard`: `vitest --passWithNoTests` — config at `helix-dashboard/vitest.config.ts`
 
-## Test Frameworks
+**Assertion Library:**
+- Vitest built-in `expect` (Jest-compatible API)
+- `@testing-library/jest-dom` for DOM matchers — imported via setup file
 
-**Runner:** xUnit 2.9.x (all projects)
+**Supporting libraries:**
+- `@testing-library/react` ^16 — `render`, `screen`, `fireEvent`, `waitFor`, `act`, `renderHook`, `rerender`
+- `@testing-library/user-event` ^14 — available but `fireEvent` used in most existing tests
+- `jsdom` — test environment
 
-**Mocking:**
-- NSubstitute 5.x — used in `Helix.Orchestration.Devices.Tests` for interface fakes (`Substitute.For<IDeviceTransport>()`, `Substitute.For<IOpcSession>()`)
-- Moq 4.20.x — used in `Helix.Orchestration.Agent.Tests`, `Helix.Orchestration.SiteServer.Tests`, and `Helix.Orchestration.Recorder.Tests` (`new Mock<IAgentProxy>()`, `.Setup(...)`, `.Verify(...)`)
-- Both libraries coexist: NSubstitute preferred for transport/device layer, Moq preferred for service layer
-
-**Assertions:** xUnit built-in (`Assert.*`) — no FluentAssertions
-
-**Coverage:** coverlet.collector 6.x included in most test projects; no enforced coverage threshold configured
-
-**Integration test HTTP:** `Microsoft.AspNetCore.Mvc.Testing` 10.x in `Helix.Orchestration.SiteServer.Tests`
-
-**Integration test database:** `Testcontainers.PostgreSql` 4.x in `Helix.Orchestration.Infrastructure.Tests`
-
-## Run Commands
-
+**Run Commands:**
 ```bash
-# Run all tests in the solution
-dotnet test Helix.Orchestration/Helix.Orchestration.slnx -c Release
+# helix-desktop
+cd helix-desktop && npm test          # Run all tests (watch mode)
+cd helix-desktop && npm test -- --run # Run once (CI)
+cd helix-desktop && npm test -- --coverage  # Coverage via @vitest/coverage-v8
 
-# Run with TRX results (as CI does)
-dotnet test Helix.Orchestration/Helix.Orchestration.slnx --no-build -c Release --logger trx --results-directory test-results
-
-# Run a single test project
-dotnet test Helix.Orchestration/tests/Helix.Orchestration.Core.Tests/ -c Release
+# helix-dashboard
+cd helix-dashboard && npm test        # Run all tests
 ```
 
-## Test File Organisation
+## Test File Organization
 
-**Location:** Tests live in `Helix.Orchestration/tests/{ProjectName}.Tests/` (separate from source, inside the solution folder). The Recorder tests are outside the main solution under `tests/Helix.Orchestration.Recorder.Tests/`.
+**Location:** Co-located with source files — test file lives next to implementation.
 
-**Naming:** `{SubjectClass}Tests.cs` — e.g., `DeviceLeasingTests.cs`, `CircuitBreakerTests.cs`, `ExperimentEndpointsTests.cs`
+**Naming:** `{ComponentOrModule}.test.tsx` for React components, `{hookOrLib}.test.ts` for pure TypeScript.
 
-**Folder structure mirrors source structure:**
+**Structure example:**
 ```
-tests/Helix.Orchestration.Core.Tests/
-├── Capabilities/CapabilityRegistryTests.cs
-├── Execution/WorkflowExecutorTests.cs
-├── Leasing/DeviceLeasingTests.cs
-├── Leasing/DeviceLeasingRenewalTests.cs
-├── Runspace/RunspaceManagerTests.cs
-├── Safety/SafetyEngineTests.cs
-├── State/GlobalStateStoreTests.cs
-├── State/WorkflowStateExtensionsTests.cs
-├── TestContext/TestContextTests.cs
-├── Trends/SpectralDataModelTests.cs
-├── Trends/TrendFunctionsTests.cs
-├── Trends/TrendValueTests.cs
-└── WSL/WslCompilerTests.cs, WslDocumentTests.cs
+src/
+  components/
+    ConnectionConfig.tsx
+    ConnectionConfig.test.tsx         ← co-located
+    ExecutionPanel/
+      ExecutionPanel.tsx
+      ExecutionPanel.test.tsx         ← co-located in subdirectory
+  hooks/
+    useAgentHealth.ts
+    useAgentHealth.test.ts
+  lib/
+    workflowLibrary.ts
+    workflowLibrary.test.ts
+  test/
+    setup.ts                          ← global setup only
 ```
 
-## Test Patterns
+## Test Setup
 
-### Fact (Single scenario)
+**Global setup file:** `src/test/setup.ts`
+```typescript
+import "@testing-library/jest-dom";
+```
 
-All test methods are `async Task` returning, even when the code under test is synchronous. `[Fact]` is the dominant attribute.
+**Vitest config:**
+```typescript
+export default defineConfig({
+  plugins: [react()],
+  test: {
+    globals: true,         // describe/it/expect/vi without imports
+    environment: "jsdom",
+    setupFiles: ["./src/test/setup.ts"],
+  },
+});
+```
 
-```csharp
-[Fact]
-public async Task AcquireExclusive_WhenFree_ReturnsLease()
-{
-    var svc = new InMemoryDeviceLeasingService();
-    await using var lease = await svc.AcquireAsync("device-1", "workflow-A");
-    Assert.Equal("device-1", lease.DeviceId);
+## Test Structure
+
+**Suite Organization:**
+```typescript
+// describe wraps a component or hook or module
+describe("ComponentName", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();       // or vi.restoreAllMocks()
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();     // used when vi.stubGlobal is involved
+  });
+
+  it("renders X when Y", () => { ... });
+  it("calls Z on valid save", async () => { ... });
+});
+```
+
+**Patterns:**
+- `beforeEach` used to reset mock state or set up stubs — `vi.clearAllMocks()` for spy resets, full stub setup for WebSocket tests
+- `afterEach` used primarily with `vi.restoreAllMocks()` to tear down `vi.stubGlobal` calls
+- Test descriptions are natural-language sentences describing observable behavior, not implementation details
+- Module-level `afterEach` (outside a `describe`) is also used when a file has a single top-level subject
+
+## Mocking
+
+**Framework:** Vitest's `vi` object — `vi.fn()`, `vi.mock()`, `vi.hoisted()`, `vi.stubGlobal()`, `vi.spyOn()`
+
+**Pattern 1 — `vi.hoisted` for module mock factories:**
+```typescript
+// Use vi.hoisted so mock functions are available when vi.mock factory runs
+const { mockSet, mockSave } = vi.hoisted(() => ({
+  mockSet: vi.fn().mockResolvedValue(undefined),
+  mockSave: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock("@tauri-apps/plugin-store", () => {
+  const LazyStoreMock = vi.fn(function (this: Record<string, unknown>, _name: string) {
+    this.set = mockSet;
+    this.save = mockSave;
+  });
+  return { LazyStore: LazyStoreMock };
+});
+```
+
+**Pattern 2 — `vi.stubGlobal` for browser globals (fetch, WebSocket):**
+```typescript
+vi.stubGlobal(
+  "fetch",
+  vi.fn(() => Promise.resolve({ ok: true, status: 200 } as Response))
+);
+
+// WebSocket — capture instance so tests can simulate messages
+let lastWsInstance: MockWs | null = null;
+vi.stubGlobal("WebSocket", vi.fn(function (this: MockWs) {
+  this.onopen = null;
+  this.onclose = null;
+  this.onerror = null;
+  this.onmessage = null;
+  this.close = mockClose;
+  lastWsInstance = this;
+}));
+```
+
+**Pattern 3 — `vi.spyOn` for method inspection:**
+```typescript
+const timeoutSpy = vi.spyOn(AbortSignal, "timeout").mockReturnValue(abortSignal);
+```
+
+**What to Mock:**
+- All Tauri plugin APIs (`@tauri-apps/plugin-store`, `@tauri-apps/plugin-fs`) — these are native APIs unavailable in jsdom
+- `fetch` — all HTTP calls in hooks/components
+- `WebSocket` — all WebSocket connections
+- `AbortSignal.timeout` — when testing that timeout configuration is applied
+
+**What NOT to Mock:**
+- Internal business logic / pure functions — test them directly
+- React state and lifecycle — test through rendered output and events
+- `@testing-library/react` internals
+
+## Fixtures and Factories
+
+**Test Data:**
+```typescript
+// Inline typed constants at top of test file
+const defaultConnection: AgentConnection = {
+  host: "localhost",
+  port: 5080,
+  protocol: "http",
+};
+
+const sampleDefinition: WslDocument = {
+  documentId: "doc-1",
+  name: "Test Workflow",
+  schemaVersion: "1.0",
+  nodes: [],
+  edges: [],
+};
+
+// Helper factory function for events (used in useNodeExecutionState.test.ts)
+function makeEvent(overrides: Partial<RunspaceEvent> & { type: string }): RunspaceEvent {
+  return {
+    runspaceId: "r1",
+    timestamp: "2026-01-01T00:00:00.000Z",
+    ...overrides,
+  };
 }
 ```
 
-### Theory / InlineData (Parameterised)
+**Location:** Inline in each test file — no shared fixture directory or factory module.
 
-Used sparingly, primarily for boundary/edge-case tables:
+## Coverage
 
-```csharp
-[Theory]
-[InlineData("helix/site-01/fumehood-02")]                // Too short
-[InlineData("invalid/site-01/fumehood-02/exp-123/...")]  // Wrong prefix
-public void TryParseFromMqttMessage_InvalidTopic_ReturnsFalse(string topic)
-{
-    var success = RecordedEvent.TryParseFromMqttMessage(topic, payload, out var result);
-    Assert.False(success);
-    Assert.Null(result);
-}
+**Requirements:** No enforced threshold configured.
+
+**Coverage tool:** `@vitest/coverage-v8` available in both packages.
+
+**View Coverage:**
+```bash
+cd helix-desktop && npm test -- --coverage
+cd helix-dashboard && npm test -- --coverage
 ```
 
-Files using Theory: `TransportAbstractionsTests.cs`, `ReconnectPolicyTests.cs`, `RecordedEventParseTests.cs`
+## Test Types
 
-### Test Method Naming
+**Unit Tests:**
+- Pure TypeScript modules: `workflowLibrary.test.ts` — tests file I/O logic with Tauri FS mocked
+- Custom hooks: `useAgentHealth.test.ts`, `useAgentWebSocket.test.ts`, `useNodeExecutionState.test.ts`, `useTrendWebSocket.test.ts`
+- Scope: single module in isolation, all external I/O mocked
 
-Pattern: `{MethodUnderTest}_{Condition}_{ExpectedOutcome}`
+**Component Tests (Integration-style):**
+- React components rendered in jsdom via `@testing-library/react`
+- Tests verify rendered output, user interactions, and async state changes
+- Examples: `ConnectionConfig.test.tsx`, `ExecutionPanel.test.tsx`, `SafetyPanel.test.tsx`
+- Uses `screen.getByRole`, `screen.getByTestId`, `screen.getByDisplayValue` for queries
 
-Examples:
-- `AcquireExclusive_WhenAlreadyHeld_Throws`
-- `ExecuteAsync_TransitionsClosedToOpen_AfterFailureThreshold`
-- `ReadHoldingRegistersAsync_WhenIOException_SetsFaulted`
-- `PostExperiment_ValidRequest_Returns200WithRunspaceId`
+**E2E Tests:** Not used.
 
-### Arrange / Act / Assert comments
+## Common Patterns
 
-Used inconsistently — present in some test files (`SafetyEngineTests.cs`, `WorkflowExecutorTests.cs`, `RecorderWriterServiceTests.cs`) as `// Arrange`, `// Act`, `// Assert` inline comments. Absent in others (leasing tests, circuit breaker tests) where the flow is self-evident.
+**Async Testing:**
+```typescript
+// waitFor for async state updates
+await waitFor(() => {
+  expect(screen.getByTestId("experiment-id")).toHaveTextContent("exp-abc123");
+});
 
-### Static factory helpers within test classes
-
-Private static helper methods named `Create{Subject}` or `Build{Subject}` are used to reduce boilerplate:
-
-```csharp
-private static InMemoryDeviceLeasingService CreateService() => new();
-private static ModbusDeviceTransport CreateTransport(FakeModbusClient client, byte slaveId = 1) { ... }
-private static RunspaceDefinition CreateDefinition(string name) => new(...);
-private static WslDocument BuildValidDocument() => new() { ... };
+// act for manual hook event simulation
+act(() => {
+  lastWsInstance!.onmessage!({ data: JSON.stringify(frame) });
+});
+await waitFor(() => expect(result.current.trendValues).toHaveLength(1));
 ```
 
-### Inner stub/fake/spy classes
+**Error Testing:**
+```typescript
+// Rendered alert element
+await waitFor(() => expect(screen.getByRole("alert")).toBeInTheDocument());
+expect(screen.getByRole("alert")).toHaveTextContent("Compile errors");
 
-Preferred over mocking frameworks for complex dependencies that need behaviour (not just interaction verification). Defined as `private sealed class` nested inside the test class:
-
-```csharp
-private sealed class StubWorkflowExecutor : IWorkflowExecutor
-{
-    public string? LastWorkflowName { get; private set; }
-    public Task ExecuteAsync(string name, string id, ...) { LastWorkflowName = name; return Task.CompletedTask; }
-}
-private sealed class BlockingWorkflowExecutor : IWorkflowExecutor
-{
-    public TaskCompletionSource ExecutionStarted { get; } = new(...);
-    public async Task ExecuteAsync(...) { ExecutionStarted.TrySetResult(); await Task.Delay(Timeout.InfiniteTimeSpan, cancellationToken); }
-}
+// Rejected promise
+await expect(saveWorkflow("!!!", doc)).rejects.toThrow("alphanumeric");
 ```
 
-Files: `DurableRunspaceTests.cs`, `RunspaceManagerTests.cs`, `WorkflowExecutorTests.cs`, `ModbusTransportTests.cs`
-
-### NSubstitute (interface substitution)
-
-Used for simple interface fakes where no custom behaviour is needed beyond return value:
-
-```csharp
-var transport = Substitute.For<IDeviceTransport>();
-transport.Status.Returns(TransportStatus.Connected);
+**Testing Hook Return Values:**
+```typescript
+const { result } = renderHook(() => useAgentHealth("http://localhost:5080", 999999));
+// Use large intervalMs to prevent polling during test
+expect(result.current.healthy).toBeNull();
 ```
 
-Files: `DeviceAdapterBaseTests.cs`, `TransportWatchdogTests.cs`, `OpcTransportTests.cs`
-
-### Moq (mock with setup/verify)
-
-Used when interaction verification (`.Verify(...)`) is required:
-
-```csharp
-var agentProxy = new Mock<IAgentProxy>();
-agentProxy
-    .Setup(a => a.SubmitExperimentAsync(It.IsAny<RunspaceDefinition>(), It.IsAny<CancellationToken>()))
-    .ReturnsAsync(() => $"runspace-{++counter}");
-// ...
-agentProxy.Verify(a => a.SubmitExperimentAsync(...), Times.Exactly(2));
+**Chained fetch mocks (sequential HTTP calls):**
+```typescript
+const mockFetch = vi.fn()
+  .mockResolvedValueOnce({ ok: true, status: 200, json: () => Promise.resolve(firstResponse) } as unknown as Response)
+  .mockResolvedValueOnce({ ok: true, status: 200, json: () => Promise.resolve(secondResponse) } as unknown as Response);
+vi.stubGlobal("fetch", mockFetch);
 ```
 
-Files: `CampaignManagerTests.cs`, `GrpcAgentProxyTests.cs`, `RecorderWriterServiceTests.cs`
-
-### xUnit Fixtures
-
-**`IClassFixture<T>`** used for shared setup across tests in one class without re-creating expensive state per test:
-- `IClassFixture<HelixWebApplicationFactory>` — injects a single shared `WebApplicationFactory` into all endpoint test classes
-- Used in: `ExperimentEndpointsTests`, `CampaignEndpointsTests`, `DeviceEndpointsTests`, `TrendEndpointsTests`
-
-**`ICollectionFixture<T>` + `[Collection]`** used for sharing a fixture across multiple test classes:
-- `PostgresFixture` is shared via `PostgresRepositoriesTestsCollection` to avoid spinning up multiple containers
-
-### Integration tests with `WebApplicationFactory`
-
-`HelixWebApplicationFactory` extends `WebApplicationFactory<Program>`, removes the real `MqttTrendBridge` hosted service, and substitutes a `NoOpHostedService` to prevent broker connection during tests:
-
-```csharp
-public sealed class HelixWebApplicationFactory : WebApplicationFactory<Program>
-{
-    protected override void ConfigureWebHost(IWebHostBuilder builder)
-    {
-        builder.ConfigureServices(services =>
-        {
-            services.RemoveAll<IHostedService>();
-            services.AddHostedService<NoOpHostedService>();
-        });
-    }
-}
-```
-
-Tests use `factory.CreateClient()` and call HTTP endpoints directly: `await _client.PostAsJsonAsync("/api/experiments", request)`.
-
-### Docker-gated tests
-
-Infrastructure tests that require a live Postgres container are decorated with `[Fact(Skip = "Requires Docker. Run with Docker available.")]` and guarded by `if (!_fixture.IsAvailable) return;`. The `PostgresFixture` swallows startup errors and sets `IsAvailable = false`, so the tests skip cleanly in CI environments without Docker.
-
-## Coverage Observations
-
-**Well covered:**
-- Device leasing (acquire, release, expiry, renewal, force-release, shared vs exclusive)
-- Circuit breaker state transitions
-- WSL document compilation and validation
-- Safety engine interlock registration, evaluation, and emergency stop
-- Capability registry registration and invocation dispatch
-- Runspace lifecycle (create, start, pause, abort, complete)
-- HTTP experiment and campaign endpoints (happy path + error cases)
-- MQTT topic parsing in the Recorder
-
-**Light coverage:**
-- `TrendAggregator`, `MqttTrendIngestionService`, `InMemoryTrendProvider` — logic present but tests for MQTT ingestion are absent from the solution (the `MqttTrendIngestionService` is replaced with a no-op in integration tests)
-- `WslExecutionAdapter` — test file exists (`WslExecutionAdapterTests.cs`) but content not fully inspected
-- `SiteServer` routing, middleware, and gRPC serialisation beyond the endpoint handler level
-- Simulation devices (`SimReactor`, `SimPump`, `SimSpectrometer`) — tested only via `SimReactorTests.cs` and `SimulatedTrendProviderTests.cs`
-
-**Missing:**
-- No E2E tests
-- No performance or load tests
-- No contract tests for the gRPC agent control service
-- `Helix.Orchestration.Recorder` background service flush timing relies on `Task.Delay` sleeps in tests which is fragile
-
-## Test Data / Fixtures
-
-Test objects are constructed inline using object initialisers or positional record constructors. No shared fixture factories exist outside of test classes. Data is minimal and purpose-built per test case:
-
-```csharp
-var record = new ExperimentRecord(
-    RunspaceId: "runspace-1",
-    CampaignId: "camp-1",
-    ...);
-```
-
-No test data files, JSON fixtures, or AutoFixture/Bogus usage detected.
+**data-testid selectors:** Components expose `data-testid` attributes for stable test queries (`start-btn`, `abort-btn`, `experiment-id`, `step-list`, `rule-r1`, etc.). Prefer `data-testid` over fragile CSS selectors; use `getByRole` for interactive/semantic elements (buttons, alerts).
 
 ---
 
-*Testing analysis: 2026-05-26*
+*Testing analysis: 2026-09-05*
