@@ -12,6 +12,7 @@ public sealed class InMemoryRunspace : IRunspace
     private readonly Func<CancellationToken, Task> _body;
     private readonly TaskCompletionSource _completion = new(TaskCreationOptions.RunContinuationsAsynchronously);
     private CancellationTokenSource? _cts;
+    private SemaphoreSlim? _pauseGate;
 
     /// <inheritdoc/>
     public string RunspaceId { get; }
@@ -74,11 +75,24 @@ public sealed class InMemoryRunspace : IRunspace
         }
     }
 
+    /// <summary>
+    /// Cooperative pause checkpoint — awaited at the start of each BFS iteration.
+    /// Call this inside the body loop before each unit of work.
+    /// </summary>
+    public async Task CheckPauseAsync(CancellationToken token)
+    {
+        if (_pauseGate is SemaphoreSlim gate)
+            await gate.WaitAsync(token);
+    }
+
     /// <inheritdoc/>
     public Task PauseAsync(CancellationToken cancellationToken = default)
     {
         if (Status == RunspaceStatus.Running)
+        {
             Status = RunspaceStatus.Paused;
+            _pauseGate = new SemaphoreSlim(0, 1);
+        }
         return Task.CompletedTask;
     }
 
@@ -86,13 +100,21 @@ public sealed class InMemoryRunspace : IRunspace
     public Task ResumeAsync(CancellationToken cancellationToken = default)
     {
         if (Status == RunspaceStatus.Paused)
+        {
             Status = RunspaceStatus.Running;
+            _pauseGate?.Release();
+            _pauseGate = null;
+        }
         return Task.CompletedTask;
     }
 
     /// <inheritdoc/>
     public async Task AbortAsync(CancellationToken cancellationToken = default)
     {
+        // Release the pause gate first so the BFS loop can observe cancellation.
+        _pauseGate?.Release();
+        _pauseGate = null;
+
         // If the runspace was never started there is no background task to await;
         // resolve the completion immediately so WaitAsync does not block forever.
         if (Status == RunspaceStatus.Idle)
@@ -120,6 +142,7 @@ public sealed class InMemoryRunspace : IRunspace
             await AbortAsync();
 
         _cts?.Dispose();
+        _pauseGate?.Dispose();
         Status = RunspaceStatus.Disposed;
     }
 }

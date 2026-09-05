@@ -88,10 +88,13 @@ try
     builder.Services.AddSingleton<TrendAggregator>();
     builder.Services.AddSingleton<IRunspaceManager>(sp =>
     {
-        var capRegistry  = sp.GetRequiredService<CapabilityRegistry>();
-        var emitter      = sp.GetService<IRunspaceEventEmitter>();
-        var execLogger   = sp.GetRequiredService<ILogger<RunspaceManager>>();
-        var simulator    = sp.GetService<Helix.Orchestration.Devices.Drivers.SimulatorDevice>();
+        var capRegistry       = sp.GetRequiredService<CapabilityRegistry>();
+        var emitter           = sp.GetService<IRunspaceEventEmitter>();
+        var execLogger        = sp.GetRequiredService<ILogger<RunspaceManager>>();
+        var simulator         = sp.GetService<Helix.Orchestration.Devices.Drivers.SimulatorDevice>();
+        var workflowState     = sp.GetRequiredService<IWorkflowStateStore>();
+        var globalState       = sp.GetRequiredService<IGlobalStateStore>();
+        var capabilityInvoker = sp.GetRequiredService<ICapabilityInvoker>();
 
         // Build a lookup: full capability key â†’ EstimatedDurationMs
         var estimatedDurations = new Dictionary<string, int?>(StringComparer.OrdinalIgnoreCase);
@@ -125,6 +128,8 @@ try
 
                 while (queue.Count > 0 && !token.IsCancellationRequested)
                 {
+                    await runspace.CheckPauseAsync(token);
+
                     var node = queue.Dequeue();
                     if (!visited.Add(node.NodeId)) continue;
 
@@ -157,12 +162,22 @@ try
 
                     try
                     {
+                        // Substitute ${scope:key} variable references in parameters before capability invocation.
+                        var substitutedParams = await VariableSubstitution.SubstituteParametersAsync(
+                            new Dictionary<string, object?>(node.Parameters),
+                            definition.DefinitionId,
+                            workflowState,
+                            globalState,
+                            capabilityInvoker,
+                            campaignId: null,
+                            token);
+
                         if ((node.NodeType.Equals("Step",         StringComparison.OrdinalIgnoreCase) ||
                              node.NodeType.Equals("DeviceAction", StringComparison.OrdinalIgnoreCase)) &&
-                            node.Parameters.TryGetValue("capability", out var capObj) &&
+                            substitutedParams.TryGetValue("capability", out var capObj) &&
                             capObj is string capName)
                         {
-                            var result = await capRegistry.InvokeAsync(capName, node.Parameters, token);
+                            var result = await capRegistry.InvokeAsync(capName, substitutedParams, token);
                             if (!result.Success)
                             {
                                 emitter?.Publish(new StepFaultedEvent(runspaceId, node.NodeId,
@@ -174,7 +189,7 @@ try
                         {
                             // Parameters arrive as JsonElement after JSON deserialization.
                             var durationMin = 1.0;
-                            if (node.Parameters.TryGetValue("durationMin", out var dVal) &&
+                            if (substitutedParams.TryGetValue("durationMin", out var dVal) &&
                                 dVal is System.Text.Json.JsonElement je &&
                                 je.ValueKind == System.Text.Json.JsonValueKind.Number)
                                 durationMin = je.GetDouble();
