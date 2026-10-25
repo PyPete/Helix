@@ -430,3 +430,7 @@ tmp/
 
 # Device adapter test outputs
 device-logs/
+
+# Local agent tool state (not project files)
+.bg-shell/
+.gsd/
