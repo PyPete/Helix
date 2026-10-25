@@ -59,9 +59,9 @@ Added 10 new test facts across 5 test files to close automated test gaps in tran
 
 ## Deviations from Plan
 
-**[Rule 1 - Bug] CollectionDefinition missing from PostgresRepositoriesTestsCollection** — Found during: T6 | Issue: Removing [Fact(Skip)] exposed a pre-existing xUnit fixture injection failure because PostgresRepositoriesTestsCollection lacked [CollectionDefinition] | Fix: Added [CollectionDefinition(nameof(PostgresRepositoriesTestsCollection))] | Files: PostgresRepositoriesTests.cs | Verification: both facts pass | Commit: e84cc8f
+**[Rule 1 - Bug] CollectionDefinition missing from PostgresRepositoriesTestsCollection** â€” Found during: T6 | Issue: Removing [Fact(Skip)] exposed a pre-existing xUnit fixture injection failure because PostgresRepositoriesTestsCollection lacked [CollectionDefinition] | Fix: Added [CollectionDefinition(nameof(PostgresRepositoriesTestsCollection))] | Files: PostgresRepositoriesTests.cs | Verification: both facts pass | Commit: e84cc8f
 
-**Total deviations:** 1 auto-fixed. **Impact:** minimal — pre-existing gap only visible when Skip was removed.
+**Total deviations:** 1 auto-fixed. **Impact:** minimal â€” pre-existing gap only visible when Skip was removed.
 
 ## Self-Check: PASSED
 
@@ -69,4 +69,4 @@ Added 10 new test facts across 5 test files to close automated test gaps in tran
 - dotnet test Helix.Orchestration.slnx exits 0
 - Zero [Skip] entries for PostgresRepositoriesTests
 
-**Next:** Phase complete — ready for /gsd:verify-work 4 or /gsd:plan-phase 5.
+**Next:** Phase complete â€” ready for /gsd:verify-work 4 or /gsd:plan-phase 5.
