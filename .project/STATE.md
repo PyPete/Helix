@@ -2,10 +2,10 @@
 pipeline: gsd-path/v2
 project: helix
 milestone: null     # set by define; names the archive directory at ship
-phase: inspect
+phase: inspect       # v2 tokens: inspect | define | research | decide | roadmap | plan | build | ship | shipped
                     # inspect only for brownfield; greenfield starts at define
                     # roadmap only in program flow (CHARTER.md exists)
-status: done
+status: active      # active | done | blocked; shipped is only phase: shipped + status: done
 branch: null        # bound per milestone as gsd-path/M00N; after integration
                     # the router rebinds before any next-milestone file change
                     # the bound branch is never main; ship integrates it there
@@ -25,5 +25,4 @@ it on completion. If this file and the artifacts disagree, the artifacts win
 ## Log
 
 <!-- append one line per transition: date, phase, event -->
-- 2026-10-25 — inspect — project initialized
-- 2026-10-25 — inspect — inspection artifacts passed
+- 2026-10-26 — inspect — project initialized

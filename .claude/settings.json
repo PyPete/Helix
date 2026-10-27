@@ -1,7 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "PowerShell(cd \"$env:USERPROFILE\\\\source\\\\repos\\\\CSharpGitLab\\\\Helix\"; git add Helix.Orchestration.Devices/Drivers/VapourtecR4.cs Helix.Orchestration.Agent/Trends/InMemoryTrendProvider.cs Helix.Orchestration.Agent/Streaming/TrendAggregator.cs; git status --short)"
-    ]
-  }
-}
