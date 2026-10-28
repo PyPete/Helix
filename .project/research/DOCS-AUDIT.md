@@ -279,19 +279,19 @@ None. All 40 inventoried documents contain at least one testable claim.
 
 | Queue # | Ruling | User's words | Planned |
 |---------|--------|--------------|---------|
-| 3 | fix-doc | Fix docs by default | no |
-| 17 | fix-doc | Fix docs by default | no |
-| 19 | fix-doc | Fix docs by default | no |
-| 21 | fix-doc | Fix docs by default | no |
-| 23 | fix-doc | Fix docs by default | no |
-| 24 | fix-doc | Fix docs by default | no |
-| 25 | fix-doc | Fix docs by default | no |
-| 26 | fix-doc | Fix docs by default | no |
-| 27 | fix-doc | Fix docs by default | no |
-| 28 | fix-doc | Fix docs by default | no |
-| 30 | fix-doc | Fix docs by default | no |
-| 36 | fix-doc | Fix docs by default | no |
-| 37 | fix-doc | Fix docs by default | no |
+| 3 | fix-doc | Fix docs by default | T005 |
+| 17 | fix-doc | Fix docs by default | T006 |
+| 19 | fix-doc | Fix docs by default | T007 |
+| 21 | fix-doc | Fix docs by default | T017 |
+| 23 | fix-doc | Fix docs by default | T008 |
+| 24 | fix-doc | Fix docs by default | T009 |
+| 25 | fix-doc | Fix docs by default | T010 |
+| 26 | fix-doc | Fix docs by default | T011 |
+| 27 | fix-doc | Fix docs by default | T012 |
+| 28 | fix-doc | Fix docs by default | T013 |
+| 30 | fix-doc | Fix docs by default | T014 |
+| 36 | fix-doc | Fix docs by default | T015 |
+| 37 | fix-doc | Fix docs by default | T016 |
 
 ## Remediation queue
 

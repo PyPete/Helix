@@ -13,7 +13,7 @@
 
 Goal: A scientist can start one Agent-authorised simulated activity from a minimal local desktop campaign workspace and recover its durable pending external-evidence wait without a duplicate physical command or retained lease.
 Depends on: []
-Surfaces: local helix-desktop campaign workspace; Agent external-evidence ingress endpoint
+Surfaces: local helix-desktop campaign workspace, Agent external-evidence ingress endpoint
 Status: active
 Archive: null
 Integrated: null

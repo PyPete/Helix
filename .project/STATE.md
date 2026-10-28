@@ -2,7 +2,7 @@
 pipeline: gsd-path/v2
 project: helix
 milestone: durable-local-campaign-skeleton
-phase: roadmap
+phase: plan
                     # inspect only for brownfield; greenfield starts at define
                     # roadmap only in program flow (CHARTER.md exists)
 status: done
@@ -40,3 +40,15 @@ it on completion. If this file and the artifacts disagree, the artifacts win
 - 2026-10-28 — roadmap — failed roadmap gate: milestone headings must use lowercase hyphenated slugs
 - 2026-10-28 — roadmap — roadmap correction resumed
 - 2026-10-28 — roadmap — program roadmap approved
+- 2026-10-28 — define — definition started
+- 2026-10-28 — define — milestone intent approved
+- 2026-10-28 — research — research started
+- 2026-10-28 — research — research complete: manifest .project/research/RESEARCH.md; dispatched stack,pitfalls; skipped domain,similar; 1 question
+- 2026-10-28 — decide — decision synthesis started
+- 2026-10-28 — decide — validated decision synthesis .project/research/SYNTHESIS.md
+- 2026-10-28 — plan — planning started
+- 2026-10-28 — plan — failed plan gates: Surface contract is missing the approved surface
+- 2026-10-28 — plan — planning resumed
+- 2026-10-28 — plan — failed plan gates: Surface contract missing local helix-desktop campaign workspace
+- 2026-10-28 — plan — planning resumed
+- 2026-10-28 — plan — plan approved
