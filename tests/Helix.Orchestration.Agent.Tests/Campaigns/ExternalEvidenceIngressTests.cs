@@ -1,10 +1,19 @@
 using System.Text.Json;
+using System.Net;
+using System.Net.Http.Json;
 using Helix.Orchestration.Agent.Api;
 using Helix.Orchestration.Agent.Campaigns;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Npgsql;
 using Xunit;
 
 namespace Helix.Orchestration.Agent.Tests.Campaigns;
 
+[Collection("External evidence PostgreSQL")]
 public sealed class ExternalEvidenceIngressTests
 {
     [Fact]
@@ -16,7 +25,7 @@ public sealed class ExternalEvidenceIngressTests
         await store.CreatePendingActivityAsync(activity);
 
         var response = await ExternalEvidenceEndpoints.ProcessAsync(
-            Request(activity) with { FlowId = activity.FlowId + "-other" }, store);
+            Request(activity) with { FlowId = activity.FlowId + "-other" }, "instrument-feed", store);
 
         Assert.Equal(nameof(EvidenceDisposition.Rejected), response.Disposition);
         Assert.Null(response.Projection);
@@ -28,32 +37,91 @@ public sealed class ExternalEvidenceIngressTests
     [Fact]
     public async Task Reconciles_recovery_time_signal_once()
     {
-        var state = new EvidenceState();
-        var beforeRecovery = new FakeEvidenceStore(state);
+        var connectionString = await GetRequiredConnectionStringAsync();
+        var beforeRecovery = new PostgresExternalEvidenceStore(connectionString);
+        await beforeRecovery.InitializeAsync();
         var activity = NewActivity();
         await beforeRecovery.CreatePendingActivityAsync(activity);
 
-        // A new store instance represents the Agent's durable-state recovery boundary.
-        var recoveredStore = new FakeEvidenceStore(state);
+        // A fresh store reloads durable state while the correlated signal arrives during recovery.
+        var recoveredStore = new PostgresExternalEvidenceStore(connectionString);
         var request = Request(activity);
-        var submissions = await Task.WhenAll(
-            ExternalEvidenceEndpoints.ProcessAsync(request, recoveredStore),
-            ExternalEvidenceEndpoints.ProcessAsync(request, recoveredStore));
+        var recoveryTask = recoveredStore.LoadRecoveryProjectionAsync();
+        var submissionsTask = Task.WhenAll(
+            ExternalEvidenceEndpoints.ProcessAsync(request, "instrument-feed", recoveredStore),
+            ExternalEvidenceEndpoints.ProcessAsync(request, "instrument-feed", recoveredStore));
+        await Task.WhenAll(recoveryTask, submissionsTask);
+        var recoveredProjection = await recoveryTask;
+        var recoveredActivity = recoveredProjection.SingleOrDefault(candidate =>
+            candidate.CampaignId == activity.CampaignId && candidate.ActivityId == activity.ActivityId);
+        if (recoveredActivity is not null)
+            Assert.Equal(activity, recoveredActivity);
+        var submissions = await submissionsTask;
 
         Assert.Single(submissions, result => !result.Replayed && result.Disposition == nameof(EvidenceDisposition.Accepted));
         Assert.Single(submissions, result => result.Replayed && result.Disposition == nameof(EvidenceDisposition.Accepted));
-        var replay = await ExternalEvidenceEndpoints.ProcessAsync(request, new FakeEvidenceStore(state));
+        var replay = await ExternalEvidenceEndpoints.ProcessAsync(
+            request, "instrument-feed", new PostgresExternalEvidenceStore(connectionString));
         Assert.True(replay.Replayed);
         Assert.Equal(nameof(EvidenceDisposition.Accepted), replay.Disposition);
         Assert.Contains("does not assert offline instrument control or physical completion", replay.Notice);
 
-        var completed = await recoveredStore.LoadActivityAsync(activity.CampaignId, activity.ActivityId);
+        var afterRecovery = new PostgresExternalEvidenceStore(connectionString);
+        var completed = await afterRecovery.LoadActivityAsync(activity.CampaignId, activity.ActivityId);
         Assert.NotNull(completed);
         Assert.Equal(ActivityLifecycle.Completed, completed!.Lifecycle);
         Assert.Equal(activity.Revision + 1, completed.Revision);
+        Assert.Equal(activity.CommandId, completed.CommandId);
         Assert.Equal(PhysicalOutcome.unknown, completed.PhysicalOutcome);
-        var audit = await recoveredStore.LoadAuditAsync(activity.CampaignId, activity.ActivityId);
+        var audit = await afterRecovery.LoadAuditAsync(activity.CampaignId, activity.ActivityId);
         Assert.Single(audit, fact => fact.Disposition == nameof(EvidenceDisposition.Accepted));
+        Assert.Equal(2, audit.Count(fact => fact.Disposition == nameof(EvidenceDisposition.Duplicate)));
+        Assert.Equal(1, await CountReceiptsAsync(connectionString, request.Source, request.EventId));
+    }
+
+    [Fact]
+    public async Task Ingress_authenticates_source_and_binds_it_to_the_request()
+    {
+        var state = new EvidenceState();
+        var store = new FakeEvidenceStore(state);
+        var activity = NewActivity();
+        await store.CreatePendingActivityAsync(activity);
+
+        var builder = WebApplication.CreateBuilder();
+        builder.WebHost.UseTestServer();
+        builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            ["ExternalEvidence:Sources:instrument-feed"] = "test-source-token"
+        });
+        builder.Services.AddExternalEvidenceAuthentication();
+        builder.Services.AddSingleton<IExternalEvidenceStore>(store);
+        await using var app = builder.Build();
+        app.UseAuthentication();
+        app.UseAuthorization();
+        app.MapExternalEvidenceEndpoints();
+        await app.StartAsync();
+
+        using var client = app.GetTestClient();
+        var request = Request(activity);
+        var unauthenticated = await client.PostAsJsonAsync("/external-evidence", request);
+        Assert.Equal(HttpStatusCode.Unauthorized, unauthenticated.StatusCode);
+
+        client.DefaultRequestHeaders.Add(ExternalEvidenceSourceAuthenticationHandler.SourceHeader, "instrument-feed");
+        client.DefaultRequestHeaders.Add(ExternalEvidenceSourceAuthenticationHandler.TokenHeader, "wrong-token");
+        var invalidCredential = await client.PostAsJsonAsync("/external-evidence", request);
+        Assert.Equal(HttpStatusCode.Unauthorized, invalidCredential.StatusCode);
+
+        client.DefaultRequestHeaders.Remove(ExternalEvidenceSourceAuthenticationHandler.TokenHeader);
+        client.DefaultRequestHeaders.Add(ExternalEvidenceSourceAuthenticationHandler.TokenHeader, "test-source-token");
+        var forgedSource = await client.PostAsJsonAsync(
+            "/external-evidence", request with { Source = "forged-feed" });
+        Assert.Equal(HttpStatusCode.Forbidden, forgedSource.StatusCode);
+
+        var accepted = await client.PostAsJsonAsync("/external-evidence", request);
+        Assert.Equal(HttpStatusCode.OK, accepted.StatusCode);
+        var completed = await store.LoadActivityAsync(activity.CampaignId, activity.ActivityId);
+        Assert.Equal(ActivityLifecycle.Completed, completed!.Lifecycle);
+        Assert.Single(state.Receipts);
     }
 
     [Fact]
@@ -64,8 +132,9 @@ public sealed class ExternalEvidenceIngressTests
         await store.CreatePendingActivityAsync(activity);
         var request = Request(activity);
 
-        var accepted = await ExternalEvidenceEndpoints.ProcessAsync(request, store);
-        var altered = await ExternalEvidenceEndpoints.ProcessAsync(request with { Payload = Payload("{\"result\":\"altered\"}") }, store);
+        var accepted = await ExternalEvidenceEndpoints.ProcessAsync(request, "instrument-feed", store);
+        var altered = await ExternalEvidenceEndpoints.ProcessAsync(
+            request with { Payload = Payload("{\"result\":\"altered\"}") }, "instrument-feed", store);
 
         Assert.Equal(nameof(EvidenceDisposition.Accepted), accepted.Disposition);
         Assert.Equal(nameof(EvidenceDisposition.Rejected), altered.Disposition);
@@ -83,7 +152,7 @@ public sealed class ExternalEvidenceIngressTests
         await store.CreatePendingActivityAsync(activity);
 
         var response = await ExternalEvidenceEndpoints.ProcessAsync(
-            Request(activity) with { ExpectedRevision = activity.Revision + 1 }, store);
+            Request(activity) with { ExpectedRevision = activity.Revision + 1 }, "instrument-feed", store);
 
         Assert.Equal(nameof(EvidenceDisposition.Stale), response.Disposition);
         var unchanged = await store.LoadActivityAsync(activity.CampaignId, activity.ActivityId);
@@ -112,6 +181,48 @@ public sealed class ExternalEvidenceIngressTests
     {
         using var document = JsonDocument.Parse(json);
         return document.RootElement.Clone();
+    }
+
+    private static string TestConnectionString =>
+        Environment.GetEnvironmentVariable("HELIX_TEST_POSTGRES") ??
+        Environment.GetEnvironmentVariable("ConnectionStrings__HelixOrchestration") ??
+        (Environment.GetEnvironmentVariable("PGHOST") is { Length: > 0 } host
+            ? new NpgsqlConnectionStringBuilder
+            {
+                Host = host,
+                Port = int.TryParse(Environment.GetEnvironmentVariable("PGPORT"), out var port) ? port : 5432,
+                Database = Environment.GetEnvironmentVariable("PGDATABASE") ?? "helix_orchestration",
+                Username = Environment.GetEnvironmentVariable("PGUSER") ?? "helix",
+                Password = Environment.GetEnvironmentVariable("PGPASSWORD") ?? "helix_dev_password"
+            }.ConnectionString ?? throw new InvalidOperationException("A PostgreSQL connection string is required.")
+            : "Host=localhost;Port=5432;Database=helix_orchestration;Username=helix;Password=helix_dev_password");
+
+    private static async Task<string> GetRequiredConnectionStringAsync()
+    {
+        try
+        {
+            await using var connection = new NpgsqlConnection(TestConnectionString);
+            await connection.OpenAsync();
+            return TestConnectionString;
+        }
+        catch (NpgsqlException exception)
+        {
+            throw new InvalidOperationException(
+                "PostgreSQL is required for durable recovery verification; configure HELIX_TEST_POSTGRES or start the test database.",
+                exception);
+        }
+    }
+
+    private static async Task<int> CountReceiptsAsync(string connectionString, string source, string eventId)
+    {
+        await using var connection = new NpgsqlConnection(connectionString);
+        await connection.OpenAsync();
+        await using var command = new NpgsqlCommand(
+            "SELECT count(*) FROM external_evidence_receipts WHERE source = @source AND event_id = @eventId",
+            connection);
+        command.Parameters.AddWithValue("source", source);
+        command.Parameters.AddWithValue("eventId", eventId);
+        return Convert.ToInt32(await command.ExecuteScalarAsync());
     }
 
     private sealed class EvidenceState
@@ -260,3 +371,6 @@ public sealed class ExternalEvidenceIngressTests
             stored.AwaitingStepId == incoming.AwaitingStepId;
     }
 }
+
+[CollectionDefinition("External evidence PostgreSQL", DisableParallelization = true)]
+public sealed class ExternalEvidencePostgresCollection { }

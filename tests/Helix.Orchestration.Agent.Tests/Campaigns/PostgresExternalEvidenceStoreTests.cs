@@ -4,9 +4,10 @@ using Xunit;
 
 namespace Helix.Orchestration.Agent.Tests.Campaigns;
 
+[Collection("External evidence PostgreSQL")]
 public sealed class PostgresExternalEvidenceStoreTests
 {
-    private static string? TestConnectionString =>
+    private static string TestConnectionString =>
         Environment.GetEnvironmentVariable("HELIX_TEST_POSTGRES") ??
         Environment.GetEnvironmentVariable("ConnectionStrings__HelixOrchestration") ??
         (Environment.GetEnvironmentVariable("PGHOST") is { Length: > 0 } host
@@ -17,15 +18,13 @@ public sealed class PostgresExternalEvidenceStoreTests
                 Database = Environment.GetEnvironmentVariable("PGDATABASE") ?? "helix_orchestration",
                 Username = Environment.GetEnvironmentVariable("PGUSER") ?? "helix",
                 Password = Environment.GetEnvironmentVariable("PGPASSWORD") ?? "helix_dev_password"
-            }.ConnectionString
+            }.ConnectionString ?? throw new InvalidOperationException("A PostgreSQL connection string is required.")
             : "Host=localhost;Port=5432;Database=helix_orchestration;Username=helix;Password=helix_dev_password");
 
     [Fact]
     public async Task Fresh_store_recovers_pending_activity_and_audit()
     {
         var connectionString = await GetAvailableConnectionStringAsync();
-        if (connectionString is null)
-            return;
 
         var store = new PostgresExternalEvidenceStore(connectionString);
         await store.InitializeAsync();
@@ -47,8 +46,6 @@ public sealed class PostgresExternalEvidenceStoreTests
     public async Task Concurrent_duplicate_receipts_are_deduplicated_with_one_transition()
     {
         var connectionString = await GetAvailableConnectionStringAsync();
-        if (connectionString is null)
-            return;
 
         var store = new PostgresExternalEvidenceStore(connectionString);
         await store.InitializeAsync();
@@ -76,8 +73,6 @@ public sealed class PostgresExternalEvidenceStoreTests
     public async Task Conditional_advance_requires_all_subject_ids_and_expected_revision()
     {
         var connectionString = await GetAvailableConnectionStringAsync();
-        if (connectionString is null)
-            return;
 
         var store = new PostgresExternalEvidenceStore(connectionString);
         await store.InitializeAsync();
@@ -101,7 +96,7 @@ public sealed class PostgresExternalEvidenceStoreTests
             $"command-{id}", 1, ActivityLifecycle.PendingExternalEvidence, PhysicalOutcome.unknown);
     }
 
-    private static async Task<string?> GetAvailableConnectionStringAsync()
+    private static async Task<string> GetAvailableConnectionStringAsync()
     {
         var connectionString = TestConnectionString;
         try
@@ -110,9 +105,11 @@ public sealed class PostgresExternalEvidenceStoreTests
             await connection.OpenAsync();
             return connectionString;
         }
-        catch (NpgsqlException)
+        catch (NpgsqlException exception)
         {
-            return null;
+            throw new InvalidOperationException(
+                "PostgreSQL is required for durable campaign evidence integration tests; configure HELIX_TEST_POSTGRES or start the test database.",
+                exception);
         }
     }
 

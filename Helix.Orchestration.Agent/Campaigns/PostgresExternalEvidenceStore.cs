@@ -157,9 +157,9 @@ public sealed class PostgresExternalEvidenceStore(string connectionString) : IEx
             """;
         await using var connection = new NpgsqlConnection(connectionString);
         await connection.OpenAsync(cancellationToken);
-        var rows = await connection.QueryAsync<ActivityAuditFact>(
+        var rows = await connection.QueryAsync<ActivityAuditRow>(
             new CommandDefinition(sql, new { campaignId, activityId }, cancellationToken: cancellationToken));
-        return rows.ToArray();
+        return rows.Select(row => row.ToAuditFact()).ToArray();
     }
 
     public async Task<PendingActivity?> TryAdvanceAsync(
@@ -420,6 +420,23 @@ public sealed class PostgresExternalEvidenceStore(string connectionString) : IEx
         public string FlowId { get; set; } = "";
         public string AwaitingStepId { get; set; } = "";
         public string Disposition { get; set; } = "";
+    }
+
+    private sealed class ActivityAuditRow
+    {
+        public long SequenceId { get; set; }
+        public string CampaignId { get; set; } = "";
+        public string ActivityId { get; set; } = "";
+        public long Revision { get; set; }
+        public string Disposition { get; set; } = "";
+        public string? Source { get; set; }
+        public string? EventId { get; set; }
+        public string? PayloadHash { get; set; }
+        public DateTime OccurredAt { get; set; }
+
+        public ActivityAuditFact ToAuditFact() => new(
+            SequenceId, CampaignId, ActivityId, Revision, Disposition, Source, EventId, PayloadHash,
+            new DateTimeOffset(DateTime.SpecifyKind(OccurredAt, DateTimeKind.Utc)));
     }
 
     private static PendingActivity ToActivity(ExternalEvidenceReceipt receipt) => new(

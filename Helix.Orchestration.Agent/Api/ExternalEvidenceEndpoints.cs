@@ -1,8 +1,15 @@
 using System.Security.Cryptography;
+using System.Security.Claims;
+using System.Text;
 using System.Text.Json;
+using System.Text.Encodings.Web;
 using Helix.Orchestration.Agent.Campaigns;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace Helix.Orchestration.Agent.Api;
 
@@ -12,6 +19,9 @@ namespace Helix.Orchestration.Agent.Api;
 /// </summary>
 public static class ExternalEvidenceEndpoints
 {
+    public const string AuthenticationScheme = "ExternalEvidenceSource";
+    public const string SourceClaimType = "external_evidence_source";
+
     private const string IngressNotice =
         "Records evidence correlation and delivery deduplication only; it does not assert offline instrument control or physical completion.";
 
@@ -20,12 +30,22 @@ public static class ExternalEvidenceEndpoints
         app.MapPost("/external-evidence", async Task<IResult> (
             ExternalEvidenceRequest request,
             IExternalEvidenceStore store,
+            HttpContext httpContext,
             CancellationToken cancellationToken) =>
         {
-            ExternalEvidenceReceipt receipt;
+            var authenticatedSource = httpContext.User.FindFirstValue(SourceClaimType);
+            if (authenticatedSource is null ||
+                !string.Equals(authenticatedSource, request.Source, StringComparison.Ordinal))
+                return Results.Forbid();
+
             try
             {
-                receipt = CreateReceipt(request);
+                var response = await ProcessAsync(request, authenticatedSource, store, cancellationToken);
+                return Results.Ok(response);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Results.Forbid();
             }
             catch (ArgumentException exception)
             {
@@ -38,16 +58,28 @@ public static class ExternalEvidenceEndpoints
                     error = exception.Message
                 });
             }
-
-            var result = await store.RecordReceiptAsync(receipt, request.ExpectedRevision, cancellationToken);
-            var projection = await CreateProjectionAsync(store, result.Activity, cancellationToken);
-            return Results.Ok(new ExternalEvidenceResponse(
-                result.Receipt.Disposition.ToString(), projection, result.IsReplay, IngressNotice));
         })
         .WithName("RecordExternalEvidence")
         .WithSummary("Correlate and deduplicate external evidence for a pending activity")
         .Produces<ExternalEvidenceResponse>(StatusCodes.Status200OK)
-        .Produces(StatusCodes.Status400BadRequest);
+        .Produces(StatusCodes.Status400BadRequest)
+        .Produces(StatusCodes.Status401Unauthorized)
+        .Produces(StatusCodes.Status403Forbidden)
+        .RequireAuthorization();
+    }
+
+    public static IServiceCollection AddExternalEvidenceAuthentication(this IServiceCollection services)
+    {
+        services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = AuthenticationScheme;
+                options.DefaultChallengeScheme = AuthenticationScheme;
+                options.DefaultForbidScheme = AuthenticationScheme;
+            })
+            .AddScheme<AuthenticationSchemeOptions, ExternalEvidenceSourceAuthenticationHandler>(
+                AuthenticationScheme, _ => { });
+        services.AddAuthorization();
+        return services;
     }
 
     /// <summary>
@@ -56,9 +88,15 @@ public static class ExternalEvidenceEndpoints
     /// </summary>
     public static async Task<ExternalEvidenceResponse> ProcessAsync(
         ExternalEvidenceRequest request,
+        string authenticatedSource,
         IExternalEvidenceStore store,
         CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(request);
+        if (string.IsNullOrWhiteSpace(authenticatedSource) ||
+            !string.Equals(request.Source, authenticatedSource, StringComparison.Ordinal))
+            throw new UnauthorizedAccessException("Evidence source does not match the authenticated source.");
+
         var receipt = CreateReceipt(request);
         var result = await store.RecordReceiptAsync(receipt, request.ExpectedRevision, cancellationToken);
         var projection = await CreateProjectionAsync(store, result.Activity, cancellationToken);
@@ -118,6 +156,42 @@ public static class ExternalEvidenceEndpoints
     {
         if (string.IsNullOrWhiteSpace(value))
             throw new ArgumentException("All subject and delivery identifiers are required.", name);
+    }
+}
+
+public sealed class ExternalEvidenceSourceAuthenticationHandler(
+    IOptionsMonitor<AuthenticationSchemeOptions> options,
+    ILoggerFactory logger,
+    UrlEncoder encoder,
+    IConfiguration configuration)
+    : AuthenticationHandler<AuthenticationSchemeOptions>(options, logger, encoder)
+{
+    public const string SourceHeader = "X-External-Evidence-Source";
+    public const string TokenHeader = "X-External-Evidence-Token";
+
+    protected override Task<AuthenticateResult> HandleAuthenticateAsync()
+    {
+        var source = Request.Headers[SourceHeader].ToString();
+        var suppliedToken = Request.Headers[TokenHeader].ToString();
+        if (string.IsNullOrWhiteSpace(source) || string.IsNullOrWhiteSpace(suppliedToken))
+            return Task.FromResult(AuthenticateResult.NoResult());
+
+        var configuredToken = configuration[$"ExternalEvidence:Sources:{source}"];
+        if (string.IsNullOrEmpty(configuredToken) || !TokensMatch(configuredToken, suppliedToken))
+            return Task.FromResult(AuthenticateResult.Fail("External evidence source credentials are invalid."));
+
+        var identity = new ClaimsIdentity(
+            [new Claim(ExternalEvidenceEndpoints.SourceClaimType, source)], Scheme.Name);
+        var ticket = new AuthenticationTicket(new ClaimsPrincipal(identity), Scheme.Name);
+        return Task.FromResult(AuthenticateResult.Success(ticket));
+    }
+
+    private static bool TokensMatch(string configuredToken, string suppliedToken)
+    {
+        var expectedBytes = Encoding.UTF8.GetBytes(configuredToken);
+        var suppliedBytes = Encoding.UTF8.GetBytes(suppliedToken);
+        return expectedBytes.Length == suppliedBytes.Length &&
+               CryptographicOperations.FixedTimeEquals(expectedBytes, suppliedBytes);
     }
 }
 

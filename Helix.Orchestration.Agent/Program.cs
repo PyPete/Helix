@@ -45,6 +45,7 @@ try
     // Serialize enums as strings so TypeScript can do param.type === "Numeric" etc.
     builder.Services.ConfigureHttpJsonOptions(options =>
         options.SerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter()));
+    builder.Services.AddExternalEvidenceAuthentication();
 
     // Serilog
     builder.Host.UseSerilog((_, services, config) => config
@@ -321,6 +322,8 @@ try
     var app = builder.Build();
 
     app.UseCors();
+    app.UseAuthentication();
+    app.UseAuthorization();
     app.UseWebSockets();
     app.MapGrpcService<AgentGrpcService>();
     app.MapHealthChecks("/health");
