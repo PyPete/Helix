@@ -3,9 +3,9 @@ id: T002
 title: Expose the Agent-owned correlated external-evidence ingress
 wave: 1
 deps: [T001]
-status: pending
-agent: null
-base: null
+status: done
+agent: build_T002
+base: 5dbd4ffa5e84ab0859148b4068a6ef698777c80e
 worktree: null
 task_branch: null
 files:
@@ -55,3 +55,27 @@ Heavy: yes
 ## Log
 
 - 2026-10-28 — created by planner
+- 2026-10-28 — implemented the Agent external-evidence ingress with subject/revision validation, payload hashing, durable disposition/replay handling, and explicitly non-physical-completion wording; added mismatch, stale, altered-payload, and recovery/concurrency tests. Verify: PowerShell guarded equivalent of `test -f tests/Helix.Orchestration.Agent.Tests/Campaigns/ExternalEvidenceIngressTests.cs && dotnet test tests/Helix.Orchestration.Agent.Tests/Helix.Orchestration.Agent.Tests.csproj --filter "FullyQualifiedName~ExternalEvidenceIngressTests.Rejects_one_component_subject_mismatch"` — passed (1/1); PowerShell guarded equivalent of `test -f tests/Helix.Orchestration.Agent.Tests/Campaigns/ExternalEvidenceIngressTests.cs && dotnet test tests/Helix.Orchestration.Agent.Tests/Helix.Orchestration.Agent.Tests.csproj --filter "FullyQualifiedName~ExternalEvidenceIngressTests.Reconciles_recovery_time_signal_once"` — passed (1/1). Additional `dotnet test tests/Helix.Orchestration.Agent.Tests/Helix.Orchestration.Agent.Tests.csproj --filter "FullyQualifiedName~ExternalEvidenceIngressTests"` — passed (4/4).
+- 2026-10-28 — orchestrator Verify (sidecar gsd-path-verify/task-t002-verify): pass, exit 0; output tail:
+  ```
+    Helix.Orchestration.Core -> C:\Users\u643664\.gsd-path\projects\3b869b23b4749acc\73bee6b8d21f842f\verify\task-t002-verify\Helix.Orchestration.Core\bin\Debug\net10.0\Helix.Orchestration.Core.dll
+    Helix.Orchestration.Infrastructure -> C:\Users\u643664\.gsd-path\projects\3b869b23b4749acc\73bee6b8d21f842f\verify\task-t002-verify\Helix.Orchestration.Infrastructure\bin\Debug\net10.0\Helix.Orchestration.Infrastructure.dll
+  C:\Program Files\dotnet\sdk\11.0.100-rc.2.26504.105\Microsoft.Common.CurrentVersion.targets(2468,5): warning MSB3277: Found conflicts between different versions of "System.Reactive" that could not be resolved. [C:\Users\u643664\.gsd-path\projects\3b869b23b4749acc\73bee6b8d21f842f\verify\task-t002-verify\Helix.Orchestration.Devices\Helix.Orchestration.Devices.csproj]
+  C:\Program Files\dotnet\sdk\11.0.100-rc.2.26504.105\Microsoft.Common.CurrentVersion.targets(2468,5): warning MSB3277: There was a conflict between "System.Reactive, Version=6.0.0.0, Culture=neutral, PublicKeyToken=94bc3704cddfc263" and "System.Reactive, Version=6.1.0.0, Culture=neutral, PublicKeyToken=94bc3704cddfc263". [C:\Users\u643664\.gsd-path\projects\3b869b23b4749acc\73bee6b8d21f842f\verify\task-t002-verify\Helix.Orchestration.Devices\Helix.Orchestration.Devices.csproj]
+  C:\Program Files\dotnet\sdk\11.0.100-rc.2.26504.105\Microsoft.Common.CurrentVersion.targets(2468,5): warning MSB3277:     "System.Reactive, Version=6.0.0.0, Culture=neutral, PublicKeyToken=94bc3704cddfc263" was chosen because it was primary and "System.Reactive, Version=6.1.0.0, Culture=neutral, PublicKeyToken=94bc3704cddfc263" was not. [C:\Users\u643664\.gsd-path\projects\3b869b23b4749acc\73bee6b8d21f842f\verify\task-t002-verify\Helix.Orchestration.Devices\Helix.Orchestration.Devices.csproj]
+  C:\Program Files\dotnet\sdk\11.0.100-rc.2.26504.105\Microsoft.Common.CurrentVersion.targets(2468,5): warning MSB3277:     References which depend on "System.Reactive, Version=6.0.0.0, Culture=neutral, PublicKeyToken=94bc3704cddfc263" [C:\Users\u643664\.nuget\packages\system.reactive\6.0.0\lib\net6.0\System.Reactive.dll]. [C:\Users\u643664\.gsd-path\projects\3b869b23b4749acc\73bee6b8d21f842f\verify\task-t002-verify\Helix.Orchestration.Devices\Helix.Orchestration.Devices.csproj]
+  C:\Program Files\dotnet\sdk\11.0.100-rc.2.26504.105\Microsoft.Common.CurrentVersion.targets(2468,5): warning MSB3277:         C:\Users\u643664\.nuget\packages\system.reactive\6.0.0\lib\net6.0\System.Reactive.dll [C:\Users\u643664\.gsd-path\projects\3b869b23b4749acc\73bee6b8d21f842f\verify\task-t002-verify\Helix.Orchestration.Devices\Helix.Orchestration.Devices.csproj]
+  C:\Program Files\dotnet\sdk\11.0.100-rc.2.26504.105\Microsoft.Common.CurrentVersion.targets(2468,5): warning MSB3277:           Project file item includes which caused reference "C:\Users\u643664\.nuget\packages\system.reactive\6.0.0\lib\net6.0\System.Reactive.dll". [C:\Users\u643664\.gsd-path\projects\3b869b23b4749acc\73bee6b8d21f842f\verify\task-t002-verify\Helix.Orchestration.Devices\Helix.Orchestration.Devices.csproj]
+  C:\Program Files\dotnet\sdk\11.0.100-rc.2.26504.105\Microsoft.Common.CurrentVersion.targets(2468,5): warning MSB3277:             C:\Users\u643664\.nuget\packages\system.reactive\6.0.0\lib\net6.0\System.Reactive.dll [C:\Users\u643664\.gsd-path\projects\3b869b23b4749acc\73bee6b8d21f842f\verify\task-t002-verify\Helix.Orchestration.Devices\Helix.Orchestration.Devices.csproj]
+  C:\Program Files\dotnet\sdk\11.0.100-rc.2.26504.105\Microsoft.Common.CurrentVersion.targets(2468,5): warning MSB3277:     References which depend on or have been unified to "System.Reactive, Version=6.1.0.0, Culture=neutral, PublicKeyToken=94bc3704cddfc263" []. [C:\Users\u643664\.gsd-path\projects\3b869b23b4749acc\73bee6b8d21f842f\verify\task-t002-verify\Helix.Orchestration.Devices\Helix.Orchestration.Devices.csproj]
+  C:\Program Files\dotnet\sdk\11.0.100-rc.2.26504.105\Microsoft.Common.CurrentVersion.targets(2468,5): warning MSB3277:         C:\Users\u643664\.gsd-path\projects\3b869b23b4749acc\73bee6b8d21f842f\verify\task-t002-verify\Helix.Orchestration.Core\bin\Debug\net10.0\Helix.Orchestration.Core.dll [C:\Users\u643664\.gsd-path\projects\3b869b23b4749acc\73bee6b8d21f842f\verify\task-t002-verify\Helix.Orchestration.Devices\Helix.Orchestration.Devices.csproj]
+  C:\Program Files\dotnet\sdk\11.0.100-rc.2.26504.105\Microsoft.Common.CurrentVersion.targets(2468,5): warning MSB3277:           Project file item includes which caused reference "C:\Users\u643664\.gsd-path\projects\3b869b23b4749acc\73bee6b8d21f842f\verify\task-t002-verify\Helix.Orchestration.Core\bin\Debug\net10.0\Helix.Orchestration.Core.dll". [C:\Users\u643664\.gsd-path\projects\3b869b23b4749acc\73bee6b8d21f842f\verify\task-t002-verify\Helix.Orchestration.Devices\Helix.Orchestration.Devices.csproj]
+  C:\Program Files\dotnet\sdk\11.0.100-rc.2.26504.105\Microsoft.Common.CurrentVersion.targets(2468,5): warning MSB3277:             C:\Users\u643664\.gsd-path\projects\3b869b23b4749acc\73bee6b8d21f842f\verify\task-t002-verify\Helix.Orchestration.Core\bin\Debug\net10.0\Helix.Orchestration.Core.dll [C:\Users\u643664\.gsd-path\projects\3b869b23b4749acc\73bee6b8d21f842f\verify\task-t002-verify\Helix.Orchestration.Devices\Helix.Orchestration.Devices.csproj]
+    Helix.Orchestration.Devices -> C:\Users\u643664\.gsd-path\projects\3b869b23b4749acc\73bee6b8d21f842f\verify\task-t002-verify\Helix.Orchestration.Devices\bin\Debug\net10.0\Helix.Orchestration.Devices.dll
+    Helix.Orchestration.Agent -> C:\Users\u643664\.gsd-path\projects\3b869b23b4749acc\73bee6b8d21f842f\verify\task-t002-verify\Helix.Orchestration.Agent\bin\Debug\net10.0\Helix.Orchestration.Agent.dll
+    Helix.Orchestration.Agent.Tests -> C:\Users\u643664\.gsd-path\projects\3b869b23b4749acc\73bee6b8d21f842f\verify\task-t002-verify\tests\Helix.Orchestration.Agent.Tests\bin\Debug\net10.0\Helix.Orchestration.Agent.Tests.dll
+  Test run for C:\Users\u643664\.gsd-path\projects\3b869b23b4749acc\73bee6b8d21f842f\verify\task-t002-verify\tests\Helix.Orchestration.Agent.Tests\bin\Debug\net10.0\Helix.Orchestration.Agent.Tests.dll (.NETCoreApp,Version=v10.0)
+  A total of 1 test files matched the specified pattern.
+  
+  Passed!  - Failed:     0, Passed:     1, Skipped:     0, Total:     1, Duration: 43 ms - Helix.Orchestration.Agent.Tests.dll (net10.0)
+  ```
