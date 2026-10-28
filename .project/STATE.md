@@ -1,8 +1,8 @@
 ---
 pipeline: gsd-path/v2
 project: helix
-milestone: null     # set by define; names the archive directory at ship
-phase: define
+milestone: durable-local-campaign-skeleton
+phase: roadmap
                     # inspect only for brownfield; greenfield starts at define
                     # roadmap only in program flow (CHARTER.md exists)
 status: done
@@ -30,3 +30,13 @@ it on completion. If this file and the artifacts disagree, the artifacts win
 - 2026-10-27 — inspect — inspection artifacts passed
 - 2026-10-27 — define — definition started
 - 2026-10-27 — define — program charter approved
+- 2026-10-27 — research — research started
+- 2026-10-27 — research — Evidence gate failed after corrected redispatch: .project/research/evidence-domain.md has a malformed assigned-question answer; it uses -> instead of the required Unicode → separator.
+- 2026-10-27 — research — evidence answer separator corrected; resuming research gate
+- 2026-10-27 — research — research complete: manifest .project/research/RESEARCH.md; dispatched domain, stack, pitfalls, similar; skipped none; 4 questions
+- 2026-10-27 — decide — decision synthesis started
+- 2026-10-27 — decide — validated decision synthesis .project/SYNTHESIS.md
+- 2026-10-28 — roadmap — roadmap started
+- 2026-10-28 — roadmap — failed roadmap gate: milestone headings must use lowercase hyphenated slugs
+- 2026-10-28 — roadmap — roadmap correction resumed
+- 2026-10-28 — roadmap — program roadmap approved
