@@ -18,6 +18,7 @@ using Helix.Orchestration.Core.Trends;
 using Helix.Orchestration.Core.WorkflowEngine;
 using Helix.Orchestration.Agent.Api;
 using Helix.Orchestration.Agent.Experiments;
+using Helix.Orchestration.Agent.Campaigns;
 using Helix.Orchestration.Infrastructure.Persistence;
 using Helix.Orchestration.Agent.GrpcServer;
 using Helix.Orchestration.Core.Devices;
@@ -76,7 +77,11 @@ try
     var postgresFunctionStore = new PostgreSqlFunctionStore(connectionString);
     await postgresFunctionStore.Initialize();
 
+    var externalEvidenceStore = new PostgresExternalEvidenceStore(connectionString);
+    await externalEvidenceStore.InitializeAsync();
+
     builder.Services.AddSingleton<IFunctionStore>(postgresFunctionStore);
+    builder.Services.AddSingleton<IExternalEvidenceStore>(externalEvidenceStore);
     builder.Services.AddSingleton<FunctionsRegistry>(sp =>
         new FunctionsRegistry(sp.GetRequiredService<IFunctionStore>()));
     builder.Services.AddSingleton<WorkflowRegistry>();
