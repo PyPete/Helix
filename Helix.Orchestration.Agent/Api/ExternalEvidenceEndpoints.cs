@@ -68,6 +68,50 @@ public static class ExternalEvidenceEndpoints
         .RequireAuthorization();
     }
 
+    public static void MapBoundedActivityEndpoints(this WebApplication app)
+    {
+        app.MapPost("/campaigns/bounded-activity", async Task<IResult> (
+            IExternalEvidenceStore store,
+            CancellationToken cancellationToken) =>
+        {
+            var id = Guid.NewGuid().ToString("N");
+            var activity = new PendingActivity(
+                $"campaign-{id}",
+                $"activity-{id}",
+                $"flow-{id}",
+                $"awaiting-step-{id}",
+                $"command-{id}",
+                1,
+                ActivityLifecycle.PendingExternalEvidence,
+                PhysicalOutcome.unknown);
+
+            var created = await store.CreatePendingActivityAsync(activity, cancellationToken);
+            var projection = await CreateProjectionAsync(store, created, cancellationToken);
+            return Results.Ok(projection);
+        })
+        .WithName("CreateBoundedActivity")
+        .WithSummary("Create a bounded simulated activity awaiting external evidence")
+        .Produces<EvidenceProjection>(StatusCodes.Status200OK);
+
+        app.MapGet("/campaigns/{campaignId}/activities/{activityId}", async Task<IResult> (
+            string campaignId,
+            string activityId,
+            IExternalEvidenceStore store,
+            CancellationToken cancellationToken) =>
+        {
+            var activity = await store.LoadActivityAsync(campaignId, activityId, cancellationToken);
+            if (activity is null)
+                return Results.NotFound();
+
+            var projection = await CreateProjectionAsync(store, activity, cancellationToken);
+            return Results.Ok(projection);
+        })
+        .WithName("GetCampaignActivity")
+        .WithSummary("Load the durable campaign activity projection")
+        .Produces<EvidenceProjection>(StatusCodes.Status200OK)
+        .Produces(StatusCodes.Status404NotFound);
+    }
+
     public static IServiceCollection AddExternalEvidenceAuthentication(this IServiceCollection services)
     {
         services.AddAuthentication(options =>

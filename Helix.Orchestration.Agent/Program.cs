@@ -332,6 +332,7 @@ try
     app.MapDeviceEndpoints();
     app.MapExperimentEndpoints();
     app.MapExternalEvidenceEndpoints();
+    app.MapBoundedActivityEndpoints();
 
     // WebSocket /ws endpoint
     var agentService = app.Services.GetRequiredService<AgentService>();

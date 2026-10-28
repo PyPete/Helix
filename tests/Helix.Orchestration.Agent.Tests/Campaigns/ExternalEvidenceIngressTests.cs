@@ -125,6 +125,54 @@ public sealed class ExternalEvidenceIngressTests
     }
 
     [Fact]
+    public async Task Bounded_activity_routes_create_and_load_the_same_durable_projection()
+    {
+        var store = new FakeEvidenceStore(new EvidenceState());
+        var builder = WebApplication.CreateBuilder();
+        builder.WebHost.UseTestServer();
+        builder.Services.AddSingleton<IExternalEvidenceStore>(store);
+        await using var app = builder.Build();
+        app.MapBoundedActivityEndpoints();
+        await app.StartAsync();
+
+        using var client = app.GetTestClient();
+        var createdResponse = await client.PostAsync("/campaigns/bounded-activity", content: null);
+        Assert.Equal(HttpStatusCode.OK, createdResponse.StatusCode);
+        var created = await createdResponse.Content.ReadFromJsonAsync<EvidenceProjection>();
+
+        Assert.NotNull(created);
+        Assert.StartsWith("campaign-", created!.CampaignId);
+        Assert.StartsWith("activity-", created.ActivityId);
+        Assert.StartsWith("flow-", created.FlowId);
+        Assert.StartsWith("awaiting-step-", created.AwaitingStepId);
+        Assert.StartsWith("command-", created.CommandId);
+        Assert.Equal(1, created.Revision);
+        Assert.Equal(nameof(ActivityLifecycle.PendingExternalEvidence), created.Lifecycle);
+        Assert.Equal(nameof(PhysicalOutcome.unknown), created.PhysicalOutcome);
+        var createdAudit = Assert.Single(created.Audit);
+        Assert.Equal("Created", createdAudit.Disposition);
+
+        var loadedResponse = await client.GetAsync(
+            $"/campaigns/{Uri.EscapeDataString(created.CampaignId)}/activities/{Uri.EscapeDataString(created.ActivityId)}");
+        Assert.Equal(HttpStatusCode.OK, loadedResponse.StatusCode);
+        var loaded = await loadedResponse.Content.ReadFromJsonAsync<EvidenceProjection>();
+
+        Assert.NotNull(loaded);
+        Assert.Equal(created.CampaignId, loaded!.CampaignId);
+        Assert.Equal(created.ActivityId, loaded.ActivityId);
+        Assert.Equal(created.FlowId, loaded.FlowId);
+        Assert.Equal(created.AwaitingStepId, loaded.AwaitingStepId);
+        Assert.Equal(created.CommandId, loaded.CommandId);
+        Assert.Equal(created.Revision, loaded.Revision);
+        Assert.Equal(created.Lifecycle, loaded.Lifecycle);
+        Assert.Equal(created.PhysicalOutcome, loaded.PhysicalOutcome);
+        Assert.Equal(created.Audit, loaded.Audit);
+
+        var missing = await client.GetAsync("/campaigns/missing/activities/missing");
+        Assert.Equal(HttpStatusCode.NotFound, missing.StatusCode);
+    }
+
+    [Fact]
     public async Task Reused_delivery_with_altered_payload_is_rejected()
     {
         var store = new FakeEvidenceStore(new EvidenceState());
