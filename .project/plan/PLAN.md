@@ -57,6 +57,15 @@ Review depth: deep
 |------|-------|------|-------|
 | T018 | Fix wave 1 cycle 1 review findings in T001, T002 | T001, T002 | Helix.Orchestration.Agent/Api/ExternalEvidenceEndpoints.cs, Helix.Orchestration.Agent/Campaigns/DurableCampaignActivity.cs, Helix.Orchestration.Agent/Campaigns/IExternalEvidenceStore.cs, Helix.Orchestration.Agent/Campaigns/PostgresExternalEvidenceStore.cs, Helix.Orchestration.Agent/Program.cs, postgres/migrations/003_campaign_activity_evidence.sql, tests/Helix.Orchestration.Agent.Tests/Campaigns/ExternalEvidenceIngressTests.cs, tests/Helix.Orchestration.Agent.Tests/Campaigns/PostgresExternalEvidenceStoreTests.cs |
 
+## Wave 5 — fix wave 1 cycle 2 review findings
+
+Goal: Repair the blocking findings of the wave 1 cycle 2 review without changing source task contracts.
+Review depth: deep
+
+| Task | Title | Deps | Files |
+|------|-------|------|-------|
+| T019 | Fix wave 1 cycle 2 review findings in T002 | T002 | Helix.Orchestration.Agent/Api/ExternalEvidenceEndpoints.cs, Helix.Orchestration.Agent/Program.cs, tests/Helix.Orchestration.Agent.Tests/Campaigns/ExternalEvidenceIngressTests.cs |
+
 ## Intent coverage
 
 | Criterion | Task | Acceptance |
