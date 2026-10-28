@@ -48,6 +48,15 @@ Walkthrough:
 2. Repeat the exact event and verify the stored disposition is returned with no second transition or command claim (SC2/T002).
 3. Submit a one-component mismatch and verify rejection with no activity completion (SC2/T002).
 
+## Wave 4 — fix wave 1 cycle 1 review findings
+
+Goal: Repair the blocking findings of the wave 1 cycle 1 review without changing source task contracts.
+Review depth: deep
+
+| Task | Title | Deps | Files |
+|------|-------|------|-------|
+| T018 | Fix wave 1 cycle 1 review findings in T001, T002 | T001, T002 | Helix.Orchestration.Agent/Api/ExternalEvidenceEndpoints.cs, Helix.Orchestration.Agent/Campaigns/DurableCampaignActivity.cs, Helix.Orchestration.Agent/Campaigns/IExternalEvidenceStore.cs, Helix.Orchestration.Agent/Campaigns/PostgresExternalEvidenceStore.cs, Helix.Orchestration.Agent/Program.cs, postgres/migrations/003_campaign_activity_evidence.sql, tests/Helix.Orchestration.Agent.Tests/Campaigns/ExternalEvidenceIngressTests.cs, tests/Helix.Orchestration.Agent.Tests/Campaigns/PostgresExternalEvidenceStoreTests.cs |
+
 ## Intent coverage
 
 | Criterion | Task | Acceptance |
