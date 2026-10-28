@@ -5,7 +5,7 @@ milestone: durable-local-campaign-skeleton
 phase: build
                     # inspect only for brownfield; greenfield starts at define
                     # roadmap only in program flow (CHARTER.md exists)
-status: blocked
+status: active
 branch: gsd-path/M001
                     # the router rebinds before any next-milestone file change
                     # the bound branch is never main; ship integrates it there
@@ -54,3 +54,4 @@ it on completion. If this file and the artifacts disagree, the artifacts win
 - 2026-10-28 — plan — plan approved
 - 2026-10-28 — build — build started
 - 2026-10-28 — build — User chose projection-only T003; transfer SC3 lease/later-command proof to a separately planned Agent task. T003 diff is preserved outside the repo and primary restored; dispatch attempt settlement awaits an approved command.
+- 2026-10-28 — build — build started
