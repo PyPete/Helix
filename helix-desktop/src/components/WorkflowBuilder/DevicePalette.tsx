@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { getAgentDeviceCapabilities, getAgentDevices } from "../../lib/agentClient";
 import type { CapabilityDescriptor } from "../../types/agent";
 
 interface DevicePaletteProps {
@@ -11,7 +12,7 @@ interface AdapterEntry {
   capabilities: CapabilityDescriptor[];
 }
 
-export function DevicePalette({ baseUrl, onDragStart }: DevicePaletteProps) {
+export function DevicePalette({ baseUrl: _baseUrl, onDragStart }: DevicePaletteProps) {
   const [adapters, setAdapters] = useState<AdapterEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
@@ -20,16 +21,11 @@ export function DevicePalette({ baseUrl, onDragStart }: DevicePaletteProps) {
     let cancelled = false;
     const load = async () => {
       try {
-        const res = await fetch(`${baseUrl}/devices`);
-        if (!res.ok) throw new Error(`Agent returned ${res.status}`);
-        const list: { adapterId: string; capabilities: string[] }[] = await res.json();
+        const list = await getAgentDevices();
 
         const results = await Promise.all(
-          list.map(async (entry) => {
-            const capRes = await fetch(`${baseUrl}/devices/${entry.adapterId}/capabilities`);
-            if (!capRes.ok) throw new Error(`Agent returned ${capRes.status}`);
-            const capData: { adapterId: string; capabilities: CapabilityDescriptor[] } =
-              await capRes.json();
+          list.filter((entry) => entry.adapterId === "simulator").map(async (entry) => {
+            const capData = await getAgentDeviceCapabilities(entry.adapterId);
             return { adapterId: entry.adapterId, capabilities: capData.capabilities };
           })
         );
@@ -38,16 +34,16 @@ export function DevicePalette({ baseUrl, onDragStart }: DevicePaletteProps) {
           setAdapters(results);
           setLoading(false);
         }
-      } catch {
+      } catch (reason) {
         if (!cancelled) {
-          setFetchError("Failed to load devices");
+          setFetchError(reason instanceof Error ? reason.message : "Device discovery is unavailable.");
           setLoading(false);
         }
       }
     };
     load();
     return () => { cancelled = true; };
-  }, [baseUrl]);
+  }, []);
 
   return (
     <div
@@ -64,7 +60,9 @@ export function DevicePalette({ baseUrl, onDragStart }: DevicePaletteProps) {
     >
       {loading && <p style={{ padding: "8px 10px", color: "#6c7086", fontSize: 12 }}>Loading devices...</p>}
       {fetchError && <p style={{ padding: "8px 10px", color: "#e74c3c", fontSize: 12 }}>{fetchError}</p>}
-      {!loading && !fetchError && adapters.map((adapter) => (
+      {!loading && adapters.length === 0 && !fetchError && <p style={{ padding: "8px 10px", color: "#6c7086", fontSize: 12 }}>No simulator devices available</p>}
+      {fetchError && adapters.length > 0 && <p style={{ padding: "8px 10px", color: "#f5a623", fontSize: 12 }}>Showing previously discovered devices</p>}
+      {!loading && adapters.map((adapter) => (
         <details
           key={adapter.adapterId}
           data-testid={`palette-group-${adapter.adapterId}`}
@@ -102,7 +100,7 @@ export function DevicePalette({ baseUrl, onDragStart }: DevicePaletteProps) {
                 userSelect: "none",
               }}
             >
-              {descriptor.displayName || descriptor.verbName}
+              <span style={{ overflowWrap: "anywhere" }}>{descriptor.displayName || descriptor.verbName}</span>
               {descriptor.category && (
                 <span style={{ marginLeft: 6, fontSize: 10, color: "#6c7086" }}>
                   {descriptor.category}

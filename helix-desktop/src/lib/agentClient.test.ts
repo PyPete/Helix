@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { act, renderHook, waitFor } from "@testing-library/react";
+import { act, render, renderHook, screen, waitFor } from "@testing-library/react";
+import { Fragment, createElement } from "react";
 
 const { invokeMock } = vi.hoisted(() => ({ invokeMock: vi.fn() }));
 
@@ -9,12 +10,18 @@ vi.mock("@tauri-apps/api/core", () => ({
 
 import {
   controlAgentExperiment,
+  getAgentDeviceCapabilities,
+  getAgentDevices,
   getAgentSessionStatus,
   pollCommittedEvidence,
   proposeAgentCommand,
   startAgentExperiment,
 } from "./agentClient";
 import { useExperiment } from "../hooks/useExperiment";
+import DeviceRegistry from "../components/DeviceRegistry";
+import { DeviceExplorer } from "../shell/panels/DeviceExplorer";
+import { DevicePalette } from "../components/WorkflowBuilder/DevicePalette";
+import { WorkflowBuilder } from "../components/WorkflowBuilder/WorkflowBuilder";
 
 const commandId = "11111111-1111-4111-8111-111111111111";
 const executionId = "22222222-2222-4222-8222-222222222222";
@@ -23,6 +30,11 @@ const correlationId = "33333333-3333-4333-8333-333333333333";
 describe("agentClient", () => {
   beforeEach(() => {
     invokeMock.mockReset();
+    vi.stubGlobal("ResizeObserver", class {
+      observe() { /* React Flow test layout stub */ }
+      unobserve() { /* React Flow test layout stub */ }
+      disconnect() { /* React Flow test layout stub */ }
+    });
   });
 
   it("maps canonical proposals through the native allowlist without actor or destination arguments", async () => {
@@ -110,6 +122,69 @@ describe("agentClient", () => {
 
     expect(pages).toHaveLength(1);
     expect(invokeMock).toHaveBeenCalledWith("agent_evidence_cursor", { cursor: "1", pageSize: 2 });
+  });
+
+  it("reads device and capability discovery through the native broker", async () => {
+    invokeMock
+      .mockResolvedValueOnce(JSON.stringify([{ adapterId: "simulator", capabilities: ["SetFlow"] }]))
+      .mockResolvedValueOnce(JSON.stringify({ adapterId: "simulator", capabilities: [] }));
+
+    await expect(getAgentDevices()).resolves.toEqual([{ adapterId: "simulator", capabilities: ["SetFlow"] }]);
+    await expect(getAgentDeviceCapabilities("simulator")).resolves.toMatchObject({ adapterId: "simulator" });
+    expect(invokeMock).toHaveBeenNthCalledWith(1, "agent_devices", {});
+    expect(invokeMock).toHaveBeenNthCalledWith(2, "agent_device_capabilities", { deviceId: "simulator" });
+  });
+
+  it("renders registry, explorer, and palette from native simulator discovery", async () => {
+    invokeMock.mockImplementation((command: string) => {
+      if (command === "agent_devices") {
+        return Promise.resolve(JSON.stringify([{ adapterId: "simulator", capabilities: ["SetFlow"] }]));
+      }
+      if (command === "agent_device_capabilities") {
+        return Promise.resolve(JSON.stringify({
+          adapterId: "simulator",
+          capabilities: [{ verbName: "SetFlow", displayName: "Set flow", description: "", category: "Control", parameters: [], isDestructive: false, requiresActiveRunspace: false }],
+        }));
+      }
+      return Promise.reject(new Error(`Unexpected command ${command}`));
+    });
+
+    render(createElement(Fragment, null,
+      createElement(DeviceRegistry, { agentBaseUrl: "https://untrusted.invalid" }),
+      createElement(DeviceExplorer, { baseUrl: "https://untrusted.invalid", onOpenDevice: () => undefined }),
+      createElement(DevicePalette, { baseUrl: "https://untrusted.invalid", onDragStart: () => undefined }),
+    ));
+
+    await waitFor(() => expect(screen.getAllByText("simulator")).not.toHaveLength(0));
+    expect(await screen.findByTestId("capability-card-simulator-SetFlow")).toBeTruthy();
+    expect(invokeMock.mock.calls.some(([command]) => command === "agent_devices")).toBe(true);
+    expect(invokeMock.mock.calls.some(([command]) => command === "agent_device_capabilities")).toBe(true);
+  });
+
+  it("renders native discovery failures without treating them as permission", async () => {
+    invokeMock.mockRejectedValue(new Error("No desktop Agent session is available."));
+    render(createElement(DeviceExplorer, { baseUrl: "https://untrusted.invalid", onOpenDevice: () => undefined }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("No desktop Agent session is available.");
+  });
+
+  it("renders the workflow builder's simulator capability picker from native discovery", async () => {
+    invokeMock.mockImplementation((command: string) => {
+      if (command === "agent_devices") {
+        return Promise.resolve(JSON.stringify([{ adapterId: "simulator", capabilities: ["SetFlow"] }]));
+      }
+      if (command === "agent_device_capabilities") {
+        return Promise.resolve(JSON.stringify({ adapterId: "simulator", capabilities: [] }));
+      }
+      if (command === "agent_evidence_cursor") {
+        return Promise.resolve(JSON.stringify({ cursor: null, nextCursor: null, records: [] }));
+      }
+      return Promise.reject(new Error(`Unexpected command ${command}`));
+    });
+    render(createElement(WorkflowBuilder, { baseUrl: "https://untrusted.invalid", onExport: () => undefined }));
+
+    await waitFor(() => expect(screen.getByTestId("capability-picker")).toBeTruthy());
+    expect(screen.getByText("simulator: SetFlow")).toBeTruthy();
   });
 
   it("uses native authoritative experiment status after a start without using a renderer URL", async () => {

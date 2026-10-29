@@ -1,4 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
+import type { CapabilityDescriptor } from '../types/agent';
 
 const ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const MAX_CURSOR_PAGE_SIZE = 100;
@@ -82,6 +83,16 @@ export interface EvidencePollingOptions {
   signal?: AbortSignal;
 }
 
+export interface AgentDeviceDiscovery {
+  adapterId: string;
+  capabilities: string[];
+}
+
+export interface AgentCapabilityDiscovery {
+  adapterId: string;
+  capabilities: CapabilityDescriptor[];
+}
+
 function assertIdentifier(value: string, fieldName: string): void {
   if (!ID_PATTERN.test(value)) {
     throw new Error(`${fieldName} must be a UUID.`);
@@ -156,6 +167,21 @@ export async function revokeAgentSession(): Promise<void> {
 /** Health is a read operation and may be explicitly requested again after a restored session. */
 export async function getAgentStatus(): Promise<string> {
   return invoke<string>('agent_status');
+}
+
+/** Discovery is a session-bound native read; the renderer never selects an Agent target. */
+export async function getAgentDevices(): Promise<AgentDeviceDiscovery[]> {
+  return nativeJson<AgentDeviceDiscovery[]>('agent_devices', {}, 'device discovery');
+}
+
+/** Capability metadata comes from the Agent and is not an authorization decision. */
+export async function getAgentDeviceCapabilities(deviceId: string): Promise<AgentCapabilityDiscovery> {
+  assertBoundedText(deviceId, 'deviceId', 128);
+  return nativeJson<AgentCapabilityDiscovery>(
+    'agent_device_capabilities',
+    { deviceId },
+    'device capability discovery',
+  );
 }
 
 export async function proposeAgentCommand(proposal: CommandProposal): Promise<CommandEvidence> {

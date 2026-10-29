@@ -93,6 +93,13 @@ fn validate_cursor(cursor: &str) -> Result<(), String> {
     Ok(())
 }
 
+fn validate_device_id(device_id: &str) -> Result<(), String> {
+    if device_id.is_empty() || device_id.len() > 128 || !device_id.bytes().all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'-' | b'_')) {
+        return Err("Device identifier is invalid.".to_string());
+    }
+    Ok(())
+}
+
 fn session_status(state: &State<'_, AgentBrokerState>) -> Result<String, String> {
     let state = state.0.lock().map_err(|_| "Agent session state is unavailable.".to_string())?;
     let status = AgentSessionStatus {
@@ -171,6 +178,20 @@ pub async fn agent_revoke_session(window: WebviewWindow, state: State<'_, AgentB
 pub async fn agent_status(window: WebviewWindow, state: State<'_, AgentBrokerState>) -> Result<String, String> {
     require_main_window(&window)?;
     native_request("GET", "/health", None, &require_session(&state)?)
+}
+
+/// Lists only the Agent's canonical simulator adapters through the authenticated broker.
+#[tauri::command]
+pub async fn agent_devices(window: WebviewWindow, state: State<'_, AgentBrokerState>) -> Result<String, String> {
+    require_main_window(&window)?;
+    native_request("GET", "/devices", None, &require_session(&state)?)
+}
+
+#[tauri::command]
+pub async fn agent_device_capabilities(window: WebviewWindow, state: State<'_, AgentBrokerState>, device_id: String) -> Result<String, String> {
+    require_main_window(&window)?;
+    validate_device_id(&device_id)?;
+    native_request("GET", &format!("/devices/{device_id}/capabilities"), None, &require_session(&state)?)
 }
 
 #[tauri::command]
@@ -338,4 +359,5 @@ mod agent_security {
     #[test] fn command_ids_do_not_accept_paths() { assert!(validate_command_id("../commands").is_err()); }
     #[test] fn command_ids_require_uuid_shape() { assert!(validate_command_id("------------------------------------").is_err()); }
     #[test] fn cursor_does_not_accept_query_injection() { assert!(validate_cursor("cursor&host=remote").is_err()); }
+    #[test] fn device_ids_do_not_accept_paths() { assert!(validate_device_id("../real-device").is_err()); }
 }

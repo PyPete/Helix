@@ -16,6 +16,7 @@ import { saveWorkflow, loadWorkflow, listWorkflows } from "../../lib/workflowLib
 import { DevicePalette } from "./DevicePalette";
 import { useAgentWebSocket } from "../../hooks/useAgentWebSocket";
 import { useNodeExecutionState, type NodeExecutionState } from "../../hooks/useNodeExecutionState";
+import { getAgentDevices } from "../../lib/agentClient";
 
 interface WorkflowBuilderProps {
   baseUrl: string;
@@ -108,22 +109,30 @@ export function WorkflowBuilder({ baseUrl, onExport }: WorkflowBuilderProps) {
     });
   }, [nodeStates, edgeExecutionStates, setEdges]);
 
-  // Load devices
-  useState(() => {
+  // Load Agent-authoritative simulator discovery. The legacy URL is intentionally unused.
+  useEffect(() => {
     let cancelled = false;
     const load = async () => {
       try {
-        const res = await fetch(baseUrl + "/devices");
-        if (!res.ok) throw new Error("Agent returned " + res.status);
-        const data: DeviceAdapter[] = await res.json();
-        if (!cancelled) setDevices(data);
-      } catch (e) {
-        if (!cancelled) setError((e as Error).message);
+        const data = await getAgentDevices();
+        if (!cancelled) {
+          setDevices(data
+            .filter((device) => device.adapterId === "simulator")
+            .map((device) => ({
+              adapterId: device.adapterId,
+              healthy: true,
+              message: "registered",
+              capabilities: device.capabilities,
+            })));
+          setError(null);
+        }
+      } catch (reason) {
+        if (!cancelled) setError(reason instanceof Error ? reason.message : "Device discovery is unavailable.");
       }
     };
-    load();
+    void load();
     return () => { cancelled = true; };
-  });
+  }, []);
 
   // Auto-export whenever the canvas changes so ExecutionPanel is always armed.
   useEffect(() => {
