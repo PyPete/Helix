@@ -2,10 +2,10 @@
 pipeline: gsd-path/v2
 project: helix
 milestone: durable-local-campaign-skeleton
-phase: build
+phase: plan
                     # inspect only for brownfield; greenfield starts at define
                     # roadmap only in program flow (CHARTER.md exists)
-status: blocked
+status: active
 branch: gsd-path/M001
                     # the router rebinds before any next-milestone file change
                     # the bound branch is never main; ship integrates it there
@@ -63,3 +63,5 @@ it on completion. If this file and the artifacts disagree, the artifacts win
 - 2026-10-29 — plan — plan approved
 - 2026-10-29 — build — build started
 - 2026-10-29 — build — T003 Verify contract is malformed: root invocation resolves an invalid Vitest setup path
+- 2026-10-29 — plan — build plan repair requested
+- 2026-10-29 — plan — build recovery: {"base": "75130dd30e6322d0eda0c58df06ca6516036a938", "branch": "gsd-path/M001", "kind": "plan", "source": "build"}
