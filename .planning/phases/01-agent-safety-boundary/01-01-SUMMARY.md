@@ -2,31 +2,36 @@
 
 ## Status
 
-**Blocked before implementation.** The tracer task's required real PostgreSQL
-environment was not configured. The precondition in `01-01-PLAN.md` requires
-`PGHOST`, `PGPORT`, `PGDATABASE`, `PGUSER`, and `PGPASSWORD` to identify a
-disposable database with migration privileges; all five were absent.
+**Partially implemented; tracer remains blocked.** Docker Desktop provisioned
+the existing Compose PostgreSQL service and it reported healthy. The required
+end-to-end tracer remains unavailable because its required Agent session,
+durable ledger, native broker, actual-Tauri smoke script, and renderer evidence
+path are not yet implemented.
 
 ## Work performed
 
-- Read the plan, walking skeleton, and its specified implementation-pattern and
-  source locations.
-- Confirmed the existing Agent exposes unauthenticated device execution and
-  therefore cannot satisfy the required safety-boundary tracer without the
-  planned implementation.
-- Did not change application code, tests, configuration, migrations, or
-  deployment artifacts because the plan explicitly requires halting when the
-  real database prerequisite is unavailable.
+- Started the existing `postgres` Compose service; it is healthy on the local
+  mapped database port.
+- Added immutable Core command intent/evidence/policy/control contracts and
+  the Agent-only dispatcher/ledger/observation ports.
+- Added a deterministic seven-check admission evaluator. A failed check rejects
+  and an absent or unknown check holds; all check evidence is retained.
+- Added four focused admission tests covering allowed SetFlow, failed
+  capability, unknown health, and a missing lease state.
 
 ## Verification
 
-Not run. The mandatory `phase01-smoke.ps1 -Scenario Tracer` requires the real
-PostgreSQL environment and must not be replaced by mocks, skipped tests, or a
-claimed pass.
+Passed: `dotnet test tests/Helix.Orchestration.Core.Tests/Helix.Orchestration.Core.Tests.csproj --no-restore --filter FullyQualifiedName~CommandAdmissionTests --verbosity minimal`
+with 4 tests. `dotnet build Helix.Orchestration.Core/Helix.Orchestration.Core.csproj --no-restore --verbosity minimal` also passed.
+
+Not run: mandatory `scripts/verification/phase01-smoke.ps1 -Scenario Tracer`
+because the script does not exist yet. Native `agent_security` tests and Agent
+authentication tests also do not exist yet. These gates are not claimed as
+passing.
 
 ## Required unblock
 
-Provide reachable disposable PostgreSQL values for `PGHOST`, `PGPORT`,
-`PGDATABASE`, `PGUSER`, and `PGPASSWORD`, with migration privileges, then
-rerun this plan from Task 01-01-01. The Windows scientist-account/native
-toolchain prerequisite must also remain available for the actual Tauri tracer.
+Complete the remaining explicitly scoped 01-01 implementation: simulator-only
+Agent composition, OS-paired session authentication, PostgreSQL ledger and
+migration, dispatch/reconciliation/control endpoints, native WinHTTP broker and
+ACL, renderer evidence/timeline path, and the real Tauri/PostgreSQL smoke.
