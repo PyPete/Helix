@@ -149,6 +149,19 @@ export type ExperimentEvent =
   | ExperimentCompletedEvent
   | ExperimentFailedEvent;
 
+export interface CommandEvidenceEvent {
+  evidenceId: string;
+  commandId: string;
+  executionId: string;
+  sequence: number;
+  state: "Allowed" | "Rejected" | "Held";
+  verifiedActor: string;
+  capability: string;
+  deviceId: string;
+  timestamp: string;
+  checks: Array<{ check: string; status: "Passed" | "Failed" | "Unknown"; code: string }>;
+}
+
 export interface ExperimentRecord {
   experimentId: string;
   name: string;

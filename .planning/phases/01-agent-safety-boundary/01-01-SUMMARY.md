@@ -54,3 +54,9 @@ ACL, renderer evidence/timeline path, and the real Tauri/PostgreSQL smoke.
 - Added the main-window-scoped Tauri broker. It retains the token only in native `Mutex` state and uses WinHTTP FFI against fixed `127.0.0.1:5080` for the authenticated health request.
 - Added explicit Tauri command permission, main-window capability scope, strict local CSP, and typed renderer IPC wrappers with no renderer credential.
 - Verified `cargo test --manifest-path helix-desktop/src-tauri/Cargo.toml agent_security` (2 passed) and Agent build (passed with existing warnings).
+
+## Renderer evidence update
+
+- Added a typed immutable command-evidence row to the timeline, including verified actor, command ID, committed state, ordered evidence sequence, and expandable admission checks.
+- Timeline renderer tests: 6 passed. Desktop build passed.
+- Added the required tracer script and ran it. It correctly failed because actual Tauri-webview automation and durable evidence retrieval are still absent; this gate is not claimed as passing.

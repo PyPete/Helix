@@ -106,4 +106,22 @@ describe('ExperimentTimeline', () => {
     expect(startedItems).toHaveLength(1);
     expect(startedItems[0].textContent).toContain('Experiment A');
   });
+
+  it('renders committed command evidence without an active experiment', () => {
+    render(
+      <ExperimentTimeline
+        runspaceEvents={[]}
+        experimentEvents={[]}
+        activeExperimentId={null}
+        commandEvidence={[{
+          evidenceId: 'evidence-1', commandId: 'command-1', executionId: 'execution-1', sequence: 1,
+          state: 'Held', verifiedActor: 'Scientist', capability: 'SetFlow', deviceId: 'simulator',
+          timestamp: '2026-06-01T00:00:00Z', checks: [{ check: 'health', status: 'Unknown', code: 'health.unknown' }],
+        }]}
+      />
+    );
+
+    expect(screen.getByTestId('timeline-command-evidence')).toHaveTextContent('SetFlow on simulator');
+    expect(screen.getByText('health: Unknown (health.unknown)')).toBeInTheDocument();
+  });
 });

@@ -1,19 +1,21 @@
 import type { ReactNode } from 'react';
-import type { RunspaceEvent, ExperimentEvent } from '../../types/agent';
+import type { RunspaceEvent, ExperimentEvent, CommandEvidenceEvent } from '../../types/agent';
 import './panels.css';
 
 export interface ExperimentTimelineProps {
   runspaceEvents: RunspaceEvent[];
   experimentEvents: ExperimentEvent[];
   activeExperimentId: string | null;
+  commandEvidence?: CommandEvidenceEvent[];
 }
 
 export function ExperimentTimeline({
   runspaceEvents,
   experimentEvents,
   activeExperimentId,
+  commandEvidence = [],
 }: ExperimentTimelineProps) {
-  if (!activeExperimentId) {
+  if (!activeExperimentId && commandEvidence.length === 0) {
     return (
       <section aria-label="Experiment Timeline" data-testid="experiment-timeline">
         <p data-testid="timeline-empty">No active experiment</p>
@@ -46,13 +48,28 @@ export function ExperimentTimeline({
     return ta < tb ? -1 : ta > tb ? 1 : 0;
   });
 
-  if (allItems.length === 0) {
+  if (allItems.length === 0 && commandEvidence.length === 0) {
     return (
       <section aria-label="Experiment Timeline" data-testid="experiment-timeline">
         <p data-testid="timeline-empty">No active experiment</p>
       </section>
     );
   }
+
+  const evidenceItems = [...commandEvidence]
+    .sort((left, right) => left.sequence - right.sequence)
+    .map((evidence) => (
+      <li key={evidence.evidenceId} data-testid="timeline-command-evidence">
+        <strong>{evidence.state}</strong> {evidence.timestamp} {evidence.capability} on {evidence.deviceId}
+        {' '}by {evidence.verifiedActor} (command {evidence.commandId})
+        <details>
+          <summary>Admission checks</summary>
+          <ul>
+            {evidence.checks.map((check) => <li key={check.check}>{check.check}: {check.status} ({check.code})</li>)}
+          </ul>
+        </details>
+      </li>
+    ));
 
   // Build rendered list items, grouping step events by experimentPhase
   const listItems: ReactNode[] = [];
@@ -130,6 +147,7 @@ export function ExperimentTimeline({
   return (
     <section aria-label="Experiment Timeline" data-testid="experiment-timeline">
       <ul data-testid="timeline-list">
+        {evidenceItems}
         {listItems}
       </ul>
     </section>
