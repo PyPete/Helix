@@ -101,6 +101,93 @@ public sealed class PostgresCommandLedger(DbConnectionFactory connectionFactory)
         return row?.ToRecord();
     }
 
+    public async Task<CommandDispatchRecord> BeginDispatchAsync(
+        CommandIntent intent,
+        SimulatorCommandExpectation expectation,
+        CancellationToken cancellationToken = default)
+    {
+        await using var connection = connectionFactory.Create();
+        const string insert = """
+            INSERT INTO command_dispatches (
+                command_id, execution_id, dispatch_state, state_key, canonical_value, unit, started_at)
+            VALUES (@CommandId, @ExecutionId, 'InFlight', @StateKey, @CanonicalValue, @Unit, NOW())
+            ON CONFLICT (command_id) DO NOTHING;
+            """;
+        await connection.ExecuteAsync(new CommandDefinition(insert, new
+        {
+            intent.CommandId, intent.ExecutionId, expectation.StateKey, expectation.CanonicalValue, expectation.Unit
+        }, cancellationToken: cancellationToken));
+        return await GetDispatchAsync(intent.CommandId, cancellationToken)
+            ?? throw new InvalidOperationException("Dispatch start was not durably recorded.");
+    }
+
+    public async Task<CommandDispatchRecord?> GetDispatchAsync(Guid commandId, CancellationToken cancellationToken = default)
+    {
+        await using var connection = connectionFactory.Create();
+        const string sql = """
+            SELECT command_id AS CommandId, execution_id AS ExecutionId, dispatch_state AS State,
+                   state_key AS StateKey, canonical_value AS CanonicalValue, unit AS Unit,
+                   observed_generation AS ObservedGeneration, started_at AS StartedAtUtc,
+                   resolved_at AS ResolvedAtUtc, resolution AS Resolution
+            FROM command_dispatches WHERE command_id = @commandId;
+            """;
+        var row = await connection.QuerySingleOrDefaultAsync<DispatchRow>(
+            new CommandDefinition(sql, new { commandId }, cancellationToken: cancellationToken));
+        return row?.ToRecord();
+    }
+
+    public async Task<CommandDispatchRecord> ConfirmDispatchAsync(
+        Guid commandId,
+        SimulatorObservation observation,
+        bool recovered,
+        CancellationToken cancellationToken = default)
+    {
+        await using var connection = connectionFactory.Create();
+        const string update = """
+            UPDATE command_dispatches
+            SET dispatch_state = 'Confirmed', observed_generation = @generation, resolved_at = NOW(),
+                resolution = @resolution
+            WHERE command_id = @commandId AND dispatch_state <> 'Confirmed';
+            """;
+        await connection.ExecuteAsync(new CommandDefinition(update, new
+        {
+            commandId, generation = observation.Generation,
+            resolution = recovered ? "Recovered from independently observed simulator effect." : "Effect confirmed by dispatcher."
+        }, cancellationToken: cancellationToken));
+        return await GetDispatchAsync(commandId, cancellationToken)
+            ?? throw new InvalidOperationException("Dispatch confirmation was not durably recorded.");
+    }
+
+    public async Task<CommandDispatchRecord> HoldForReconciliationAsync(
+        Guid commandId,
+        string reason,
+        CancellationToken cancellationToken = default)
+    {
+        await using var connection = connectionFactory.Create();
+        const string update = """
+            UPDATE command_dispatches
+            SET dispatch_state = 'HeldForReconciliation', resolved_at = NOW(), resolution = @reason
+            WHERE command_id = @commandId AND dispatch_state = 'InFlight';
+            """;
+        await connection.ExecuteAsync(new CommandDefinition(update, new { commandId, reason }, cancellationToken: cancellationToken));
+        return await GetDispatchAsync(commandId, cancellationToken)
+            ?? throw new InvalidOperationException("Reconciliation hold was not durably recorded.");
+    }
+
+    public async Task<IReadOnlyList<CommandDispatchRecord>> GetIncompleteDispatchesAsync(CancellationToken cancellationToken = default)
+    {
+        await using var connection = connectionFactory.Create();
+        const string sql = """
+            SELECT command_id AS CommandId, execution_id AS ExecutionId, dispatch_state AS State,
+                   state_key AS StateKey, canonical_value AS CanonicalValue, unit AS Unit,
+                   observed_generation AS ObservedGeneration, started_at AS StartedAtUtc,
+                   resolved_at AS ResolvedAtUtc, resolution AS Resolution
+            FROM command_dispatches WHERE dispatch_state = 'InFlight' ORDER BY started_at, command_id;
+            """;
+        var rows = await connection.QueryAsync<DispatchRow>(new CommandDefinition(sql, cancellationToken: cancellationToken));
+        return rows.Select(row => row.ToRecord()).ToArray();
+    }
+
     private sealed class EvidenceRow
     {
         public Guid EvidenceId { get; init; }
@@ -116,6 +203,30 @@ public sealed class PostgresCommandLedger(DbConnectionFactory connectionFactory)
             Enum.Parse<CommandAdmissionState>(AdmissionState, ignoreCase: false),
             JsonSerializer.Deserialize<List<CommandCheckEvidence>>(ChecksJson, JsonOptions) ?? [],
             OccurredAt);
+    }
+
+    private sealed class DispatchRow
+    {
+        public Guid CommandId { get; init; }
+        public Guid ExecutionId { get; init; }
+        public string State { get; init; } = string.Empty;
+        public string StateKey { get; init; } = string.Empty;
+        public string CanonicalValue { get; init; } = string.Empty;
+        public string Unit { get; init; } = string.Empty;
+        public long? ObservedGeneration { get; init; }
+        public DateTimeOffset StartedAtUtc { get; init; }
+        public DateTimeOffset? ResolvedAtUtc { get; init; }
+        public string? Resolution { get; init; }
+
+        public CommandDispatchRecord ToRecord() => new(
+            CommandId,
+            ExecutionId,
+            Enum.Parse<CommandDispatchState>(State, ignoreCase: false),
+            new SimulatorCommandExpectation(StateKey, CanonicalValue, Unit),
+            ObservedGeneration,
+            StartedAtUtc,
+            ResolvedAtUtc,
+            Resolution);
     }
 
     private sealed class JoinedEvidenceRow

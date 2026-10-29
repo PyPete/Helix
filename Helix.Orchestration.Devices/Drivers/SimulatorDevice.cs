@@ -1,5 +1,6 @@
 using System.Runtime.CompilerServices;
 using System.Text.Json;
+using Helix.Orchestration.Core.Execution;
 using Helix.Orchestration.Devices.Abstractions;
 using Helix.Orchestration.Devices.Transports.Null;
 using Microsoft.Extensions.Logging;
@@ -10,186 +11,125 @@ using CoreParameterType = Helix.Orchestration.Core.Capabilities.ParameterType;
 
 namespace Helix.Orchestration.Devices.Drivers;
 
-/// <summary>
-/// In-process simulator device for development and UAT.
-/// Exposes realistic capabilities with typed parameters so the WorkflowBuilder
-/// palette and DeviceAction node render correctly without physical hardware.
-/// </summary>
+/// <summary>In-process simulator with command-identified, observable effects.</summary>
 public sealed class SimulatorDevice : DeviceAdapterBase
 {
+    private readonly ISimulatorStateStore? _stateStore;
     private double _flowSetpoint;
-    private double _temperature = 25.0;
+    private double _temperature = 25;
     private string _pumpMode = "Isocratic";
-    private Guid? _lastSetFlowCommandId;
+    private readonly Dictionary<string, LocalSimulatorState> _localStates = new(StringComparer.Ordinal);
 
-    public SimulatorDevice(NullDeviceTransport transport, ILogger<SimulatorDevice> logger)
-        : base(transport, logger) { }
+    public SimulatorDevice(
+        NullDeviceTransport transport,
+        ILogger<SimulatorDevice> logger,
+        ISimulatorStateStore? stateStore = null)
+        : base(transport, logger) => _stateStore = stateStore;
 
     protected override void RegisterCapabilities(CapabilityDispatchBuilder builder)
     {
-        // SetFlow — Numeric parameter
-        builder.RegisterSimple(
-            "SetFlow",
-            "Set the pump flow rate (mL/min)",
-            ct =>
-            {
-                Logger.LogInformation("Simulator: SetFlow called (setpoint={Setpoint})", _flowSetpoint);
-                return Task.FromResult(CapabilityInvocationResult.Successful());
-            });
-
-        // GetFlow — returns current setpoint
-        builder.RegisterSimple(
-            "GetFlow",
-            "Read back the current flow setpoint",
-            ct => Task.FromResult(CapabilityInvocationResult.Successful(
-                JsonSerializer.SerializeToElement(new { flowRate = _flowSetpoint, unit = "mL/min" }))));
-
-        // SetTemperature — Numeric parameter
-        builder.RegisterSimple(
-            "SetTemperature",
-            "Set the column oven temperature (°C)",
-            ct =>
-            {
-                Logger.LogInformation("Simulator: SetTemperature called (temp={Temp})", _temperature);
-                return Task.FromResult(CapabilityInvocationResult.Successful());
-            });
-
-        // SetPumpMode — Enum parameter
-        builder.RegisterSimple(
-            "SetPumpMode",
-            "Set the pump operating mode",
-            ct =>
-            {
-                Logger.LogInformation("Simulator: SetPumpMode called (mode={Mode})", _pumpMode);
-                return Task.FromResult(CapabilityInvocationResult.Successful());
-            });
-
-        // Start
-        builder.RegisterSimple(
-            "Start",
-            "Start the simulator device",
-            ct => Task.FromResult(CapabilityInvocationResult.Successful()));
-
-        // Stop
-        builder.RegisterSimple(
-            "Stop",
-            "Stop the simulator device",
-            ct => Task.FromResult(CapabilityInvocationResult.Successful()));
+        builder.RegisterSimple("SetFlow", "Set the pump flow rate (mL/min)", ct => Task.FromResult(CapabilityInvocationResult.Successful()));
+        builder.RegisterSimple("GetFlow", "Read back the current flow setpoint", ct => Task.FromResult(CapabilityInvocationResult.Successful(JsonSerializer.SerializeToElement(new { flowRate = _flowSetpoint, unit = "mL/min" }))));
+        builder.RegisterSimple("SetTemperature", "Set the column oven temperature (°C)", ct => Task.FromResult(CapabilityInvocationResult.Successful()));
+        builder.RegisterSimple("GetTemperature", "Read back the column oven temperature", ct => Task.FromResult(CapabilityInvocationResult.Successful(JsonSerializer.SerializeToElement(new { temperature = _temperature, unit = "°C" }))));
+        builder.RegisterSimple("SetMode", "Set the pump operating mode", ct => Task.FromResult(CapabilityInvocationResult.Successful()));
+        builder.RegisterSimple("GetMode", "Read back the pump operating mode", ct => Task.FromResult(CapabilityInvocationResult.Successful(JsonSerializer.SerializeToElement(new { mode = _pumpMode }))));
     }
 
-    /// <summary>
-    /// Returns CapabilityDescriptor records with full ParameterSchema metadata
-    /// so the WorkflowBuilder DeviceAction node renders the correct input widgets.
-    /// </summary>
-    public override Task<bool> HealthCheckAsync(CancellationToken cancellationToken = default)
-        => Task.FromResult(true);
+    public override Task<bool> HealthCheckAsync(CancellationToken cancellationToken = default) => Task.FromResult(true);
 
-    /// <summary>Applies the sole Phase 01 mutable simulator capability after durable admission.</summary>
-    public Task ApplySetFlowAsync(Guid commandId, double flowRate, CancellationToken cancellationToken = default)
+    public async Task<SimulatorObservation> ApplySetFlowAsync(Guid commandId, double flowRate, CancellationToken cancellationToken = default)
     {
-        cancellationToken.ThrowIfCancellationRequested();
-        if (!double.IsFinite(flowRate) || flowRate < 0 || flowRate > 10)
+        if (!double.IsFinite(flowRate) || flowRate < 0 || flowRate > 10 || Math.Abs(flowRate * 10 - Math.Round(flowRate * 10)) > 0.000001)
             throw new ArgumentOutOfRangeException(nameof(flowRate));
+        const string stateKey = "flowRate";
+        var value = flowRate.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture);
+        return await ApplyAndPersistAsync(stateKey, commandId, value, "mL/min", () => _flowSetpoint = flowRate, cancellationToken);
+    }
+
+    public async Task<SimulatorObservation> ApplySetTemperatureAsync(Guid commandId, double temperature, CancellationToken cancellationToken = default)
+    {
+        if (!double.IsFinite(temperature) || temperature < 20 || temperature > 80 || temperature != Math.Truncate(temperature))
+            throw new ArgumentOutOfRangeException(nameof(temperature));
+        const string stateKey = "temperature";
+        var value = temperature.ToString("0", System.Globalization.CultureInfo.InvariantCulture);
+        return await ApplyAndPersistAsync(stateKey, commandId, value, "°C", () => _temperature = temperature, cancellationToken);
+    }
+
+    public async Task<SimulatorObservation> ApplySetModeAsync(Guid commandId, string mode, CancellationToken cancellationToken = default)
+    {
+        if (mode is not "Isocratic" and not "Gradient" and not "Purge")
+            throw new ArgumentOutOfRangeException(nameof(mode));
+        return await ApplyAndPersistAsync("mode", commandId, mode, string.Empty, () => _pumpMode = mode, cancellationToken);
+    }
+
+    /// <summary>Read-only state observation; it never invokes a mutation capability.</summary>
+    public async Task<SimulatorObservation?> GetObservationAsync(string stateKey, CancellationToken cancellationToken = default)
+    {
+        if (_stateStore is not null)
+            return await _stateStore.GetAsync("simulator", stateKey, cancellationToken);
+
         lock (this)
         {
-            if (_lastSetFlowCommandId == commandId)
-                return Task.CompletedTask;
-            _flowSetpoint = flowRate;
-            _lastSetFlowCommandId = commandId;
+            return _localStates.TryGetValue(stateKey, out var state)
+                ? new SimulatorObservation("simulator", stateKey, state.CommandId, state.CanonicalValue, state.Unit, state.Generation, state.ObservedAtUtc)
+                : null;
         }
-        Logger.LogInformation("Simulator: committed SetFlow {Setpoint} for command {CommandId}", flowRate, commandId);
-        return Task.CompletedTask;
     }
 
     public IReadOnlyList<CoreCapabilityDescriptor> GetRichCapabilities() =>
     [
-        new CoreCapabilityDescriptor(
-            "SetFlow",
-            "Set Flow",
-            "Set the pump flow rate",
-            CoreCapabilityCategory.Control,
-            [
-                new CoreParameterSchema("flowRate", "Flow Rate", CoreParameterType.Numeric, "mL/min",
-                    Min: 0, Max: 10, Step: 0.1, Options: null, DefaultValue: 1.0)
-            ],
-            IsDestructive: false,
-            RequiresActiveRunspace: false,
-            EstimatedDurationMs: 500),
-
-        new CoreCapabilityDescriptor(
-            "GetFlow",
-            "Get Flow",
-            "Read back the current flow setpoint",
-            CoreCapabilityCategory.Measurement,
-            [],
-            IsDestructive: false,
-            RequiresActiveRunspace: false,
-            EstimatedDurationMs: 200,
-            Returns:
-            [
-                new CoreParameterSchema("flowRate", "Flow Rate", CoreParameterType.Numeric, "mL/min",
-                    Min: 0, Max: 10, Step: 0.1, Options: null, DefaultValue: null)
-            ]),
-
-        new CoreCapabilityDescriptor(
-            "SetTemperature",
-            "Set Temperature",
-            "Set the column oven temperature",
-            CoreCapabilityCategory.Control,
-            [
-                new CoreParameterSchema("temperature", "Temperature", CoreParameterType.Numeric, "°C",
-                    Min: 20, Max: 80, Step: 1, Options: null, DefaultValue: 40.0)
-            ],
-            IsDestructive: false,
-            RequiresActiveRunspace: false,
-            EstimatedDurationMs: 3000),
-
-        new CoreCapabilityDescriptor(
-            "SetPumpMode",
-            "Set Pump Mode",
-            "Set the pump operating mode",
-            CoreCapabilityCategory.Control,
-            [
-                new CoreParameterSchema("mode", "Mode", CoreParameterType.Enum, "",
-                    Min: null, Max: null, Step: null,
-                    Options: ["Isocratic", "Gradient", "Purge"],
-                    DefaultValue: "Isocratic")
-            ],
-            IsDestructive: false,
-            RequiresActiveRunspace: false),
-
-        new CoreCapabilityDescriptor(
-            "Start",
-            "Start",
-            "Start the simulator device",
-            CoreCapabilityCategory.Control,
-            [],
-            IsDestructive: false,
-            RequiresActiveRunspace: false,
-            EstimatedDurationMs: 1000),
-
-        new CoreCapabilityDescriptor(
-            "Stop",
-            "Stop",
-            "Stop the simulator device",
-            CoreCapabilityCategory.Control,
-            [],
-            IsDestructive: false,
-            RequiresActiveRunspace: false,
-            EstimatedDurationMs: 500),
+        new("SetFlow", "Set Flow", "Set the pump flow rate", CoreCapabilityCategory.Control,
+            [new CoreParameterSchema("flowRate", "Flow Rate", CoreParameterType.Numeric, "mL/min", 0, 10, 0.1, null, 1.0)], false, false, 500),
+        new("GetFlow", "Get Flow", "Read back the current flow setpoint", CoreCapabilityCategory.Measurement, [], false, false, 200,
+            Returns: [new CoreParameterSchema("flowRate", "Flow Rate", CoreParameterType.Numeric, "mL/min", 0, 10, 0.1, null, null)]),
+        new("SetTemperature", "Set Temperature", "Set the column oven temperature", CoreCapabilityCategory.Control,
+            [new CoreParameterSchema("temperature", "Temperature", CoreParameterType.Numeric, "°C", 20, 80, 1, null, 40.0)], false, false, 3000),
+        new("GetTemperature", "Get Temperature", "Read back the column oven temperature", CoreCapabilityCategory.Measurement, [], false, false,
+            Returns: [new CoreParameterSchema("temperature", "Temperature", CoreParameterType.Numeric, "°C", 20, 80, 1, null, null)]),
+        new("SetMode", "Set Mode", "Set the pump operating mode", CoreCapabilityCategory.Control,
+            [new CoreParameterSchema("mode", "Mode", CoreParameterType.Enum, "", null, null, null, ["Isocratic", "Gradient", "Purge"], "Isocratic")], false, false),
+        new("GetMode", "Get Mode", "Read back the pump operating mode", CoreCapabilityCategory.Measurement, [], false, false,
+            Returns: [new CoreParameterSchema("mode", "Mode", CoreParameterType.Enum, "", null, null, null, ["Isocratic", "Gradient", "Purge"], null)])
     ];
 
-    public override async IAsyncEnumerable<TrendSample> StreamTrendsAsync(
-        [EnumeratorCancellation] CancellationToken ct = default)
+    public override async IAsyncEnumerable<TrendSample> StreamTrendsAsync([EnumeratorCancellation] CancellationToken ct = default)
     {
         while (!ct.IsCancellationRequested)
         {
             var now = DateTimeOffset.UtcNow;
             yield return new TrendSample { TrendName = "simulator.flowRate", Value = _flowSetpoint, Timestamp = now, Unit = "mL/min" };
-            yield return new TrendSample { TrendName = "simulator.temperature", Value = _temperature + (Random.Shared.NextDouble() - 0.5) * 0.2, Timestamp = now, Unit = "°C" };
-
+            yield return new TrendSample { TrendName = "simulator.temperature", Value = _temperature, Timestamp = now, Unit = "°C" };
             try { await Task.Delay(TimeSpan.FromSeconds(2), ct); }
             catch (OperationCanceledException) { yield break; }
         }
     }
+
+    private async Task<SimulatorObservation> ApplyAndPersistAsync(
+        string stateKey,
+        Guid commandId,
+        string canonicalValue,
+        string unit,
+        Action effect,
+        CancellationToken cancellationToken)
+    {
+        LocalSimulatorState local;
+        lock (this)
+        {
+            if (_localStates.TryGetValue(stateKey, out var existing) && existing.CommandId == commandId)
+                return new SimulatorObservation("simulator", stateKey, existing.CommandId, existing.CanonicalValue, existing.Unit, existing.Generation, existing.ObservedAtUtc);
+            effect();
+            local = new LocalSimulatorState(commandId, canonicalValue, unit,
+                _localStates.TryGetValue(stateKey, out var prior) ? prior.Generation + 1 : 1,
+                DateTimeOffset.UtcNow);
+            _localStates[stateKey] = local;
+        }
+
+        if (_stateStore is not null)
+            return await _stateStore.ApplyAsync("simulator", stateKey, commandId, canonicalValue, unit, cancellationToken);
+        Logger.LogInformation("Simulator committed command {CommandId} at generation {Generation}", commandId, local.Generation);
+        return new SimulatorObservation("simulator", stateKey, local.CommandId, local.CanonicalValue, local.Unit, local.Generation, local.ObservedAtUtc);
+    }
+
+    private sealed record LocalSimulatorState(Guid CommandId, string CanonicalValue, string Unit, long Generation, DateTimeOffset ObservedAtUtc);
 }

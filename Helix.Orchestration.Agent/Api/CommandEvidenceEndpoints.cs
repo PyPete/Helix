@@ -45,11 +45,17 @@ public static class CommandEvidenceEndpoints
             return record is null ? Results.NotFound() : Results.Ok(record);
         });
 
-        app.MapPost("/executions/{executionId:guid}/control/{state}", (Guid executionId, string state, ExecutionControlService controls) =>
+        app.MapPost("/executions/{executionId:guid}/control/{state}", async Task<IResult> (Guid executionId, string state, HttpContext context, ExecutionControlService controls, CancellationToken ct) =>
         {
             if (!Enum.TryParse<ExecutionControlState>(state, ignoreCase: true, out var requested))
                 return Results.BadRequest(new { error = "Unknown execution control state." });
-            return Results.Ok(new { executionId, state = controls.Set(executionId, requested).ToString() });
+            var actor = (VerifiedDesktopActor)context.Items[DesktopSessionAuthenticationHandler.ActorItemKey]!;
+            var current = await controls.GetSnapshotAsync(executionId, ct);
+            var result = await controls.RequestControlAsync(
+                executionId, requested, current.Revision, actor.Sid, "Requested through command evidence API.", ct);
+            return result.Accepted
+                ? Results.Ok(new { executionId, state = result.Snapshot.State.ToString(), result.Snapshot.Revision })
+                : Results.Conflict(new { error = result.Code, state = result.Snapshot.State.ToString(), result.Snapshot.Revision });
         }).WithTags("Execution control");
     }
 }

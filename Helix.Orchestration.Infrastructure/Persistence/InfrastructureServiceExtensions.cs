@@ -17,6 +17,9 @@ public static class InfrastructureServiceExtensions
         services.AddScoped<ICampaignRepository, PostgresCampaignRepository>();
         services.AddScoped<IExperimentEventRepository, PostgresExperimentEventRepository>();
         services.AddScoped<ICommandLedger, PostgresCommandLedger>();
+        services.AddSingleton<IExecutionControlStore, PostgresExecutionControlStore>();
+        services.AddSingleton<ISimulatorStateStore, PostgresSimulatorStateStore>();
+        services.AddSingleton<ISimulatorObservation>(sp => sp.GetRequiredService<ISimulatorStateStore>());
 
         return services;
     }
