@@ -1,4 +1,5 @@
 using Helix.Orchestration.Agent.Security;
+using Helix.Orchestration.Agent.Execution;
 using Helix.Orchestration.Core.Execution;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -24,5 +25,12 @@ public static class CommandEvidenceEndpoints
 
         group.MapPost("/{commandId:guid}/dispatch", async Task<IResult> (Guid commandId, ICommandDispatcher dispatcher, CancellationToken ct) =>
             Results.Ok(await dispatcher.DispatchAsync(commandId, ct)));
+
+        app.MapPost("/executions/{executionId:guid}/control/{state}", (Guid executionId, string state, ExecutionControlService controls) =>
+        {
+            if (!Enum.TryParse<ExecutionControlState>(state, ignoreCase: true, out var requested))
+                return Results.BadRequest(new { error = "Unknown execution control state." });
+            return Results.Ok(new { executionId, state = controls.Set(executionId, requested).ToString() });
+        }).WithTags("Execution control");
     }
 }

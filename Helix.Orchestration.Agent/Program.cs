@@ -281,6 +281,8 @@ try
     builder.Services.AddSingleton<DesktopSessionService>();
     builder.Services.AddSingleton<CommandAdmissionEvaluator>();
     builder.Services.AddSingleton<ICommandDispatcher, AgentCommandDispatcher>();
+    builder.Services.AddSingleton<ExecutionControlService>();
+    builder.Services.AddHostedService<CommandReconciliationWorker>();
 
     // AgentService registered as singleton so it is resolvable as the concrete type
     // (AddHostedService<T> only registers as IHostedService, which prevents GetRequiredService<AgentService>())
