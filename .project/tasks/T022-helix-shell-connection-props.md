@@ -3,9 +3,9 @@ id: T022
 title: Expose HelixShell connection as an App-owned composition contract
 wave: 7
 deps: [T003]
-status: pending
-agent: null
-base: null
+status: done
+agent: build_T022
+base: 477f85f03f11f1d22c2ade66296b7a65a78455df
 worktree: null
 task_branch: null
 files:
@@ -64,3 +64,27 @@ Criterion: A scientist can start the one bounded simulated activity from `helix-
 ## Log
 
 - 2026-10-29 — created by Plan recovery to expose the out-of-batch HelixShell controlled-connection contract.
+- 2026-10-29 — implemented controlled HelixShell connection props with zero-prop defaults and no shell-owned connection selection state.
+- 2026-10-29 — Verify passed: `git diff --check -- helix-desktop/src/shell/HelixShell.tsx`; both CampaignWorkspace focused source commands (1 passed each); App source command (5 passed).
+- 2026-10-29 — orchestrator Verify (sidecar gsd-path-verify/task-t022-verify): pass, exit 0; output tail:
+  ```
+     Duration  1.77s (transform 65ms, setup 131ms, import 169ms, tests 108ms, environment 1.13s)
+  
+  
+   RUN  v4.1.7 C:/Users/u643664/.gsd-path/projects/3b869b23b4749acc/73bee6b8d21f842f/verify/task-t022-verify/helix-desktop
+  
+  
+   Test Files  1 passed (1)
+        Tests  1 passed | 3 skipped (4)
+     Start at  08:46:20
+     Duration  1.70s (transform 69ms, setup 133ms, import 151ms, tests 139ms, environment 1.08s)
+  
+  
+   RUN  v4.1.7 C:/Users/u643664/.gsd-path/projects/3b869b23b4749acc/73bee6b8d21f842f/verify/task-t022-verify/helix-desktop
+  
+  
+   Test Files  1 passed (1)
+        Tests  5 passed (5)
+     Start at  08:46:24
+     Duration  2.59s (transform 312ms, setup 129ms, import 1.03s, tests 138ms, environment 1.10s)
+  ```

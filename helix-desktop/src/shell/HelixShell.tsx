@@ -13,14 +13,23 @@ import { StatusBar } from './StatusBar';
 import { WorkspaceLayout } from './WorkspaceLayout';
 import type { WorkspaceLayoutHandle } from './WorkspaceLayout';
 
+interface HelixShellProps {
+  connection?: AgentConnection;
+  onConnectionChange?: (connection: AgentConnection) => void;
+}
+
+const noopConnectionChange = () => {};
+
 /**
  * HelixShell â€” composition root for the Helix IDE shell (Wave 1).
  * Replaces App.tsx as the top-level component when mounted.
  * App.tsx is not modified in Wave 1 â€” HelixShell is standalone.
  */
-export default function HelixShell() {
+export default function HelixShell({
+  connection = DEFAULT_CONNECTION,
+  onConnectionChange = noopConnectionChange,
+}: HelixShellProps) {
   // --- Connection & health ---
-  const [connection, setConnection] = useState<AgentConnection>(DEFAULT_CONNECTION);
   const baseUrl = `${connection.protocol}://${connection.host}:${connection.port}`;
   const health = useAgentHealth(baseUrl);
 
@@ -156,7 +165,7 @@ export default function HelixShell() {
 
       {activeRibbonTab === 'Settings' && (
         <div className="settings-overlay" data-testid="settings-overlay">
-          <ConnectionConfig connection={connection} onSave={setConnection} />
+          <ConnectionConfig connection={connection} onSave={onConnectionChange} />
         </div>
       )}
 
