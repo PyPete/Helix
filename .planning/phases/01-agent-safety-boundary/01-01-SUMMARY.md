@@ -40,3 +40,10 @@ Complete the remaining explicitly scoped 01-01 implementation: simulator-only
 Agent composition, OS-paired session authentication, PostgreSQL ledger and
 migration, dispatch/reconciliation/control endpoints, native WinHTTP broker and
 ACL, renderer evidence/timeline path, and the real Tauri/PostgreSQL smoke.
+
+## Agent integration update
+
+- Registered fail-closed bearer-session middleware before Agent route mapping.
+- Added opaque SHA-256-backed session validation and revocation, plus trusted actor propagation into authenticated command proposal and dispatch endpoints.
+- Added an Agent-owned dispatcher that appends held admission evidence through the durable ledger rather than attempting an effect with incomplete fresh safety, lease, resource, budget, termination, and health context.
+- `AgentAuthenticationTests`: 3 passed. Agent project build passed (existing dependency/platform warnings remain).

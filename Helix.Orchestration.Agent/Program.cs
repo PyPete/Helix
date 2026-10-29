@@ -8,6 +8,7 @@ using Helix.Orchestration.Agent.Execution;
 using Helix.Orchestration.Agent.Leasing;
 using Helix.Orchestration.Agent.Streaming;
 using Helix.Orchestration.Agent.Trends;
+using Helix.Orchestration.Agent.Security;
 using Helix.Orchestration.Core.Capabilities;
 using Helix.Orchestration.Core.Execution;
 using Helix.Orchestration.Core.Leasing;
@@ -277,6 +278,9 @@ try
 
     // Infrastructure repositories (scoped, via connection string)
     builder.Services.AddHelixInfrastructure(builder.Configuration);
+    builder.Services.AddSingleton<DesktopSessionService>();
+    builder.Services.AddSingleton<CommandAdmissionEvaluator>();
+    builder.Services.AddSingleton<ICommandDispatcher, AgentCommandDispatcher>();
 
     // AgentService registered as singleton so it is resolvable as the concrete type
     // (AddHostedService<T> only registers as IHostedService, which prevents GetRequiredService<AgentService>())
@@ -316,12 +320,14 @@ try
     var app = builder.Build();
 
     app.UseCors();
+    app.UseMiddleware<DesktopSessionAuthenticationHandler>();
     app.UseWebSockets();
     app.MapGrpcService<AgentGrpcService>();
     app.MapHealthChecks("/health");
     app.MapWorkflowEndpoints();
     app.MapRunspaceEndpoints();
     app.MapDeviceEndpoints();
+    app.MapCommandEvidenceEndpoints();
     app.MapExperimentEndpoints();
 
     // WebSocket /ws endpoint
