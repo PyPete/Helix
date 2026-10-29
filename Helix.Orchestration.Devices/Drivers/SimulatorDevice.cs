@@ -20,6 +20,7 @@ public sealed class SimulatorDevice : DeviceAdapterBase
     private double _flowSetpoint;
     private double _temperature = 25.0;
     private string _pumpMode = "Isocratic";
+    private Guid? _lastSetFlowCommandId;
 
     public SimulatorDevice(NullDeviceTransport transport, ILogger<SimulatorDevice> logger)
         : base(transport, logger) { }
@@ -82,6 +83,23 @@ public sealed class SimulatorDevice : DeviceAdapterBase
     /// </summary>
     public override Task<bool> HealthCheckAsync(CancellationToken cancellationToken = default)
         => Task.FromResult(true);
+
+    /// <summary>Applies the sole Phase 01 mutable simulator capability after durable admission.</summary>
+    public Task ApplySetFlowAsync(Guid commandId, double flowRate, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        if (!double.IsFinite(flowRate) || flowRate < 0 || flowRate > 10)
+            throw new ArgumentOutOfRangeException(nameof(flowRate));
+        lock (this)
+        {
+            if (_lastSetFlowCommandId == commandId)
+                return Task.CompletedTask;
+            _flowSetpoint = flowRate;
+            _lastSetFlowCommandId = commandId;
+        }
+        Logger.LogInformation("Simulator: committed SetFlow {Setpoint} for command {CommandId}", flowRate, commandId);
+        return Task.CompletedTask;
+    }
 
     public IReadOnlyList<CoreCapabilityDescriptor> GetRichCapabilities() =>
     [

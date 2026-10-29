@@ -83,6 +83,24 @@ public sealed class PostgresCommandLedger(DbConnectionFactory connectionFactory)
         return evidence;
     }
 
+    public async Task<CommandEvidenceRecord?> GetAsync(Guid commandId, CancellationToken cancellationToken = default)
+    {
+        await using var connection = connectionFactory.Create();
+        const string sql = """
+            SELECT i.command_id AS CommandId, i.execution_id AS ExecutionId, i.correlation_id AS CorrelationId,
+                   i.device_id AS DeviceId, i.capability AS Capability, i.canonical_parameters::text AS CanonicalParameters,
+                   i.verified_actor_sid AS VerifiedActorSid, i.verified_actor_display_name AS VerifiedActorDisplayName,
+                   i.session_reference AS SessionReference, i.policy_revision AS PolicyRevision, i.occurred_at AS IntentOccurredAtUtc,
+                   e.evidence_id AS EvidenceId, e.sequence_num AS SequenceNum, e.admission_state AS AdmissionState,
+                   e.checks_json::text AS ChecksJson, e.occurred_at AS EvidenceOccurredAtUtc
+            FROM command_intents i JOIN command_evidence e ON e.command_id = i.command_id
+            WHERE i.command_id = @commandId;
+            """;
+        var row = await connection.QuerySingleOrDefaultAsync<JoinedEvidenceRow>(
+            new CommandDefinition(sql, new { commandId }, cancellationToken: cancellationToken));
+        return row?.ToRecord();
+    }
+
     private sealed class EvidenceRow
     {
         public Guid EvidenceId { get; init; }
@@ -98,5 +116,32 @@ public sealed class PostgresCommandLedger(DbConnectionFactory connectionFactory)
             Enum.Parse<CommandAdmissionState>(AdmissionState, ignoreCase: false),
             JsonSerializer.Deserialize<List<CommandCheckEvidence>>(ChecksJson, JsonOptions) ?? [],
             OccurredAt);
+    }
+
+    private sealed class JoinedEvidenceRow
+    {
+        public Guid CommandId { get; init; }
+        public Guid ExecutionId { get; init; }
+        public Guid CorrelationId { get; init; }
+        public string DeviceId { get; init; } = string.Empty;
+        public string Capability { get; init; } = string.Empty;
+        public string CanonicalParameters { get; init; } = "{}";
+        public string VerifiedActorSid { get; init; } = string.Empty;
+        public string VerifiedActorDisplayName { get; init; } = string.Empty;
+        public string SessionReference { get; init; } = string.Empty;
+        public string PolicyRevision { get; init; } = string.Empty;
+        public DateTimeOffset IntentOccurredAtUtc { get; init; }
+        public Guid EvidenceId { get; init; }
+        public long SequenceNum { get; init; }
+        public string AdmissionState { get; init; } = string.Empty;
+        public string ChecksJson { get; init; } = "[]";
+        public DateTimeOffset EvidenceOccurredAtUtc { get; init; }
+
+        public CommandEvidenceRecord ToRecord() => new(
+            new CommandIntent(CommandId, ExecutionId, CorrelationId, DeviceId, Capability, CanonicalParameters,
+                VerifiedActorSid, VerifiedActorDisplayName, SessionReference, PolicyRevision, IntentOccurredAtUtc),
+            new CommandEvidence(EvidenceId, CommandId, SequenceNum,
+                Enum.Parse<CommandAdmissionState>(AdmissionState, ignoreCase: false),
+                JsonSerializer.Deserialize<List<CommandCheckEvidence>>(ChecksJson, JsonOptions) ?? [], EvidenceOccurredAtUtc));
     }
 }

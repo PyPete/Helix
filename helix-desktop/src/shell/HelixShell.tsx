@@ -6,6 +6,7 @@ import { useAgentHealth } from '../hooks/useAgentHealth';
 import { useAgentWebSocket } from '../hooks/useAgentWebSocket';
 import { useWorkspaceLayouts } from '../hooks/useWorkspaceLayouts';
 import ConnectionConfig from '../components/ConnectionConfig';
+import DeviceManualControl from '../components/DeviceManualControl/DeviceManualControl';
 import { Ribbon } from './Ribbon';
 import type { RibbonTab } from './Ribbon';
 import { ActivityBar } from './ActivityBar';
@@ -153,6 +154,7 @@ export default function HelixShell() {
           onWorkflowExport={setCurrentWorkflow}
         />
       </div>
+      <DeviceManualControl deviceId="simulator" baseUrl={baseUrl} />
 
       {activeRibbonTab === 'Settings' && (
         <div className="settings-overlay" data-testid="settings-overlay">

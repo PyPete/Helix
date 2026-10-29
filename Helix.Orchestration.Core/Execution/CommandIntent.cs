@@ -46,6 +46,9 @@ public sealed record CommandEvidence(
     IReadOnlyList<CommandCheckEvidence> Checks,
     DateTimeOffset OccurredAtUtc);
 
+/// <summary>Immutable evidence joined with the intent that created it.</summary>
+public sealed record CommandEvidenceRecord(CommandIntent Intent, CommandEvidence Evidence);
+
 /// <summary>Approved simulation-only limits required before dispatch.</summary>
 public sealed record SimulationPolicy(
     string Revision,
@@ -71,6 +74,8 @@ public interface ICommandLedger
         IReadOnlyList<CommandCheckEvidence> checks,
         CommandAdmissionState state,
         CancellationToken cancellationToken = default);
+
+    Task<CommandEvidenceRecord?> GetAsync(Guid commandId, CancellationToken cancellationToken = default);
 }
 
 /// <summary>Authoritative Agent-only command-dispatch boundary.</summary>

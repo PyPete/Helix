@@ -60,3 +60,14 @@ ACL, renderer evidence/timeline path, and the real Tauri/PostgreSQL smoke.
 - Added a typed immutable command-evidence row to the timeline, including verified actor, command ID, committed state, ordered evidence sequence, and expandable admission checks.
 - Timeline renderer tests: 6 passed. Desktop build passed.
 - Added the required tracer script and ran it. It correctly failed because actual Tauri-webview automation and durable evidence retrieval are still absent; this gate is not claimed as passing.
+
+## Native operation completion
+
+- Added native main-window-only proposal, policy approval, dispatch, and evidence-read broker commands. The broker keeps its bearer token in Rust memory and only calls the fixed loopback Agent target.
+- Added the Agent's simulation-only SetFlow dispatch path: seven passing checks and immutable PostgreSQL admission evidence are committed before the simulator mutation; unsupported capabilities remain rejected.
+- Replaced direct renderer mutation with the brokered Set Flow UI flow and added a real-process tracer that starts the Agent and Tauri WebView, clicks its visible control using Windows UI Automation, and verifies PostgreSQL evidence before and after an Agent restart.
+
+## Current verification
+
+- Passed: Agent build; `cargo test --manifest-path helix-desktop/src-tauri/Cargo.toml agent_security` (3 passed); focused `CommandAdmissionTests` (4 passed); desktop production build.
+- The first tracer execution reached Docker provisioning but failed only because it was launched from `helix-desktop/` and the script then resolved the migration relative to that caller directory. The script now resolves the repository root from its own path. The corrected real-process tracer has not yet been rerun, so no passing tracer result is claimed here.
