@@ -1,20 +1,22 @@
 # Plan 01-02 Summary
 
-## Implemented
+## Delivered
 
-- Added a deterministic-clock seam to `CommandAdmissionEvaluator` and retained all seven check evidences for every result.
-- Established hold precedence for unknown admission state so an unsafe or uncertain boundary cannot be masked by an ordinary invalid proposal.
-- Added timestamped, revisioned `SafetyState` and `EmergencyStopTransition` contracts to `SafetyEngine`.
-- Made empty interlock configuration fail closed, publishes unknown state after configuration changes or E-stop reset, and publishes unsafe state for critical failures and E-stop activation.
-- Added evaluator truth-table coverage for every required check, missing evidence, stable evidence time/revision, and simultaneous invalid/unknown input.
-- Added safety-state coverage for empty rules, critical failures, and prompt E-stop cancellation.
+- Added `AdmissionContextProvider` as the Agent's fresh, fail-closed admission-context boundary. It evaluates current interlocks and consumes read-only policy, lease, resource, budget, termination, and health evidence through `IAdmissionStateSource`.
+- Missing, stale, future-dated, or unavailable state becomes `Unknown`; an absent approved policy can never authorize a command. Canonical simulation names, exact parameter keys, decimal bounds/steps, and `SetMode` values are validated before policy evidence can pass.
+- `AgentCommandDispatcher` uses the provider for proposal evidence and repeats it immediately before dispatch, so previous success cannot authorize after a state change.
+- Refined evaluator disposition: unknown state and failed safety/lease/health checks hold for review; known capability/resource/budget/termination failures reject. All seven stable check evidences remain in the result.
+- `SafetyEngine` invalidates a previously safe snapshot whenever interlock configuration changes. Empty or unevaluated rule sets remain unknown; synchronous E-stop cancellation and timestamped/revisioned state remain intact.
+- Corrected the committed evaluator truth-table pattern-variable compiler error and added focused provider/evaluator tests.
 
 ## Verification
 
-- `dotnet build Helix.Orchestration.Core/Helix.Orchestration.Core.csproj --no-restore --verbosity minimal` â€” passed (0 warnings, 0 errors).
-- Focused Core safety/admission tests initially passed: 13 tests.
-- Subsequent focused test run is blocked before test execution by an existing Agent compilation error: `ExecutionControlService.cs(114,33): CS0102: ControlResult already contains a definition for Accepted`.
+- `dotnet test tests/Helix.Orchestration.Core.Tests/Helix.Orchestration.Core.Tests.csproj --no-restore --filter FullyQualifiedName~CommandAdmissionTests --verbosity minimal` — 12 passed.
+- `dotnet test tests/Helix.Orchestration.Core.Tests/Helix.Orchestration.Core.Tests.csproj --no-restore --filter FullyQualifiedName~SafetyEngineTests --verbosity minimal` — 9 passed.
+- `dotnet test tests/Helix.Orchestration.Core.Tests/Helix.Orchestration.Core.Tests.csproj --no-restore --verbosity minimal` — 140 passed.
+- `dotnet test tests/Helix.Orchestration.Agent.Tests/Helix.Orchestration.Agent.Tests.csproj --no-restore --verbosity minimal` — 37 passed.
+- `dotnet build Helix.Orchestration.slnx --no-restore --verbosity minimal` — succeeded (existing restore/package/platform warnings remain).
 
-## Notes
+## Handoff
 
-- The repository did not contain the plan-listed `Helix.Orchestration.Agent/Execution/AdmissionContextProvider.cs` path when this work was performed. The fresh-state provider integration cannot be changed without its actual contract/location.
+`IAdmissionStateSource` is intentionally fail-closed by default. The policy/lease/resource/budget/termination/health persistence work in later plans must supply fresh, revisioned evidence; until then commands are held rather than implicitly authorized. `ControlResult` retains its positional `Accepted` property and `Success` factory for the in-progress Plan 01-03 control work.

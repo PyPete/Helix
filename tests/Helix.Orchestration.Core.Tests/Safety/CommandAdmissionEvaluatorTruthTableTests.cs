@@ -64,12 +64,12 @@ public sealed class CommandAdmissionEvaluatorTruthTableTests
         var result = new CommandAdmissionEvaluator().Evaluate(new CommandAdmissionContext(statuses, "revision-9"));
 
         Assert.Equal(CommandAdmissionState.Held, result.State);
-        Assert.Contains(result.Checks, check => check is
+        Assert.Contains(result.Checks, evidence => evidence is
         {
-            Check: var check,
+            Check: var checkName,
             Status: CommandCheckStatus.Unknown,
             Code: var code
-        } && check == unknownCheck && code == $"{unknownCheck}.unknown");
+        } && checkName == unknownCheck && code == $"{unknownCheck}.unknown");
     }
 
     [Fact]

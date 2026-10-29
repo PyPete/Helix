@@ -10,29 +10,20 @@ namespace Helix.Orchestration.Agent.Execution;
 public sealed class AgentCommandDispatcher(
     ICommandLedger ledger,
     CommandAdmissionEvaluator evaluator,
-    SimulatorDevice simulator) : ICommandDispatcher
+    SimulatorDevice simulator,
+    AdmissionContextProvider admissionContexts) : ICommandDispatcher
 {
     private readonly Dictionary<Guid, CommandIntent> _intents = [];
     private readonly Lock _gate = new();
 
-    public Task<CommandEvidence> ProposeAsync(CommandIntent intent, CancellationToken cancellationToken = default)
+    public async Task<CommandEvidence> ProposeAsync(CommandIntent intent, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(intent);
-        var permitted = IsSupportedSetFlow(intent);
-        var status = permitted ? CommandCheckStatus.Passed : CommandCheckStatus.Failed;
-        var result = evaluator.Evaluate(new CommandAdmissionContext(new Dictionary<string, CommandCheckStatus>
-        {
-            ["capability"] = status,
-            ["safety"] = status,
-            ["lease"] = status,
-            ["resource"] = status,
-            ["budget"] = status,
-            ["termination"] = status,
-            ["health"] = status
-        }, "simulation-policy-v1"));
+        var context = await admissionContexts.CreateAsync(intent, cancellationToken);
+        var result = evaluator.Evaluate(context);
         lock (_gate)
             _intents[intent.CommandId] = intent;
-        return ledger.AppendAdmissionAsync(intent, result.Checks, result.State, cancellationToken);
+        return await ledger.AppendAdmissionAsync(intent, result.Checks, result.State, cancellationToken);
     }
 
     public async Task<CommandEvidence> DispatchAsync(Guid commandId, CancellationToken cancellationToken = default)
@@ -48,6 +39,14 @@ public sealed class AgentCommandDispatcher(
             ?? throw new InvalidOperationException("Command evidence was not committed.");
         if (evidence.Evidence.State != CommandAdmissionState.Allowed)
             return evidence.Evidence;
+
+        // Proposal feedback is evidence, not an authorization token. Rebuild the
+        // complete context immediately before effect so a changed safety, health,
+        // lease, resource, budget, or termination condition cannot be raced by a
+        // previous passing proposal.
+        var freshResult = evaluator.Evaluate(await admissionContexts.CreateAsync(intent, cancellationToken));
+        if (freshResult.State != CommandAdmissionState.Allowed)
+            return await ledger.AppendAdmissionAsync(intent, freshResult.Checks, freshResult.State, cancellationToken);
 
         var flowRate = JsonDocument.Parse(intent.CanonicalParameters).RootElement.GetProperty("flowRate").GetDouble();
         await simulator.ApplySetFlowAsync(commandId, flowRate, cancellationToken);

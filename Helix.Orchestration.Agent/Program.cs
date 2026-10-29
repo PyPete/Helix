@@ -83,7 +83,8 @@ try
     builder.Services.AddSingleton<WorkflowRegistry>();
     builder.Services.AddSingleton<IWorkflowStateStore, WorkflowStateStore>();
     builder.Services.AddSingleton<IGlobalStateStore, InMemoryGlobalStateStore>();
-    builder.Services.AddSingleton<ISafetyEngine, SafetyEngine>();
+    builder.Services.AddSingleton<SafetyEngine>();
+    builder.Services.AddSingleton<ISafetyEngine>(sp => sp.GetRequiredService<SafetyEngine>());
     builder.Services.AddSingleton<InMemoryTrendProvider>();
     builder.Services.AddSingleton<ITrendProvider>(sp => sp.GetRequiredService<InMemoryTrendProvider>());
     builder.Services.AddSingleton<TrendAggregator>();
@@ -281,6 +282,7 @@ try
     builder.Services.AddSingleton<DesktopSessionService>();
     builder.Services.AddHostedService<SessionBootstrapWorker>();
     builder.Services.AddSingleton<CommandAdmissionEvaluator>();
+    builder.Services.AddSingleton<AdmissionContextProvider>();
     builder.Services.AddSingleton<ICommandDispatcher, AgentCommandDispatcher>();
     builder.Services.AddSingleton<ExecutionControlService>();
     builder.Services.AddHostedService<CommandReconciliationWorker>();

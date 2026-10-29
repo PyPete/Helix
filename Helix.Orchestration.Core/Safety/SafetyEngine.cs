@@ -53,6 +53,8 @@ public sealed class SafetyEngine : ISafetyEngine, IDisposable
         {
             throw new ArgumentException($"Interlock rule '{rule.RuleId}' is already registered.", nameof(rule));
         }
+
+        PublishSafetyState(SafetyState.Unknown("Interlock configuration changed and requires evaluation.", NextRevision()));
     }
 
     /// <inheritdoc/>

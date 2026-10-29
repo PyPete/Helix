@@ -31,14 +31,17 @@ public sealed class CommandAdmissionEvaluator
             occurredAtUtc,
             context.ContextRevision)).ToArray();
 
-        // An uncertain physical safety boundary must take precedence over an
+        // An uncertain or unsafe physical boundary must take precedence over an
         // otherwise-invalid proposal: the operator needs the hold reason before
         // deciding whether it is safe to correct and resubmit the proposal.
         var hasUnknown = checks.Any(check => check.Status == CommandCheckStatus.Unknown);
-        var hasFailure = checks.Any(check => check.Status == CommandCheckStatus.Failed);
-        var state = hasUnknown
+        var hasReviewFailure = checks.Any(check =>
+            check.Status == CommandCheckStatus.Failed &&
+            check.Check is "safety" or "lease" or "health");
+        var hasOrdinaryFailure = checks.Any(check => check.Status == CommandCheckStatus.Failed);
+        var state = hasUnknown || hasReviewFailure
             ? CommandAdmissionState.Held
-            : hasFailure
+            : hasOrdinaryFailure
                 ? CommandAdmissionState.Rejected
                 : CommandAdmissionState.Allowed;
 
