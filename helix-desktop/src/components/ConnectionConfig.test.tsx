@@ -1,86 +1,80 @@
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import ConnectionConfig from "./ConnectionConfig";
 import type { AgentConnection } from "../types/agent";
 
-// Use vi.hoisted so mockSet/mockSave are available when vi.mock factory runs
-const { mockSet, mockSave } = vi.hoisted(() => ({
-  mockSet: vi.fn().mockResolvedValue(undefined),
-  mockSave: vi.fn().mockResolvedValue(undefined),
+const { bootstrapSessionMock, sessionStatusMock } = vi.hoisted(() => ({
+  bootstrapSessionMock: vi.fn(),
+  sessionStatusMock: vi.fn(),
 }));
 
-// Mock @tauri-apps/plugin-store — LazyStore is the v2 sync-constructor API
-vi.mock("@tauri-apps/plugin-store", () => {
-  const LazyStoreMock = vi.fn(function (this: Record<string, unknown>, _name: string) {
-    this.set = mockSet;
-    this.save = mockSave;
-  });
-  return { LazyStore: LazyStoreMock };
-});
+vi.mock("../lib/agentClient", () => ({
+  bootstrapAgentSession: bootstrapSessionMock,
+  getAgentSessionStatus: sessionStatusMock,
+}));
 
-const defaultConnection: AgentConnection = {
-  host: "localhost",
-  port: 5080,
-  protocol: "http",
+const localConnection: AgentConnection = { host: "127.0.0.1", port: 5080, protocol: "http" };
+
+const verifiedSession = {
+  authenticated: true,
+  verifiedScientist: "scientist-with-a-long-verified-windows-identity@example.invalid",
+  expiresAt: "2026-10-29T10:15:00Z",
+  restored: true,
+  restorationError: null,
 };
 
 describe("ConnectionConfig", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    bootstrapSessionMock.mockReset();
+    sessionStatusMock.mockReset();
+    sessionStatusMock.mockResolvedValue(verifiedSession);
+    bootstrapSessionMock.mockResolvedValue(verifiedSession);
   });
 
-  it("renders host input with default value", () => {
+  it("shows the immutable local native broker target without editable destination fields", () => {
+    render(<ConnectionConfig connection={localConnection} onSave={vi.fn()} />);
+
+    expect(screen.getByText("Native broker target: 127.0.0.1:5080")).toBeInTheDocument();
+    expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+    expect(screen.queryByRole("spinbutton")).not.toBeInTheDocument();
+  });
+
+  it("makes a legacy remote setting visible but ignores it", () => {
     render(
-      <ConnectionConfig connection={defaultConnection} onSave={vi.fn()} />
+      <ConnectionConfig
+        connection={{ host: "remote.example", port: 443, protocol: "https" }}
+        onSave={vi.fn()}
+      />,
     );
-    const hostInput = screen.getByDisplayValue("localhost");
-    expect(hostInput).toBeInTheDocument();
+
+    expect(screen.getByRole("alert")).toHaveTextContent("legacy remote connection setting was ignored");
   });
 
-  it("renders port input with default value", () => {
-    render(
-      <ConnectionConfig connection={defaultConnection} onSave={vi.fn()} />
-    );
-    const portInput = screen.getByDisplayValue("5080");
-    expect(portInput).toBeInTheDocument();
+  it("shows the verified scientist, expiry, and restoration errors without a credential", async () => {
+    render(<ConnectionConfig connection={localConnection} onSave={vi.fn()} />);
+
+    expect(await screen.findByLabelText("Verified local session")).toHaveTextContent(verifiedSession.verifiedScientist);
+    expect(screen.getByText(`Session expiry: ${verifiedSession.expiresAt}`)).toBeInTheDocument();
+    expect(screen.queryByText(/Bearer|token/i)).not.toBeInTheDocument();
   });
 
-  it("shows error when port is 0", async () => {
-    render(
-      <ConnectionConfig connection={defaultConnection} onSave={vi.fn()} />
-    );
-    const portInput = screen.getByDisplayValue("5080");
-    fireEvent.change(portInput, { target: { value: "0" } });
-    fireEvent.click(screen.getByRole("button", { name: /save/i }));
+  it("shows a session inspection failure as actionable local status", async () => {
+    sessionStatusMock.mockRejectedValueOnce(new Error("Unable to establish the local desktop session."));
+    render(<ConnectionConfig connection={localConnection} onSave={vi.fn()} />);
 
-    await waitFor(() => {
-      expect(screen.getByRole("alert")).toBeInTheDocument();
-    });
-    expect(screen.getByRole("alert")).toHaveTextContent("Invalid host or port");
+    expect(await screen.findByRole("alert")).toHaveTextContent("Unable to establish the local desktop session.");
   });
 
-  it("calls onSave with updated connection on valid save", async () => {
+  it("only restores the fixed local destination", async () => {
     const onSave = vi.fn();
     render(
-      <ConnectionConfig connection={defaultConnection} onSave={onSave} />
+      <ConnectionConfig
+        connection={{ host: "remote.example", port: 443, protocol: "https" }}
+        onSave={onSave}
+      />,
     );
 
-    const hostInput = screen.getByDisplayValue("localhost");
-    fireEvent.change(hostInput, { target: { value: "192.168.1.100" } });
-    fireEvent.click(screen.getByRole("button", { name: /save/i }));
-
-    await waitFor(() => {
-      expect(onSave).toHaveBeenCalledWith({
-        host: "192.168.1.100",
-        port: 5080,
-        protocol: "http",
-      });
-    });
-    expect(mockSet).toHaveBeenCalledWith("agentConnection", {
-      host: "192.168.1.100",
-      port: 5080,
-      protocol: "http",
-    });
-    expect(mockSave).toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Restore local Agent session" }));
+    await waitFor(() => expect(onSave).toHaveBeenCalledWith(localConnection));
   });
 });
