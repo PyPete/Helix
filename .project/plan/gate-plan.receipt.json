@@ -1,0 +1,87 @@
+{
+  "status": "complete",
+  "steps": [
+    {
+      "script": "discussion_records.py",
+      "command": [
+        "C:\\Users\\u643664\\Downloads\\WPy64-31160\\python-3.11.6.amd64\\python.exe",
+        "-B",
+        "C:\\Users\\u643664\\.config\\opencode\\skills\\gsd-path-plan\\scripts\\discussion_records.py",
+        "pending",
+        "--repo",
+        "C:\\Users\\u643664\\source\\repos\\CSharpGitLab\\Helix"
+      ],
+      "exit_code": 0,
+      "result": { "pending": [] },
+      "stdout": "{\"pending\": []}\n",
+      "stderr": ""
+    },
+    {
+      "script": "check_handoffs.py",
+      "command": [
+        "C:\\Users\\u643664\\Downloads\\WPy64-31160\\python-3.11.6.amd64\\python.exe",
+        "-B",
+        "C:\\Users\\u643664\\.config\\opencode\\skills\\gsd-path-plan\\scripts\\check_handoffs.py",
+        "plan",
+        "--repo",
+        "C:\\Users\\u643664\\source\\repos\\CSharpGitLab\\Helix",
+        "--project-dir",
+        ".project"
+      ],
+      "exit_code": 0,
+      "result": {
+        "criteria": ["SC1", "SC2", "SC3", "SC4"],
+        "held_out": {"E1": "T003", "E2": "T003", "E4": "T002", "E6": "T020"},
+        "phase": "plan",
+        "rows": 4,
+        "surfaces": {
+          "Agent external-evidence ingress endpoint": "T002",
+          "local helix-desktop campaign workspace": "T003"
+        },
+        "tasks": 20,
+        "waves": [1, 2, 3, 4, 5, 6]
+      },
+      "stdout": "{\"criteria\": [\"SC1\", \"SC2\", \"SC3\", \"SC4\"], \"held_out\": {\"E1\": \"T003\", \"E2\": \"T003\", \"E4\": \"T002\", \"E6\": \"T020\"}, \"phase\": \"plan\", \"rows\": 4, \"surfaces\": {\"Agent external-evidence ingress endpoint\": \"T002\", \"local helix-desktop campaign workspace\": \"T003\"}, \"tasks\": 20, \"waves\": [1, 2, 3, 4, 5, 6]}\n",
+      "stderr": ""
+    },
+    {
+      "script": "check_task_briefs.py",
+      "command": [
+        "C:\\Users\\u643664\\Downloads\\WPy64-31160\\python-3.11.6.amd64\\python.exe",
+        "-B",
+        "C:\\Users\\u643664\\.config\\opencode\\skills\\gsd-path-plan\\scripts\\check_task_briefs.py",
+        "--repo",
+        "C:\\Users\\u643664\\source\\repos\\CSharpGitLab\\Helix",
+        "--base",
+        "d3c6c1e91b9d829992fd398bfa61bac2ad3f095e",
+        "--tasks-dir",
+        ".project/tasks",
+        "--project-dir",
+        ".project"
+      ],
+      "exit_code": 0,
+      "result": { "base": "d3c6c1e91b9d829992fd398bfa61bac2ad3f095e", "checked": 81, "tasks": 20 },
+      "stdout": "{\"base\": \"d3c6c1e91b9d829992fd398bfa61bac2ad3f095e\", \"checked\": 81, \"tasks\": 20}\n",
+      "stderr": ""
+    },
+    {
+      "script": "review_panel.py",
+      "command": [
+        "C:\\Users\\u643664\\Downloads\\WPy64-31160\\python-3.11.6.amd64\\python.exe",
+        "-B",
+        "C:\\Users\\u643664\\.config\\opencode\\skills\\gsd-path-plan\\scripts\\review_panel.py",
+        "validate-plan",
+        "--plan",
+        "C:\\Users\\u643664\\source\\repos\\CSharpGitLab\\Helix\\.project\\plan\\PLAN.md",
+        "--intent",
+        "C:\\Users\\u643664\\source\\repos\\CSharpGitLab\\Helix\\.project\\intent\\INTENT.md",
+        "--charter",
+        "C:\\Users\\u643664\\source\\repos\\CSharpGitLab\\Helix\\.project\\CHARTER.md"
+      ],
+      "exit_code": 0,
+      "result": { "families": [], "mode": "off", "source": "plan" },
+      "stdout": "{\n  \"families\": [],\n  \"mode\": \"off\",\n  \"source\": \"plan\"\n}\n",
+      "stderr": ""
+    }
+  ]
+}

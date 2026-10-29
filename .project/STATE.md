@@ -2,10 +2,10 @@
 pipeline: gsd-path/v2
 project: helix
 milestone: durable-local-campaign-skeleton
-phase: build
+phase: plan
                     # inspect only for brownfield; greenfield starts at define
                     # roadmap only in program flow (CHARTER.md exists)
-status: blocked
+status: done
 branch: gsd-path/M001
                     # the router rebinds before any next-milestone file change
                     # the bound branch is never main; ship integrates it there
@@ -56,3 +56,8 @@ it on completion. If this file and the artifacts disagree, the artifacts win
 - 2026-10-28 — build — User chose projection-only T003; transfer SC3 lease/later-command proof to a separately planned Agent task. T003 diff is preserved outside the repo and primary restored; dispatch attempt settlement awaits an approved command.
 - 2026-10-28 — build — build started
 - 2026-10-28 — build — User approved projection-only T003 and transfer of lease/later-command proof to Plan repair; T003 attempt is terminal blocked, work is preserved outside the repo, primary is clean.
+- 2026-10-28 — plan — build plan repair requested
+- 2026-10-28 — plan — build recovery: {"base": "d3c6c1e91b9d829992fd398bfa61bac2ad3f095e", "branch": "gsd-path/M001", "kind": "plan", "source": "build"}
+- 2026-10-28 — plan — failed plan gate: E6 held-out owner conflicts with immutable T002 SC2 contract
+- 2026-10-28 — plan — planning resumed
+- 2026-10-29 — plan — plan approved
