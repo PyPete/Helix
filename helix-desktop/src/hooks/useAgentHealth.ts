@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import { getAgentStatus } from "../lib/agentClient";
 
 export interface AgentHealthState {
   healthy: boolean | null;
@@ -6,7 +7,11 @@ export interface AgentHealthState {
   lastChecked: Date | null;
 }
 
-export function useAgentHealth(baseUrl: string, intervalMs = 5000): AgentHealthState {
+/**
+ * The URL parameter remains for compatibility with existing consumers. Health always travels
+ * through the fixed, authenticated native broker rather than renderer networking.
+ */
+export function useAgentHealth(_baseUrl: string, intervalMs = 5000): AgentHealthState {
   const [state, setState] = useState<AgentHealthState>({
     healthy: null,
     error: null,
@@ -14,28 +19,35 @@ export function useAgentHealth(baseUrl: string, intervalMs = 5000): AgentHealthS
   });
 
   useEffect(() => {
+    let disposed = false;
     const check = async () => {
       try {
-        const res = await fetch(`${baseUrl}/health`, {
-          signal: AbortSignal.timeout(3000),
-        });
-        setState({
-          healthy: res.ok,
-          error: res.ok ? null : `HTTP ${res.status}`,
-          lastChecked: new Date(),
-        });
-      } catch (e) {
-        setState({
-          healthy: false,
-          error: (e as Error).message,
-          lastChecked: new Date(),
-        });
+        const status = await getAgentStatus();
+        if (!disposed) {
+          setState({
+            healthy: status.trim().toLowerCase() === "healthy",
+            error: status.trim().toLowerCase() === "healthy" ? null : "Local Agent is unavailable.",
+            lastChecked: new Date(),
+          });
+        }
+      } catch (error) {
+        if (!disposed) {
+          setState({
+            healthy: false,
+            error: error instanceof Error ? error.message : "Local Agent is unavailable.",
+            lastChecked: new Date(),
+          });
+        }
       }
     };
-    check();
-    const id = setInterval(check, intervalMs);
-    return () => clearInterval(id);
-  }, [baseUrl, intervalMs]);
+
+    void check();
+    const id = window.setInterval(() => { void check(); }, intervalMs);
+    return () => {
+      disposed = true;
+      window.clearInterval(id);
+    };
+  }, [intervalMs]);
 
   return state;
 }
