@@ -35,6 +35,7 @@ try
     Log.Information("Helix Agent starting up.");
 
     var builder = WebApplication.CreateBuilder(args);
+    ValidateLocalOnlyListeners(builder.Configuration);
 
     // Serialize enums as strings so TypeScript can do param.type === "Numeric" etc.
     builder.Services.ConfigureHttpJsonOptions(options =>
@@ -343,5 +344,36 @@ finally
 }
 
 return 0;
+
+static void ValidateLocalOnlyListeners(IConfiguration configuration)
+{
+    // Configuration providers are deliberately checked before Kestrel starts.  A
+    // process-level override must not silently turn the same-user Agent into a
+    // lab-network service.
+    var configuredUrls = new[]
+    {
+        configuration["ASPNETCORE_URLS"],
+        configuration["urls"],
+        configuration["Kestrel:Endpoints:Http:Url"]
+    }
+    .Where(url => !string.IsNullOrWhiteSpace(url))
+    .SelectMany(url => url!.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
+
+    foreach (var configuredUrl in configuredUrls)
+    {
+        if (!Uri.TryCreate(configuredUrl, UriKind.Absolute, out var uri) ||
+            uri.Scheme is not ("http" or "https") ||
+            !IsLoopbackHost(uri.Host))
+        {
+            throw new InvalidOperationException(
+                $"Helix Agent is a same-user local service and refuses non-loopback listener '{configuredUrl}'.");
+        }
+    }
+}
+
+static bool IsLoopbackHost(string host) =>
+    string.Equals(host, "localhost", StringComparison.OrdinalIgnoreCase) ||
+    System.Net.IPAddress.TryParse(host.Trim('[', ']'), out var address) &&
+    System.Net.IPAddress.IsLoopback(address);
 
 

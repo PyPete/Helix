@@ -23,9 +23,11 @@ public sealed class E2eWorkflowExecutionTests
     {
         var provider = new InMemoryTrendProvider();
         var registry = new CapabilityRegistry();
+        var invocationCount = 0;
 
         registry.Register("SetTemperature", new LambdaCapabilityInvoker(async (name, parameters, ct) =>
         {
+            invocationCount++;
             provider.PushScalar("reactor.temperature", 75.0);
             return await Task.FromResult(CapabilityInvocationResult.Succeeded(returnValue: 75.0));
         }));
@@ -43,6 +45,7 @@ public sealed class E2eWorkflowExecutionTests
         await runspace.WaitAsync();
 
         Assert.Equal(RunspaceStatus.Completed, runspace.Status);
+        Assert.Equal(1, invocationCount);
         Assert.True(provider.TryGetScalar("reactor.temperature", out var temp));
         Assert.Equal(75.0, (double)temp!);
     }
