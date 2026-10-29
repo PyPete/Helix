@@ -1,5 +1,7 @@
 ﻿using Helix.Orchestration.Agent.Events;
 using Helix.Orchestration.Agent.Experiments;
+using Helix.Orchestration.Agent.Security;
+using Helix.Orchestration.Core.Devices;
 using Helix.Orchestration.Core.Runspace;
 using Helix.Orchestration.Core.WSL;
 using Helix.Orchestration.Infrastructure.Persistence;
@@ -16,6 +18,16 @@ namespace Helix.Orchestration.Agent.Api;
 public static class ExperimentEndpoints
 {
     /// <summary>
+    /// A scientist's workflow proposal. The client never supplies a compiled
+    /// definition or an authorization token.
+    /// </summary>
+    public sealed record ExperimentSubmissionRequest(
+        string Name,
+        WslDocument Workflow,
+        string ApprovedPolicyRevision,
+        Dictionary<string, object?>? Metadata = null);
+
+    /// <summary>
     /// Maps the /experiments endpoint group onto <paramref name="app"/>.
     /// </summary>
     public static void MapExperimentEndpoints(this WebApplication app)
@@ -25,23 +37,42 @@ public static class ExperimentEndpoints
 
         // POST /experiments — start a new experiment, create its runspace, return context
         group.MapPost("/", async Task<IResult> (
-            ExperimentStartRequest request,
+            ExperimentSubmissionRequest request,
+            HttpContext httpContext,
             IExperimentManager experimentManager,
             IRunspaceManager runspaceManager,
             IRunspaceEventEmitter emitter,
+            IWslCompiler compiler,
+            DeviceRegistry deviceRegistry,
             CancellationToken ct) =>
         {
             try
             {
-                var ctx = await experimentManager.StartAsync(request, ct);
+                if (httpContext.Items[DesktopSessionAuthenticationHandler.ActorItemKey] is not VerifiedDesktopActor actor)
+                    return Results.Unauthorized();
+                if (request.Workflow is null || string.IsNullOrWhiteSpace(request.ApprovedPolicyRevision))
+                    return Results.BadRequest(new { code = "experiment.invalid_submission", message = "A workflow and approved policy revision are required." });
 
-                // Create a stub RunspaceDefinition for the experiment main phase
-                var definition = new RunspaceDefinition(
-                    DefinitionId: ctx.ExperimentId,
-                    Name: ctx.Name,
-                    Nodes: Array.Empty<WslNode>(),
-                    Edges: Array.Empty<WslEdge>(),
-                    Metadata: new Dictionary<string, object?>());
+                var compilation = compiler.Compile(request.Workflow, deviceRegistry);
+                if (!compilation.Success || compilation.Definition is null)
+                    return Results.BadRequest(new { code = "experiment.workflow_rejected", diagnostics = compilation.Diagnostics });
+
+                var definition = compilation.Definition;
+                var definitionHash = definition.Metadata.TryGetValue("definitionHash", out var hash)
+                    ? hash?.ToString() ?? string.Empty
+                    : string.Empty;
+                if (string.IsNullOrWhiteSpace(definitionHash))
+                    return Results.Problem(title: "Workflow compilation did not produce a canonical definition hash.", statusCode: StatusCodes.Status500InternalServerError);
+
+                var ctx = await experimentManager.StartAsync(
+                    new ExperimentStartRequest(request.Name, definition.DefinitionId, request.Metadata),
+                    ct);
+                experimentManager.SetCanonicalDefinition(ctx.ExperimentId, new CanonicalExperimentDefinition(
+                    definition,
+                    request.ApprovedPolicyRevision,
+                    definitionHash,
+                    actor.Sid,
+                    DateTimeOffset.UtcNow));
 
                 var runspace = await runspaceManager.CreateAsync(definition, ct);
                 emitter.Publish(new RunspaceStartedEvent(runspace.RunspaceId)
@@ -59,7 +90,8 @@ public static class ExperimentEndpoints
                     name = updated.Name,
                     lifecycle = updated.Lifecycle.ToString(),
                     activePhase = updated.ActivePhase?.ToString(),
-                    activeRunspaceId = updated.ActiveRunspaceId
+                    activeRunspaceId = updated.ActiveRunspaceId,
+                    definitionHash
                 });
             }
             catch (Exception ex)

@@ -1,6 +1,4 @@
-using Helix.Orchestration.Agent.Events;
 using Helix.Orchestration.Core.Runspace;
-using Helix.Orchestration.Core.WSL;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -21,33 +19,15 @@ public static class RunspaceEndpoints
             .WithTags("Runspaces");
 
         // POST /runspaces — submit a RunspaceDefinition, start execution, return runspaceId
-        group.MapPost("/", async Task<IResult> (
-            RunspaceDefinition definition,
-            IRunspaceManager manager,
-            IRunspaceEventEmitter? emitter,
-            CancellationToken ct) =>
+        // Client-supplied definitions are proposals, never execution authority.
+        group.MapPost("/", () => Results.BadRequest(new
         {
-            try
-            {
-                var runspace = await manager.CreateAsync(definition, ct);
-                // Publish runspace-started BEFORE StartAsync so it arrives in the channel
-                // before any step events the background body emits. The channel is FIFO.
-                emitter?.Publish(new RunspaceStartedEvent(runspace.RunspaceId));
-                await runspace.StartAsync(ct);
-                return Results.Ok(new { runspaceId = runspace.RunspaceId });
-            }
-            catch (Exception ex)
-            {
-                return Results.Problem(
-                    title: "Failed to start runspace",
-                    detail: ex.Message,
-                    statusCode: 500);
-            }
-        })
+            code = "runspace.raw_definition_unsupported",
+            message = "Raw runspace definitions cannot be submitted for execution. Submit a WSL workflow to /experiments."
+        }))
         .WithName("CreateRunspace")
-        .WithSummary("Submit a RunspaceDefinition for execution")
-        .Produces<object>(StatusCodes.Status200OK)
-        .ProducesProblem(StatusCodes.Status500InternalServerError);
+        .WithSummary("Reject raw runspace definitions")
+        .Produces(StatusCodes.Status400BadRequest);
 
         // GET /runspaces/{id} — return runspace status; 404 when unknown
         group.MapGet("/{id}", IResult (string id, IRunspaceManager manager) =>

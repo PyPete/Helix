@@ -14,6 +14,7 @@ public sealed class ExperimentManager(
     ILogger<ExperimentManager> logger) : IExperimentManager
 {
     private readonly ConcurrentDictionary<string, ExperimentContext> _experiments = new();
+    private readonly ConcurrentDictionary<string, CanonicalExperimentDefinition> _definitions = new();
     private volatile string? _activeExperimentId;
 
     /// <inheritdoc />
@@ -130,4 +131,25 @@ public sealed class ExperimentManager(
                 experimentId, runspaceId);
         }
     }
+
+    /// <inheritdoc />
+    public void SetCanonicalDefinition(string experimentId, CanonicalExperimentDefinition definition)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(experimentId);
+        ArgumentNullException.ThrowIfNull(definition);
+
+        if (!_experiments.ContainsKey(experimentId))
+            throw new InvalidOperationException($"Experiment '{experimentId}' was not found.");
+
+        _definitions[experimentId] = definition;
+        logger.LogInformation(
+            "Experiment {ExperimentId} accepted canonical definition {DefinitionHash} under policy {PolicyRevision}.",
+            experimentId,
+            definition.DefinitionHash,
+            definition.PolicyRevision);
+    }
+
+    /// <inheritdoc />
+    public bool TryGetCanonicalDefinition(string experimentId, out CanonicalExperimentDefinition? definition) =>
+        _definitions.TryGetValue(experimentId, out definition);
 }

@@ -1,4 +1,5 @@
 ﻿using Helix.Orchestration.Core.Experiment;
+using Helix.Orchestration.Core.WSL;
 
 namespace Helix.Orchestration.Agent.Experiments;
 
@@ -36,6 +37,17 @@ public sealed record ExperimentStartRequest(
     string? MainPhaseWorkflowId = null,
     Dictionary<string, object?>? Metadata = null
 );
+
+/// <summary>
+/// Agent-owned result of compiling a scientist's workflow proposal. Only this
+/// server-side record may be used by retained transport compatibility paths.
+/// </summary>
+public sealed record CanonicalExperimentDefinition(
+    RunspaceDefinition Definition,
+    string PolicyRevision,
+    string DefinitionHash,
+    string ActorSid,
+    DateTimeOffset AcceptedAtUtc);
 
 /// <summary>
 /// Manages the in-process lifecycle of experiments: creation, phase transitions, and terminal states.
@@ -86,4 +98,10 @@ public interface IExperimentManager
     /// Associates a runspace ID with the experiment (called after a runspace is created for a phase).
     /// </summary>
     void SetActiveRunspace(string experimentId, string runspaceId);
+
+    /// <summary>Associates an Agent-compiled definition with an experiment.</summary>
+    void SetCanonicalDefinition(string experimentId, CanonicalExperimentDefinition definition);
+
+    /// <summary>Gets the Agent-compiled definition for a canonical experiment reference.</summary>
+    bool TryGetCanonicalDefinition(string experimentId, out CanonicalExperimentDefinition? definition);
 }
