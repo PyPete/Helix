@@ -1,4 +1,5 @@
 ﻿using Helix.Orchestration.Infrastructure.Storage;
+using Helix.Orchestration.Core.Execution;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -15,6 +16,7 @@ public static class InfrastructureServiceExtensions
         services.AddScoped<IExperimentRepository, PostgresExperimentRepository>();
         services.AddScoped<ICampaignRepository, PostgresCampaignRepository>();
         services.AddScoped<IExperimentEventRepository, PostgresExperimentEventRepository>();
+        services.AddScoped<ICommandLedger, PostgresCommandLedger>();
 
         return services;
     }
