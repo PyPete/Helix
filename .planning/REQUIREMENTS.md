@@ -72,13 +72,35 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| _Pending roadmap creation_ | — | Pending |
+| SAFE-01 | Phase 1 | Pending |
+| SAFE-02 | Phase 1 | Pending |
+| SAFE-03 | Phase 1 | Pending |
+| SAFE-04 | Phase 1 | Pending |
+| APP-01 | Phase 2 | Pending |
+| APP-02 | Phase 2 | Pending |
+| APP-03 | Phase 2 | Pending |
+| APP-04 | Phase 2 | Pending |
+| SAMP-01 | Phase 2 | Pending |
+| SAMP-02 | Phase 2 | Pending |
+| CAMP-01 | Phase 3 | Pending |
+| CAMP-02 | Phase 3 | Pending |
+| CAMP-03 | Phase 3 | Pending |
+| ANLY-01 | Phase 4 | Pending |
+| ANLY-02 | Phase 4 | Pending |
+| ANLY-03 | Phase 4 | Pending |
+| ANLY-04 | Phase 4 | Pending |
+| ANLY-05 | Phase 4 | Pending |
+| CAMP-04 | Phase 5 | Pending |
+| AUTO-01 | Phase 5 | Pending |
+| AUTO-02 | Phase 5 | Pending |
+| UX-01 | Phase 6 | Pending |
+| EVID-01 | Phase 6 | Pending |
 
 **Coverage:**
 - v1 requirements: 23 total
-- Mapped to phases: 0
-- Unmapped: 23 ⚠️
+- Mapped to phases: 23
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-10-29*
-*Last updated: 2026-10-29 after initial scope approval*
+*Last updated: 2026-10-29 after roadmap creation*
