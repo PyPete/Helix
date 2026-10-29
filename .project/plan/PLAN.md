@@ -63,6 +63,15 @@ Walkthrough:
 2. Repeat the exact event and verify the stored disposition is returned with no second transition or command claim (SC2/T002).
 3. Submit a one-component mismatch and verify rejection with no activity completion (SC2/T002).
 
+## Wave 7 — fix wave 2 cycle 1 review findings
+
+Goal: Repair the blocking findings of the wave 2 cycle 1 review without changing source task contracts.
+Review depth: full
+
+| Task | Title | Deps | Files |
+|------|-------|------|-------|
+| T021 | Fix wave 2 cycle 1 review findings in T003 | T003 | helix-desktop/src/App.test.tsx, helix-desktop/src/App.tsx, helix-desktop/src/campaign/CampaignWorkspace.test.tsx, helix-desktop/src/campaign/CampaignWorkspace.tsx, helix-desktop/src/campaign/agentCampaignClient.ts |
+
 ## Intent coverage
 
 | Criterion | Task | Acceptance |
