@@ -1,7 +1,46 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import App from './App';
+
+const configuredAgentUrl = 'http://127.0.0.1:5099';
+
+function projection() {
+  return {
+    campaignId: 'campaign-selected-agent',
+    activityId: 'activity-selected-agent',
+    flowId: 'flow-selected-agent',
+    awaitingStepId: 'awaiting-step-selected-agent',
+    commandId: 'command-selected-agent',
+    revision: 1,
+    lifecycle: 'PendingExternalEvidence' as const,
+    physicalOutcome: 'unknown' as const,
+    audit: [{ disposition: 'Created', occurredAt: '2026-01-01T00:00:01Z' }],
+  };
+}
+
+function jsonResponse(value: unknown) {
+  return new Response(JSON.stringify(value), {
+    status: 200,
+    headers: { 'Content-Type': 'application/json' },
+  });
+}
+
+vi.mock('./shell/HelixShell', () => ({
+  default: ({ onConnectionChange }: { onConnectionChange?: (connection: { protocol: string; host: string; port: number }) => void }) => (
+    <div data-testid="helix-shell">
+      <div data-testid="ribbon-tab-Home" />
+      <div data-testid="activity-bar" />
+      <div data-testid="status-bar" />
+      <button type="button" onClick={() => onConnectionChange?.({ protocol: 'http', host: '127.0.0.1', port: 5099 })}>
+        Use configured Agent
+      </button>
+      <button type="button" onClick={() => onConnectionChange?.({ protocol: 'http', host: 'localhost', port: 5080 })}>
+        Use default Agent
+      </button>
+    </div>
+  ),
+}));
 
 // --- Mock rc-dock (class component --- use forwardRef-compatible function mock) ---
 vi.mock('rc-dock', () => {
@@ -96,5 +135,31 @@ describe('App', () => {
     render(<App />);
     expect(screen.getByTestId('helix-shell')).toBeInTheDocument();
     expect(screen.getByRole('complementary', { name: 'Campaign workspace' })).toBeInTheDocument();
+  });
+
+  it('routes selected-Agent creation and restoration without using the default Agent', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(jsonResponse(projection()))
+      .mockResolvedValueOnce(jsonResponse(projection()));
+
+    render(<App />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Use configured Agent' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Start bounded simulated activity' }));
+    expect(await screen.findByText('campaign-selected-agent')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Use default Agent' }));
+    expect(screen.getByRole('button', { name: 'Start bounded simulated activity' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Use configured Agent' }));
+    expect(await screen.findByText('campaign-selected-agent')).toBeInTheDocument();
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock.mock.calls[0][0]).toBe(`${configuredAgentUrl}/campaigns/bounded-activity`);
+    expect(fetchMock.mock.calls[0][1]?.method).toBe('POST');
+    expect(fetchMock.mock.calls[1][0]).toBe(
+      `${configuredAgentUrl}/campaigns/campaign-selected-agent/activities/activity-selected-agent`,
+    );
+    expect(fetchMock.mock.calls.every(([url]) => !String(url).startsWith('http://localhost:5080'))).toBe(true);
   });
 });

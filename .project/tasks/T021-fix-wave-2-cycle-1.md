@@ -3,9 +3,9 @@ id: T021
 title: Fix wave 2 cycle 1 review findings in T003
 wave: 7
 deps: [T003, T022]
-status: pending
-agent: null
-base: null
+status: done
+agent: build_T021
+base: 12071c45850c50f59f1191ae84ca01af3ce33d53
 worktree: null
 task_branch: null
 files:
@@ -71,3 +71,49 @@ Criterion: A scientist can start the one bounded simulated activity from `helix-
 ## Log
 
 - 2026-10-29 — created by dispatch_driver.py fix-tasks from wave 2 cycle 1
+- 2026-10-29 — App now owns the selected AgentConnection, supplies it to HelixShell, derives the campaign URL from it, and keys CampaignWorkspace by that URL. Added an App regression that selects a non-default Agent, creates the bounded activity, switches Agents to remount, and restores only through the selected Agent URL.
+- 2026-10-29 — Verify passed: `npm install --prefix helix-desktop`; CampaignWorkspace unknown-identity focused test (1 passed, 3 skipped); CampaignWorkspace stale-revision focused test (1 passed, 3 skipped); App.test.tsx (6 passed).
+- 2026-10-29 — orchestrator Verify (sidecar gsd-path-verify/task-t021-verify): pass, exit 0; output tail:
+  ```
+     Duration  1.75s (transform 72ms, setup 146ms, import 162ms, tests 104ms, environment 1.11s)
+  
+  
+   RUN  v4.1.7 C:/Users/u643664/.gsd-path/projects/3b869b23b4749acc/73bee6b8d21f842f/verify/task-t021-verify/helix-desktop
+  
+  
+   Test Files  1 passed (1)
+        Tests  1 passed | 3 skipped (4)
+     Start at  08:52:52
+     Duration  1.75s (transform 67ms, setup 128ms, import 151ms, tests 131ms, environment 1.14s)
+  
+  
+   RUN  v4.1.7 C:/Users/u643664/.gsd-path/projects/3b869b23b4749acc/73bee6b8d21f842f/verify/task-t021-verify/helix-desktop
+  
+  
+   Test Files  1 passed (1)
+        Tests  6 passed (6)
+     Start at  08:52:56
+     Duration  1.78s (transform 96ms, setup 144ms, import 204ms, tests 152ms, environment 1.07s)
+  ```
+- 2026-10-29 — orchestrator regression Verify of T003 (sidecar gsd-path-verify/task-t021-verify): pass, exit 0; output tail:
+  ```
+     Duration  1.69s (transform 70ms, setup 128ms, import 153ms, tests 124ms, environment 1.07s)
+  
+  
+   RUN  v4.1.7 C:/Users/u643664/.gsd-path/projects/3b869b23b4749acc/73bee6b8d21f842f/verify/task-t021-verify/helix-desktop
+  
+  
+   Test Files  1 passed (1)
+        Tests  1 passed | 3 skipped (4)
+     Start at  08:53:06
+     Duration  1.73s (transform 74ms, setup 131ms, import 164ms, tests 148ms, environment 1.09s)
+  
+  
+   RUN  v4.1.7 C:/Users/u643664/.gsd-path/projects/3b869b23b4749acc/73bee6b8d21f842f/verify/task-t021-verify/helix-desktop
+  
+  
+   Test Files  1 passed (1)
+        Tests  6 passed (6)
+     Start at  08:53:10
+     Duration  1.79s (transform 92ms, setup 139ms, import 187ms, tests 174ms, environment 1.09s)
+  ```
