@@ -232,15 +232,27 @@ pub async fn agent_operation_status(window: WebviewWindow, state: State<'_, Agen
 }
 
 #[tauri::command]
-pub async fn agent_evidence_cursor(window: WebviewWindow, state: State<'_, AgentBrokerState>, cursor: Option<String>, page_size: u16) -> Result<String, String> {
+pub async fn agent_evidence_cursor(window: WebviewWindow, state: State<'_, AgentBrokerState>, cursor: Option<String>, page_size: u16, execution_id: Option<String>) -> Result<String, String> {
     require_main_window(&window)?;
     if !(1..=100).contains(&page_size) {
         return Err("Evidence page size is invalid.".to_string());
     }
     let cursor = cursor.unwrap_or_default();
     validate_cursor(&cursor)?;
-    let path = format!("/commands/evidence?cursor={cursor}&pageSize={page_size}");
+    let execution_query = match execution_id {
+        Some(id) => { validate_command_id(&id)?; format!("&executionId={id}") },
+        None => String::new(),
+    };
+    let path = format!("/commands/evidence?cursor={cursor}&pageSize={page_size}{execution_query}");
     native_request("GET", &path, None, &require_session(&state)?)
+}
+
+#[tauri::command]
+pub async fn agent_append_review_note(window: WebviewWindow, state: State<'_, AgentBrokerState>, command_id: String, note: String) -> Result<String, String> {
+    require_main_window(&window)?;
+    validate_command_id(&command_id)?;
+    validate_json(&note)?;
+    native_request("POST", &format!("/commands/{command_id}/review-notes"), Some(&note), &require_session(&state)?)
 }
 
 #[tauri::command]

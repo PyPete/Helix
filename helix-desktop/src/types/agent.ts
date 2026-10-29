@@ -162,6 +162,36 @@ export interface CommandEvidenceEvent {
   checks: Array<{ check: string; status: "Passed" | "Failed" | "Unknown"; code: string }>;
 }
 
+export type CommandEvidenceOutcome = "Allowed" | "Rejected" | "Held" | "Dispatched" | "Completed" | "Unavailable";
+
+/** A committed immutable command-history fact; missing legacy provenance remains explicit. */
+export interface CommandEvidenceHistoryRecord {
+  evidenceId: string;
+  commandId: string;
+  executionId: string;
+  correlationId: string | null;
+  sequence: number;
+  outcome: CommandEvidenceOutcome;
+  verifiedActor: string | null;
+  deviceId: string | null;
+  capability: string | null;
+  timestamp: string;
+  parameters: string | null;
+  checks: Array<{ check: string; status: "Passed" | "Failed" | "Unknown"; code: string; reason?: string }>;
+  source?: "committed" | "recovered-spool" | "legacy";
+  claimedActor?: string | null;
+  agentGeneration?: string | null;
+  spoolOrdinal?: number | null;
+}
+
+export interface CommandEvidenceHistoryState {
+  records: CommandEvidenceHistoryRecord[];
+  loading: boolean;
+  unavailable: boolean;
+  error: string | null;
+  refresh: () => Promise<void>;
+}
+
 export interface ExperimentRecord {
   experimentId: string;
   name: string;

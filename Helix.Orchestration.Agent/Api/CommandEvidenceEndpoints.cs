@@ -8,6 +8,7 @@ namespace Helix.Orchestration.Agent.Api;
 
 public sealed record CommandProposalRequest(Guid CommandId, Guid ExecutionId, Guid CorrelationId, string DeviceId, string Capability, string CanonicalParameters, string PolicyRevision);
 public sealed record PolicyApprovalRequest(string PolicyRevision);
+public sealed record AddReviewNoteRequest(Guid OperationId, string Text);
 
 public static class CommandEvidenceEndpoints
 {
@@ -43,6 +44,48 @@ public static class CommandEvidenceEndpoints
         {
             var record = await ledger.GetAsync(commandId, ct);
             return record is null ? Results.NotFound() : Results.Ok(record);
+        });
+
+        // A notification is only a wake-up signal. This route is the authoritative,
+        // committed-history read used for active, completed, manual and security streams.
+        group.MapGet("/evidence", async Task<IResult> (Guid? executionId, string? cursor, int? pageSize, ICommandLedger ledger, CancellationToken ct) =>
+        {
+            try
+            {
+                var page = await ledger.GetHistoryAsync(executionId, cursor, pageSize ?? 50, ct);
+                return Results.Ok(page);
+            }
+            catch (NotSupportedException)
+            {
+                return Results.StatusCode(StatusCodes.Status503ServiceUnavailable);
+            }
+            catch (ArgumentException exception)
+            {
+                return Results.BadRequest(new { error = exception.Message });
+            }
+        });
+
+        group.MapPost("/{commandId:guid}/review-notes", async Task<IResult> (Guid commandId, AddReviewNoteRequest request, HttpContext context, ICommandLedger ledger, CancellationToken ct) =>
+        {
+            var actor = (VerifiedDesktopActor)context.Items[DesktopSessionAuthenticationHandler.ActorItemKey]!;
+            if (await ledger.GetAsync(commandId, ct) is null)
+                return Results.NotFound();
+
+            try
+            {
+                // The session actor is authoritative; request bodies never supply identity.
+                var note = await ledger.AppendReviewNoteAsync(
+                    request.OperationId, commandId, actor.Sid, actor.DisplayName, request.Text, ct);
+                return Results.Ok(note);
+            }
+            catch (ArgumentException exception)
+            {
+                return Results.BadRequest(new { error = exception.Message });
+            }
+            catch (NotSupportedException)
+            {
+                return Results.StatusCode(StatusCodes.Status503ServiceUnavailable);
+            }
         });
 
         app.MapPost("/executions/{executionId:guid}/control/{state}", async Task<IResult> (Guid executionId, string state, HttpContext context, ExecutionControlService controls, CancellationToken ct) =>

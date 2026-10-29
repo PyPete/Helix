@@ -57,6 +57,21 @@ public sealed class CommandEvidenceTests : IDisposable
         Assert.Single(ledger.Intents);
     }
 
+    [Fact]
+    public async Task ReviewNote_IsIdempotentAndDoesNotAlterTheOriginalEvidence()
+    {
+        var ledger = new RecordingLedger();
+        var commandId = Guid.NewGuid();
+        var operationId = Guid.NewGuid();
+
+        var first = await ledger.AppendReviewNoteAsync(operationId, commandId, "verified-sid", "Verified scientist", "Observed a stable meniscus.");
+        var duplicate = await ledger.AppendReviewNoteAsync(operationId, commandId, "forged-sid", "Forged actor", "Changed text.");
+
+        Assert.Equal(first, duplicate);
+        Assert.Equal("Verified scientist", first.VerifiedActorDisplayName);
+        Assert.Single(ledger.Notes);
+    }
+
     public void Dispose()
     {
         if (Directory.Exists(_directory))
@@ -66,6 +81,7 @@ public sealed class CommandEvidenceTests : IDisposable
     private sealed class RecordingLedger : ICommandLedger
     {
         public List<CommandIntent> Intents { get; } = [];
+        public List<CommandReviewNote> Notes { get; } = [];
 
         public Task<CommandEvidence> AppendAdmissionAsync(CommandIntent intent, IReadOnlyList<CommandCheckEvidence> checks, CommandAdmissionState state, CancellationToken cancellationToken = default)
         {
@@ -80,5 +96,16 @@ public sealed class CommandEvidenceTests : IDisposable
         public Task<CommandDispatchRecord> ConfirmDispatchAsync(Guid commandId, SimulatorObservation observation, bool recovered, CancellationToken cancellationToken = default) => throw new NotSupportedException();
         public Task<CommandDispatchRecord> HoldForReconciliationAsync(Guid commandId, string reason, CancellationToken cancellationToken = default) => throw new NotSupportedException();
         public Task<IReadOnlyList<CommandDispatchRecord>> GetIncompleteDispatchesAsync(CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyList<CommandDispatchRecord>>([]);
+
+        public Task<CommandReviewNote> AppendReviewNoteAsync(Guid operationId, Guid commandId, string verifiedActorSid, string verifiedActorDisplayName, string text, CancellationToken cancellationToken = default)
+        {
+            var note = Notes.FirstOrDefault(item => item.OperationId == operationId);
+            if (note is null)
+            {
+                note = new CommandReviewNote(Guid.NewGuid(), operationId, commandId, verifiedActorSid, verifiedActorDisplayName, text, DateTimeOffset.UtcNow);
+                Notes.Add(note);
+            }
+            return Task.FromResult(note);
+        }
     }
 }

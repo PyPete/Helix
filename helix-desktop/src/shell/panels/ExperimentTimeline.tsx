@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import type { RunspaceEvent, ExperimentEvent, CommandEvidenceEvent } from '../../types/agent';
+import { useCommandEvidence } from '../../hooks/useCommandEvidence';
 import './panels.css';
 
 export interface ExperimentTimelineProps {
@@ -15,7 +16,22 @@ export function ExperimentTimeline({
   activeExperimentId,
   commandEvidence = [],
 }: ExperimentTimelineProps) {
-  if (!activeExperimentId && commandEvidence.length === 0) {
+  const history = useCommandEvidence(activeExperimentId);
+  const committedEvidence: CommandEvidenceEvent[] = history.records.map((record) => ({
+    evidenceId: record.evidenceId,
+    commandId: record.commandId,
+    executionId: record.executionId,
+    sequence: record.sequence,
+    state: record.outcome === 'Unavailable' ? 'Held' : record.outcome as 'Allowed' | 'Rejected' | 'Held',
+    verifiedActor: record.verifiedActor ?? 'Not recorded',
+    capability: record.capability ?? 'Not recorded',
+    deviceId: record.deviceId ?? 'Not recorded',
+    timestamp: record.timestamp,
+    checks: record.checks.map((check) => ({ check: check.check, status: check.status, code: check.code })),
+  }));
+  const allEvidence = [...commandEvidence, ...committedEvidence].filter((item, index, values) =>
+    values.findIndex((candidate) => candidate.evidenceId === item.evidenceId) === index);
+  if (!activeExperimentId && allEvidence.length === 0) {
     return (
       <section aria-label="Experiment Timeline" data-testid="experiment-timeline">
         <p data-testid="timeline-empty">No active experiment</p>
@@ -48,7 +64,7 @@ export function ExperimentTimeline({
     return ta < tb ? -1 : ta > tb ? 1 : 0;
   });
 
-  if (allItems.length === 0 && commandEvidence.length === 0) {
+  if (allItems.length === 0 && allEvidence.length === 0) {
     return (
       <section aria-label="Experiment Timeline" data-testid="experiment-timeline">
         <p data-testid="timeline-empty">No active experiment</p>
@@ -56,7 +72,7 @@ export function ExperimentTimeline({
     );
   }
 
-  const evidenceItems = [...commandEvidence]
+  const evidenceItems = [...allEvidence]
     .sort((left, right) => left.sequence - right.sequence)
     .map((evidence) => (
       <li key={evidence.evidenceId} data-testid="timeline-command-evidence">
@@ -147,6 +163,7 @@ export function ExperimentTimeline({
   return (
     <section aria-label="Experiment Timeline" data-testid="experiment-timeline">
       <ul data-testid="timeline-list">
+        {history.unavailable && <li role="alert" data-testid="timeline-history-unavailable">Committed evidence history is unavailable: {history.error}</li>}
         {evidenceItems}
         {listItems}
       </ul>

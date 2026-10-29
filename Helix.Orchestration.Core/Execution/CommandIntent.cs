@@ -49,6 +49,19 @@ public sealed record CommandEvidence(
 /// <summary>Immutable evidence joined with the intent that created it.</summary>
 public sealed record CommandEvidenceRecord(CommandIntent Intent, CommandEvidence Evidence);
 
+/// <summary>One bounded, canonically ordered page of committed command evidence.</summary>
+public sealed record CommandEvidencePage(string? Cursor, string? NextCursor, IReadOnlyList<CommandEvidenceRecord> Records);
+
+/// <summary>Attributable context appended to, rather than changing, an immutable command fact.</summary>
+public sealed record CommandReviewNote(
+    Guid NoteId,
+    Guid OperationId,
+    Guid CommandId,
+    string VerifiedActorSid,
+    string VerifiedActorDisplayName,
+    string Text,
+    DateTimeOffset OccurredAtUtc);
+
 /// <summary>Approved simulation-only limits required before dispatch.</summary>
 public sealed record SimulationPolicy(
     string Revision,
@@ -100,6 +113,20 @@ public interface ICommandLedger
 
     /// <summary>Returns only effects whose start was durable but whose outcome was not observed.</summary>
     Task<IReadOnlyList<CommandDispatchRecord>> GetIncompleteDispatchesAsync(CancellationToken cancellationToken = default);
+
+    Task<CommandEvidencePage> GetHistoryAsync(
+        Guid? executionId,
+        string? cursor,
+        int pageSize,
+        CancellationToken cancellationToken = default) => throw new NotSupportedException("Evidence history is unavailable.");
+
+    Task<CommandReviewNote> AppendReviewNoteAsync(
+        Guid operationId,
+        Guid commandId,
+        string verifiedActorSid,
+        string verifiedActorDisplayName,
+        string text,
+        CancellationToken cancellationToken = default) => throw new NotSupportedException("Evidence annotations are unavailable.");
 }
 
 /// <summary>Authoritative Agent-only command-dispatch boundary.</summary>

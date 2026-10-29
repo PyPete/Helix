@@ -210,6 +210,68 @@ public sealed class PostgresCommandLedger(DbConnectionFactory connectionFactory)
         return rows.Select(row => row.ToRecord()).ToArray();
     }
 
+    public async Task<CommandEvidencePage> GetHistoryAsync(Guid? executionId, string? cursor, int pageSize, CancellationToken cancellationToken = default)
+    {
+        if (pageSize is < 1 or > 100)
+            throw new ArgumentOutOfRangeException(nameof(pageSize));
+
+        var afterSequence = 0L;
+        var afterEvidenceId = Guid.Empty;
+        if (!string.IsNullOrWhiteSpace(cursor))
+        {
+            var parts = cursor.Split(':', 2, StringSplitOptions.None);
+            if (parts.Length != 2 || !long.TryParse(parts[0], out afterSequence) || !Guid.TryParse(parts[1], out afterEvidenceId))
+                throw new ArgumentException("Evidence cursor is invalid.", nameof(cursor));
+        }
+
+        await using var connection = connectionFactory.Create();
+        var where = executionId.HasValue
+            ? "WHERE e.execution_id = @executionId AND (e.sequence_num > @afterSequence OR (e.sequence_num = @afterSequence AND e.evidence_id > @afterEvidenceId))"
+            : "WHERE e.sequence_num > @afterSequence OR (e.sequence_num = @afterSequence AND e.evidence_id > @afterEvidenceId)";
+        var sql = $"""
+            SELECT i.command_id AS CommandId, i.execution_id AS ExecutionId, i.correlation_id AS CorrelationId,
+                   i.device_id AS DeviceId, i.capability AS Capability, i.canonical_parameters::text AS CanonicalParameters,
+                   i.verified_actor_sid AS VerifiedActorSid, i.verified_actor_display_name AS VerifiedActorDisplayName,
+                   i.session_reference AS SessionReference, i.policy_revision AS PolicyRevision, i.occurred_at AS IntentOccurredAtUtc,
+                   e.evidence_id AS EvidenceId, e.sequence_num AS SequenceNum, e.admission_state AS AdmissionState,
+                   e.checks_json::text AS ChecksJson, e.occurred_at AS EvidenceOccurredAtUtc
+            FROM command_evidence e JOIN command_intents i ON i.command_id = e.command_id
+            {where}
+            ORDER BY e.sequence_num ASC, e.evidence_id ASC
+            LIMIT @take;
+            """;
+        var rows = (await connection.QueryAsync<JoinedEvidenceRow>(new CommandDefinition(
+            sql, new { executionId, afterSequence, afterEvidenceId, take = pageSize + 1 }, cancellationToken: cancellationToken))).ToArray();
+        var hasNext = rows.Length > pageSize;
+        var records = rows.Take(pageSize).Select(row => row.ToRecord()).ToArray();
+        var nextCursor = hasNext && records.Length > 0
+            ? $"{records[^1].Evidence.Sequence.ToString(System.Globalization.CultureInfo.InvariantCulture)}:{records[^1].Evidence.EvidenceId:D}"
+            : null;
+        return new CommandEvidencePage(cursor, nextCursor, records);
+    }
+
+    public async Task<CommandReviewNote> AppendReviewNoteAsync(Guid operationId, Guid commandId, string verifiedActorSid, string verifiedActorDisplayName, string text, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(text) || text.Length > 2_000)
+            throw new ArgumentException("Review note must be between 1 and 2000 characters.", nameof(text));
+
+        await using var connection = connectionFactory.Create();
+        const string insert = """
+            INSERT INTO command_review_notes (note_id, operation_id, command_id, verified_actor_sid, verified_actor_display_name, note_text, occurred_at)
+            VALUES (@NoteId, @OperationId, @CommandId, @VerifiedActorSid, @VerifiedActorDisplayName, @Text, @OccurredAtUtc)
+            ON CONFLICT (operation_id) DO NOTHING;
+            """;
+        var note = new CommandReviewNote(Guid.NewGuid(), operationId, commandId, verifiedActorSid, verifiedActorDisplayName, text.Trim(), DateTimeOffset.UtcNow);
+        await connection.ExecuteAsync(new CommandDefinition(insert, note, cancellationToken: cancellationToken));
+        const string read = """
+            SELECT note_id AS NoteId, operation_id AS OperationId, command_id AS CommandId,
+                   verified_actor_sid AS VerifiedActorSid, verified_actor_display_name AS VerifiedActorDisplayName,
+                   note_text AS Text, occurred_at AS OccurredAtUtc
+            FROM command_review_notes WHERE operation_id = @operationId;
+            """;
+        return await connection.QuerySingleAsync<CommandReviewNote>(new CommandDefinition(read, new { operationId }, cancellationToken: cancellationToken));
+    }
+
     private class EvidenceRow
     {
         public Guid EvidenceId { get; init; }

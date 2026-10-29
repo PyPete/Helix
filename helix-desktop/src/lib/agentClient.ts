@@ -15,22 +15,26 @@ const CANONICAL_CAPABILITIES = new Set([
 
 export type CheckStatus = 'Passed' | 'Failed' | 'Unknown';
 export type CommandState = 'Allowed' | 'Rejected' | 'Held' | 'Dispatched' | 'Completed';
-export type ExperimentControl = 'pause' | 'resume' | 'abort';
+export type ExperimentControl = 'pause' | 'hold' | 'resume' | 'abort';
 
 export interface CommandEvidence {
+  evidenceId?: string;
   commandId: string;
   state: CommandState;
   sequence: number;
+  occurredAtUtc?: string;
   checks: Array<{ check: string; status: CheckStatus; code: string }>;
 }
 
 export interface CommandEvidenceRecord {
   intent: {
     commandId: string;
+    executionId: string;
     correlationId: string;
     verifiedActorDisplayName: string;
     capability: string;
     deviceId: string;
+    canonicalParameters?: string;
   };
   evidence: CommandEvidence;
 }
@@ -78,6 +82,7 @@ export interface EvidenceCursorPage {
 
 export interface EvidencePollingOptions {
   cursor?: string | null;
+  executionId?: string | null;
   pageSize?: number;
   maxPages?: number;
   signal?: AbortSignal;
@@ -267,7 +272,7 @@ export function controlAgentExperiment(
 ): Promise<MutationOutcome<void>> {
   assertIdentifier(experimentId, 'experimentId');
   assertIdentifier(stableOperationId, 'operationId');
-  if (!['pause', 'resume', 'abort'].includes(control)) {
+  if (!['pause', 'hold', 'resume', 'abort'].includes(control)) {
     throw new Error('Experiment control is invalid.');
   }
 
@@ -298,7 +303,7 @@ export async function* pollCommittedEvidence(options: EvidencePollingOptions = {
   for (let pageNumber = 0; pageNumber < maxPages && !options.signal?.aborted; pageNumber += 1) {
     const page = await nativeJson<EvidenceCursorPage>(
       'agent_evidence_cursor',
-      { cursor, pageSize },
+      { cursor, pageSize, executionId: options.executionId ?? null },
       'evidence cursor',
     );
     if (options.signal?.aborted) return;
@@ -306,6 +311,27 @@ export async function* pollCommittedEvidence(options: EvidencePollingOptions = {
     if (page.nextCursor === null || page.nextCursor === cursor) return;
     cursor = page.nextCursor;
   }
+}
+
+export interface ReviewNote {
+  noteId: string;
+  operationId: string;
+  commandId: string;
+  verifiedActorDisplayName: string;
+  text: string;
+  occurredAtUtc: string;
+}
+
+/** Appends context to a fact; acknowledgement loss must be resolved by operation-id lookup, never a retry. */
+export async function appendCommandReviewNote(commandId: string, text: string, stableOperationId = operationId()): Promise<ReviewNote> {
+  assertIdentifier(commandId, 'commandId');
+  assertIdentifier(stableOperationId, 'operationId');
+  assertBoundedText(text.trim(), 'review note', 2000);
+  return nativeJson<ReviewNote>(
+    'agent_append_review_note',
+    { commandId, note: JSON.stringify({ operationId: stableOperationId, text: text.trim() }) },
+    'review note',
+  );
 }
 
 export async function executeApprovedSetFlow(flowRate: number): Promise<CommandEvidenceRecord> {
@@ -337,6 +363,7 @@ export async function executeApprovedSetFlow(flowRate: number): Promise<CommandE
   return {
     intent: {
       commandId,
+      executionId,
       correlationId,
       verifiedActorDisplayName: '',
       capability: 'SetFlow',
@@ -349,4 +376,61 @@ export async function executeApprovedSetFlow(flowRate: number): Promise<CommandE
       checks: [{ check: 'Acknowledgement', status: 'Unknown', code: 'ACK_UNKNOWN' }],
     },
   };
+}
+
+export interface AdmissionCheck {
+  check: string;
+  status: CheckStatus;
+  code: string;
+  reason?: string;
+}
+
+export interface SimulationPolicy {
+  revision: string;
+  approved: boolean;
+  limits: {
+    flowRate: string;
+    temperature: string;
+    mode: string;
+    maximumMutations: number;
+    wallTimeMinutes: number;
+    leaseSeconds: number;
+  };
+}
+
+export interface WorkflowSubmission {
+  operationId: string;
+  executionId: string;
+  correlationId: string;
+  originalWsl: unknown;
+  definitionReference: string;
+  policy: SimulationPolicy;
+}
+
+export interface RuntimeAdmission {
+  state: "Dispatched" | "Rejected" | "Held";
+  reason?: string;
+  checks: AdmissionCheck[];
+}
+
+export interface WorkflowSubmissionResult {
+  executionId: string;
+  canonicalDefinitionReference?: string;
+  canonicalDefinitionHash?: string;
+  compileDiagnostics?: AdmissionCheck[];
+  runtimeAdmission?: RuntimeAdmission;
+}
+
+/** Submits the original nonempty WSL and a scientist-approved, frozen simulation policy via the native broker. */
+export async function submitSimulationWorkflow(request: WorkflowSubmission): Promise<WorkflowSubmissionResult> {
+  assertIdentifier(request.operationId, "operationId");
+  assertIdentifier(request.executionId, "executionId");
+  assertIdentifier(request.correlationId, "correlationId");
+  assertBoundedText(request.definitionReference, "definitionReference", 256);
+  if (!request.policy.approved) throw new Error("The simulation policy must be approved before dispatch.");
+  return nativeJson<WorkflowSubmissionResult>(
+    "agent_submit_simulation",
+    { request: JSON.stringify(request) },
+    "simulation submission",
+  );
 }
