@@ -74,6 +74,12 @@ export interface MutationOutcome<T> {
   error?: string;
 }
 
+export interface ExecutionControlAcknowledgement {
+  executionId: string;
+  state: string;
+  revision: number;
+}
+
 export interface EvidenceCursorPage {
   cursor: string | null;
   nextCursor: string | null;
@@ -269,20 +275,18 @@ export function controlAgentExperiment(
   experimentId: string,
   control: ExperimentControl,
   stableOperationId = operationId(),
-): Promise<MutationOutcome<void>> {
+): Promise<MutationOutcome<ExecutionControlAcknowledgement>> {
   assertIdentifier(experimentId, 'experimentId');
   assertIdentifier(stableOperationId, 'operationId');
   if (!['pause', 'hold', 'resume', 'abort'].includes(control)) {
     throw new Error('Experiment control is invalid.');
   }
 
-  return mutation(stableOperationId, async () => {
-    await invoke<void>('agent_experiment_control', {
+  return mutation(stableOperationId, () => nativeJson<ExecutionControlAcknowledgement>('agent_experiment_control', {
       experimentId,
       control,
       operationId: stableOperationId,
-    });
-  });
+    }, 'execution control'));
 }
 
 /**
@@ -303,7 +307,7 @@ export async function* pollCommittedEvidence(options: EvidencePollingOptions = {
   for (let pageNumber = 0; pageNumber < maxPages && !options.signal?.aborted; pageNumber += 1) {
     const page = await nativeJson<EvidenceCursorPage>(
       'agent_evidence_cursor',
-      { cursor, pageSize, executionId: options.executionId ?? null },
+      options.executionId ? { cursor, pageSize, executionId: options.executionId } : { cursor, pageSize },
       'evidence cursor',
     );
     if (options.signal?.aborted) return;

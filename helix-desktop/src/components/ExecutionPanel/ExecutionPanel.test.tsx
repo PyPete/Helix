@@ -1,233 +1,45 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { describe, it, expect, vi, afterEach } from 'vitest';
-import { ExecutionPanel } from './ExecutionPanel';
-import type { WslDocument, RunspaceEvent } from '../../types/agent';
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { ExecutionPanel } from "./ExecutionPanel";
 
-const sampleDefinition: WslDocument = {
-  documentId: 'doc-1',
-  name: 'Test Workflow',
-  schemaVersion: '1.0',
-  nodes: [],
-  edges: [],
-};
+const { submitSimulationWorkflow, controlAgentExperiment } = vi.hoisted(() => ({ submitSimulationWorkflow: vi.fn(), controlAgentExperiment: vi.fn() }));
+vi.mock("../../lib/agentClient", () => ({
+  bootstrapAgentSession: vi.fn().mockResolvedValue({ authenticated: true }),
+  submitSimulationWorkflow,
+  controlAgentExperiment,
+}));
 
-const sampleRunspaceDef = {
-  runspaceDefinitionId: 'def-1',
-  name: 'Test Runspace',
-};
+const definition = { documentId: "workflow-1", name: "Simulation", schemaVersion: "1.0", nodes: [{ nodeId: "step-1", label: "Set flow", nodeType: "DeviceAction", parameters: {} }], edges: [] };
+const response = { executionId: "11111111-1111-4111-8111-111111111111", runtimeAdmission: { state: "Dispatched", checks: ["Capability", "Safety", "Lease", "Resource", "Budget", "Termination", "Device health"].map((check) => ({ check, status: "Passed", code: "OK" })) } };
 
-afterEach(() => {
-  vi.restoreAllMocks();
-});
-
-describe('ExecutionPanel', () => {
-  it('renders Start button as enabled when definition is provided', () => {
-    render(
-      <ExecutionPanel
-        baseUrl='http://localhost:5080'
-        definition={sampleDefinition}
-        runspaceEvents={[]}
-      />
-    );
-    expect(screen.getByTestId('start-btn')).not.toBeDisabled();
+describe("ExecutionPanel", () => {
+  beforeEach(() => { vi.clearAllMocks(); submitSimulationWorkflow.mockResolvedValue(response); controlAgentExperiment.mockResolvedValue({ uncertain: false }); });
+  it("submits the nonempty original WSL and approved policy only after explicit approval", async () => {
+    render(<ExecutionPanel baseUrl="ignored" definition={definition} runspaceEvents={[]} />);
+    await waitFor(() => expect(screen.getByTestId("start-btn")).toBeDisabled());
+    fireEvent.click(screen.getByLabelText(/I approve this frozen/i));
+    await waitFor(() => expect(screen.getByTestId("start-btn")).toBeEnabled());
+    fireEvent.click(screen.getByTestId("start-btn"));
+    await waitFor(() => expect(submitSimulationWorkflow).toHaveBeenCalledTimes(1));
+    expect(submitSimulationWorkflow.mock.calls[0][0]).toEqual(expect.objectContaining({ originalWsl: definition, definitionReference: "workflow-1", policy: expect.objectContaining({ approved: true, revision: "simulation-policy-v1" }) }));
   });
-
-  it('renders Start button as disabled when definition is null', () => {
-    render(
-      <ExecutionPanel
-        baseUrl='http://localhost:5080'
-        definition={null}
-        runspaceEvents={[]}
-      />
-    );
-    expect(screen.getByTestId('start-btn')).toBeDisabled();
+  it("shows missing admission evidence as Unknown and blocks a retry", async () => {
+    submitSimulationWorkflow.mockResolvedValueOnce({ executionId: "11111111-1111-4111-8111-111111111111", runtimeAdmission: { state: "Held", checks: [] } });
+    render(<ExecutionPanel baseUrl="ignored" definition={definition} runspaceEvents={[]} />);
+    expect(screen.getAllByText("Unknown")).toHaveLength(7);
+    fireEvent.click(screen.getByLabelText(/I approve this frozen/i));
+    await waitFor(() => expect(screen.getByTestId("start-btn")).toBeEnabled());
+    fireEvent.click(screen.getByTestId("start-btn"));
+    await waitFor(() => expect(submitSimulationWorkflow).toHaveBeenCalledTimes(1));
+    expect(screen.getByTestId("start-btn")).toBeDisabled();
   });
-
-  it('calls POST /workflows/compile then POST /experiments on Start click and shows experimentId', async () => {
-    const mockFetch = vi
-      .fn()
-      .mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        json: () => Promise.resolve(sampleRunspaceDef),
-      } as unknown as Response)
-      .mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        json: () => Promise.resolve({ experimentId: 'exp-abc123', name: 'Test Workflow', lifecycle: 'Running', activePhase: 'main', activeRunspaceId: null }),
-      } as unknown as Response);
-    vi.stubGlobal('fetch', mockFetch);
-
-    render(
-      <ExecutionPanel
-        baseUrl='http://localhost:5080'
-        definition={sampleDefinition}
-        runspaceEvents={[]}
-      />
-    );
-
-    fireEvent.click(screen.getByTestId('start-btn'));
-
-    await waitFor(() =>
-      expect(screen.getByTestId('experiment-id')).toHaveTextContent('exp-abc123')
-    );
-
-    expect(mockFetch).toHaveBeenCalledWith(
-      expect.stringContaining('/workflows/compile'),
-      expect.anything()
-    );
-    expect(mockFetch).toHaveBeenCalledWith(
-      expect.stringContaining('/experiments'),
-      expect.anything()
-    );
-  });
-
-  it('shows compile errors when POST /workflows/compile returns 422', async () => {
-    const mockFetch = vi.fn().mockResolvedValueOnce({
-      ok: false,
-      status: 422,
-      json: () => Promise.resolve([{ message: 'Unknown node type' }]),
-    } as unknown as Response);
-    vi.stubGlobal('fetch', mockFetch);
-
-    render(
-      <ExecutionPanel
-        baseUrl='http://localhost:5080'
-        definition={sampleDefinition}
-        runspaceEvents={[]}
-      />
-    );
-
-    fireEvent.click(screen.getByTestId('start-btn'));
-
-    await waitFor(() =>
-      expect(screen.getByRole('alert')).toBeInTheDocument()
-    );
-
-    expect(screen.getByRole('alert')).toHaveTextContent('Compile errors');
-    // POST /experiments must NOT have been called
-    expect(mockFetch).not.toHaveBeenCalledWith(
-      expect.stringContaining('/experiments'),
-      expect.anything()
-    );
-  });
-
-  it('calls POST /experiments/{id}/abort when Abort is clicked', async () => {
-    const experimentId = 'exp-999';
-    const events: RunspaceEvent[] = [
-      {
-        type: 'runspace-started',
-        runspaceId: 'rs-999',
-        timestamp: '2026-01-01T00:00:00Z',
-        experimentId,
-      },
-    ];
-
-    const mockFetch = vi
-      .fn()
-      .mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        json: () => Promise.resolve(sampleRunspaceDef),
-      } as unknown as Response)
-      .mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        json: () => Promise.resolve({ experimentId, name: 'Test Workflow', lifecycle: 'Running', activePhase: 'main', activeRunspaceId: null }),
-      } as unknown as Response)
-      .mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        json: () => Promise.resolve({}),
-      } as unknown as Response);
-    vi.stubGlobal('fetch', mockFetch);
-
-    const { rerender } = render(
-      <ExecutionPanel
-        baseUrl='http://localhost:5080'
-        definition={sampleDefinition}
-        runspaceEvents={[]}
-      />
-    );
-
-    fireEvent.click(screen.getByTestId('start-btn'));
-    await waitFor(() =>
-      expect(screen.getByTestId('experiment-id')).toHaveTextContent(experimentId)
-    );
-
-    // Rerender with the runspace-started event so isRunning = true
-    rerender(
-      <ExecutionPanel
-        baseUrl='http://localhost:5080'
-        definition={sampleDefinition}
-        runspaceEvents={events}
-      />
-    );
-
-    fireEvent.click(screen.getByTestId('abort-btn'));
-
-    await waitFor(() =>
-      expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/abort'),
-        expect.objectContaining({ method: 'POST' })
-      )
-    );
-  });
-
-  it('filters step events by experimentId', () => {
-    const experimentId = 'exp-display-test';
-    const events: RunspaceEvent[] = [
-      {
-        type: 'step-started',
-        runspaceId: 'rs-1',
-        timestamp: '2026-01-01T00:00:00Z',
-        experimentId,
-      },
-      {
-        type: 'step-started',
-        runspaceId: 'rs-2',
-        timestamp: '2026-01-01T00:01:00Z',
-        experimentId: 'exp-other',
-      },
-    ];
-
-    const mockFetch = vi
-      .fn()
-      .mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        json: () => Promise.resolve(sampleRunspaceDef),
-      } as unknown as Response)
-      .mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        json: () => Promise.resolve({ experimentId, name: 'Test Workflow', lifecycle: 'Running', activePhase: 'main', activeRunspaceId: null }),
-      } as unknown as Response);
-    vi.stubGlobal('fetch', mockFetch);
-
-    const { rerender } = render(
-      <ExecutionPanel
-        baseUrl='http://localhost:5080'
-        definition={sampleDefinition}
-        runspaceEvents={[]}
-      />
-    );
-
-    fireEvent.click(screen.getByTestId('start-btn'));
-
-    return waitFor(() =>
-      expect(screen.getByTestId('experiment-id')).toHaveTextContent(experimentId)
-    ).then(() => {
-      rerender(
-        <ExecutionPanel
-          baseUrl='http://localhost:5080'
-          definition={sampleDefinition}
-          runspaceEvents={events}
-        />
-      );
-      // Should show only 1 step-started (from the active experiment)
-      const stepItems = screen.getAllByTestId('step-event-step-started');
-      expect(stepItems).toHaveLength(1);
-    });
+  it("keeps Abort pending until the explicit confirmation is accepted", async () => {
+    render(<ExecutionPanel baseUrl="ignored" definition={definition} runspaceEvents={[{ type: "runspace-started", runspaceId: "run", timestamp: "now", experimentId: "11111111-1111-4111-8111-111111111111" }]} />);
+    await waitFor(() => expect(screen.getByRole("button", { name: "Abort" })).toBeEnabled());
+    fireEvent.click(screen.getByRole("button", { name: "Abort" }));
+    expect(screen.getByRole("dialog")).toHaveTextContent("An in-flight action may already have completed");
+    expect(controlAgentExperiment).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Abort simulation" }));
+    await waitFor(() => expect(controlAgentExperiment).toHaveBeenCalledWith("11111111-1111-4111-8111-111111111111", "abort"));
   });
 });

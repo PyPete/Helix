@@ -1,12 +1,13 @@
-﻿import './shell.css';
+import './shell.css';
 import { useState, useRef, useEffect } from 'react';
 import { DEFAULT_CONNECTION } from '../types/agent';
 import type { AgentConnection, WslDocument } from '../types/agent';
+import { type AgentSessionStatus, controlAgentExperiment } from '../lib/agentClient';
 import { useAgentHealth } from '../hooks/useAgentHealth';
 import { useAgentWebSocket } from '../hooks/useAgentWebSocket';
 import { useWorkspaceLayouts } from '../hooks/useWorkspaceLayouts';
 import ConnectionConfig from '../components/ConnectionConfig';
-import DeviceManualControl from '../components/DeviceManualControl/DeviceManualControl';
+import { AgentSession } from '../components/AgentSession/AgentSession';
 import { Ribbon } from './Ribbon';
 import type { RibbonTab } from './Ribbon';
 import { ActivityBar } from './ActivityBar';
@@ -14,132 +15,139 @@ import { StatusBar } from './StatusBar';
 import { WorkspaceLayout } from './WorkspaceLayout';
 import type { WorkspaceLayoutHandle } from './WorkspaceLayout';
 
-/**
- * HelixShell â€” composition root for the Helix IDE shell (Wave 1).
- * Replaces App.tsx as the top-level component when mounted.
- * App.tsx is not modified in Wave 1 â€” HelixShell is standalone.
- */
+/** The desktop shell composes untrusted views; all lifecycle mutations remain native-Agent requests. */
 export default function HelixShell() {
-  // --- Connection & health ---
   const [connection, setConnection] = useState<AgentConnection>(DEFAULT_CONNECTION);
   const baseUrl = `${connection.protocol}://${connection.host}:${connection.port}`;
   const health = useAgentHealth(baseUrl);
-
-  // --- WebSocket data stream ---
   const { runspaceEvents, trendValues, safetyEvents, experimentEvents, activeExperimentId, connected } = useAgentWebSocket(baseUrl);
-
-  // --- Derived state ---
-  const currentStatus = runspaceEvents[runspaceEvents.length - 1]?.type ?? null;
-  const isRunning =
-    currentStatus === 'runspace-started' || currentStatus === 'step-started';
-  const isPaused = currentStatus === 'runspace-paused';
-
-  // --- Workflow state ---
   const [currentWorkflow, setCurrentWorkflow] = useState<WslDocument | null>(null);
-
-  // --- Shell UI state ---
   const [activeRibbonTab, setActiveRibbonTab] = useState<RibbonTab>('Home');
   const [activePanel, setActivePanel] = useState<string | null>(null);
   const [savedLayoutNames, setSavedLayoutNames] = useState<string[]>([]);
-
-  // --- Workspace layout persistence ---
+  const [session, setSession] = useState<AgentSessionStatus | null>(null);
+  const [selectedExecutionId, setSelectedExecutionId] = useState<string | null>(null);
+  const [durableLifecycle, setDurableLifecycle] = useState<string | null>(null);
+  const [shellError, setShellError] = useState<string | null>(null);
+  const [pausePending, setPausePending] = useState(false);
+  const [abortConfirmationOpen, setAbortConfirmationOpen] = useState(false);
   const { saveLayout, loadLayouts, listLayoutNames } = useWorkspaceLayouts();
+  const workspaceRef = useRef<WorkspaceLayoutHandle>(null);
 
-  // Load saved layout names on mount so the Load dropdown is populated after restart
   useEffect(() => {
     void listLayoutNames().then(setSavedLayoutNames).catch(() => {});
   // listLayoutNames is a stable function reference from the hook
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // --- DockLayout handle ---
-  const workspaceRef = useRef<WorkspaceLayoutHandle>(null);
+  // Keep the last Agent execution selected after its live stream becomes terminal so its timeline stays reachable.
+  useEffect(() => {
+    if (activeExperimentId) setSelectedExecutionId(activeExperimentId);
+  }, [activeExperimentId]);
 
-  // --- Execution handlers (follows ExecutionPanel.tsx fetch pattern) ---
-  const handleRun = async () => {
-    await fetch(`${baseUrl}/api/runspaces/start`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(currentWorkflow ?? {}),
-    });
-  };
+  useEffect(() => {
+    const event = [...runspaceEvents].reverse().find((candidate) => candidate.experimentId === selectedExecutionId);
+    if (!event) return;
+    const lifecycleByEvent: Record<string, string> = {
+      'runspace-started': 'Running',
+      'runspace-paused': 'Paused',
+      'runspace-completed': 'Completed',
+      'runspace-aborted': 'Aborted',
+      'runspace-faulted': 'Held',
+    };
+    const lifecycle = lifecycleByEvent[event.type];
+    if (lifecycle) setDurableLifecycle(lifecycle);
+  }, [runspaceEvents, selectedExecutionId]);
 
-  const handlePause = async () => {
-    await fetch(`${baseUrl}/api/runspaces/pause`, { method: 'POST' });
-  };
+  const isRunning = durableLifecycle === 'Running';
+  const isPaused = durableLifecycle === 'Paused' || durableLifecycle === 'Held';
+  const canControl = session?.authenticated === true && selectedExecutionId !== null && (isRunning || isPaused);
+  const timelineExperimentId = activeExperimentId ?? selectedExecutionId;
 
-  const handleAbort = async () => {
-    await fetch(`${baseUrl}/api/runspaces/abort`, { method: 'POST' });
-  };
+  function showExecutionPanel() {
+    workspaceRef.current?.activateTab('execution-panel');
+  }
 
-  // --- Layout handlers ---
+  // A run cannot originate from this shell button: it must include the editable, approved policy in ExecutionPanel.
+  function handleRun() {
+    showExecutionPanel();
+  }
+
+  async function handlePause() {
+    if (!selectedExecutionId || !canControl) return;
+    setPausePending(true);
+    setShellError(null);
+    try {
+      const outcome = await controlAgentExperiment(selectedExecutionId, 'pause');
+      if (outcome.uncertain) {
+        setDurableLifecycle('Held');
+        setShellError('Outcome not confirmed. This command is held pending reconciliation; do not retry it.');
+      } else if (outcome.result) setDurableLifecycle(outcome.result.state);
+    } finally {
+      setPausePending(false);
+    }
+  }
+
+  function handleAbort() {
+    if (canControl) setAbortConfirmationOpen(true);
+  }
+
+  async function confirmAbort() {
+    if (!selectedExecutionId || !canControl) return;
+    setShellError(null);
+    try {
+      const outcome = await controlAgentExperiment(selectedExecutionId, 'abort');
+      if (outcome.uncertain) {
+        setDurableLifecycle('Held');
+        setShellError('Outcome not confirmed. This command is held pending reconciliation; do not retry it.');
+      } else if (outcome.result) setDurableLifecycle(outcome.result.state);
+    } finally {
+      setAbortConfirmationOpen(false);
+    }
+  }
+
   const handleSaveLayout = async (name: string) => {
     if (!name.trim()) return;
     const layout = workspaceRef.current?.saveLayout();
-    console.log('[Layout] saveLayout returned:', layout);
     if (layout) {
       await saveLayout(name, layout);
-      const names = await listLayoutNames();
-      console.log('[Layout] saved. names:', names);
-      setSavedLayoutNames(names);
+      setSavedLayoutNames(await listLayoutNames());
     }
   };
 
   const handleLoadLayout = async (name: string) => {
     if (!name) return;
-    console.log('[Layout] load:', name);
-    const layouts = await loadLayouts();
-    console.log('[Layout] stored layouts:', Object.keys(layouts));
-    const lb = layouts[name];
-    if (lb) {
-      console.log('[Layout] calling loadLayout');
-      workspaceRef.current?.loadLayout(lb);
-    } else {
-      console.warn('[Layout] no layout found for:', name);
-    }
+    const layout = (await loadLayouts())[name];
+    if (layout) workspaceRef.current?.loadLayout(layout);
   };
 
-  const handleOpenChartPanel = () => {
-    workspaceRef.current?.openChartPanel('new-chart-' + Date.now());
-  };
-
-  // Map activity bar button ids â†’ dock tab ids
-  const ACTIVITY_BAR_TAB_MAP: Record<string, string> = {
-    explorer: 'device-explorer',
-    trends:   'trend-explorer',
-  };
-
+  const handleOpenChartPanel = () => workspaceRef.current?.openChartPanel('new-chart-' + Date.now());
+  const activityBarTabMap: Record<string, string> = { explorer: 'device-explorer', trends: 'trend-explorer' };
   const handlePanelToggle = (panelId: string) => {
-    setActivePanel((prev) => (prev === panelId ? null : panelId));
-    // Navigate the dock to the corresponding tab (if mapped)
-    const dockTabId = ACTIVITY_BAR_TAB_MAP[panelId];
-    if (dockTabId) {
-      workspaceRef.current?.activateTab(dockTabId);
-    }
-    // Settings button switches the ribbon to the Settings tab instead
-    if (panelId === 'settings') {
-      setActiveRibbonTab('Settings');
-    }
+    setActivePanel((previous) => (previous === panelId ? null : panelId));
+    const dockTabId = activityBarTabMap[panelId];
+    if (dockTabId) workspaceRef.current?.activateTab(dockTabId);
+    if (panelId === 'settings') setActiveRibbonTab('Settings');
   };
 
   return (
     <div className="helix-shell" data-testid="helix-shell">
       <div className="titlebar">Helix Desktop</div>
-
+      <AgentSession onStatusChange={setSession} />
+      {shellError && <p role="alert" className="shell-error">{shellError}</p>}
       <Ribbon
         activeTab={activeRibbonTab}
         onTabChange={setActiveRibbonTab}
         onRunWorkflow={handleRun}
-        onPauseWorkflow={handlePause}
+        onPauseWorkflow={() => void handlePause()}
         onAbortWorkflow={handleAbort}
         onOpenChartPanel={handleOpenChartPanel}
-        onSaveLayout={handleSaveLayout}
-        onLoadLayout={handleLoadLayout}
+        onSaveLayout={(name) => void handleSaveLayout(name)}
+        onLoadLayout={(name) => void handleLoadLayout(name)}
         savedLayoutNames={savedLayoutNames}
-        isRunning={isRunning}
+        isRunning={isRunning || pausePending}
         isPaused={isPaused}
       />
-
       <div className="workspace">
         <ActivityBar activePanel={activePanel} onPanelToggle={handlePanelToggle} />
         <WorkspaceLayout
@@ -149,26 +157,14 @@ export default function HelixShell() {
           trendValues={trendValues}
           safetyEvents={safetyEvents}
           experimentEvents={experimentEvents}
-          activeExperimentId={activeExperimentId}
+          activeExperimentId={timelineExperimentId}
           currentWorkflow={currentWorkflow}
           onWorkflowExport={setCurrentWorkflow}
         />
       </div>
-      <DeviceManualControl deviceId="simulator" baseUrl={baseUrl} />
-
-      {activeRibbonTab === 'Settings' && (
-        <div className="settings-overlay" data-testid="settings-overlay">
-          <ConnectionConfig connection={connection} onSave={setConnection} />
-        </div>
-      )}
-
-      <StatusBar
-        connected={connected}
-        healthy={health.healthy}
-        agentUrl={baseUrl}
-      />
+      {abortConfirmationOpen && <div role="dialog" aria-modal="true" aria-labelledby="shell-abort-title"><h2 id="shell-abort-title">Abort simulation</h2><p>Abort this run? No new commands will start. An in-flight action may already have completed; Helix will record its observed outcome and will not replay it.</p><button onClick={() => void confirmAbort()}>Abort simulation</button><button onClick={() => setAbortConfirmationOpen(false)}>Keep running</button></div>}
+      {activeRibbonTab === 'Settings' && <div className="settings-overlay" data-testid="settings-overlay"><ConnectionConfig connection={connection} onSave={setConnection} /></div>}
+      <StatusBar connected={connected} healthy={health.healthy} agentUrl={baseUrl} />
     </div>
   );
 }
-
-

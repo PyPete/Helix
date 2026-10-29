@@ -1,5 +1,13 @@
-import { useState } from "react";
-import type { WslDocument, RunspaceEvent } from "../../types/agent";
+import { useEffect, useMemo, useState } from "react";
+import type { RunspaceEvent, WslDocument } from "../../types/agent";
+import {
+  bootstrapAgentSession,
+  controlAgentExperiment,
+  submitSimulationWorkflow,
+  type AdmissionCheck,
+  type SimulationPolicy,
+  type WorkflowSubmissionResult,
+} from "../../lib/agentClient";
 
 interface ExecutionPanelProps {
   baseUrl: string;
@@ -7,236 +15,143 @@ interface ExecutionPanelProps {
   runspaceEvents: RunspaceEvent[];
 }
 
-const STATUS_LABELS: Record<string, string> = {
-  idle: "Idle",
-  "runspace-started": "Running",
-  "step-started": "Running",
-  "runspace-paused": "Paused",
-  "runspace-completed": "Completed",
-  "runspace-aborted": "Aborted",
-  "runspace-faulted": "Faulted",
+const REQUIRED_CHECKS = ["Capability", "Safety", "Lease", "Resource", "Budget", "Termination", "Device health"];
+
+const initialLimits = {
+  flowRate: "0–10 mL/min in 0.1 steps",
+  temperature: "20–80 °C in 1 °C steps",
+  mode: "Isocratic, Gradient, or Purge",
+  maximumMutations: 100,
+  wallTimeMinutes: 10,
+  leaseSeconds: 30,
 };
 
-const STATUS_COLORS: Record<string, string> = {
-  idle: "#6c7086",
-  "runspace-started": "#f5a623",
-  "step-started": "#f5a623",
-  "runspace-paused": "#89b4fa",
-  "runspace-completed": "#27ae60",
-  "runspace-aborted": "#6c7086",
-  "runspace-faulted": "#e74c3c",
-};
+function checksForDisplay(checks: AdmissionCheck[] | undefined): AdmissionCheck[] {
+  return REQUIRED_CHECKS.map((check) => checks?.find((item) => item.check === check) ?? {
+    check,
+    status: "Unknown",
+    code: "NOT_RECORDED",
+    reason: "Not recorded",
+  });
+}
 
-export function ExecutionPanel({
-  baseUrl,
-  definition,
-  runspaceEvents,
-}: ExecutionPanelProps) {
-  const [experimentId, setExperimentId] = useState<string | null>(null);
+/** A desktop request never grants execution: runtime admission is rendered from Agent evidence. */
+export function ExecutionPanel({ definition, runspaceEvents }: ExecutionPanelProps) {
+  const [sessionReady, setSessionReady] = useState(false);
+  const [policyApproved, setPolicyApproved] = useState(false);
+  const [limits, setLimits] = useState(initialLimits);
   const [submitting, setSubmitting] = useState(false);
+  const [controlPending, setControlPending] = useState<string | null>(null);
+  const [result, setResult] = useState<WorkflowSubmissionResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [abortConfirmationOpen, setAbortConfirmationOpen] = useState(false);
 
-  const eventsForRunspace = runspaceEvents.filter(
-    (e: RunspaceEvent) => e.experimentId === experimentId
-  );
+  useEffect(() => {
+    void bootstrapAgentSession()
+      .then((session) => setSessionReady(session.authenticated))
+      .catch(() => setError("The local Agent could not verify your desktop session. No command was dispatched. Restore the local session, then try again."));
+  }, []);
 
-  const eventsForStatus = runspaceEvents.filter(
-    (e: RunspaceEvent) => e.experimentId === experimentId
-  );
-  const lastEvent =
-    eventsForStatus.length > 0
-      ? eventsForStatus[eventsForStatus.length - 1]
-      : undefined;
-  const currentStatus = lastEvent?.type ?? "idle";
+  const hasExecutableNodes = definition !== null && definition.nodes.length > 0;
+  const experimentId = result?.executionId ?? runspaceEvents.at(-1)?.experimentId ?? null;
+  const runtimeChecks = checksForDisplay(result?.runtimeAdmission?.checks);
+  const hasReturnedUnknownChecks = result !== null && runtimeChecks.some((check) => check.status === "Unknown");
+  const policy: SimulationPolicy = { revision: "simulation-policy-v1", approved: policyApproved, limits };
+  // Before an Agent response this button creates a proposal. Once evidence contains gaps, no retry is offered.
+  const canSubmitProposal = sessionReady && hasExecutableNodes && policyApproved && !submitting && !hasReturnedUnknownChecks;
+  const canControl = sessionReady && experimentId !== null && result?.runtimeAdmission?.state !== "Held" && result?.runtimeAdmission?.state !== "Rejected";
 
-  const isRunning =
-    currentStatus === "runspace-started" || currentStatus === "step-started";
-  const isPaused = currentStatus === "runspace-paused";
+  const status = useMemo(() => {
+    if (result?.runtimeAdmission?.state === "Held") return "Held for scientist review";
+    if (result?.runtimeAdmission?.state === "Rejected") return "Rejected — not dispatched";
+    if (result?.runtimeAdmission?.state === "Dispatched") return "Dispatched";
+    return "Proposal not dispatched";
+  }, [result]);
 
-  const hasExecutableNodes =
-    definition !== null &&
-    definition.nodes.some((n) =>
-      ["Step", "DeviceAction", "Delay", "WaitFor", "Condition", "Branch", "Loop", "Parallel"].includes(n.nodeType)
-    );
+  function updateLimit<Key extends keyof typeof limits>(key: Key, value: typeof limits[Key]) {
+    setLimits((current) => ({ ...current, [key]: value }));
+    setPolicyApproved(false);
+  }
 
-  const handleCompile = async (): Promise<unknown | null> => {
-    if (!definition) {
-      setError("No workflow loaded");
-      return null;
-    }
-    const compileRes = await fetch(baseUrl + "/workflows/compile", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(definition),
-    });
-    if (compileRes.status === 422) {
-      const diagnostics = await compileRes.json();
-      setError("Compile errors: " + JSON.stringify(diagnostics));
-      return null;
-    }
-    if (!compileRes.ok) {
-      setError("Compilation failed: " + compileRes.statusText);
-      return null;
-    }
-    const runspaceDef = await compileRes.json();
-    return runspaceDef;
-  };
+  async function handleStart() {
+    if (!definition || !canSubmitProposal) return;
 
-  const handleStart = async () => {
-    if (!definition) {
-      setError("No workflow loaded");
-      return;
-    }
     setSubmitting(true);
     setError(null);
     try {
-      const runspaceDef = await handleCompile();
-      if (runspaceDef === null) {
-        return;
-      }
-      const res = await fetch(baseUrl + "/experiments", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: definition.name ?? "Experiment" }),
+      const response = await submitSimulationWorkflow({
+        operationId: crypto.randomUUID(),
+        executionId: crypto.randomUUID(),
+        correlationId: crypto.randomUUID(),
+        originalWsl: definition,
+        definitionReference: definition.documentId,
+        policy: { ...policy, approved: true },
       });
-      if (!res.ok) {
-        setError("Failed to start experiment: " + res.statusText);
-        return;
+      setResult(response);
+
+      if (response.runtimeAdmission?.state === "Rejected") {
+        setError(`Command rejected: ${response.runtimeAdmission.reason ?? "Admission checks failed"}. No command was dispatched. Review the failed checks and correct the proposal.`);
+      } else if (response.runtimeAdmission?.state === "Held") {
+        setError("Outcome not confirmed. This command is held pending reconciliation; do not retry it.");
+      } else if (checksForDisplay(response.runtimeAdmission?.checks).some((check) => check.status === "Unknown")) {
+        setError("Admission checks are incomplete. The outcome is unavailable; do not retry this submission.");
       }
-      const data = await res.json();
-      setExperimentId(data.experimentId);
-    } catch (e) {
-      setError((e as Error).message);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "The local Agent could not verify your desktop session. No command was dispatched. Restore the local session, then try again.");
     } finally {
       setSubmitting(false);
     }
-  };
+  }
 
-  const handlePause = async () => {
-    if (!experimentId) return;
+  async function requestControl(control: "pause" | "hold" | "abort") {
+    if (!experimentId || !canControl) return;
+
+    setControlPending(control);
+    setError(null);
     try {
-      const res = await fetch(baseUrl + "/experiments/" + experimentId + "/pause", {
-        method: "POST",
-      });
-      if (!res.ok) setError("Failed to pause: " + res.statusText);
-    } catch (e) {
-      setError((e as Error).message);
+      const outcome = await controlAgentExperiment(experimentId, control);
+      if (outcome.uncertain) {
+        setError("Outcome not confirmed. This command is held pending reconciliation; do not retry it.");
+      }
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Control request could not be acknowledged.");
+    } finally {
+      setControlPending(null);
+      setAbortConfirmationOpen(false);
     }
-  };
-
-  const handleResume = async () => {
-    if (!experimentId) return;
-    try {
-      const res = await fetch(
-        baseUrl + "/experiments/" + experimentId + "/resume",
-        { method: "POST" }
-      );
-      if (!res.ok) setError("Failed to resume: " + res.statusText);
-    } catch (e) {
-      setError((e as Error).message);
-    }
-  };
-
-  const handleAbort = async () => {
-    if (!experimentId) return;
-    try {
-      const res = await fetch(baseUrl + "/experiments/" + experimentId + "/abort", {
-        method: "POST",
-      });
-      if (!res.ok) setError("Failed to abort: " + res.statusText);
-    } catch (e) {
-      setError((e as Error).message);
-    }
-  };
-
-  const statusColor = STATUS_COLORS[currentStatus] ?? "#6c7086";
-  const statusLabel = STATUS_LABELS[currentStatus] ?? currentStatus;
+  }
 
   return (
     <section aria-label="Experiment Execution" data-testid="execution-panel">
-      {error && (
-        <p role="alert" className="error">
-          {error}
-        </p>
-      )}
-      {definition && !hasExecutableNodes && (
-        <p
-          role="status"
-          data-testid="no-nodes-warning"
-          style={{ color: "#f5a623", fontSize: "0.85rem", margin: "4px 0" }}
-        >
-          Workflow has no executable nodes — add steps in the Builder tab first.
-        </p>
-      )}
+      <h2>Simulation execution</h2>
+      {error && <p role="alert">{error}</p>}
+      <p role="status" data-testid="execution-status">{status}</p>
+      <fieldset>
+        <legend>Simulation limits</legend>
+        <label>Flow <input aria-label="Flow limit" disabled={policyApproved} value={limits.flowRate} onChange={(event) => updateLimit("flowRate", event.target.value)} /></label>
+        <label>Temperature <input aria-label="Temperature limit" disabled={policyApproved} value={limits.temperature} onChange={(event) => updateLimit("temperature", event.target.value)} /></label>
+        <label>Mode <input aria-label="Mode limit" disabled={policyApproved} value={limits.mode} onChange={(event) => updateLimit("mode", event.target.value)} /></label>
+        <label>Maximum mutations <input aria-label="Maximum mutations" type="number" min="1" disabled={policyApproved} value={limits.maximumMutations} onChange={(event) => updateLimit("maximumMutations", Number(event.target.value))} /></label>
+        <label>Wall time (minutes) <input aria-label="Wall time" type="number" min="1" disabled={policyApproved} value={limits.wallTimeMinutes} onChange={(event) => updateLimit("wallTimeMinutes", Number(event.target.value))} /></label>
+        <label>Lease (seconds) <input aria-label="Lease duration" type="number" min="1" disabled={policyApproved} value={limits.leaseSeconds} onChange={(event) => updateLimit("leaseSeconds", Number(event.target.value))} /></label>
+        <label>
+          <input type="checkbox" checked={policyApproved} onChange={(event) => setPolicyApproved(event.target.checked)} />
+          I approve this frozen simulation policy revision
+        </label>
+      </fieldset>
+      {!hasExecutableNodes && <p role="status">Workflow has no executable nodes — add steps in the Builder tab first.</p>}
+      <section aria-label="Admission checks">
+        <h3>Admission checks</h3>
+        <ul>{runtimeChecks.map((check) => <li key={check.check}><strong>{check.check}:</strong> {check.status} <details><summary>Reason</summary><span>{check.reason ?? "Unavailable"} ({check.code})</span></details></li>)}</ul>
+      </section>
       <div className="controls">
-        <button
-          onClick={handleStart}
-          disabled={!definition || submitting || isRunning || isPaused}
-          data-testid="start-btn"
-        >
-          {submitting ? "Starting…" : "Start"}
-        </button>
-        <button
-          onClick={handlePause}
-          disabled={!isRunning}
-          data-testid="pause-btn"
-        >
-          Pause
-        </button>
-        <button
-          onClick={handleResume}
-          disabled={!isPaused}
-          data-testid="resume-btn"
-        >
-          Resume
-        </button>
-        <button
-          onClick={handleAbort}
-          disabled={!experimentId || (!isRunning && !isPaused)}
-          data-testid="abort-btn"
-        >
-          Abort
-        </button>
-        <span
-          data-testid="runspace-status"
-          style={{
-            marginLeft: 12,
-            color: statusColor,
-            fontWeight: 600,
-            fontSize: "0.9rem",
-          }}
-        >
-          {statusLabel}
-        </span>
+        <button onClick={handleStart} disabled={!canSubmitProposal} data-testid="start-btn">{submitting ? "Submitting…" : "Start simulation"}</button>
+        <button onClick={() => void requestControl("pause")} disabled={!canControl || controlPending !== null}>{controlPending === "pause" ? "Pause pending…" : "Pause"}</button>
+        <button onClick={() => void requestControl("hold")} disabled={!canControl || controlPending !== null}>{controlPending === "hold" ? "Hold pending…" : "Hold"}</button>
+        <button onClick={() => setAbortConfirmationOpen(true)} disabled={!canControl || controlPending !== null}>Abort</button>
       </div>
-      {experimentId && (
-        <p data-testid="experiment-id" style={{ fontSize: "0.75rem", color: "#6c7086" }}>
-          Experiment: {experimentId}
-        </p>
-      )}
-      <ul data-testid="step-list" style={{ listStyle: "none", padding: 0, margin: "8px 0" }}>
-        {eventsForRunspace.map((e, i) => {
-          const isStep = e.type === "step-started" || e.type === "step-completed" || e.type === "step-faulted";
-          const stepLabel = isStep ? String(e["stepLabel"] ?? e["stepId"] ?? "") : "";
-          const eventColor =
-            e.type === "step-completed" || e.type === "runspace-completed"
-              ? "#27ae60"
-              : e.type === "step-faulted" || e.type === "runspace-faulted"
-              ? "#e74c3c"
-              : e.type === "step-started" || e.type === "runspace-started"
-              ? "#f5a623"
-              : "#6c7086";
-          return (
-            <li
-              key={i}
-              data-testid={`step-event-${e.type}`}
-              style={{ color: eventColor, fontSize: "0.8rem", padding: "2px 0" }}
-            >
-              {e.type}{stepLabel ? ` — ${stepLabel}` : ""}
-            </li>
-          );
-        })}
-      </ul>
+      {abortConfirmationOpen && <div role="dialog" aria-modal="true" aria-labelledby="abort-title"><h3 id="abort-title">Abort simulation</h3><p>Abort this run? No new commands will start. An in-flight action may already have completed; Helix will record its observed outcome and will not replay it.</p><button onClick={() => void requestControl("abort")}>Abort simulation</button><button onClick={() => setAbortConfirmationOpen(false)}>Keep running</button></div>}
+      {result && <p data-testid="execution-id">Execution: <code>{result.executionId}</code></p>}
     </section>
   );
 }

@@ -270,16 +270,16 @@ pub async fn agent_experiment_start(window: WebviewWindow, state: State<'_, Agen
 }
 
 #[tauri::command]
-pub async fn agent_experiment_control(window: WebviewWindow, state: State<'_, AgentBrokerState>, experiment_id: String, control: String, operation_id: String) -> Result<(), String> {
+pub async fn agent_experiment_control(window: WebviewWindow, state: State<'_, AgentBrokerState>, experiment_id: String, control: String, operation_id: String) -> Result<String, String> {
     require_main_window(&window)?;
     validate_command_id(&experiment_id)?;
     validate_command_id(&operation_id)?;
-    if !matches!(control.as_str(), "pause" | "resume" | "abort") {
+    if !matches!(control.as_str(), "pause" | "hold" | "resume" | "abort") {
         return Err("Experiment control is invalid.".to_string());
     }
-    let body = serde_json::json!({ "operationId": operation_id }).to_string();
-    native_request("POST", &format!("/experiments/{experiment_id}/{control}"), Some(&body), &require_session(&state)?)?;
-    Ok(())
+    // The Agent owns the durable execution revision. The renderer-provided operation id is
+    // validated above for correlation but is deliberately not interpreted as authority.
+    native_request("POST", &format!("/executions/{experiment_id}/control/{control}"), None, &require_session(&state)?)
 }
 
 #[cfg(windows)]

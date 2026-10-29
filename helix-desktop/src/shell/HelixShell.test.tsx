@@ -61,6 +61,14 @@ vi.mock('../hooks/useAgentHealth', () => ({
   useAgentHealth: vi.fn(() => ({ healthy: null, error: null })),
 }));
 
+vi.mock('../lib/agentClient', () => ({
+  getAgentSessionStatus: vi.fn().mockResolvedValue({ authenticated: true, verifiedScientist: 'Scientist', expiresAt: null, restored: true, restorationError: null }),
+  bootstrapAgentSession: vi.fn().mockResolvedValue({ authenticated: true, verifiedScientist: 'Scientist', expiresAt: null, restored: true, restorationError: null }),
+  logoutAgentSession: vi.fn().mockResolvedValue(undefined),
+  controlAgentExperiment: vi.fn(),
+  getExperimentStatus: vi.fn(),
+}));
+
 describe('HelixShell', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -107,5 +115,10 @@ describe('HelixShell', () => {
     // Verify the shell container and workspace section render correctly.
     expect(screen.getByTestId('helix-shell')).toBeInTheDocument();
     expect(screen.getByTestId('activity-bar')).toBeInTheDocument();
+  });
+
+  it('mounts the reachable local Agent session surface', async () => {
+    render(<HelixShell />);
+    expect(await screen.findByLabelText('Local Agent session')).toBeInTheDocument();
   });
 });

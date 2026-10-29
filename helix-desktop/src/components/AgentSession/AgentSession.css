@@ -1,0 +1,4 @@
+.agent-session { padding: 8px 16px; color: var(--color-text, #f8f8f2); background: var(--color-surface, #252535); font-size: 13px; }
+.agent-session p { margin: 4px 0; overflow-wrap: anywhere; }
+.agent-session__identity { font-family: Cascadia Code, Consolas, monospace; user-select: text; }
+.agent-session button { margin-right: 8px; }
