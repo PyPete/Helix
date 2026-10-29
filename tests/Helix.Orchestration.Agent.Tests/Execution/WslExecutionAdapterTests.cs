@@ -10,7 +10,7 @@ namespace Helix.Orchestration.Agent.Tests.Execution;
 public sealed class WslExecutionAdapterTests
 {
     [Fact]
-    public async Task ExecuteAsync_CompilesAndStartsRunspace()
+    public async Task ExecuteAsync_RejectsBeforeLeaseOrExecutorSideEffects()
     {
         var leasing = new InMemoryDeviceLeasingService();
         await using var manager = new RunspaceManager();
@@ -30,16 +30,15 @@ public sealed class WslExecutionAdapterTests
             Edges = []
         };
 
-        var runspace = await adapter.ExecuteAsync(document, "holder-a");
-        await runspace.WaitAsync();
+        await Assert.ThrowsAsync<NotSupportedException>(() => adapter.ExecuteAsync(document, "holder-a"));
 
-        Assert.NotNull(manager.Get(runspace.RunspaceId));
-        Assert.True(leasing.IsHeldBy("pump-1", "holder-a"));
-        Assert.Equal("wf-run", executor.LastWorkflowName);
+        Assert.Empty(manager.ListActive());
+        Assert.False(leasing.IsHeldBy("pump-1", "holder-a"));
+        Assert.Null(executor.LastWorkflowName);
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenDocumentInvalid_ThrowsWslValidationException()
+    public async Task ExecuteAsync_WhenDocumentInvalid_StillRejectsBeforeCompilation()
     {
         var leasing = new InMemoryDeviceLeasingService();
         await using var manager = new RunspaceManager();
@@ -53,7 +52,7 @@ public sealed class WslExecutionAdapterTests
             Edges = []
         };
 
-        await Assert.ThrowsAsync<WslValidationException>(() => adapter.ExecuteAsync(invalid, "holder-a"));
+        await Assert.ThrowsAsync<NotSupportedException>(() => adapter.ExecuteAsync(invalid, "holder-a"));
         Assert.Empty(manager.ListActive());
     }
 

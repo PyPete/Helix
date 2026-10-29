@@ -1,6 +1,5 @@
 using System.Collections.Concurrent;
 using Cleipnir.ResilientFunctions;
-using Cleipnir.ResilientFunctions.CoreRuntime.Invocation;
 using Helix.Orchestration.Core.WorkflowEngine;
 
 namespace Helix.Orchestration.Core.Execution;
@@ -10,10 +9,7 @@ namespace Helix.Orchestration.Core.Execution;
 /// </summary>
 public sealed class WorkflowExecutor : IWorkflowExecutor
 {
-    private readonly FunctionsRegistry _functionsRegistry;
     private readonly WorkflowRegistry _registry;
-    private readonly Func<string, WorkflowContext> _contextFactory;
-    private readonly ConcurrentDictionary<string, ActionRegistration<string>> _registrations = new();
     private readonly ConcurrentDictionary<string, WorkflowStatus> _statuses = new();
     private readonly ConcurrentDictionary<string, CancellationTokenSource> _cancellations = new();
 
@@ -22,56 +18,27 @@ public sealed class WorkflowExecutor : IWorkflowExecutor
         WorkflowRegistry registry,
         Func<string, WorkflowContext> contextFactory)
     {
-        _functionsRegistry = functionsRegistry ?? throw new ArgumentNullException(nameof(functionsRegistry));
+        ArgumentNullException.ThrowIfNull(functionsRegistry);
         _registry = registry ?? throw new ArgumentNullException(nameof(registry));
-        _contextFactory = contextFactory ?? throw new ArgumentNullException(nameof(contextFactory));
+        ArgumentNullException.ThrowIfNull(contextFactory);
     }
 
     /// <inheritdoc/>
-    public async Task ExecuteAsync(string workflowName, string workflowId, object? input = null, CancellationToken cancellationToken = default)
+    public Task ExecuteAsync(string workflowName, string workflowId, object? input = null, CancellationToken cancellationToken = default)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(workflowName);
+        ArgumentException.ThrowIfNullOrWhiteSpace(workflowId);
         _registry.Get(workflowName);
 
-        var registration = _registrations.GetOrAdd(
-            workflowName,
-            name => _functionsRegistry.RegisterAction(
-                flowType: name,
-                inner: async (string instanceId, Workflow _) =>
-                {
-                    var workflow = _registry.Get(name);
-                    var context = _contextFactory(instanceId);
-                    var token = _cancellations.TryGetValue(instanceId, out var cts)
-                        ? cts.Token
-                        : CancellationToken.None;
-
-                    await workflow.ExecuteAsync(context, token);
-                })
-        );
-
-        var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        _statuses[workflowId] = WorkflowStatus.Running;
-        _cancellations[workflowId] = linkedCts;
-
-        try
-        {
-            await registration.Invoke(flowInstance: workflowId, param: workflowId);
-            _statuses[workflowId] = WorkflowStatus.Completed;
-        }
-        catch (OperationCanceledException)
-        {
-            _statuses[workflowId] = WorkflowStatus.Suspended;
-            throw;
-        }
-        catch
-        {
-            _statuses[workflowId] = WorkflowStatus.Failed;
-            throw;
-        }
-        finally
-        {
-            if (_cancellations.TryRemove(workflowId, out var cts))
-                cts.Dispose();
-        }
+        // A generic Cleipnir action may replay its delegate after recovery. The
+        // historical WorkflowContext exposes ICapabilityInvoker, which is not a
+        // command dispatcher and therefore cannot prove a stable effect id or a
+        // durable cursor. Reject this retained entry point rather than replaying
+        // an external effect. Canonical Agent execution owns the dispatcher and
+        // cursor; Core remains free of Agent dependencies.
+        _statuses[workflowId] = WorkflowStatus.Failed;
+        return Task.FromException(new NotSupportedException(
+            "Generic workflow execution is disabled. Execute stable command steps through ICommandDispatcher."));
     }
 
     /// <inheritdoc/>

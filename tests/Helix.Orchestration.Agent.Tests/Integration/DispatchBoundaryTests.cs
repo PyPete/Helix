@@ -1,7 +1,9 @@
 using Grpc.Core;
 using Helix.Orchestration.Agent.GrpcServer;
+using Helix.Orchestration.Agent.Runspaces;
 using Helix.Orchestration.Contracts.Control;
 using Helix.Orchestration.Core.Devices;
+using Helix.Orchestration.Core.Execution;
 using Helix.Orchestration.Core.Runspace;
 using Helix.Orchestration.Agent.Experiments;
 using Moq;
@@ -12,6 +14,23 @@ namespace Helix.Orchestration.Agent.Tests.Integration;
 /// <summary>Production transport compatibility must never turn a raw graph into authority.</summary>
 public sealed class DispatchBoundaryTests
 {
+    [Fact]
+    public async Task LegacyDurableRunspace_RejectsBeforeInvokingReplayableExecutor()
+    {
+        var executor = new Mock<IWorkflowExecutor>(MockBehavior.Strict);
+        executor.Setup(value => value.CancelAsync(It.IsAny<string>())).Returns(Task.CompletedTask);
+        var definition = new Helix.Orchestration.Core.WSL.RunspaceDefinition(
+            "definition-1", "checked", [], [], new Dictionary<string, object?>());
+        await using var runspace = new DurableRunspace(definition, executor.Object);
+
+        await Assert.ThrowsAsync<NotSupportedException>(() => runspace.StartAsync());
+        executor.Verify(value => value.ExecuteAsync(
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<object?>(), It.IsAny<CancellationToken>()), Times.Never);
+
+        await runspace.AbortAsync();
+        Assert.Equal(RunspaceStatus.Faulted, runspace.Status);
+    }
+
     [Fact]
     public async Task SubmitExperiment_RawDefinition_IsRejectedBeforeRunspaceCreation()
     {

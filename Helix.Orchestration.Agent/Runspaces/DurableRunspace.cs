@@ -14,9 +14,6 @@ public sealed class DurableRunspace : IRunspace
     private readonly SemaphoreSlim _gate = new(1, 1);
     private readonly TaskCompletionSource _completion = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
-    private CancellationTokenSource? _executionCts;
-    private Task? _executionTask;
-
     /// <inheritdoc/>
     public string RunspaceId { get; } = Guid.NewGuid().ToString("N");
 
@@ -53,13 +50,12 @@ public sealed class DurableRunspace : IRunspace
             if (Status is not RunspaceStatus.Idle and not RunspaceStatus.Paused)
                 throw new InvalidOperationException($"Cannot start runspace in state {Status}.");
 
-            _executionCts?.Dispose();
-            _executionCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-
-            Status = RunspaceStatus.Running;
-            StartedAt ??= DateTimeOffset.UtcNow;
-
-            _executionTask = ExecuteAsync(_executionCts.Token);
+            // Cleipnir may replay an action delegate. This legacy runspace has no
+            // persisted command cursor or command-dispatch port, so running it
+            // would make an external effect replayable. Do not turn a display
+            // runspace into an alternative execution authority.
+            throw new NotSupportedException(
+                "Legacy DurableRunspace execution is disabled. Use canonical dispatch with a persisted cursor.");
         }
         finally
         {
@@ -77,7 +73,6 @@ public sealed class DurableRunspace : IRunspace
                 return;
 
             await _workflowExecutor.CancelAsync(RunspaceId);
-            _executionCts?.Cancel();
             Status = RunspaceStatus.Paused;
         }
         finally
@@ -88,7 +83,12 @@ public sealed class DurableRunspace : IRunspace
 
     /// <inheritdoc/>
     public Task ResumeAsync(CancellationToken cancellationToken = default)
-        => StartAsync(cancellationToken);
+    {
+        // Resume must never mean graph-from-start. This implementation has no
+        // durable cursor, so it intentionally cannot resume.
+        return Task.FromException(new NotSupportedException(
+            "Legacy DurableRunspace cannot resume without a persisted command cursor."));
+    }
 
     /// <inheritdoc/>
     public async Task AbortAsync(CancellationToken cancellationToken = default)
@@ -100,7 +100,6 @@ public sealed class DurableRunspace : IRunspace
                 return;
 
             await _workflowExecutor.CancelAsync(RunspaceId);
-            _executionCts?.Cancel();
             Fault = new OperationCanceledException($"Runspace '{RunspaceId}' aborted.");
             Status = RunspaceStatus.Faulted;
             EndedAt = DateTimeOffset.UtcNow;
@@ -117,83 +116,12 @@ public sealed class DurableRunspace : IRunspace
     public Task WaitAsync(CancellationToken cancellationToken = default)
         => _completion.Task.WaitAsync(cancellationToken);
 
-    private async Task ExecuteAsync(CancellationToken cancellationToken)
-    {
-        using var activity = HelixTelemetry.AgentActivitySource.StartActivity("runspace.execute");
-        activity?.SetTag("helix.runspace.id", RunspaceId);
-        activity?.SetTag("helix.workflow.name", Definition.Name);
-
-        try
-        {
-            await _workflowExecutor.ExecuteAsync(Definition.Name, RunspaceId, cancellationToken: cancellationToken);
-
-            await _gate.WaitAsync(cancellationToken);
-            try
-            {
-                if (Status == RunspaceStatus.Running)
-                {
-                    Status = RunspaceStatus.Completed;
-                    EndedAt = DateTimeOffset.UtcNow;
-                    HelixTelemetry.RunspaceCompletions.Add(1);
-                    _completion.TrySetResult();
-                }
-            }
-            finally
-            {
-                _gate.Release();
-            }
-        }
-        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
-        {
-            await _gate.WaitAsync();
-            try
-            {
-                if (Status == RunspaceStatus.Running)
-                    Status = RunspaceStatus.Paused;
-            }
-            finally
-            {
-                _gate.Release();
-            }
-        }
-        catch (OperationCanceledException)
-        {
-            await _gate.WaitAsync();
-            try
-            {
-                if (Status == RunspaceStatus.Running)
-                    Status = RunspaceStatus.Paused;
-            }
-            finally
-            {
-                _gate.Release();
-            }
-        }
-        catch (Exception ex)
-        {
-            await _gate.WaitAsync();
-            try
-            {
-                Fault = ex;
-                Status = RunspaceStatus.Faulted;
-                EndedAt = DateTimeOffset.UtcNow;
-                HelixTelemetry.RunspaceFaults.Add(1);
-                _completion.TrySetResult();
-            }
-            finally
-            {
-                _gate.Release();
-            }
-        }
-    }
-
     /// <inheritdoc/>
     public async ValueTask DisposeAsync()
     {
         if (Status is RunspaceStatus.Running or RunspaceStatus.Paused)
             await AbortAsync();
 
-        _executionCts?.Dispose();
         _gate.Dispose();
         Status = RunspaceStatus.Disposed;
     }

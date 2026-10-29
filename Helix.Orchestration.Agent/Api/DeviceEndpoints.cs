@@ -1,188 +1,165 @@
-﻿using Helix.Orchestration.Agent.Events;
+using System.Text.Json;
+using Helix.Orchestration.Agent.Events;
 using Helix.Orchestration.Agent.Experiments;
+using Helix.Orchestration.Agent.Security;
+using Helix.Orchestration.Core.Execution;
 using Helix.Orchestration.Devices.Drivers;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Routing;
 using CapabilityDescriptor = Helix.Orchestration.Core.Capabilities.CapabilityDescriptor;
-using CapabilityCategory = Helix.Orchestration.Core.Capabilities.CapabilityCategory;
-using CapabilityRegistry = Helix.Orchestration.Core.Capabilities.CapabilityRegistry;
-using ParameterSchema = Helix.Orchestration.Core.Capabilities.ParameterSchema;
 
 namespace Helix.Orchestration.Agent.Api;
 
-/// <summary>
-/// Request body for POST /devices/{id}/execute.
-/// </summary>
-/// <param name="Capability">The capability verb name to invoke.</param>
-/// <param name="Parameters">Optional parameters passed to the capability.</param>
+/// <summary>Request body for POST /devices/{id}/execute.</summary>
 public sealed record ExecuteRequest(string Capability, Dictionary<string, object>? Parameters);
 
-/// <summary>
-/// Minimal API endpoint group for device and capability discovery.
-/// </summary>
+/// <summary>Minimal API endpoint group for simulator discovery and command proposals.</summary>
 public static class DeviceEndpoints
 {
-    /// <summary>
-    /// Maps the /devices endpoint group onto <paramref name="app"/>.
-    /// </summary>
+    private const string SimulatorId = "simulator";
+    private const string SimulationPolicyRevision = "simulation-policy-v1";
+
+    /// <summary>Maps the /devices endpoint group onto <paramref name="app"/>.</summary>
     public static void MapDeviceEndpoints(this WebApplication app)
     {
-        var group = app.MapGroup("/devices")
-            .WithTags("Devices");
+        var group = app.MapGroup("/devices").WithTags("Devices");
 
-        // GET /devices â€” return one entry per adapter, only if at least one capability is available
-        group.MapGet("/", async Task<IResult> (CapabilityRegistry registry) =>
+        // The Agent intentionally exposes only the simulator while the safety
+        // boundary is being proven. Hardware adapter registration is not an
+        // authority grant and is not surfaced from this API.
+        group.MapGet("/", (SimulatorDevice simulator) => Results.Ok(new[]
         {
-            try
-            {
-                // Group capability keys by adapter prefix (e.g. "simulator.SetFlow" â†’ "simulator")
-                var groups = registry.GetAllCapabilityNames()
-                    .GroupBy(name =>
-                    {
-                        var dot = name.IndexOf('.');
-                        return dot > 0 ? name[..dot] : name;
-                    });
-
-                var available = new List<object>();
-                foreach (var g in groups)
-                {
-                    // Check availability via HealthCheckAsync on the first capability key.
-                    // NullDeviceTransport always returns Connected (simulator is always available).
-                    // Serial/TCP transports return Disconnected when hardware is not present.
-                    var probe = g.First();
-                    if (await registry.IsAvailableAsync(probe))
-                        available.Add(new { adapterId = g.Key, capabilities = g.ToArray() });
-                }
-
-                return Results.Ok(available);
-            }
-            catch (Exception ex)
-            {
-                return Results.Problem(
-                    title: "Failed to retrieve devices",
-                    detail: ex.Message,
-                    statusCode: 500);
-            }
-        })
+            new { adapterId = SimulatorId, capabilities = simulator.GetRichCapabilities().Select(capability => $"{SimulatorId}.{capability.VerbName}").ToArray() }
+        }))
         .WithName("GetDevices")
-        .WithSummary("List all registered device adapters and their capabilities")
-        .Produces<IEnumerable<object>>(StatusCodes.Status200OK)
-        .ProducesProblem(StatusCodes.Status500InternalServerError);
+        .WithSummary("List the canonical simulator capabilities")
+        .Produces<IEnumerable<object>>(StatusCodes.Status200OK);
 
-        // GET /devices/{id}/capabilities â€” return CapabilityDescriptor[] for one adapter
-        group.MapGet("/{id}/capabilities", IResult (string id, CapabilityRegistry registry,
-            [FromServices] SimulatorDevice? simulator) =>
+        group.MapGet("/{id}/capabilities", IResult (string id, SimulatorDevice simulator) =>
         {
-            try
-            {
-                // Find all capability keys that belong to this adapter prefix.
-                var adapterKeys = registry.GetAllCapabilityNames()
-                    .Where(name =>
-                    {
-                        var dot = name.IndexOf('.');
-                        var prefix = dot > 0 ? name[..dot] : name;
-                        return string.Equals(prefix, id, StringComparison.OrdinalIgnoreCase);
-                    })
-                    .ToArray();
+            if (!string.Equals(id, SimulatorId, StringComparison.OrdinalIgnoreCase))
+                return Results.NotFound(new { Error = $"Device '{id}' not found." });
 
-                if (adapterKeys.Length == 0)
-                    return Results.NotFound(new { Error = $"Device '{id}' not found." });
-
-                // Use rich descriptors from the simulator when available.
-                CapabilityDescriptor[] descriptors;
-                if (string.Equals(id, "simulator", StringComparison.OrdinalIgnoreCase) && simulator is not null)
-                {
-                    descriptors = simulator.GetRichCapabilities().ToArray();
-                }
-                else
-                {
-                    // Stub descriptors for adapters that haven't wired rich metadata yet.
-                    descriptors = adapterKeys
-                        .Select(key =>
-                        {
-                            var dot = key.IndexOf('.');
-                            var verbName = dot > 0 ? key[(dot + 1)..] : key;
-                            return new CapabilityDescriptor(verbName, verbName, string.Empty,
-                                CapabilityCategory.Utility, Array.Empty<ParameterSchema>(), false, false);
-                        })
-                        .ToArray();
-                }
-
-                return Results.Ok(new { adapterId = id, capabilities = descriptors });
-            }
-            catch (Exception ex)
-            {
-                return Results.Problem(
-                    title: "Failed to retrieve device capabilities",
-                    detail: ex.Message,
-                    statusCode: 500);
-            }
+            CapabilityDescriptor[] descriptors = simulator.GetRichCapabilities().ToArray();
+            return Results.Ok(new { adapterId = SimulatorId, capabilities = descriptors });
         })
         .WithName("GetDeviceCapabilities")
-        .WithSummary("Get capabilities for a specific device adapter")
+        .WithSummary("Get canonical simulator capability descriptors")
         .Produces<object>(StatusCodes.Status200OK)
-        .Produces(StatusCodes.Status404NotFound)
-        .ProducesProblem(StatusCodes.Status500InternalServerError);
+        .Produces(StatusCodes.Status404NotFound);
 
-        // POST /devices/{id}/execute â€” invoke a capability on a device adapter
+        // This endpoint deliberately does not receive CapabilityRegistry. A
+        // request first becomes immutable evidence, then the Agent dispatcher
+        // refreshes admission at its durable dispatch-start fence.
         group.MapPost("/{id}/execute", async Task<IResult> (
             string id,
             ExecuteRequest request,
-            CapabilityRegistry registry,
+            HttpContext context,
+            SimulatorDevice simulator,
+            ICommandDispatcher dispatcher,
             [FromServices] IRunspaceEventEmitter? emitter,
-            [FromServices] IExperimentManager? experimentManager) =>
+            [FromServices] IExperimentManager? experimentManager,
+            CancellationToken cancellationToken) =>
         {
+            if (context.Items[DesktopSessionAuthenticationHandler.ActorItemKey] is not VerifiedDesktopActor actor)
+                return Results.Unauthorized();
+
+            if (!string.Equals(id, SimulatorId, StringComparison.OrdinalIgnoreCase))
+                return Results.NotFound(new { Error = $"Device '{id}' not found." });
+
+            if (string.IsNullOrWhiteSpace(request.Capability) ||
+                !simulator.GetRichCapabilities().Any(capability =>
+                    string.Equals(capability.VerbName, request.Capability, StringComparison.Ordinal)))
+            {
+                return Results.NotFound(new { Error = $"Capability '{request.Capability}' was not found on '{SimulatorId}'." });
+            }
+
             try
             {
-                // Guard: check that at least one capability key has this adapter prefix.
-                // allNames contains full keys like "simulator.SetFlow"; id is the prefix ("simulator").
-                var adapterExists = registry.GetAllCapabilityNames()
-                    .Any(name =>
+                var activeExperiment = experimentManager?.GetActive();
+                var executionId = activeExperiment?.ActiveRunspaceId is { } runspaceId && Guid.TryParse(runspaceId, out var parsed)
+                    ? parsed
+                    : Guid.NewGuid();
+                var intent = new CommandIntent(
+                    Guid.NewGuid(),
+                    executionId,
+                    Guid.NewGuid(),
+                    SimulatorId,
+                    request.Capability,
+                    Canonicalize(request.Parameters),
+                    actor.Sid,
+                    actor.DisplayName,
+                    actor.SessionReference,
+                    SimulationPolicyRevision,
+                    DateTimeOffset.UtcNow);
+
+                var evidence = await dispatcher.ProposeAsync(intent, cancellationToken).ConfigureAwait(false);
+                if (evidence.State != CommandAdmissionState.Allowed)
+                {
+                    // Admission evidence is durable, but it is not a device effect.
+                    return Results.Conflict(new
                     {
-                        var dot = name.IndexOf('.');
-                        return string.Equals(dot > 0 ? name[..dot] : name, id, StringComparison.OrdinalIgnoreCase);
+                        success = false,
+                        commandId = intent.CommandId,
+                        state = evidence.State.ToString(),
+                        error = "Command was not admitted for dispatch."
                     });
-                if (!adapterExists)
-                    return Results.NotFound(new { Error = $"Device '{id}' not found." });
+                }
 
-                // Invoke using the full capability key (adapter prefix + "." + verb name).
-                var fullKey = $"{id}.{request.Capability}";
-                var invocationResult = await registry.InvokeAsync(fullKey, request.Parameters);
+                await dispatcher.DispatchAsync(intent.CommandId, cancellationToken).ConfigureAwait(false);
 
-                var activeExp = experimentManager?.GetActive();
+                // DispatchAsync returns only after the dispatcher has committed a
+                // confirmed observation (or, for reads, completed safely). Publish
+                // no success notification before that canonical evidence exists.
                 emitter?.Publish(new ManualActionEvent(
-                    id,
+                    SimulatorId,
                     request.Capability,
                     request.Parameters ?? new Dictionary<string, object>(),
-                    invocationResult.Success,
-                    invocationResult.ReturnValue,
-                    invocationResult.ErrorMessage,
-                    ExperimentId: activeExp?.ExperimentId,
-                    ExperimentPhase: activeExp?.ActivePhase?.ToString()?.ToLowerInvariant()));
+                    Success: true,
+                    Result: null,
+                    Error: null,
+                    ExperimentId: activeExperiment?.ExperimentId,
+                    ExperimentPhase: activeExperiment?.ActivePhase?.ToString()?.ToLowerInvariant()));
 
                 return Results.Ok(new
                 {
-                    success = invocationResult.Success,
-                    result = invocationResult.ReturnValue,
-                    error = invocationResult.ErrorMessage
+                    success = true,
+                    commandId = intent.CommandId,
+                    state = evidence.State.ToString(),
+                    result = (object?)null,
+                    error = (string?)null
                 });
             }
-            catch (Exception ex)
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                // Once dispatch started, cancellation is intentionally uncertain
+                // and reconciliation owns the disposition. This endpoint must not
+                // claim an unsuccessful/no-effect outcome.
+                return Results.StatusCode(StatusCodes.Status499ClientClosedRequest);
+            }
+            catch (Exception exception)
             {
                 return Results.Problem(
-                    title: "Failed to execute device capability",
-                    detail: ex.Message,
-                    statusCode: 500);
+                    title: "Failed to dispatch simulator command",
+                    detail: exception.Message,
+                    statusCode: StatusCodes.Status500InternalServerError);
             }
         })
         .WithName("ExecuteDeviceCapability")
-        .WithSummary("Execute a device capability")
+        .WithSummary("Propose and dispatch a simulator command through the Agent boundary")
         .Produces<object>(StatusCodes.Status200OK)
+        .Produces(StatusCodes.Status401Unauthorized)
         .Produces(StatusCodes.Status404NotFound)
+        .Produces(StatusCodes.Status409Conflict)
         .ProducesProblem(StatusCodes.Status500InternalServerError);
     }
+
+    private static string Canonicalize(Dictionary<string, object>? parameters)
+    {
+        var canonical = (parameters ?? [])
+            .OrderBy(pair => pair.Key, StringComparer.Ordinal)
+            .ToDictionary(pair => pair.Key, pair => pair.Value, StringComparer.Ordinal);
+        return JsonSerializer.Serialize(canonical);
+    }
 }
-
-

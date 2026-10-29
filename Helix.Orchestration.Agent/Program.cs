@@ -1,28 +1,22 @@
-﻿using Cleipnir.ResilientFunctions;
-using Cleipnir.ResilientFunctions.PostgreSQL;
-using Cleipnir.ResilientFunctions.Storage;
 using Helix.Orchestration.Agent;
-using Helix.Orchestration.Agent.Adapters.Devices;
 using Helix.Orchestration.Agent.Events;
 using Helix.Orchestration.Agent.Execution;
 using Helix.Orchestration.Agent.Leasing;
 using Helix.Orchestration.Agent.Streaming;
 using Helix.Orchestration.Agent.Trends;
 using Helix.Orchestration.Agent.Security;
-using Helix.Orchestration.Core.Capabilities;
 using Helix.Orchestration.Core.Execution;
 using Helix.Orchestration.Core.Leasing;
 using Helix.Orchestration.Core.Runspace;
 using Helix.Orchestration.Core.Safety;
-using Helix.Orchestration.Core.State;
 using Helix.Orchestration.Core.Trends;
-using Helix.Orchestration.Core.WorkflowEngine;
 using Helix.Orchestration.Agent.Api;
 using Helix.Orchestration.Agent.Experiments;
 using Helix.Orchestration.Infrastructure.Persistence;
 using Helix.Orchestration.Agent.GrpcServer;
 using Helix.Orchestration.Core.Devices;
 using Helix.Orchestration.Core.WSL;
+using Helix.Orchestration.Devices.Transports.Null;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.WebSockets;
@@ -65,24 +59,12 @@ try
     builder.Services.AddSingleton<IDeviceLeasingService>(sp =>
         sp.GetRequiredService<InMemoryDeviceLeasingService>());
 
-    // Capability invoker + migrated device adapters
-    builder.Services.AddMigratedDeviceAdapters();
+    // The safety boundary is proven against the simulator first. Do not register
+    // hardware adapter bridges here: a registry entry is otherwise an alternate
+    // mutable authority outside ICommandDispatcher.
+    builder.Services.AddSingleton<NullDeviceTransport>();
+    builder.Services.AddSingleton<Helix.Orchestration.Devices.Drivers.SimulatorDevice>();
 
-    // Durable workflow execution â€” PostgreSQL-backed (survives process restart)
-    var connectionString = builder.Configuration.GetConnectionString("HelixOrchestration")
-        ?? throw new InvalidOperationException(
-            "Connection string 'HelixOrchestration' is required for Cleipnir PostgreSQL store. " +
-            "Ensure docker compose is running: docker compose up -d");
-
-    var postgresFunctionStore = new PostgreSqlFunctionStore(connectionString);
-    await postgresFunctionStore.Initialize();
-
-    builder.Services.AddSingleton<IFunctionStore>(postgresFunctionStore);
-    builder.Services.AddSingleton<FunctionsRegistry>(sp =>
-        new FunctionsRegistry(sp.GetRequiredService<IFunctionStore>()));
-    builder.Services.AddSingleton<WorkflowRegistry>();
-    builder.Services.AddSingleton<IWorkflowStateStore, WorkflowStateStore>();
-    builder.Services.AddSingleton<IGlobalStateStore, InMemoryGlobalStateStore>();
     builder.Services.AddSingleton<SafetyEngine>();
     builder.Services.AddSingleton<ISafetyEngine>(sp => sp.GetRequiredService<SafetyEngine>());
     builder.Services.AddSingleton<InMemoryTrendProvider>();
@@ -90,188 +72,171 @@ try
     builder.Services.AddSingleton<TrendAggregator>();
     builder.Services.AddSingleton<IRunspaceManager>(sp =>
     {
-        var capRegistry        = sp.GetRequiredService<CapabilityRegistry>();
-        var emitter            = sp.GetService<IRunspaceEventEmitter>();
-        var experimentManager  = sp.GetService<IExperimentManager>();
-        var execLogger         = sp.GetRequiredService<ILogger<RunspaceManager>>();
-        var simulator          = sp.GetService<Helix.Orchestration.Devices.Drivers.SimulatorDevice>();
-        var workflowState      = sp.GetRequiredService<IWorkflowStateStore>();
-        var globalState        = sp.GetRequiredService<IGlobalStateStore>();
-        var capabilityInvoker  = sp.GetRequiredService<ICapabilityInvoker>();
-
-        // Build a lookup: full capability key â†’ EstimatedDurationMs
-        var estimatedDurations = new Dictionary<string, int?>(StringComparer.OrdinalIgnoreCase);
-        if (simulator != null)
-        {
-            foreach (var desc in simulator.GetRichCapabilities())
-                estimatedDurations[$"simulator.{desc.VerbName}"] = desc.EstimatedDurationMs;
-        }
+        var emitter = sp.GetService<IRunspaceEventEmitter>();
+        var experimentManager = sp.GetService<IExperimentManager>();
+        var dispatcher = sp.GetRequiredService<ICommandDispatcher>();
+        var executionLogger = sp.GetRequiredService<ILogger<RunspaceManager>>();
 
         return new RunspaceManager(async (definition, ct) =>
         {
-            // Deferred-body pattern: captures runspaceId after InMemoryRunspace is constructed.
+            // The runspace only coordinates canonical command steps. It never
+            // receives CapabilityRegistry, a device adapter, or a leasing handle.
             Func<CancellationToken, Task>? body = null;
             var runspace = new InMemoryRunspace(definition, token => body!(token));
             var runspaceId = runspace.RunspaceId;
 
-            body = async (token) =>
+            body = async token =>
             {
-                // Resolve the experiment that owns this runspace so step events carry ExperimentId.
-                var experimentId = experimentManager?.ListActive()
-                    .FirstOrDefault(x => x.ActiveRunspaceId == runspaceId)?.ExperimentId;
+                var experiment = experimentManager?.ListActive()
+                    .FirstOrDefault(item => item.ActiveRunspaceId == runspaceId);
+                if (experiment is null || !experimentManager!.TryGetCanonicalDefinition(experiment.ExperimentId, out var canonical) || canonical is null)
+                {
+                    throw new InvalidOperationException("A runspace may execute only an Agent-held canonical experiment definition.");
+                }
 
-                // BFS walk from entry nodes (no incoming edges).
-                // Only exec edges determine execution order; data edges are ignored for sequencing.
-                var execEdges = definition.Edges.Where(e =>
-                    e.EdgeKind == null || string.Equals(e.EdgeKind, "exec", StringComparison.OrdinalIgnoreCase)).ToList();
-
-                var inDegree = definition.Nodes.ToDictionary(n => n.NodeId, _ => 0);
-                foreach (var edge in execEdges)
+                var executionId = Guid.ParseExact(runspaceId, "N");
+                var executionEdges = definition.Edges.Where(edge =>
+                    edge.EdgeKind is null || string.Equals(edge.EdgeKind, "exec", StringComparison.OrdinalIgnoreCase)).ToList();
+                var inDegree = definition.Nodes.ToDictionary(node => node.NodeId, _ => 0);
+                foreach (var edge in executionEdges)
+                {
                     if (inDegree.ContainsKey(edge.TargetNodeId))
                         inDegree[edge.TargetNodeId]++;
+                }
 
-                var queue   = new Queue<WslNode>(definition.Nodes.Where(n => inDegree[n.NodeId] == 0));
-                var visited = new HashSet<string>();
-
-                while (queue.Count > 0 && !token.IsCancellationRequested)
+                var queue = new Queue<WslNode>(definition.Nodes.Where(node => inDegree[node.NodeId] == 0));
+                var visited = new HashSet<string>(StringComparer.Ordinal);
+                while (queue.Count > 0)
                 {
-                    await runspace.CheckPauseAsync(token);
-
+                    token.ThrowIfCancellationRequested();
+                    await runspace.CheckPauseAsync(token).ConfigureAwait(false);
                     var node = queue.Dequeue();
-                    if (!visited.Add(node.NodeId)) continue;
+                    if (!visited.Add(node.NodeId))
+                        continue;
 
-                    var isStep =
-                        node.NodeType.Equals("Step",         StringComparison.OrdinalIgnoreCase) ||
-                        node.NodeType.Equals("DeviceAction", StringComparison.OrdinalIgnoreCase) ||
-                        node.NodeType.Equals("Delay",        StringComparison.OrdinalIgnoreCase);
-
+                    var isStep = node.NodeType.Equals("Step", StringComparison.OrdinalIgnoreCase) ||
+                                 node.NodeType.Equals("DeviceAction", StringComparison.OrdinalIgnoreCase) ||
+                                 node.NodeType.Equals("Delay", StringComparison.OrdinalIgnoreCase);
                     if (isStep)
                     {
-                        int? eta = null;
-                        if (node.NodeType.Equals("Delay", StringComparison.OrdinalIgnoreCase))
+                        emitter?.Publish(new StepStartedEvent(runspaceId, node.NodeId, node.Label)
                         {
-                            // Delay nodes carry durationMin; convert to ms for the ETA hint.
-                            if (node.Parameters.TryGetValue("durationMin", out var dv) &&
-                                dv is System.Text.Json.JsonElement jd &&
-                                jd.ValueKind == System.Text.Json.JsonValueKind.Number)
-                                eta = (int)(jd.GetDouble() * 60_000);
-                            else
-                                eta = 60_000; // default 1 minute
-                        }
-                        else if (node.Parameters.TryGetValue("capability", out var capForEta) &&
-                                 capForEta is string capKey &&
-                                 estimatedDurations.TryGetValue(capKey, out var d))
-                        {
-                            eta = d;
-                        }
-                        emitter?.Publish(new StepStartedEvent(runspaceId, node.NodeId, node.Label, eta)
-                            with { ExperimentId = experimentId });
+                            ExperimentId = experiment.ExperimentId,
+                            ExperimentPhase = experiment.ActivePhase?.ToString().ToLowerInvariant()
+                        });
                     }
 
                     try
                     {
-                        // Substitute ${scope:key} variable references in parameters before capability invocation.
-                        var substitutedParams = await VariableSubstitution.SubstituteParametersAsync(
-                            new Dictionary<string, object?>(node.Parameters),
-                            definition.DefinitionId,
-                            workflowState,
-                            globalState,
-                            capabilityInvoker,
-                            campaignId: null,
-                            token);
-
-                        if ((node.NodeType.Equals("Step",         StringComparison.OrdinalIgnoreCase) ||
-                             node.NodeType.Equals("DeviceAction", StringComparison.OrdinalIgnoreCase)) &&
-                            substitutedParams.TryGetValue("capability", out var capObj) &&
-                            capObj is string capName)
+                        if (node.NodeType.Equals("Step", StringComparison.OrdinalIgnoreCase) ||
+                            node.NodeType.Equals("DeviceAction", StringComparison.OrdinalIgnoreCase))
                         {
-                            var result = await capRegistry.InvokeAsync(capName, substitutedParams, token);
-                            if (!result.Success)
+                            if (!node.Parameters.TryGetValue("capability", out var capabilityValue) || capabilityValue is not string registeredCapability ||
+                                !registeredCapability.StartsWith("simulator.", StringComparison.Ordinal))
                             {
-                                emitter?.Publish(new StepFaultedEvent(runspaceId, node.NodeId,
-                                    result.ErrorMessage ?? $"Capability '{capName}' failed.")
-                                    with { ExperimentId = experimentId });
+                                throw new InvalidOperationException("Workflow steps must use a canonical simulator capability.");
+                            }
+
+                            var capability = registeredCapability["simulator.".Length..];
+                            var parameters = node.Parameters
+                                .Where(pair => pair.Key is not "capability" and not "deviceId")
+                                .OrderBy(pair => pair.Key, StringComparer.Ordinal)
+                                .ToDictionary(pair => pair.Key, pair => pair.Value, StringComparer.Ordinal);
+                            var intent = new CommandIntent(
+                                Guid.NewGuid(),
+                                executionId,
+                                Guid.NewGuid(),
+                                "simulator",
+                                capability,
+                                System.Text.Json.JsonSerializer.Serialize(parameters),
+                                canonical.ActorSid,
+                                canonical.ActorSid,
+                                $"canonical-experiment:{experiment.ExperimentId}",
+                                canonical.PolicyRevision,
+                                DateTimeOffset.UtcNow);
+                            var evidence = await dispatcher.ProposeAsync(intent, token).ConfigureAwait(false);
+                            if (evidence.State != CommandAdmissionState.Allowed)
+                            {
+                                emitter?.Publish(new StepFaultedEvent(runspaceId, node.NodeId, "Command admission did not allow dispatch.")
+                                {
+                                    ExperimentId = experiment.ExperimentId,
+                                    ExperimentPhase = experiment.ActivePhase?.ToString().ToLowerInvariant()
+                                });
                                 return;
                             }
+
+                            // DispatchAsync owns the fresh admission, persistent
+                            // start fence, observed outcome, and uncertain recovery.
+                            await dispatcher.DispatchAsync(intent.CommandId, token).ConfigureAwait(false);
                         }
                         else if (node.NodeType.Equals("Delay", StringComparison.OrdinalIgnoreCase))
                         {
-                            // Parameters arrive as JsonElement after JSON deserialization.
-                            var durationMin = 1.0;
-                            if (substitutedParams.TryGetValue("durationMin", out var dVal) &&
-                                dVal is System.Text.Json.JsonElement je &&
-                                je.ValueKind == System.Text.Json.JsonValueKind.Number)
-                                durationMin = je.GetDouble();
-                            await Task.Delay(TimeSpan.FromMinutes(durationMin), token);
+                            var duration = node.Parameters.TryGetValue("durationMin", out var value) &&
+                                           value is System.Text.Json.JsonElement element &&
+                                           element.ValueKind == System.Text.Json.JsonValueKind.Number
+                                ? TimeSpan.FromMinutes(element.GetDouble())
+                                : TimeSpan.FromMinutes(1);
+                            await Task.Delay(duration, token).ConfigureAwait(false);
                         }
 
                         if (isStep)
+                        {
                             emitter?.Publish(new StepCompletedEvent(runspaceId, node.NodeId)
-                                with { ExperimentId = experimentId });
+                            {
+                                ExperimentId = experiment.ExperimentId,
+                                ExperimentPhase = experiment.ActivePhase?.ToString().ToLowerInvariant()
+                            });
+                        }
                     }
-                    catch (OperationCanceledException) { throw; }
-                    catch (Exception ex)
+                    catch (OperationCanceledException)
                     {
-                        execLogger.LogError(ex, "Step {NodeId} faulted", node.NodeId);
-                        emitter?.Publish(new StepFaultedEvent(runspaceId, node.NodeId, ex.Message)
-                            with { ExperimentId = experimentId });
+                        throw;
+                    }
+                    catch (Exception exception)
+                    {
+                        executionLogger.LogError(exception, "Step {NodeId} faulted", node.NodeId);
+                        emitter?.Publish(new StepFaultedEvent(runspaceId, node.NodeId, exception.Message)
+                        {
+                            ExperimentId = experiment.ExperimentId,
+                            ExperimentPhase = experiment.ActivePhase?.ToString().ToLowerInvariant()
+                        });
                         return;
                     }
 
-                    // Only follow exec edges for control flow; data edges carry values, not sequencing.
-                    foreach (var edge in definition.Edges.Where(e =>
-                        e.SourceNodeId == node.NodeId &&
-                        (e.EdgeKind == null || string.Equals(e.EdgeKind, "exec", StringComparison.OrdinalIgnoreCase))))
+                    foreach (var edge in executionEdges.Where(edge => edge.SourceNodeId == node.NodeId))
                     {
-                        var next = definition.Nodes.FirstOrDefault(n => n.NodeId == edge.TargetNodeId);
-                        if (next != null && !visited.Contains(next.NodeId))
+                        var next = definition.Nodes.FirstOrDefault(candidate => candidate.NodeId == edge.TargetNodeId);
+                        if (next is not null && !visited.Contains(next.NodeId))
                             queue.Enqueue(next);
                     }
                 }
 
                 emitter?.Publish(new RunspaceCompletedEvent(runspaceId)
-                    with { ExperimentId = experimentId });
+                {
+                    ExperimentId = experiment.ExperimentId,
+                    ExperimentPhase = experiment.ActivePhase?.ToString().ToLowerInvariant()
+                });
             };
 
-            return await Task.FromResult(runspace);
+            return await Task.FromResult<IRunspace>(runspace).ConfigureAwait(false);
         });
     });
-    builder.Services.AddSingleton<Func<string, WorkflowContext>>(sp => workflowId => new WorkflowContext
-    {
-        WorkflowId = workflowId,
-        Capabilities = sp.GetRequiredService<ICapabilityInvoker>(),
-        Trends = sp.GetRequiredService<ITrendProvider>(),
-        Safety = sp.GetRequiredService<ISafetyEngine>(),
-        State = sp.GetRequiredService<IWorkflowStateStore>(),
-        Leasing = sp.GetRequiredService<IDeviceLeasingService>(),
-        GlobalState = sp.GetRequiredService<IGlobalStateStore>()
-    });
-    builder.Services.AddSingleton<IWorkflowExecutor, WorkflowExecutor>();
-    builder.Services.AddSingleton<WslExecutionAdapter>();
 
-    // WSL compilation + device registry
-    // DeviceRegistry is populated from CapabilityRegistry at first resolve (lazy factory).
-    // CapabilityRegistry is registered by AddMigratedDeviceAdapters() above, so DI ordering is safe.
+
+    // WSL compilation only advertises the simulator's canonical vocabulary.
     builder.Services.AddSingleton<IWslCompiler, WslCompiler>();
     builder.Services.AddSingleton<DeviceRegistry>(sp =>
     {
-        var capRegistry = sp.GetRequiredService<CapabilityRegistry>();
-        var deviceRegistry = new DeviceRegistry();
-        var prefixes = capRegistry.GetAllCapabilityNames()
-            .Select(name => { var dot = name.IndexOf('.'); return dot > 0 ? name[..dot] : name; })
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .ToList();
-        foreach (var prefix in prefixes)
-        {
-            var caps = capRegistry.GetAllCapabilityNames()
-                .Where(n => { var dot = n.IndexOf('.'); return string.Equals(dot > 0 ? n[..dot] : n, prefix, StringComparison.OrdinalIgnoreCase); })
-                .Select(n => { var dot = n.IndexOf('.'); return dot > 0 ? n[(dot + 1)..] : n; })
-                .ToList();
-            deviceRegistry.Register(new DeviceDescriptor(prefix, prefix, "device", caps, new Dictionary<string, object?>()));
-        }
-        return deviceRegistry;
+        var simulator = sp.GetRequiredService<Helix.Orchestration.Devices.Drivers.SimulatorDevice>();
+        var registry = new DeviceRegistry();
+        registry.Register(new DeviceDescriptor(
+            "simulator",
+            "simulator",
+            "simulator",
+            simulator.GetRichCapabilities().Select(capability => capability.VerbName).ToArray(),
+            new Dictionary<string, object?>()));
+        return registry;
     });
-
     // Event bus
     builder.Services.AddSingleton<IRunspaceEventEmitter, RunspaceEventEmitter>();
     builder.Services.AddSingleton<IExperimentEventChannel, ExperimentEventChannel>();
@@ -300,7 +265,7 @@ try
     // Health checks
     builder.Services.AddHealthChecks();
 
-    // CORS â€” allow Tauri webview origins (dev: Vite on 5173, prod: tauri://localhost)
+    // CORS — allow Tauri webview origins (dev: Vite on 5173, prod: tauri://localhost)
     builder.Services.AddCors(options =>
     {
         options.AddDefaultPolicy(policy =>
@@ -341,6 +306,14 @@ try
     {
         if (context.Request.Path == "/ws")
         {
+            // Keep the upgrade boundary explicitly fail-closed even if middleware
+            // ordering changes in a host embedding the Agent.
+            if (context.Items[DesktopSessionAuthenticationHandler.ActorItemKey] is not VerifiedDesktopActor)
+            {
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                return;
+            }
+
             if (context.WebSockets.IsWebSocketRequest)
             {
                 using var ws = await context.WebSockets.AcceptWebSocketAsync();

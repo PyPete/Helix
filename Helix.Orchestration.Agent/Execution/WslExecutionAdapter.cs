@@ -1,34 +1,36 @@
-using Helix.Orchestration.Agent.Runspaces;
-using Helix.Orchestration.Core.Execution;
-using Helix.Orchestration.Core.Leasing;
 using Helix.Orchestration.Core.Runspace;
 using Helix.Orchestration.Core.WSL;
+using Helix.Orchestration.Core.Execution;
+using Helix.Orchestration.Core.Leasing;
 
 namespace Helix.Orchestration.Agent.Execution;
 
-/// <summary>
-/// Bridges a WSL authoring document into runtime execution.
-/// </summary>
+/// <summary>Retired compatibility entry point for direct WSL execution.</summary>
 public sealed class WslExecutionAdapter
 {
-    private readonly IDeviceLeasingService _leasingService;
-    private readonly IRunspaceManager _runspaceManager;
-    private readonly IWorkflowExecutor _workflowExecutor;
-
+    /// <summary>
+    /// Retained solely for source compatibility with callers that constructed the
+    /// legacy adapter. Dependencies are deliberately not retained or used.
+    /// </summary>
     public WslExecutionAdapter(
         IDeviceLeasingService leasingService,
         IRunspaceManager runspaceManager,
         IWorkflowExecutor workflowExecutor)
     {
-        _leasingService = leasingService ?? throw new ArgumentNullException(nameof(leasingService));
-        _runspaceManager = runspaceManager ?? throw new ArgumentNullException(nameof(runspaceManager));
-        _workflowExecutor = workflowExecutor ?? throw new ArgumentNullException(nameof(workflowExecutor));
+        ArgumentNullException.ThrowIfNull(leasingService);
+        ArgumentNullException.ThrowIfNull(runspaceManager);
+        ArgumentNullException.ThrowIfNull(workflowExecutor);
     }
 
-    /// <summary>
-    /// Compiles and executes a WSL document as a tracked durable runspace.
-    /// </summary>
-    public async Task<IRunspace> ExecuteAsync(
+    /// <summary>Rejects the retired direct WSL execution path.</summary>
+    /// <remarks>
+    /// A compiled document and locally acquired leases are not command authority.
+    /// Execution must begin through the canonical experiment submission path, which
+    /// creates a command intent and repeats admission at the dispatch fence. Keeping
+    /// this API fail-closed prevents callers of the legacy adapter from creating a
+    /// second executor that can reach device capabilities without that boundary.
+    /// </remarks>
+    public Task<IRunspace> ExecuteAsync(
         WslDocument document,
         string holderName,
         CancellationToken cancellationToken = default)
@@ -36,47 +38,7 @@ public sealed class WslExecutionAdapter
         ArgumentNullException.ThrowIfNull(document);
         ArgumentException.ThrowIfNullOrWhiteSpace(holderName);
 
-        var definition = document.Compile();
-        var leases = new List<DeviceLease>();
-
-        try
-        {
-            foreach (var deviceId in GetDeviceIds(definition))
-            {
-                var lease = await _leasingService.AcquireAsync(
-                    deviceId,
-                    holderName,
-                    LeaseMode.Exclusive,
-                    ttl: TimeSpan.FromMinutes(30),
-                    cancellationToken: cancellationToken).ConfigureAwait(false);
-
-                leases.Add(lease);
-            }
-
-            var runspace = new DurableRunspace(definition, _workflowExecutor);
-            _runspaceManager.Track(runspace);
-
-            await runspace.StartAsync(cancellationToken).ConfigureAwait(false);
-            return runspace;
-        }
-        catch
-        {
-            foreach (var lease in leases)
-                await lease.DisposeAsync().ConfigureAwait(false);
-
-            throw;
-        }
-    }
-
-    private static IEnumerable<string> GetDeviceIds(RunspaceDefinition definition)
-    {
-        foreach (var node in definition.Nodes)
-        {
-            if (!node.Parameters.TryGetValue("deviceId", out var value))
-                continue;
-
-            if (value is string deviceId && !string.IsNullOrWhiteSpace(deviceId))
-                yield return deviceId;
-        }
+        return Task.FromException<IRunspace>(new NotSupportedException(
+            "Direct WSL execution is disabled. Submit the workflow through the canonical experiment admission path."));
     }
 }
