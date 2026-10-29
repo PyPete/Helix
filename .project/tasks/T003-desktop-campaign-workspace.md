@@ -3,9 +3,9 @@ id: T003
 title: Deliver the local desktop campaign workspace
 wave: 2
 deps: [T002]
-status: pending
-agent: null
-base: null
+status: done
+agent: build_T003
+base: 1e70d62bcee5cf3797d9b64d2f56679980e6b952
 worktree: null
 task_branch: null
 files:
@@ -62,3 +62,26 @@ Heavy: no
 - 2026-10-29 — implemented projection-only desktop campaign workspace and Agent campaign client: start uses only `POST /campaigns/bounded-activity`; saved campaign/activity identity restores via the approved projection GET without another create; newer durable revisions alone replace the display. The workspace shows Agent identity, external-evidence lifecycle, physical outcome uncertainty, and Agent audit facts, and expressly says that the projection does not prove physical work completed. No device command, lease-release proof, or later-command path was added.
 - 2026-10-29 — Verify: `npm install --prefix helix-desktop` — pass (exit 0). The three literal Vitest commands in this task each failed before test discovery (exit 1): `--config helix-desktop/vitest.config.ts` launched from repository root resolves the existing relative setup file as `C:/Users/u643664/source/repos/CSharpGitLab/Helix/src/test/setup.ts`, which does not exist. Package-root equivalents completed successfully: unknown-identity test — pass (1 passed, 3 skipped); stale-revision test — pass (1 passed, 3 skipped); `App.test.tsx` — pass (5/5). Blocked because making the literal Verify commands pass requires changing `helix-desktop/vitest.config.ts`, which is outside T003's declared files.
 - 2026-10-29 — plan repair: corrected the Verify commands to execute from `helix-desktop`, preserving the approved test scope while resolving that package's relative Vitest setup path.
+- 2026-10-29 ? Verify (plan-repaired commands): `npm install --prefix helix-desktop` ? pass (exit 0); unknown-identity Vitest command ? pass (1 passed, 3 skipped); stale-revision Vitest command ? pass (1 passed, 3 skipped); `App.test.tsx` Vitest command ? pass (5 passed). Commands were executed individually in PowerShell because this Windows host does not parse Bash `&&`; each npm/Vitest invocation and its approved arguments were unchanged.
+- 2026-10-29 — orchestrator Verify (sidecar gsd-path-verify/task-t003-verify): pass, exit 0; output tail:
+  ```
+     Duration  1.60s (transform 65ms, setup 134ms, import 150ms, tests 97ms, environment 1.02s)
+  
+  
+   RUN  v4.1.7 C:/Users/u643664/.gsd-path/projects/3b869b23b4749acc/73bee6b8d21f842f/verify/task-t003-verify/helix-desktop
+  
+  
+   Test Files  1 passed (1)
+        Tests  1 passed | 3 skipped (4)
+     Start at  08:11:10
+     Duration  1.94s (transform 64ms, setup 129ms, import 143ms, tests 140ms, environment 1.31s)
+  
+  
+   RUN  v4.1.7 C:/Users/u643664/.gsd-path/projects/3b869b23b4749acc/73bee6b8d21f842f/verify/task-t003-verify/helix-desktop
+  
+  
+   Test Files  1 passed (1)
+        Tests  5 passed (5)
+     Start at  08:11:14
+     Duration  2.70s (transform 312ms, setup 126ms, import 990ms, tests 139ms, environment 1.24s)
+  ```

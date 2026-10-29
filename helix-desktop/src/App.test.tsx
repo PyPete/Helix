@@ -91,4 +91,10 @@ describe('App', () => {
     render(<App />);
     expect(screen.getByTestId('status-bar')).toBeInTheDocument();
   });
+
+  it('adds the campaign workspace without replacing the Helix shell', () => {
+    render(<App />);
+    expect(screen.getByTestId('helix-shell')).toBeInTheDocument();
+    expect(screen.getByRole('complementary', { name: 'Campaign workspace' })).toBeInTheDocument();
+  });
 });
