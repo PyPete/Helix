@@ -8,26 +8,38 @@ namespace Helix.Orchestration.Core.Safety;
 /// </summary>
 public sealed class CommandAdmissionEvaluator
 {
+    private readonly TimeProvider _timeProvider;
+
     private static readonly string[] RequiredChecks =
     [
         "capability", "safety", "lease", "resource", "budget", "termination", "health"
     ];
 
+    public CommandAdmissionEvaluator(TimeProvider? timeProvider = null)
+    {
+        _timeProvider = timeProvider ?? TimeProvider.System;
+    }
+
     public CommandAdmissionResult Evaluate(CommandAdmissionContext context)
     {
         ArgumentNullException.ThrowIfNull(context);
 
-        var occurredAtUtc = DateTimeOffset.UtcNow;
+        var occurredAtUtc = _timeProvider.GetUtcNow();
         var checks = RequiredChecks.Select(check => CreateEvidence(
             check,
             context.GetStatus(check),
             occurredAtUtc,
             context.ContextRevision)).ToArray();
 
-        var state = checks.Any(check => check.Status == CommandCheckStatus.Failed)
-            ? CommandAdmissionState.Rejected
-            : checks.Any(check => check.Status == CommandCheckStatus.Unknown)
-                ? CommandAdmissionState.Held
+        // An uncertain physical safety boundary must take precedence over an
+        // otherwise-invalid proposal: the operator needs the hold reason before
+        // deciding whether it is safe to correct and resubmit the proposal.
+        var hasUnknown = checks.Any(check => check.Status == CommandCheckStatus.Unknown);
+        var hasFailure = checks.Any(check => check.Status == CommandCheckStatus.Failed);
+        var state = hasUnknown
+            ? CommandAdmissionState.Held
+            : hasFailure
+                ? CommandAdmissionState.Rejected
                 : CommandAdmissionState.Allowed;
 
         return new CommandAdmissionResult(state, checks);
