@@ -20,7 +20,7 @@ Deliver one local-first, simulated scientific feedback loop in which the Helix A
 ## Phase Details
 
 ### Phase 1: Agent Safety Boundary
-**Goal**: Scientists can rely on the local Helix Agent as the sole, safety-gated authority for simulated device commands and recovery.
+**Goal**: As a scientist, I want to control simulated devices through the local Helix Agent with safety checks, pause/hold/abort controls, restart reconciliation, and an attributable command timeline, so that I can execute experiments safely without losing evidence or blindly repeating uncertain actions.
 **Mode:** mvp
 **Depends on**: Nothing (first phase)
 **Requirements**: SAFE-01, SAFE-02, SAFE-03, SAFE-04
@@ -29,7 +29,36 @@ Deliver one local-first, simulated scientific feedback loop in which the Helix A
   2. A command is refused before dispatch when its capability, safety, lease, resource, budget, or termination check fails.
   3. A scientist can pause, abort, or hold an active campaign, and after an Agent restart can see uncertain simulated outcomes reconciled rather than blindly replayed.
   4. A scientist can inspect an attributable record of each command's intent, observation, correlation, and audit context.
-**Plans**: TBD
+**Plans**: 14 plans
+
+Plans:
+**Wave 1**
+- [ ] 01-01-PLAN.md — Real native/session/Agent/PostgreSQL/simulator evidence tracer
+
+**Wave 2** *(blocked on Wave 1 completion)*
+- [ ] 01-02-PLAN.md — Complete deterministic admission and fresh safety/E-stop evidence
+- [ ] 01-03-PLAN.md — Durable controls and matching-only restart reconciliation
+- [ ] 01-05-PLAN.md — Complete native client and local connection/experiment caller migration
+
+**Wave 3** *(blocked on Wave 2 completion)*
+- [ ] 01-09-PLAN.md — SQL immutability/idempotency/accounting and final dispatch races
+- [ ] 01-10-PLAN.md — Canonical read-only variables and checked non-authorizing compilation
+- [ ] 01-12-PLAN.md — Authenticated health/event/discovery caller migration
+
+**Wave 4** *(blocked on Wave 3 completion)*
+- [ ] 01-04-PLAN.md — Canonical nonempty REST/gRPC workflow submission and lifecycle
+- [ ] 01-14-PLAN.md — Bounded fail-closed denied-attempt spool and idempotent security-history recovery
+
+**Wave 5** *(blocked on Wave 4 completion)*
+- [ ] 01-06-PLAN.md — Policy approval, actual workflow submission and acknowledged controls UI
+- [ ] 01-07-PLAN.md — Immutable history/safety/annotation endpoints and mounted native cursor consumer
+- [ ] 01-11-PLAN.md — Actual host/alternative executor closure and commit-before-notification
+
+**Wave 6** *(blocked on Wave 5 completion)*
+- [ ] 01-13-PLAN.md — Complete outcome-first timeline/notes and all evidence/safety UI states
+
+**Wave 7** *(blocked on Wave 6 completion)*
+- [ ] 01-08-PLAN.md — Effective local deployment, final schema and full native restart acceptance
 
 ### Phase 2: Scientific Setup Foundation
 **Goal**: Scientists can define the revisioned scientific setup and sample facts that a campaign will freeze as its evidence base.
