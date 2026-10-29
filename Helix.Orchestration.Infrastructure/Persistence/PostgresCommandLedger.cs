@@ -26,6 +26,20 @@ public sealed class PostgresCommandLedger(DbConnectionFactory connectionFactory)
         await connection.OpenAsync(cancellationToken);
         await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
 
+        // A command ID is an idempotency key.  Take a transaction-scoped lock
+        // before looking it up so concurrent callers either observe the same
+        // committed fact or create it exactly once.  This is deliberately
+        // before the stream lock: all callers use command identity then stream
+        // ordering, avoiding an inverted lock order.
+        const string lockCommandIdentity = """
+            SELECT pg_advisory_xact_lock(hashtextextended(@CommandId::text, 0));
+            """;
+        await connection.ExecuteAsync(new CommandDefinition(
+            lockCommandIdentity,
+            new { intent.CommandId },
+            transaction,
+            cancellationToken: cancellationToken));
+
         const string createStream = """
             INSERT INTO command_streams (execution_id) VALUES (@ExecutionId)
             ON CONFLICT (execution_id) DO NOTHING;
@@ -33,13 +47,21 @@ public sealed class PostgresCommandLedger(DbConnectionFactory connectionFactory)
         await connection.ExecuteAsync(new CommandDefinition(createStream, intent, transaction, cancellationToken: cancellationToken));
 
         const string existingEvidence = """
-            SELECT evidence_id, sequence_num, admission_state, checks_json, occurred_at
-            FROM command_evidence WHERE command_id = @CommandId;
+            SELECT e.evidence_id, e.sequence_num, e.admission_state, e.checks_json, e.occurred_at,
+                   i.execution_id, i.correlation_id, i.device_id, i.capability,
+                   i.canonical_parameters::text AS canonical_parameters, i.verified_actor_sid,
+                   i.verified_actor_display_name, i.session_reference, i.policy_revision
+            FROM command_evidence e
+            JOIN command_intents i ON i.command_id = e.command_id
+            WHERE e.command_id = @CommandId;
             """;
-        var existing = await connection.QuerySingleOrDefaultAsync<EvidenceRow>(
+        var existing = await connection.QuerySingleOrDefaultAsync<ExistingEvidenceRow>(
             new CommandDefinition(existingEvidence, new { intent.CommandId }, transaction, cancellationToken: cancellationToken));
         if (existing is not null)
         {
+            if (!existing.Matches(intent))
+                throw new InvalidOperationException("Command identity was reused with different immutable intent content.");
+
             await transaction.CommitAsync(cancellationToken);
             return existing.ToEvidence(intent.CommandId);
         }
@@ -188,7 +210,7 @@ public sealed class PostgresCommandLedger(DbConnectionFactory connectionFactory)
         return rows.Select(row => row.ToRecord()).ToArray();
     }
 
-    private sealed class EvidenceRow
+    private class EvidenceRow
     {
         public Guid EvidenceId { get; init; }
         public long SequenceNum { get; init; }
@@ -203,6 +225,30 @@ public sealed class PostgresCommandLedger(DbConnectionFactory connectionFactory)
             Enum.Parse<CommandAdmissionState>(AdmissionState, ignoreCase: false),
             JsonSerializer.Deserialize<List<CommandCheckEvidence>>(ChecksJson, JsonOptions) ?? [],
             OccurredAt);
+    }
+
+    private sealed class ExistingEvidenceRow : EvidenceRow
+    {
+        public Guid ExecutionId { get; init; }
+        public Guid CorrelationId { get; init; }
+        public string DeviceId { get; init; } = string.Empty;
+        public string Capability { get; init; } = string.Empty;
+        public string CanonicalParameters { get; init; } = "{}";
+        public string VerifiedActorSid { get; init; } = string.Empty;
+        public string VerifiedActorDisplayName { get; init; } = string.Empty;
+        public string SessionReference { get; init; } = string.Empty;
+        public string PolicyRevision { get; init; } = string.Empty;
+
+        public bool Matches(CommandIntent intent) =>
+            ExecutionId == intent.ExecutionId &&
+            CorrelationId == intent.CorrelationId &&
+            string.Equals(DeviceId, intent.DeviceId, StringComparison.Ordinal) &&
+            string.Equals(Capability, intent.Capability, StringComparison.Ordinal) &&
+            string.Equals(CanonicalParameters, intent.CanonicalParameters, StringComparison.Ordinal) &&
+            string.Equals(VerifiedActorSid, intent.VerifiedActorSid, StringComparison.Ordinal) &&
+            string.Equals(VerifiedActorDisplayName, intent.VerifiedActorDisplayName, StringComparison.Ordinal) &&
+            string.Equals(SessionReference, intent.SessionReference, StringComparison.Ordinal) &&
+            string.Equals(PolicyRevision, intent.PolicyRevision, StringComparison.Ordinal);
     }
 
     private sealed class DispatchRow
