@@ -18,11 +18,16 @@ path are not yet implemented.
   and an absent or unknown check holds; all check evidence is retained.
 - Added four focused admission tests covering allowed SetFlow, failed
   capability, unknown health, and a missing lease state.
+- Added PostgreSQL command-stream, intent, and evidence tables plus an atomic
+  Dapper ledger implementation that serializes per-execution sequence allocation
+  with immutable intent/evidence insertion. The migration was applied to the
+  disposable Docker database and all three tables were confirmed present.
 
 ## Verification
 
 Passed: `dotnet test tests/Helix.Orchestration.Core.Tests/Helix.Orchestration.Core.Tests.csproj --no-restore --filter FullyQualifiedName~CommandAdmissionTests --verbosity minimal`
 with 4 tests. `dotnet build Helix.Orchestration.Core/Helix.Orchestration.Core.csproj --no-restore --verbosity minimal` also passed.
+`dotnet build Helix.Orchestration.Infrastructure/Helix.Orchestration.Infrastructure.csproj --no-restore --verbosity minimal` passed after adding the ledger.
 
 Not run: mandatory `scripts/verification/phase01-smoke.ps1 -Scenario Tracer`
 because the script does not exist yet. Native `agent_security` tests and Agent
