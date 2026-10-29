@@ -27,7 +27,7 @@
   </ItemGroup>
 
   <ItemGroup>
-	<None Include="..\..\postgres\migrations\001_initial.sql" Link="migrations\001_initial.sql" CopyToOutputDirectory="Always" />
+	<None Include="..\..\postgres\migrations\*.sql" Link="migrations\%(Filename)%(Extension)" CopyToOutputDirectory="Always" />
   </ItemGroup>
 
 </Project>

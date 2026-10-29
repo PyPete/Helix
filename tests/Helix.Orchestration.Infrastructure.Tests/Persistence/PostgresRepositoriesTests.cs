@@ -47,7 +47,7 @@ public sealed class PostgresFixture : IAsyncLifetime
     public async Task InitializeAsync()
     {
         if (!IsAvailable)
-            return;
+            throw new InvalidOperationException("PostgreSQL test container could not be configured.");
 
         try
         {
@@ -64,20 +64,27 @@ public sealed class PostgresFixture : IAsyncLifetime
 
             ConnectionFactory = new DbConnectionFactory(connStr);
 
-            var migrationPath = Path.Combine(AppContext.BaseDirectory, "migrations", "001_initial.sql");
-            if (!File.Exists(migrationPath))
-                throw new FileNotFoundException($"Migration file not found at {migrationPath}");
-
-            var sql = await File.ReadAllTextAsync(migrationPath);
+            var migrationsPath = Path.Combine(AppContext.BaseDirectory, "migrations");
+            var migrationPaths = Directory.EnumerateFiles(migrationsPath, "*.sql")
+                .OrderBy(Path.GetFileName, StringComparer.Ordinal)
+                .ToArray();
+            if (migrationPaths.Length == 0)
+                throw new DirectoryNotFoundException($"No migrations were found at {migrationsPath}");
 
             await using var conn = ConnectionFactory.Create();
             await conn.OpenAsync();
-            await using var cmd = new NpgsqlCommand(sql, conn);
-            await cmd.ExecuteNonQueryAsync();
+            foreach (var migrationPath in migrationPaths)
+            {
+                var sql = await File.ReadAllTextAsync(migrationPath);
+                await using var cmd = new NpgsqlCommand(sql, conn);
+                await cmd.ExecuteNonQueryAsync();
+            }
         }
-        catch
+        catch (Exception exception)
         {
             IsAvailable = false;
+            ConnectionFactory = null;
+            throw new InvalidOperationException("PostgreSQL fixture initialization failed; required SQL tests cannot run.", exception);
         }
     }
 
