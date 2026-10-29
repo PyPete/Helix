@@ -2,7 +2,7 @@
 id: T021
 title: Fix wave 2 cycle 1 review findings in T003
 wave: 7
-deps: [T003]
+deps: [T003, T022]
 status: pending
 agent: null
 base: null
@@ -28,11 +28,13 @@ The source task contracts are unchanged; read them and .project/intent/INTENT.md
 
 - Fix only what the Review findings name, inside the listed files; do not change the source
   tasks' acceptance criteria or interface contracts.
+- App owns the selected `AgentConnection`, passes it to HelixShell, derives CampaignWorkspace
+  `baseUrl` from that same value, and keys/remounts CampaignWorkspace by URL.
 - Re-run the source tasks' Verify commands after the fix and record the result in the Log.
 
 ## Interface contract
 
-- None
+`HelixShell` accepts optional controlled props `connection?: AgentConnection` and `onConnectionChange?: (connection: AgentConnection) => void`. With both props supplied, it uses the supplied connection and reports saves through the callback; App always supplies both after T021. For zero-prop compatibility while T003's existing App remains unchanged, it defaults to `DEFAULT_CONNECTION` and a no-op save callback. It does not retain shell-owned mutable connection-selection state.
 
 ## Intent coverage
 

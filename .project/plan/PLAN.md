@@ -70,7 +70,8 @@ Review depth: full
 
 | Task | Title | Deps | Files |
 |------|-------|------|-------|
-| T021 | Fix wave 2 cycle 1 review findings in T003 | T003 | helix-desktop/src/App.test.tsx, helix-desktop/src/App.tsx, helix-desktop/src/campaign/CampaignWorkspace.test.tsx, helix-desktop/src/campaign/CampaignWorkspace.tsx, helix-desktop/src/campaign/agentCampaignClient.ts |
+| T021 | Fix wave 2 cycle 1 review findings in T003 | T003, T022 | helix-desktop/src/App.test.tsx, helix-desktop/src/App.tsx, helix-desktop/src/campaign/CampaignWorkspace.test.tsx, helix-desktop/src/campaign/CampaignWorkspace.tsx, helix-desktop/src/campaign/agentCampaignClient.ts |
+| T022 | Expose HelixShell connection as an App-owned composition contract | T003 | helix-desktop/src/shell/HelixShell.tsx |
 
 ## Intent coverage
 

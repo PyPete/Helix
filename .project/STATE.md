@@ -5,7 +5,7 @@ milestone: durable-local-campaign-skeleton
 phase: plan
                     # inspect only for brownfield; greenfield starts at define
                     # roadmap only in program flow (CHARTER.md exists)
-status: active
+status: done
 branch: gsd-path/M001
                     # the router rebinds before any next-milestone file change
                     # the bound branch is never main; ship integrates it there
@@ -70,3 +70,4 @@ it on completion. If this file and the artifacts disagree, the artifacts win
 - 2026-10-29 — build — Wave 2 review requires a repair task for HelixShell.tsx outside the generated finding batch
 - 2026-10-29 — plan — build plan repair requested
 - 2026-10-29 — plan — build recovery: {"base": "65295d5d70e23b6ea49ff0cf1f3d9d949d9de2c1", "branch": "gsd-path/M001", "kind": "plan", "source": "build"}
+- 2026-10-29 — plan — plan approved
