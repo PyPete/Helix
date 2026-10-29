@@ -47,3 +47,10 @@ ACL, renderer evidence/timeline path, and the real Tauri/PostgreSQL smoke.
 - Added opaque SHA-256-backed session validation and revocation, plus trusted actor propagation into authenticated command proposal and dispatch endpoints.
 - Added an Agent-owned dispatcher that appends held admission evidence through the durable ledger rather than attempting an effect with incomplete fresh safety, lease, resource, budget, termination, and health context.
 - `AgentAuthenticationTests`: 3 passed. Agent project build passed (existing dependency/platform warnings remain).
+
+## Native broker update
+
+- Added a Windows `PipeOptions.CurrentUserOnly` session-bootstrap worker. It issues an opaque 15-minute session only over the local named pipe.
+- Added the main-window-scoped Tauri broker. It retains the token only in native `Mutex` state and uses WinHTTP FFI against fixed `127.0.0.1:5080` for the authenticated health request.
+- Added explicit Tauri command permission, main-window capability scope, strict local CSP, and typed renderer IPC wrappers with no renderer credential.
+- Verified `cargo test --manifest-path helix-desktop/src-tauri/Cargo.toml agent_security` (2 passed) and Agent build (passed with existing warnings).

@@ -279,6 +279,7 @@ try
     // Infrastructure repositories (scoped, via connection string)
     builder.Services.AddHelixInfrastructure(builder.Configuration);
     builder.Services.AddSingleton<DesktopSessionService>();
+    builder.Services.AddHostedService<SessionBootstrapWorker>();
     builder.Services.AddSingleton<CommandAdmissionEvaluator>();
     builder.Services.AddSingleton<ICommandDispatcher, AgentCommandDispatcher>();
     builder.Services.AddSingleton<ExecutionControlService>();
