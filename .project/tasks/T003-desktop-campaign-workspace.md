@@ -3,10 +3,10 @@ id: T003
 title: Deliver the local desktop campaign workspace
 wave: 2
 deps: [T002]
-status: pending
-agent: null
-base: null
-worktree: null
+status: blocked
+agent: build_T003
+base: 3c718c573512b28bedb27e30e726b6b2d5e90665
+worktree: C:\Users\u643664\source\repos\CSharpGitLab\Helix
 task_branch: null
 files:
   - helix-desktop/src/campaign/agentCampaignClient.ts
@@ -59,3 +59,6 @@ Heavy: no
 - 2026-10-28 — created by planner
 - 2026-10-28 — user ruling: keep T003 desktop projection-only; transfer no-retained-lease and later-command Agent revalidation proof to separate T020. Do not waive or change intent SC3/N3; keep T002 as the sole E6 owner. T003 covers only desktop start/display/readback/restore/monotonic projection and the approved no-direct-command boundary.
 - 2026-10-28 — planner correction: the earlier Log attribution assigning E6 to T002 was orchestrator guidance, not a user ruling. T020 owns SC3/E6 at plan level; T002's landed E6 implementation/test remain unchanged prerequisite evidence for T020 to rerun/compose.
+- 2026-10-29 — implemented projection-only desktop campaign workspace and Agent campaign client: start uses only `POST /campaigns/bounded-activity`; saved campaign/activity identity restores via the approved projection GET without another create; newer durable revisions alone replace the display. The workspace shows Agent identity, external-evidence lifecycle, physical outcome uncertainty, and Agent audit facts, and expressly says that the projection does not prove physical work completed. No device command, lease-release proof, or later-command path was added.
+- 2026-10-29 — Verify: `npm install --prefix helix-desktop` — pass (exit 0). The three literal Vitest commands in this task each failed before test discovery (exit 1): `--config helix-desktop/vitest.config.ts` launched from repository root resolves the existing relative setup file as `C:/Users/u643664/source/repos/CSharpGitLab/Helix/src/test/setup.ts`, which does not exist. Package-root equivalents completed successfully: unknown-identity test — pass (1 passed, 3 skipped); stale-revision test — pass (1 passed, 3 skipped); `App.test.tsx` — pass (5/5). Blocked because making the literal Verify commands pass requires changing `helix-desktop/vitest.config.ts`, which is outside T003's declared files.
+
