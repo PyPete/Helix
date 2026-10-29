@@ -1,11 +1,13 @@
 using Helix.Orchestration.Core.Devices;
 using Helix.Orchestration.Core.Safety;
 using Helix.Orchestration.Core.WSL;
+using Helix.Orchestration.Core.Execution;
+using Helix.Orchestration.Core.WorkflowEngine;
 using Xunit;
 
 namespace Helix.Orchestration.Core.Tests.WSL;
 
-// Manual test double for ISafetyEngine — no mock framework required
+// Manual test double for ISafetyEngine â€” no mock framework required
 file sealed class FakeSafetyEngine : ISafetyEngine
 {
     private readonly List<InterlockRule> _violations;
@@ -37,7 +39,7 @@ public sealed class WslCompilerTests
         Nodes =
         [
             new WslNode("n1", "Start", "Start", new Dictionary<string, object?> { ["entryPoint"] = true }),
-            new WslNode("n2", "Ramp Up", "Ramp", new Dictionary<string, object?> { ["target"] = 80.0, ["device"] = "reactor1" }),
+            new WslNode("n2", "Set temperature", "Action", new Dictionary<string, object?> { ["capability"] = "SetTemperature", ["temperature"] = 80m, ["device"] = "simulator" }),
             new WslNode("n3", "End", "Terminate", new Dictionary<string, object?>())
         ],
         Edges =
@@ -51,17 +53,17 @@ public sealed class WslCompilerTests
     {
         var registry = new DeviceRegistry();
         registry.Register(new DeviceDescriptor(
-            "reactor-001",
-            "reactor1",
-            "reactor",
-            ["SetTemperature", "GetPressure"],
+            "simulator",
+            "simulator",
+            "simulator",
+            ["SetFlow", "GetFlow", "SetTemperature", "GetTemperature", "SetMode", "GetMode"],
             new Dictionary<string, object?> { ["location"] = "FH-A" }));
         return registry;
     }
 
-    // ────────────────────────────────────────────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     // Existing baseline tests
-    // ────────────────────────────────────────────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     [Fact]
     public void Compile_ValidDocument_ReturnsSuccess()
@@ -317,120 +319,65 @@ public sealed class WslCompilerTests
         Assert.True(result.Diagnostics.Count(d => d.Severity == DiagnosticSeverity.Error) >= 4);
     }
 
-    // ────────────────────────────────────────────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     // New TDD tests: loop expansion, branch flattening, safety injection, parallel
-    // ────────────────────────────────────────────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     [Fact]
-    public void Compile_LoopNode_ExpandsBodyToNIterations()
+    public void Compile_LoopNode_IsRejectedBecauseItsSemanticsAreNotEnforced()
     {
-        // Arrange: Start -> Loop(iterations=3) -> Body -> End
-        var compiler = new WslCompiler();
-        var doc = new WslDocument
+        var doc = BuildValidDocument() with
         {
-            DocumentId = "loop-doc",
-            Name = "LoopWorkflow",
-            SchemaVersion = "1.0",
             Nodes =
             [
                 new WslNode("start", "Start", "Start", new Dictionary<string, object?> { ["entryPoint"] = true }),
-                new WslNode("loop1", "Loop", "Loop", new Dictionary<string, object?> { ["iterations"] = 3 }),
-                new WslNode("body1", "Body Step", "Hold", new Dictionary<string, object?>()),
+                new WslNode("loop", "Loop", "Loop", new Dictionary<string, object?>()),
                 new WslNode("end", "End", "Terminate", new Dictionary<string, object?>())
-            ],
-            Edges =
-            [
-                new WslEdge("e1", "start", "loop1"),
-                new WslEdge("e2", "loop1", "body1"),
-                new WslEdge("e3", "body1", "end")
             ]
         };
-        var registry = new DeviceRegistry();
 
-        // Act
-        var result = compiler.Compile(doc, registry);
+        var result = new WslCompiler().Compile(doc, BuildDeviceRegistry());
 
-        // Assert: loop node is absent, body node appears 3 times
-        Assert.True(result.Success, string.Join("; ", result.Diagnostics.Select(d => d.Message)));
-        Assert.NotNull(result.Definition);
-        Assert.DoesNotContain(result.Definition.Nodes, n => n.NodeType.Equals("Loop", StringComparison.OrdinalIgnoreCase));
-        var bodyNodes = result.Definition.Nodes.Where(n => n.NodeId.StartsWith("body1")).ToList();
-        Assert.Equal(3, bodyNodes.Count);
+        Assert.False(result.Success);
+        Assert.Contains(result.Diagnostics, diagnostic => diagnostic.Code == "WSL060");
     }
 
     [Fact]
-    public void Compile_BranchNode_ProducesConditionalTrueFalseEdges()
+    public void Compile_BranchNode_IsRejectedBecauseItsGuardIsNotEnforced()
     {
-        // Arrange: Start -> Branch -> TruePath / FalsePath
-        var compiler = new WslCompiler();
-        var doc = new WslDocument
+        var doc = BuildValidDocument() with
         {
-            DocumentId = "branch-doc",
-            Name = "BranchWorkflow",
-            SchemaVersion = "1.0",
             Nodes =
             [
                 new WslNode("start", "Start", "Start", new Dictionary<string, object?> { ["entryPoint"] = true }),
-                new WslNode("branch1", "Decision", "Branch", new Dictionary<string, object?>()),
-                new WslNode("true-path", "True Path", "Hold", new Dictionary<string, object?>()),
-                new WslNode("false-path", "False Path", "Hold", new Dictionary<string, object?>())
-            ],
-            Edges =
-            [
-                new WslEdge("e1", "start", "branch1"),
-                new WslEdge("e2", "branch1", "true-path"),
-                new WslEdge("e3", "branch1", "false-path")
+                new WslNode("branch", "Branch", "Branch", new Dictionary<string, object?>()),
+                new WslNode("end", "End", "Terminate", new Dictionary<string, object?>())
             ]
         };
-        var registry = new DeviceRegistry();
 
-        // Act
-        var result = compiler.Compile(doc, registry);
+        var result = new WslCompiler().Compile(doc, BuildDeviceRegistry());
 
-        // Assert: edges from branch point labeled "true" and "false"
-        Assert.True(result.Success, string.Join("; ", result.Diagnostics.Select(d => d.Message)));
-        Assert.NotNull(result.Definition);
-
-        // Collect edges that originate from the branch node or any ConditionalGateway it produces
-        var branchAndGatewayNodeIds = result.Definition.Nodes
-            .Where(n => n.NodeId == "branch1" ||
-                        n.NodeType.Equals("ConditionalGateway", StringComparison.OrdinalIgnoreCase))
-            .Select(n => n.NodeId)
-            .ToHashSet();
-
-        var outgoingEdges = result.Definition.Edges
-            .Where(e => branchAndGatewayNodeIds.Contains(e.SourceNodeId))
-            .ToList();
-
-        Assert.Contains(outgoingEdges, e => e.Condition != null && e.Condition.Equals("true", StringComparison.OrdinalIgnoreCase));
-        Assert.Contains(outgoingEdges, e => e.Condition != null && e.Condition.Equals("false", StringComparison.OrdinalIgnoreCase));
+        Assert.False(result.Success);
+        Assert.Contains(result.Diagnostics, diagnostic => diagnostic.Code == "WSL060");
     }
 
     [Fact]
-    public void Compile_WithSafetyViolation_InjectsSafetyGuardNode()
+    public void Compile_ExplicitSafetyGuard_IsRejectedBecauseTheExecutorCannotEnforceIt()
     {
-        // Arrange: valid document + safety engine reporting one violation
-        var compiler = new WslCompiler();
-        var doc = BuildValidDocument();
-        var registry = BuildDeviceRegistry();
-        var violation = new InterlockRule(() => Task.FromResult(false))
+        var doc = BuildValidDocument() with
         {
-            RuleId = "PRESSURE-001",
-            Description = "Reactor pressure exceeds threshold",
-            Severity = InterlockSeverity.Critical
+            Nodes =
+            [
+                new WslNode("start", "Start", "Start", new Dictionary<string, object?> { ["entryPoint"] = true }),
+                new WslNode("guard", "Guard", "SafetyGuard", new Dictionary<string, object?>()),
+                new WslNode("end", "End", "Terminate", new Dictionary<string, object?>())
+            ]
         };
-        var safetyEngine = new FakeSafetyEngine([violation]);
 
-        // Act
-        var result = compiler.Compile(doc, registry, safetyEngine);
+        var result = new WslCompiler().Compile(doc, BuildDeviceRegistry(), new FakeSafetyEngine());
 
-        // Assert: a SafetyGuard node was injected
-        Assert.True(result.Success, string.Join("; ", result.Diagnostics.Select(d => d.Message)));
-        Assert.NotNull(result.Definition);
-        var guardNodes = result.Definition.Nodes.Where(n => n.NodeType == "SafetyGuard").ToList();
-        Assert.Single(guardNodes);
-        Assert.Equal("PRESSURE-001", guardNodes[0].Parameters["ruleId"]?.ToString());
-        Assert.Contains(result.Diagnostics, d => d.Code == "WSL050");
+        Assert.False(result.Success);
+        Assert.Contains(result.Diagnostics, diagnostic => diagnostic.Code == "WSL060");
     }
 
     [Fact]
@@ -450,42 +397,152 @@ public sealed class WslCompilerTests
     }
 
     [Fact]
-    public void Compile_ParallelNode_ProducesForkJoinStructure()
+    public void Compile_ParallelNode_IsRejectedBecauseTheExecutorIsSequential()
     {
-        // Arrange: Start -> Parallel(branch-a, branch-b) -> End
-        var compiler = new WslCompiler();
-        var doc = new WslDocument
+        var doc = BuildValidDocument() with
         {
-            DocumentId = "parallel-doc",
-            Name = "ParallelWorkflow",
+            Nodes =
+            [
+                new WslNode("start", "Start", "Start", new Dictionary<string, object?> { ["entryPoint"] = true }),
+                new WslNode("parallel", "Parallel", "Parallel", new Dictionary<string, object?>()),
+                new WslNode("end", "End", "Terminate", new Dictionary<string, object?>())
+            ]
+        };
+
+        var result = new WslCompiler().Compile(doc, BuildDeviceRegistry());
+
+        Assert.False(result.Success);
+        Assert.Contains(result.Diagnostics, diagnostic => diagnostic.Code == "WSL060");
+    }
+}
+
+public sealed class CapabilityReadExtensionsTests
+{
+    [Fact]
+    public async Task ReadObservationAsync_UsesOnlyTheCanonicalGetterAllowlist()
+    {
+        var observations = new CountingObservations(new SimulatorObservation(
+            "simulator", "flowRate", Guid.NewGuid(), "1.5", "mL/min", 1, DateTimeOffset.UtcNow));
+
+        var known = await observations.ReadObservationAsync("GetFlow");
+        var rejected = await observations.ReadObservationAsync("SetFlow");
+
+        Assert.Equal(ObservationReadStatus.Known, known.Status);
+        Assert.Equal(1.5m, Assert.IsType<decimal>(known.Value));
+        Assert.Equal(ObservationReadStatus.Invalid, rejected.Status);
+        Assert.Equal(1, observations.ReadCount);
+        Assert.Equal("flowRate", observations.LastStateKey);
+    }
+
+    [Fact]
+    public async Task ReadObservationAsync_StaleObservationRemainsUnknown()
+    {
+        var observations = new CountingObservations(new SimulatorObservation(
+            "simulator", "temperature", Guid.NewGuid(), "25", "°C", 1, DateTimeOffset.UtcNow.AddSeconds(-3)));
+
+        var result = await observations.ReadObservationAsync("GetTemperature");
+
+        Assert.Equal(ObservationReadStatus.Unknown, result.Status);
+        Assert.Null(result.Value);
+        Assert.Equal("observation.stale", result.Code);
+    }
+
+    private sealed class CountingObservations(SimulatorObservation observation) : ISimulatorObservation
+    {
+        private readonly SimulatorObservation _observation = observation;
+        public int ReadCount { get; private set; }
+        public string? LastStateKey { get; private set; }
+
+        public Task<SimulatorObservation?> GetAsync(string deviceId, string stateKey, CancellationToken cancellationToken = default)
+        {
+            ReadCount++;
+            LastStateKey = stateKey;
+            return Task.FromResult<SimulatorObservation?>(_observation);
+        }
+    }
+}
+public sealed class WorkflowCompilerAdmissionTests
+{
+    [Fact]
+    public void CompileWithFeedback_ReturnsEveryFreshCheckWithoutGrantingDispatchAuthority()
+    {
+        var compiler = new WslCompiler();
+        var document = new WslDocument
+        {
+            DocumentId = "proposal",
+            Name = "Proposal",
             SchemaVersion = "1.0",
             Nodes =
             [
                 new WslNode("start", "Start", "Start", new Dictionary<string, object?> { ["entryPoint"] = true }),
-                new WslNode("par1", "Parallel Step", "Parallel", new Dictionary<string, object?>()),
-                new WslNode("branch-a", "Branch A", "Hold", new Dictionary<string, object?>()),
-                new WslNode("branch-b", "Branch B", "Hold", new Dictionary<string, object?>()),
+                new WslNode("flow", "Set flow", "Action", new Dictionary<string, object?>
+                {
+                    ["device"] = "simulator", ["capability"] = "SetFlow", ["flowRate"] = 1.5m
+                }),
                 new WslNode("end", "End", "Terminate", new Dictionary<string, object?>())
             ],
-            Edges =
-            [
-                new WslEdge("e1", "start", "par1"),
-                new WslEdge("e2", "par1", "branch-a"),
-                new WslEdge("e3", "par1", "branch-b"),
-                new WslEdge("e4", "branch-a", "end"),
-                new WslEdge("e5", "branch-b", "end")
-            ]
+            Edges = [new WslEdge("start-flow", "start", "flow"), new WslEdge("flow-end", "flow", "end")]
         };
         var registry = new DeviceRegistry();
+        registry.Register(new DeviceDescriptor(
+            "simulator", "simulator", "simulator",
+            ["SetFlow", "GetFlow", "SetTemperature", "GetTemperature", "SetMode", "GetMode"],
+            new Dictionary<string, object?>()));
+        var passed = new Dictionary<string, CommandCheckStatus>
+        {
+            ["capability"] = CommandCheckStatus.Passed,
+            ["safety"] = CommandCheckStatus.Passed,
+            ["lease"] = CommandCheckStatus.Passed,
+            ["resource"] = CommandCheckStatus.Passed,
+            ["budget"] = CommandCheckStatus.Passed,
+            ["termination"] = CommandCheckStatus.Passed,
+            ["health"] = CommandCheckStatus.Passed
+        };
 
-        // Act
-        var result = compiler.Compile(doc, registry);
+        var allowed = compiler.CompileWithFeedback(
+            document, registry, new CommandAdmissionEvaluator(), new CommandAdmissionContext(passed, "revision-a"));
+        var changed = compiler.CompileWithFeedback(
+            document, registry, new CommandAdmissionEvaluator(),
+            new CommandAdmissionContext(new Dictionary<string, CommandCheckStatus>(passed)
+            {
+                ["safety"] = CommandCheckStatus.Unknown
+            }, "revision-b"));
 
-        // Assert: ParallelFork and ParallelJoin nodes exist; original Parallel node is gone
-        Assert.True(result.Success, string.Join("; ", result.Diagnostics.Select(d => d.Message)));
-        Assert.NotNull(result.Definition);
-        Assert.Contains(result.Definition.Nodes, n => n.NodeType == "ParallelFork");
-        Assert.Contains(result.Definition.Nodes, n => n.NodeType == "ParallelJoin");
-        Assert.DoesNotContain(result.Definition.Nodes, n => n.NodeType.Equals("Parallel", StringComparison.OrdinalIgnoreCase));
+        Assert.True(allowed.Compilation.Success);
+        Assert.Equal(CommandAdmissionState.Allowed, allowed.Admission.State);
+        Assert.Equal(7, allowed.Admission.Checks.Count);
+        Assert.False(allowed.IsDispatchAuthorization);
+        Assert.Equal(CommandAdmissionState.Held, changed.Admission.State);
+        Assert.False(changed.IsDispatchAuthorization);
+    }
+}
+public sealed class CanonicalCapabilityCompilerTests
+{
+    [Fact]
+    public void Compile_LegacyCapabilityAndArbitraryParameter_AreRejected()
+    {
+        var document = new WslDocument
+        {
+            DocumentId = "legacy-proposal",
+            Name = "Legacy proposal",
+            SchemaVersion = "1.0",
+            Nodes =
+            [
+                new WslNode("start", "Start", "Start", new Dictionary<string, object?> { ["entryPoint"] = true }),
+                new WslNode("action", "Legacy", "Action", new Dictionary<string, object?>
+                {
+                    ["device"] = "simulator", ["capability"] = "SetPumpMode", ["mode"] = "Purge", ["unsafe"] = true
+                }),
+                new WslNode("end", "End", "Terminate", new Dictionary<string, object?>())
+            ],
+            Edges = [new WslEdge("start-action", "start", "action"), new WslEdge("action-end", "action", "end")]
+        };
+        var registry = new DeviceRegistry();
+        registry.Register(new DeviceDescriptor("simulator", "simulator", "simulator", ["SetMode"], new Dictionary<string, object?>()));
+
+        var result = new WslCompiler().Compile(document, registry);
+
+        Assert.False(result.Success);
+        Assert.Contains(result.Diagnostics, diagnostic => diagnostic.Code == "WSL061");
     }
 }

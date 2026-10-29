@@ -1,3 +1,7 @@
+using System.Globalization;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
 using Helix.Orchestration.Core.Devices;
 using Helix.Orchestration.Core.Safety;
 
@@ -15,12 +19,40 @@ namespace Helix.Orchestration.Core.WSL;
 ///   <item><description>Parallel node fork-join expansion</description></item>
 /// </list>
 /// </summary>
-public sealed class WslCompiler : IWslCompiler
+/// <summary>Compiler entry point that carries fresh admission feedback but no dispatch authority.</summary>
+public interface IAdmissionAwareWslCompiler
+{
+    WorkflowCompilationFeedback CompileWithFeedback(
+        WslDocument document,
+        DeviceRegistry deviceRegistry,
+        CommandAdmissionEvaluator evaluator,
+        CommandAdmissionContext context,
+        ISafetyEngine? safetyEngine = null);
+}
+
+/// <summary>
+/// Compilation plus the point-in-time safety/policy feedback that informed it.
+/// <see cref="Admission"/> is evidence only and can never be reused for dispatch.
+/// </summary>
+public sealed record WorkflowCompilationFeedback(
+    CompilationResult Compilation,
+    CommandAdmissionResult Admission)
+{
+    public bool IsDispatchAuthorization => false;
+}
+
+public sealed class WslCompiler : IWslCompiler, IAdmissionAwareWslCompiler
 {
     // Threat T-06-07: cap loop iterations to prevent memory exhaustion from malformed WSL
     private const int MaxLoopIterations = 1000;
 
     private static readonly HashSet<string> SupportedVersions = ["1.0"];
+
+    private static readonly HashSet<string> SupportedNodeTypes =
+        ["Start", "Action", "Delay", "Hold", "Terminate"];
+
+    private static readonly HashSet<string> CanonicalCapabilities =
+        ["SetFlow", "GetFlow", "SetTemperature", "GetTemperature", "SetMode", "GetMode"];
 
     /// <inheritdoc />
     public CompilationResult Compile(
@@ -45,20 +77,19 @@ public sealed class WslCompiler : IWslCompiler
         // 5. Variable reference validation
         ValidateVariableReferences(document, diagnostics);
 
+        // The currently active executor is sequential. Do not transform syntax
+        // into a construct whose guard/parallel/loop semantics it cannot enforce.
+        ValidateActiveExecutorCompatibility(document, deviceRegistry, diagnostics);
+
         // If any errors, return failed result before running transforms
         if (diagnostics.Any(d => d.Severity == DiagnosticSeverity.Error))
             return CompilationResult.Failed(diagnostics);
 
-        // 6. Apply graph transformations (mutable copies)
+        // 6. Emit the exact supported graph. Compilation must not turn an
+        // unsupported control construct into something that merely looks safe.
         var transformedNodes = new List<WslNode>(document.Nodes);
         var transformedEdges = new List<WslEdge>(document.Edges);
-
-        if (safetyEngine != null)
-            transformedNodes = InjectSafetyEnvelope(transformedNodes, safetyEngine, diagnostics);
-
-        (transformedNodes, transformedEdges) = ExpandLoopNodes(transformedNodes, transformedEdges, diagnostics);
-        (transformedNodes, transformedEdges) = FlattenBranchNodes(transformedNodes, transformedEdges, diagnostics);
-        (transformedNodes, transformedEdges) = FlattenParallelNodes(transformedNodes, transformedEdges, diagnostics);
+        var definitionHash = ComputeDefinitionHash(document);
 
         // 7. Emit RunspaceDefinition
         var definition = new RunspaceDefinition(
@@ -71,10 +102,32 @@ public sealed class WslCompiler : IWslCompiler
                 ["schemaVersion"] = document.SchemaVersion,
                 ["author"] = document.Author,
                 ["description"] = document.Description,
+                ["definitionRevision"] = $"sha256:{definitionHash}",
+                ["definitionHash"] = definitionHash,
                 ["compiledAt"] = DateTimeOffset.UtcNow
             });
 
         return CompilationResult.Succeeded(definition, diagnostics);
+    }
+
+    /// <summary>
+    /// Compiles a proposal against a fresh admission snapshot. The result keeps
+    /// all Passed/Failed/Unknown checks for scientist feedback; it does not
+    /// mint a credential and dispatch must evaluate fresh state again.
+    /// </summary>
+    public WorkflowCompilationFeedback CompileWithFeedback(
+        WslDocument document,
+        DeviceRegistry deviceRegistry,
+        CommandAdmissionEvaluator evaluator,
+        CommandAdmissionContext context,
+        ISafetyEngine? safetyEngine = null)
+    {
+        ArgumentNullException.ThrowIfNull(evaluator);
+        ArgumentNullException.ThrowIfNull(context);
+
+        var compilation = Compile(document, deviceRegistry, safetyEngine);
+        var admission = evaluator.Evaluate(context);
+        return new WorkflowCompilationFeedback(compilation, admission);
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -94,6 +147,12 @@ public sealed class WslCompiler : IWslCompiler
                 DiagnosticSeverity.Error,
                 $"Schema version '{document.SchemaVersion}' is not supported. Supported versions: {string.Join(", ", SupportedVersions)}",
                 Code: "WSL003"));
+
+        if (document.Nodes.Count == 0)
+            diagnostics.Add(new CompilationDiagnostic(
+                DiagnosticSeverity.Error,
+                "Document must contain at least one executable node.",
+                Code: "WSL004"));
     }
 
     private static void ValidateGraph(WslDocument document, List<CompilationDiagnostic> diagnostics)
@@ -214,10 +273,262 @@ public sealed class WslCompiler : IWslCompiler
                                 node.NodeId,
                                 "WSL040"));
                         }
+                        else if (scope.Equals("device", StringComparison.OrdinalIgnoreCase) &&
+                                 !WorkflowEngine.CapabilityReadExtensions.IsCanonicalObservation(match.Groups[2].Value))
+                        {
+                            diagnostics.Add(new CompilationDiagnostic(
+                                DiagnosticSeverity.Error,
+                                $"Node '{node.NodeId}', parameter '{param.Key}': device variable '{match.Groups[2].Value}' is unsupported or mutating. Reauthor with GetFlow, GetTemperature, or GetMode.",
+                                node.NodeId,
+                                "WSL041"));
+                        }
                     }
                 }
             }
         }
+    }
+
+    private static void ValidateActiveExecutorCompatibility(
+        WslDocument document,
+        DeviceRegistry deviceRegistry,
+        List<CompilationDiagnostic> diagnostics)
+    {
+        foreach (var node in document.Nodes)
+        {
+            if (!SupportedNodeTypes.Contains(node.NodeType))
+            {
+                diagnostics.Add(new CompilationDiagnostic(
+                    DiagnosticSeverity.Error,
+                    $"Node '{node.NodeId}' uses '{node.NodeType}', which the active executor does not enforce. Reauthor as a sequential Action, Delay, Hold, or termination step.",
+                    node.NodeId,
+                    "WSL060"));
+                continue;
+            }
+
+            if (node.NodeType.Equals("Action", StringComparison.Ordinal))
+                ValidateAction(node, deviceRegistry, diagnostics);
+            else if (node.NodeType.Equals("Delay", StringComparison.Ordinal))
+                ValidateDelay(node, diagnostics);
+        }
+
+        foreach (var edge in document.Edges)
+        {
+            if (!string.IsNullOrWhiteSpace(edge.Condition))
+            {
+                diagnostics.Add(new CompilationDiagnostic(
+                    DiagnosticSeverity.Error,
+                    $"Edge '{edge.EdgeId}' has a guard condition that the active executor does not enforce.",
+                    edge.SourceNodeId,
+                    "WSL062"));
+            }
+        }
+
+        foreach (var group in document.Edges.GroupBy(edge => edge.SourceNodeId))
+        {
+            if (group.Count() > 1)
+            {
+                diagnostics.Add(new CompilationDiagnostic(
+                    DiagnosticSeverity.Error,
+                    $"Node '{group.Key}' fans out to multiple edges; parallel or branch semantics are unsupported by the active executor.",
+                    group.Key,
+                    "WSL063"));
+            }
+        }
+    }
+
+    private static void ValidateAction(WslNode node, DeviceRegistry deviceRegistry, List<CompilationDiagnostic> diagnostics)
+    {
+        if (!node.Parameters.TryGetValue("capability", out var capabilityValue) || capabilityValue is not string capability ||
+            !CanonicalCapabilities.Contains(capability))
+        {
+            diagnostics.Add(new CompilationDiagnostic(
+                DiagnosticSeverity.Error,
+                $"Action node '{node.NodeId}' must use one canonical capability: SetFlow, GetFlow, SetTemperature, GetTemperature, SetMode, or GetMode. Legacy capability aliases require reauthoring and reapproval.",
+                node.NodeId,
+                "WSL061"));
+            return;
+        }
+
+        if (!TryGetSimulatorAlias(node, out var deviceAlias) || !string.Equals(deviceAlias, "simulator", StringComparison.Ordinal))
+        {
+            diagnostics.Add(new CompilationDiagnostic(
+                DiagnosticSeverity.Error,
+                $"Action node '{node.NodeId}' must target the registered simulator using its canonical alias.",
+                node.NodeId,
+                "WSL064"));
+        }
+
+        ValidateActionParameterNames(node, capability, diagnostics);
+
+        switch (capability)
+        {
+            case "SetFlow":
+                ValidateDecimalParameter(node, "flowRate", 0m, 10m, 0.1m, "WSL065", diagnostics);
+                break;
+            case "SetTemperature":
+                ValidateDecimalParameter(node, "temperature", 20m, 80m, 1m, "WSL065", diagnostics);
+                break;
+            case "SetMode":
+                if (!node.Parameters.TryGetValue("mode", out var mode) || mode is not string modeValue ||
+                    modeValue is not ("Isocratic" or "Gradient" or "Purge"))
+                {
+                    diagnostics.Add(new CompilationDiagnostic(
+                        DiagnosticSeverity.Error,
+                        $"Action node '{node.NodeId}' requires canonical mode Isocratic, Gradient, or Purge.",
+                        node.NodeId,
+                        "WSL065"));
+                }
+                break;
+        }
+    }
+
+    private static void ValidateDelay(WslNode node, List<CompilationDiagnostic> diagnostics)
+    {
+        if (!node.Parameters.TryGetValue("duration", out var duration) || !TryGetFiniteDecimal(duration, out var seconds) || seconds <= 0m)
+        {
+            diagnostics.Add(new CompilationDiagnostic(
+                DiagnosticSeverity.Error,
+                $"Delay node '{node.NodeId}' requires a finite positive duration.",
+                node.NodeId,
+                "WSL066"));
+        }
+    }
+
+    private static bool TryGetSimulatorAlias(WslNode node, out string? deviceAlias)
+    {
+        if (node.Parameters.ContainsKey("device") && node.Parameters.ContainsKey("deviceAlias"))
+        {
+            deviceAlias = null;
+            return false;
+        }
+
+        if (node.Parameters.TryGetValue("device", out var device) && device is string deviceValue)
+        {
+            deviceAlias = deviceValue;
+            return true;
+        }
+
+        if (node.Parameters.TryGetValue("deviceAlias", out var alias) && alias is string aliasValue)
+        {
+            deviceAlias = aliasValue;
+            return true;
+        }
+
+        deviceAlias = null;
+        return false;
+    }
+
+    private static void ValidateActionParameterNames(
+        WslNode node,
+        string capability,
+        List<CompilationDiagnostic> diagnostics)
+    {
+        var allowed = capability switch
+        {
+            "SetFlow" => new HashSet<string>(["device", "deviceAlias", "capability", "flowRate"], StringComparer.Ordinal),
+            "SetTemperature" => new HashSet<string>(["device", "deviceAlias", "capability", "temperature"], StringComparer.Ordinal),
+            "SetMode" => new HashSet<string>(["device", "deviceAlias", "capability", "mode"], StringComparer.Ordinal),
+            _ => new HashSet<string>(["device", "deviceAlias", "capability"], StringComparer.Ordinal)
+        };
+
+        foreach (var parameterName in node.Parameters.Keys.Where(parameterName => !allowed.Contains(parameterName)))
+        {
+            diagnostics.Add(new CompilationDiagnostic(
+                DiagnosticSeverity.Error,
+                $"Action node '{node.NodeId}' parameter '{parameterName}' is not canonical for '{capability}'. Reauthor using the canonical parameter key and unit.",
+                node.NodeId,
+                "WSL067"));
+        }
+    }
+
+    private static void ValidateDecimalParameter(
+        WslNode node,
+        string parameter,
+        decimal minimum,
+        decimal maximum,
+        decimal step,
+        string code,
+        List<CompilationDiagnostic> diagnostics)
+    {
+        if (!node.Parameters.TryGetValue(parameter, out var value) || !TryGetFiniteDecimal(value, out var decimalValue) ||
+            decimalValue < minimum || decimalValue > maximum || (decimalValue - minimum) % step != 0m)
+        {
+            diagnostics.Add(new CompilationDiagnostic(
+                DiagnosticSeverity.Error,
+                $"Action node '{node.NodeId}' requires '{parameter}' in [{minimum}, {maximum}] using {step} canonical increments.",
+                node.NodeId,
+                code));
+        }
+    }
+
+    private static bool TryGetFiniteDecimal(object? value, out decimal result)
+    {
+        switch (value)
+        {
+            case decimal decimalValue:
+                result = decimalValue;
+                return true;
+            case int intValue:
+                result = intValue;
+                return true;
+            case long longValue:
+                result = longValue;
+                return true;
+            case double doubleValue when !double.IsNaN(doubleValue) && !double.IsInfinity(doubleValue):
+                try
+                {
+                    result = Convert.ToDecimal(doubleValue, CultureInfo.InvariantCulture);
+                    return true;
+                }
+                catch (OverflowException)
+                {
+                    break;
+                }
+            case float floatValue when !float.IsNaN(floatValue) && !float.IsInfinity(floatValue):
+                try
+                {
+                    result = Convert.ToDecimal(floatValue, CultureInfo.InvariantCulture);
+                    return true;
+                }
+                catch (OverflowException)
+                {
+                    break;
+                }
+            case string stringValue when decimal.TryParse(stringValue, NumberStyles.Number, CultureInfo.InvariantCulture, out var parsed):
+                result = parsed;
+                return true;
+        }
+
+        result = default;
+        return false;
+    }
+
+    private static string ComputeDefinitionHash(WslDocument document)
+    {
+        var canonical = new StringBuilder();
+        canonical.Append(document.DocumentId).Append('\n')
+            .Append(document.Name).Append('\n')
+            .Append(document.SchemaVersion).Append('\n')
+            .Append(document.Author).Append('\n')
+            .Append(document.Description).Append('\n');
+
+        foreach (var node in document.Nodes.OrderBy(node => node.NodeId, StringComparer.Ordinal))
+        {
+            canonical.Append(node.NodeId).Append('|').Append(node.Label).Append('|').Append(node.NodeType).Append('|');
+            foreach (var parameter in node.Parameters.OrderBy(parameter => parameter.Key, StringComparer.Ordinal))
+            {
+                canonical.Append(parameter.Key).Append('=').Append(JsonSerializer.Serialize(parameter.Value)).Append(';');
+            }
+
+            canonical.Append('\n');
+        }
+
+        foreach (var edge in document.Edges.OrderBy(edge => edge.EdgeId, StringComparer.Ordinal))
+        {
+            canonical.Append(edge.EdgeId).Append('|').Append(edge.SourceNodeId).Append('|').Append(edge.TargetNodeId).Append('|').Append(edge.Condition).Append('\n');
+        }
+
+        return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(canonical.ToString()))).ToLowerInvariant();
     }
 
     // ─────────────────────────────────────────────────────────────────────────

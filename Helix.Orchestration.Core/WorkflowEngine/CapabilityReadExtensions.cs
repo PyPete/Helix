@@ -1,117 +1,171 @@
-using Helix.Orchestration.Core.Capabilities;
+using System.Globalization;
+using Helix.Orchestration.Core.Execution;
 
 namespace Helix.Orchestration.Core.WorkflowEngine;
 
+/// <summary>Outcome of a read-only canonical simulator observation.</summary>
+public enum ObservationReadStatus
+{
+    Known,
+    Unknown,
+    Invalid
+}
+
 /// <summary>
-/// Extension methods for reading device state as typed variables through capability invocation.
-/// Enables workflows to retrieve device values (flow rates, temperatures, pressures, etc.)
-/// without direct device coupling.
+/// A structured observation result. Invalid means the requested vocabulary was
+/// rejected; Unknown means a permitted observation could not be trusted.
+/// </summary>
+public sealed record ObservationReadResult<T>(
+    ObservationReadStatus Status,
+    T? Value,
+    string Code,
+    string Reason)
+{
+    public static ObservationReadResult<T> Known(T value) =>
+        new(ObservationReadStatus.Known, value, "observation.known", "Observation is readable and current.");
+
+    public static ObservationReadResult<T> Unknown(string code, string reason) =>
+        new(ObservationReadStatus.Unknown, default, code, reason);
+
+    public static ObservationReadResult<T> Invalid(string code, string reason) =>
+        new(ObservationReadStatus.Invalid, default, code, reason);
+}
+
+/// <summary>
+/// Resolves the deliberately small read-only simulator vocabulary used by WSL
+/// variables. This type never invokes <c>ICapabilityInvoker</c>: a variable
+/// read must not be able to call a setter or an arbitrary registered capability.
 /// </summary>
 public static class CapabilityReadExtensions
 {
+    private static readonly TimeSpan ObservationFreshness = TimeSpan.FromSeconds(2);
+
+    /// <summary>Returns whether <paramref name="capability"/> is one of the three canonical getters.</summary>
+    public static bool IsCanonicalObservation(string capability) =>
+        capability is "GetFlow" or "GetTemperature" or "GetMode";
+
     /// <summary>
-    /// Reads a typed value from a capability invocation.
-    /// Capability name should be in the format "deviceId_capabilityName" (e.g., "vapourtec_status").
-    /// Returns default(T) if the capability does not exist or the result cannot be converted.
+    /// Maps a canonical getter to its persistent simulator state key and unit.
+    /// Namespaces are intentionally not accepted here; device bridges own any
+    /// transport-specific namespace normalization.
     /// </summary>
-    /// <param name="invoker">The capability invoker.</param>
-    /// <param name="capabilityName">The capability name (e.g., "vapourtec_status").</param>
-    /// <param name="propertyPath">Optional dot-separated property path for nested values (e.g., "FlowRate.Pump1").</param>
-    /// <param name="parameters">Optional parameters for the capability invocation.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <typeparam name="T">The expected return type.</typeparam>
-    /// <returns>The typed value or default(T) if not found or type conversion fails.</returns>
-    public static async Task<T?> ReadDeviceValueAsync<T>(
-        this ICapabilityInvoker invoker,
-        string capabilityName,
-        string? propertyPath = null,
-        object? parameters = null,
+    public static bool TryGetObservationMetadata(
+        string capability,
+        out string stateKey,
+        out string unit)
+    {
+        switch (capability)
+        {
+            case "GetFlow":
+                stateKey = "flowRate";
+                unit = "mL/min";
+                return true;
+            case "GetTemperature":
+                stateKey = "temperature";
+                unit = "°C";
+                return true;
+            case "GetMode":
+                stateKey = "mode";
+                unit = "enum";
+                return true;
+            default:
+                stateKey = string.Empty;
+                unit = string.Empty;
+                return false;
+        }
+    }
+
+    /// <summary>
+    /// Reads a canonical getter through the read-only observation port. Missing,
+    /// stale, malformed, or unreadable data is Unknown, never a safe-looking
+    /// numeric or empty-string default.
+    /// </summary>
+    public static async Task<ObservationReadResult<object>> ReadObservationAsync(
+        this ISimulatorObservation observations,
+        string capability,
         CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(capabilityName))
-            throw new ArgumentException("Capability name cannot be null or empty.", nameof(capabilityName));
+        ArgumentNullException.ThrowIfNull(observations);
 
+        if (!TryGetObservationMetadata(capability, out var stateKey, out var unit))
+        {
+            return ObservationReadResult<object>.Invalid(
+                "observation.unsupported-capability",
+                $"'{capability}' is not a canonical read-only observation. Reauthor with GetFlow, GetTemperature, or GetMode.");
+        }
+
+        SimulatorObservation? observation;
         try
         {
-            var invocationResult = await invoker.InvokeAsync(capabilityName, parameters, cancellationToken);
+            observation = await observations.GetAsync("simulator", stateKey, cancellationToken).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception exception)
+        {
+            return ObservationReadResult<object>.Unknown(
+                "observation.unreadable",
+                $"'{capability}' observation could not be read: {exception.GetType().Name}.");
+        }
 
-            if (!invocationResult.Success || invocationResult.ReturnValue == null)
-                return default;
+        if (observation is null)
+        {
+            return ObservationReadResult<object>.Unknown(
+                "observation.missing",
+                $"'{capability}' has no independent simulator observation.");
+        }
 
-            var result = invocationResult.ReturnValue;
+        var now = DateTimeOffset.UtcNow;
+        if (observation.ObservedAtUtc == default || observation.ObservedAtUtc > now ||
+            now - observation.ObservedAtUtc > ObservationFreshness)
+        {
+            return ObservationReadResult<object>.Unknown(
+                "observation.stale",
+                $"'{capability}' observation is stale or has an invalid timestamp.");
+        }
 
-            // If a property path is specified, navigate into the result object
-            if (!string.IsNullOrWhiteSpace(propertyPath))
+        if (!string.Equals(observation.DeviceId, "simulator", StringComparison.Ordinal) ||
+            !string.Equals(observation.StateKey, stateKey, StringComparison.Ordinal) ||
+            !string.Equals(observation.Unit, unit, StringComparison.Ordinal))
+        {
+            return ObservationReadResult<object>.Unknown(
+                "observation.mismatch",
+                $"'{capability}' observation did not match its canonical simulator state key or unit.");
+        }
+
+        if (capability == "GetMode")
+        {
+            if (observation.CanonicalValue is not ("Isocratic" or "Gradient" or "Purge"))
             {
-                result = NavigatePropertyPath(result, propertyPath);
-                if (result == null)
-                    return default;
+                return ObservationReadResult<object>.Unknown(
+                    "observation.invalid-value",
+                    "GetMode observation is not a canonical mode enum value.");
             }
 
-            // Direct type match
-            if (result is T typedResult)
-                return typedResult;
-
-            // Attempt conversion for numeric types
-            if (typeof(T).IsPrimitive || typeof(T) == typeof(decimal))
-            {
-                try
-                {
-                    return (T)Convert.ChangeType(result, typeof(T));
-                }
-                catch
-                {
-                    return default;
-                }
-            }
-
-            return default;
+            return ObservationReadResult<object>.Known(observation.CanonicalValue);
         }
-        catch
+
+        if (!decimal.TryParse(
+                observation.CanonicalValue,
+                NumberStyles.AllowLeadingSign | NumberStyles.AllowDecimalPoint,
+                CultureInfo.InvariantCulture,
+                out var numericValue))
         {
-            return default;
-        }
-    }
-
-    /// <summary>
-    /// Reads a typed value with a fallback default if not found.
-    /// </summary>
-    public static async Task<T> ReadDeviceValueOrDefaultAsync<T>(
-        this ICapabilityInvoker invoker,
-        string capabilityName,
-        T defaultValue,
-        string? propertyPath = null,
-        object? parameters = null,
-        CancellationToken cancellationToken = default)
-    {
-        var result = await invoker.ReadDeviceValueAsync<T>(
-            capabilityName, propertyPath, parameters, cancellationToken);
-        return result ?? defaultValue;
-    }
-
-    /// <summary>
-    /// Navigates a dot-separated property path into a nested object.
-    /// Example: "FlowRate.Pump1" will access result.FlowRate.Pump1
-    /// </summary>
-    private static object? NavigatePropertyPath(object source, string path)
-    {
-        var parts = path.Split('.');
-        var current = source;
-
-        foreach (var part in parts)
-        {
-            if (current == null)
-                return null;
-
-            var type = current.GetType();
-            var property = type.GetProperty(part);
-
-            if (property == null)
-                return null;
-
-            current = property.GetValue(current);
+            return ObservationReadResult<object>.Unknown(
+                "observation.invalid-value",
+                $"'{capability}' observation is not a finite canonical decimal.");
         }
 
-        return current;
+        return ObservationReadResult<object>.Known(numericValue);
     }
+
+    /// <summary>Formats an already validated canonical observation for substitution.</summary>
+    public static string FormatCanonicalValue(object value) => value switch
+    {
+        decimal decimalValue => decimalValue.ToString("0.#############################", CultureInfo.InvariantCulture),
+        string enumValue when enumValue is "Isocratic" or "Gradient" or "Purge" => enumValue,
+        _ => throw new ArgumentException("Observation value was not canonical.", nameof(value))
+    };
 }
