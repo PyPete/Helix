@@ -1,7 +1,7 @@
 ---
 phase: "01"
 slug: "agent-safety-boundary"
-status: draft
+status: approved
 shadcn_initialized: false
 preset: none
 created: "2026-10-29"
