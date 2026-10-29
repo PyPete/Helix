@@ -1,127 +1,39 @@
-import { render, screen } from '@testing-library/react';
-import { describe, it, expect } from 'vitest';
+import { fireEvent, render, screen, within } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
 import { ExperimentTimeline } from './ExperimentTimeline';
-import type { RunspaceEvent, ExperimentStartedEvent, ExperimentEvent } from '../../types/agent';
+
+const appendNote = vi.fn().mockResolvedValue(undefined);
+vi.mock('../../hooks/useCommandEvidence', () => ({ useCommandEvidence: () => ({ records: [], loading: false, unavailable: false, error: null, refresh: vi.fn() }) }));
+vi.mock('../../lib/agentClient', () => ({ appendCommandReviewNote: (...args: unknown[]) => appendNote(...args) }));
 
 describe('ExperimentTimeline', () => {
-  it('renders empty state when no activeExperimentId', () => {
-    render(
-      <ExperimentTimeline
-        runspaceEvents={[]}
-        experimentEvents={[]}
-        activeExperimentId={null}
-      />
-    );
-    expect(screen.getByTestId('timeline-empty')).toBeInTheDocument();
+  it('uses the required empty evidence copy', () => {
+    render(<ExperimentTimeline runspaceEvents={[]} experimentEvents={[]} activeExperimentId={null} />);
+    expect(screen.getByRole('heading', { name: 'No command evidence yet' })).toBeInTheDocument();
+    expect(screen.getByText(/Proposed simulated actions/)).toBeInTheDocument();
   });
 
-  it('renders experiment-started event', () => {
-    const startedEvent: ExperimentStartedEvent = {
-      type: 'experiment-started',
-      experimentId: 'exp-1',
-      name: 'My Experiment',
-      experimentPhase: 'init',
-      timestamp: '2026-06-01T00:00:00Z',
-    };
-    render(
-      <ExperimentTimeline
-        runspaceEvents={[]}
-        experimentEvents={[startedEvent]}
-        activeExperimentId='exp-1'
-      />
-    );
-    expect(screen.getByTestId('timeline-experiment-started')).toBeInTheDocument();
+  it('orders evidence by durable sequence and shows critical meaning without color', () => {
+    render(<ExperimentTimeline runspaceEvents={[]} experimentEvents={[]} activeExperimentId={null} commandEvidence={[
+      { evidenceId: 'second', commandId: '22222222-2222-4222-8222-222222222222', executionId: 'execution', sequence: 2, state: 'Allowed', verifiedActor: 'Scientist', capability: 'SetFlow', deviceId: 'simulator', timestamp: 'later', checks: [] },
+      { evidenceId: 'first', commandId: '11111111-1111-4111-8111-111111111111', executionId: 'execution', sequence: 1, state: 'Rejected', verifiedActor: 'Scientist', capability: 'SetFlow', deviceId: 'simulator', timestamp: 'earlier', checks: [{ check: 'Safety', status: 'Failed', code: 'unsafe' }] },
+    ]} />);
+    const rows = screen.getAllByTestId('timeline-command-evidence');
+    expect(rows[0]).toHaveTextContent('Rejected � not dispatched');
+    expect(rows[0]).toHaveTextContent('?');
+    expect(rows[1]).toHaveTextContent('Allowed');
   });
 
-  it('renders step events under phase', () => {
-    const startedEvent: ExperimentStartedEvent = {
-      type: 'experiment-started',
-      experimentId: 'exp-2',
-      name: 'Phase Test',
-      experimentPhase: 'main',
-      timestamp: '2026-06-01T00:00:00Z',
-    };
-    const stepEvent: RunspaceEvent = {
-      type: 'step-started',
-      runspaceId: 'rs-1',
-      timestamp: '2026-06-01T00:00:01Z',
-      experimentId: 'exp-2',
-      experimentPhase: 'main',
-    };
-    render(
-      <ExperimentTimeline
-        runspaceEvents={[stepEvent]}
-        experimentEvents={[startedEvent]}
-        activeExperimentId='exp-2'
-      />
-    );
-    expect(screen.getByTestId('timeline-phase-main')).toBeInTheDocument();
-    expect(screen.getByTestId('timeline-step-step-started')).toBeInTheDocument();
-  });
-
-  it('renders manual-action events with [M] marker', () => {
-    const manualEvent: RunspaceEvent = {
-      type: 'manual-action',
-      runspaceId: 'rs-manual',
-      timestamp: '2026-06-01T00:00:02Z',
-      experimentId: 'exp-3',
-    };
-    render(
-      <ExperimentTimeline
-        runspaceEvents={[manualEvent]}
-        experimentEvents={[]}
-        activeExperimentId='exp-3'
-      />
-    );
-    const manualItem = screen.getByTestId('timeline-manual-action');
-    expect(manualItem).toBeInTheDocument();
-    expect(manualItem.textContent).toContain('[M]');
-  });
-
-  it('filters events to activeExperimentId only', () => {
-    const startedA: ExperimentStartedEvent = {
-      type: 'experiment-started',
-      experimentId: 'exp-a',
-      name: 'Experiment A',
-      experimentPhase: 'init',
-      timestamp: '2026-06-01T00:00:00Z',
-    };
-    const startedB: ExperimentStartedEvent = {
-      type: 'experiment-started',
-      experimentId: 'exp-b',
-      name: 'Experiment B',
-      experimentPhase: 'init',
-      timestamp: '2026-06-01T00:00:00Z',
-    };
-    const allExperimentEvents: ExperimentEvent[] = [startedA, startedB];
-    render(
-      <ExperimentTimeline
-        runspaceEvents={[]}
-        experimentEvents={allExperimentEvents}
-        activeExperimentId='exp-a'
-      />
-    );
-    // Only one experiment-started should appear (for exp-a)
-    const startedItems = screen.getAllByTestId('timeline-experiment-started');
-    expect(startedItems).toHaveLength(1);
-    expect(startedItems[0].textContent).toContain('Experiment A');
-  });
-
-  it('renders committed command evidence without an active experiment', () => {
-    render(
-      <ExperimentTimeline
-        runspaceEvents={[]}
-        experimentEvents={[]}
-        activeExperimentId={null}
-        commandEvidence={[{
-          evidenceId: 'evidence-1', commandId: 'command-1', executionId: 'execution-1', sequence: 1,
-          state: 'Held', verifiedActor: 'Scientist', capability: 'SetFlow', deviceId: 'simulator',
-          timestamp: '2026-06-01T00:00:00Z', checks: [{ check: 'health', status: 'Unknown', code: 'health.unknown' }],
-        }]}
-      />
-    );
-
-    expect(screen.getByTestId('timeline-command-evidence')).toHaveTextContent('SetFlow on simulator');
-    expect(screen.getByText('health: Unknown (health.unknown)')).toBeInTheDocument();
+  it('expands original facts and appends a review note without editing them', async () => {
+    render(<ExperimentTimeline runspaceEvents={[]} experimentEvents={[]} activeExperimentId={null} commandEvidence={[{
+      evidenceId: 'evidence-1', commandId: '11111111-1111-4111-8111-111111111111', executionId: 'execution-1', sequence: 1, state: 'Held', verifiedActor: 'Scientist', capability: 'SetFlow', deviceId: 'simulator', timestamp: 'now', checks: [{ check: 'health', status: 'Unknown', code: 'health.unknown' }],
+    }]} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Show original facts' }));
+    expect(screen.getByText('Command ID')).toBeInTheDocument();
+    const evidenceRow = screen.getByTestId('timeline-command-evidence');
+    expect(within(evidenceRow).getByText(/health:\s*health\.unknown/)).toHaveTextContent('Unknown health: health.unknown');
+    fireEvent.change(screen.getByLabelText('Add review note'), { target: { value: 'Observed fumehood condition' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Add review note' }));
+    expect(appendNote).toHaveBeenCalledWith('11111111-1111-4111-8111-111111111111', 'Observed fumehood condition');
   });
 });

@@ -1,0 +1,7 @@
+.safety-panel { min-height: 0; overflow: hidden; }
+.safety-panel__rules { max-height: 260px; margin: 0; padding-left: 16px; overflow-y: auto; }
+.safety-panel__rule, .safety-panel__rule--triggered { margin: 8px 0; overflow-wrap: anywhere; }
+.safety-panel__rule--triggered, .safety-panel__triggered { color: var(--color-danger); }
+.safety-panel__unknown { color: var(--color-warning, var(--color-danger)); }
+.safety-panel__known { color: var(--color-text-muted); }
+.safety-panel__identifier { font-family: var(--font-mono); font-size: 11px; user-select: text; }
