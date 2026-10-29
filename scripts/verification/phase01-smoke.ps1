@@ -17,6 +17,33 @@ function Wait-Until([scriptblock]$Condition, [string]$Failure) {
     throw $Failure
 }
 
+function Get-ProcessTreeIds([int]$RootProcessId) {
+    $processIds = [System.Collections.Generic.HashSet[int]]::new()
+    $pending = [System.Collections.Generic.Queue[int]]::new()
+    $pending.Enqueue($RootProcessId)
+
+    while ($pending.Count -gt 0) {
+        $processId = $pending.Dequeue()
+        if (-not $processIds.Add($processId)) { continue }
+
+        Get-CimInstance Win32_Process -Filter "ParentProcessId = $processId" -ErrorAction SilentlyContinue |
+            ForEach-Object { $pending.Enqueue([int]$_.ProcessId) }
+    }
+
+    return $processIds
+}
+
+function Stop-ProcessTree($Process) {
+    if ($null -eq $Process) { return }
+
+    # `npm tauri dev` owns cargo, Vite and the native WebView host. Stopping only
+    # npm leaves Helix Desktop running with a session for the previous Agent.
+    # A later run can otherwise find that stale window by title and click it.
+    Get-ProcessTreeIds $Process.Id |
+        Sort-Object -Descending |
+        ForEach-Object { Stop-Process -Id $_ -Force -ErrorAction SilentlyContinue }
+}
+
 function Invoke-Postgres([string]$Sql) {
     $Sql | docker exec -i helix-postgres psql -v ON_ERROR_STOP=1 -U helix -d helix_orchestration -At 2>$null
     if ($LASTEXITCODE -ne 0) { throw 'The required Docker PostgreSQL query failed.' }
@@ -36,27 +63,35 @@ try {
     Invoke-Postgres 'DELETE FROM command_evidence; DELETE FROM command_intents; DELETE FROM command_streams;' | Out-Null
 
     docker compose stop helix-agent | Out-Null
-    $environment:ASPNETCORE_URLS = 'http://127.0.0.1:5080'
-    $environment:ConnectionStrings__HelixOrchestration = 'Host=127.0.0.1;Port=5432;Database=helix_orchestration;Username=helix;Password=helix_dev_password'
+    $env:ASPNETCORE_URLS = 'http://127.0.0.1:5080'
+    $env:ConnectionStrings__HelixOrchestration = 'Host=127.0.0.1;Port=5432;Database=helix_orchestration;Username=helix;Password=helix_dev_password'
     $agent = Start-Process dotnet -ArgumentList 'run','--no-build','--project','Helix.Orchestration.Agent/Helix.Orchestration.Agent.csproj' -PassThru
     Wait-Until { (Test-NetConnection -ComputerName 127.0.0.1 -Port 5080 -InformationLevel Quiet) } 'Real Agent child process did not listen on 127.0.0.1:5080.'
 
     # Tauri dev launches the real WebView2 main window and the production native
     # command module. UI Automation presses the visible renderer button; no invoke
-    # call is fabricated by this tracer.
+    # call is fabricated by this tracer. Match the window to this process tree,
+    # rather than title alone: a stale prior test window may hold an invalid token.
     $desktop = Start-Process npm.cmd -WorkingDirectory 'helix-desktop' -ArgumentList 'run','tauri','dev' -PassThru
     Add-Type -AssemblyName UIAutomationClient
     Add-Type -AssemblyName UIAutomationTypes
     $root = [System.Windows.Automation.AutomationElement]::RootElement
     $windowCondition = New-Object System.Windows.Automation.PropertyCondition([System.Windows.Automation.AutomationElement]::NameProperty, 'Helix Desktop')
     $buttonCondition = New-Object System.Windows.Automation.PropertyCondition([System.Windows.Automation.AutomationElement]::NameProperty, 'Set Flow')
-    $button = $null
+    $script:tracerWindow = $null
+    $script:tracerButton = $null
     Wait-Until {
-        $window = $root.FindFirst([System.Windows.Automation.TreeScope]::Children, $windowCondition)
-        if ($null -eq $window) { return $false }
-        $script:button = $window.FindFirst([System.Windows.Automation.TreeScope]::Subtree, $buttonCondition)
-        return $null -ne $script:button
-    } 'Actual Tauri main webview did not render the Set Flow control.'
+        $desktopProcessIds = Get-ProcessTreeIds $desktop.Id
+        $script:tracerWindow = $null
+        $root.FindAll([System.Windows.Automation.TreeScope]::Children, $windowCondition) |
+            ForEach-Object {
+                if ($desktopProcessIds.Contains($_.Current.ProcessId)) { $script:tracerWindow = $_ }
+            }
+        if ($null -eq $script:tracerWindow) { return $false }
+        $script:tracerButton = $script:tracerWindow.FindFirst([System.Windows.Automation.TreeScope]::Subtree, $buttonCondition)
+        return $null -ne $script:tracerButton -and $script:tracerButton.Current.IsEnabled
+    } 'The Tauri process started by this tracer did not render an enabled Set Flow control.'
+    $button = $script:tracerButton
     $invoke = $button.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern)
     ([System.Windows.Automation.InvokePattern]$invoke).Invoke()
 
@@ -83,8 +118,8 @@ try {
     Write-Host "Tracer passed: real Tauri WebView action, native broker, Agent, PostgreSQL evidence, and restart persistence ($commandId)."
 }
 finally {
-    if ($desktop -and -not $desktop.HasExited) { Stop-Process -Id $desktop.Id -Force -ErrorAction SilentlyContinue }
-    if ($agent -and -not $agent.HasExited) { Stop-Process -Id $agent.Id -Force -ErrorAction SilentlyContinue }
+    Stop-ProcessTree $desktop
+    Stop-ProcessTree $agent
     Remove-Item Env:ASPNETCORE_URLS -ErrorAction SilentlyContinue
     Remove-Item Env:ConnectionStrings__HelixOrchestration -ErrorAction SilentlyContinue
     Pop-Location

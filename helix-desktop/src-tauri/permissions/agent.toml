@@ -1,4 +1,11 @@
 [[permission]]
 identifier = "allow-agent-broker"
 description = "Allows only the fixed-target native Agent broker commands."
-commands.allow = ["bootstrap_agent_session", "agent_status"]
+commands.allow = [
+  "bootstrap_agent_session",
+  "agent_status",
+  "agent_propose",
+  "agent_approve_policy",
+  "agent_dispatch",
+  "agent_evidence"
+]

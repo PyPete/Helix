@@ -11,9 +11,12 @@ export default function DeviceManualControl({ deviceId }: DeviceManualControlPro
   const [flowRate, setFlowRate] = useState("1.0");
   const [evidence, setEvidence] = useState<CommandEvidenceRecord | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [sessionReady, setSessionReady] = useState(false);
 
   useEffect(() => {
-    void bootstrapAgentSession().catch(() => setError("Unable to establish the local desktop session."));
+    void bootstrapAgentSession()
+      .then(() => setSessionReady(true))
+      .catch(() => setError("Unable to establish the local desktop session."));
   }, []);
 
   async function handleSetFlow() {
@@ -26,7 +29,9 @@ export default function DeviceManualControl({ deviceId }: DeviceManualControlPro
     try {
       setEvidence(await executeApprovedSetFlow(value));
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Agent command failed.");
+      // Tauri rejects command failures as strings. Native broker messages are
+      // deliberately token-free, so retain that actionable local diagnostic.
+      setError(reason instanceof Error || typeof reason === "string" ? reason.toString() : "Agent command failed.");
     }
   }
 
@@ -37,7 +42,7 @@ export default function DeviceManualControl({ deviceId }: DeviceManualControlPro
       <input id="SetFlow.flowRate" type="number" min="0" max="10" step="0.1" value={flowRate}
         onChange={(event) => setFlowRate(event.target.value)} />
       <span>mL/min</span>
-      <button onClick={handleSetFlow}>Set Flow</button>
+      <button disabled={!sessionReady} onClick={handleSetFlow}>Set Flow</button>
       {error && <p role="alert">{error}</p>}
       {evidence && (
         <output data-testid="command-evidence" aria-label="Command evidence">

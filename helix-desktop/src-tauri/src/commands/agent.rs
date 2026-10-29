@@ -10,6 +10,7 @@ const AGENT_HOST: &str = "127.0.0.1";
 const AGENT_PORT: u16 = 5080;
 const PIPE_PATH: &str = r"\\.\pipe\helix-desktop-session";
 const MAX_REQUEST_BYTES: usize = 4 * 1024;
+const WINHTTP_ADDREQ_FLAG_ADD: u32 = 0x2000_0000;
 
 pub struct AgentBrokerState(pub Mutex<Option<String>>);
 
@@ -120,10 +121,19 @@ fn native_request(verb: &str, path: &str, body: Option<&str>, token: &str) -> Re
         if connect.is_null() { WinHttpCloseHandle(session); return Err("Unable to connect to the fixed local Agent.".to_string()); }
         let request = WinHttpOpenRequest(connect, verb.as_ptr(), path.as_ptr(), std::ptr::null(), std::ptr::null(), std::ptr::null(), 0);
         if request.is_null() { WinHttpCloseHandle(connect); WinHttpCloseHandle(session); return Err("Unable to create local Agent request.".to_string()); }
-        let sent = WinHttpAddRequestHeaders(request, headers.as_ptr(), u32::MAX, 0) != 0 &&
+        // WinHttpAddRequestHeaders requires an explicit add/replace modifier.
+        // Passing zero rejects the request headers on Windows, which meant the
+        // authenticated proposal was never sent to the Agent.
+        let sent = WinHttpAddRequestHeaders(request, headers.as_ptr(), u32::MAX, WINHTTP_ADDREQ_FLAG_ADD) != 0 &&
             WinHttpSendRequest(request, std::ptr::null(), 0, payload.as_ptr() as *mut c_void, payload.len() as u32, payload.len() as u32, 0) != 0;
         let received = sent && WinHttpReceiveResponse(request, std::ptr::null_mut()) != 0;
-        if !received { WinHttpCloseHandle(request); WinHttpCloseHandle(connect); WinHttpCloseHandle(session); return Err("Local Agent request failed.".to_string()); }
+        if !received {
+            // Retain the OS error only as a local diagnostic; it identifies a
+            // transport failure without disclosing the opaque session token.
+            let error = std::io::Error::last_os_error();
+            WinHttpCloseHandle(request); WinHttpCloseHandle(connect); WinHttpCloseHandle(session);
+            return Err(format!("Local Agent request failed ({error})."));
+        }
         let mut response = Vec::new();
         loop {
             let mut available = 0u32;
