@@ -1,9 +1,8 @@
 using Grpc.Core;
+using Helix.Orchestration.Agent.Experiments;
 using Helix.Orchestration.Contracts.Control;
 using Helix.Orchestration.Core.Devices;
 using Helix.Orchestration.Core.Runspace;
-using Helix.Orchestration.Core.WSL;
-using System.Text.Json;
 
 namespace Helix.Orchestration.Agent.GrpcServer;
 
@@ -11,25 +10,50 @@ public class AgentGrpcService : AgentControl.AgentControlBase
 {
     private readonly IRunspaceManager _runspaceManager;
     private readonly DeviceRegistry _deviceRegistry;
+    private readonly IExperimentManager? _experimentManager;
 
     public AgentGrpcService(IRunspaceManager runspaceManager, DeviceRegistry deviceRegistry)
+        : this(runspaceManager, deviceRegistry, null)
     {
-        _runspaceManager = runspaceManager;
-        _deviceRegistry = deviceRegistry;
+    }
+
+    public AgentGrpcService(
+        IRunspaceManager runspaceManager,
+        DeviceRegistry deviceRegistry,
+        IExperimentManager? experimentManager)
+    {
+        _runspaceManager = runspaceManager ?? throw new ArgumentNullException(nameof(runspaceManager));
+        _deviceRegistry = deviceRegistry ?? throw new ArgumentNullException(nameof(deviceRegistry));
+        _experimentManager = experimentManager;
     }
 
     public override async Task<SubmissionAck> SubmitExperiment(ExperimentSubmission request, ServerCallContext context)
     {
         try
         {
-            var definition = JsonSerializer.Deserialize<RunspaceDefinition>(request.RunspaceDefinitionJson)
-                ?? throw new InvalidOperationException("Null RunspaceDefinition");
-            var runspace = await _runspaceManager.CreateAsync(definition, context.CancellationToken);
+            if (string.IsNullOrWhiteSpace(request.RunspaceDefinitionJson) ||
+                _experimentManager is null ||
+                !_experimentManager.TryGetCanonicalDefinition(request.RunspaceDefinitionJson, out var canonical) ||
+                canonical is null)
+            {
+                return new SubmissionAck
+                {
+                    Accepted = false,
+                    Message = "Raw workflow definitions are unsupported. Submit a canonical experiment reference accepted by the Agent."
+                };
+            }
+
+            var runspace = await _runspaceManager.CreateAsync(canonical.Definition, context.CancellationToken);
+            _experimentManager.SetActiveRunspace(request.RunspaceDefinitionJson, runspace.RunspaceId);
             return new SubmissionAck { Accepted = true, RunspaceId = runspace.RunspaceId, Message = "Accepted" };
         }
-        catch (Exception ex)
+        catch (OperationCanceledException) when (context.CancellationToken.IsCancellationRequested)
         {
-            return new SubmissionAck { Accepted = false, Message = ex.Message };
+            return new SubmissionAck { Accepted = false, Message = "Submission cancelled." };
+        }
+        catch (Exception)
+        {
+            return new SubmissionAck { Accepted = false, Message = "Submission was rejected." };
         }
     }
 
