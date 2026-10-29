@@ -59,7 +59,7 @@ public sealed class PostgresCommandLedger(DbConnectionFactory connectionFactory)
             new CommandDefinition(existingEvidence, new { intent.CommandId }, transaction, cancellationToken: cancellationToken));
         if (existing is not null)
         {
-            if (!existing.Matches(intent))
+            if (!existing.Matches(intent, state, checks))
                 throw new InvalidOperationException("Command identity was reused with different immutable intent content.");
 
             await transaction.CommitAsync(cancellationToken);
@@ -239,7 +239,7 @@ public sealed class PostgresCommandLedger(DbConnectionFactory connectionFactory)
         public string SessionReference { get; init; } = string.Empty;
         public string PolicyRevision { get; init; } = string.Empty;
 
-        public bool Matches(CommandIntent intent) =>
+        public bool Matches(CommandIntent intent, CommandAdmissionState state, IReadOnlyList<CommandCheckEvidence> checks) =>
             ExecutionId == intent.ExecutionId &&
             CorrelationId == intent.CorrelationId &&
             string.Equals(DeviceId, intent.DeviceId, StringComparison.Ordinal) &&
@@ -248,7 +248,9 @@ public sealed class PostgresCommandLedger(DbConnectionFactory connectionFactory)
             string.Equals(VerifiedActorSid, intent.VerifiedActorSid, StringComparison.Ordinal) &&
             string.Equals(VerifiedActorDisplayName, intent.VerifiedActorDisplayName, StringComparison.Ordinal) &&
             string.Equals(SessionReference, intent.SessionReference, StringComparison.Ordinal) &&
-            string.Equals(PolicyRevision, intent.PolicyRevision, StringComparison.Ordinal);
+            string.Equals(PolicyRevision, intent.PolicyRevision, StringComparison.Ordinal) &&
+            string.Equals(AdmissionState, state.ToString(), StringComparison.Ordinal) &&
+            JsonSerializer.Deserialize<List<CommandCheckEvidence>>(ChecksJson, JsonOptions)?.SequenceEqual(checks) == true;
     }
 
     private sealed class DispatchRow

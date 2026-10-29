@@ -16,7 +16,15 @@ public sealed class DesktopSessionAuthenticationHandler(RequestDelegate next, IL
             !sessions.TryValidate(authorization[prefix.Length..], out var actor))
         {
             logger.LogWarning("Denied desktop session request {Method} {Path}", context.Request.Method, context.Request.Path);
-            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            context.Response.StatusCode = sessions.TryRecordDeniedAttempt(context.Request.Method, context.Request.Path, "Invalid desktop session")
+                ? StatusCodes.Status401Unauthorized
+                : StatusCodes.Status503ServiceUnavailable;
+            return;
+        }
+
+        if (!sessions.IsAdmissionOpen)
+        {
+            context.Response.StatusCode = StatusCodes.Status503ServiceUnavailable;
             return;
         }
 
