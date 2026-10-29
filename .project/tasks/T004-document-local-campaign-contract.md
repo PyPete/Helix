@@ -3,10 +3,10 @@ id: T004
 title: Document the supported local campaign contract
 wave: 3
 deps: [T002]
-status: pending
-agent: null
-base: null
-worktree: null
+status: in-progress
+agent: build_T004
+base: c2941e70e3f586cf461c6cb4bc6fef027ff680d4
+worktree: C:\Users\u643664\source\repos\CSharpGitLab\Helix
 task_branch: null
 files:
   - docs-site/docs/operator/local-campaign.md
@@ -48,3 +48,4 @@ Heavy: no
 ## Log
 
 - 2026-10-28 — created by planner
+- 2026-10-29 — blocked: unable to inspect the checked-in Agent routes/persistence/recovery/desktop projection needed to document shipped behavior; the runtime search command (`rg`) was unavailable and the read-only context budget is exhausted. No product files changed.
