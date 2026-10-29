@@ -62,6 +62,14 @@ public sealed class AgentCommandDispatcher(
         CommandDispatchRecord? dispatch = null;
         var fence = await controls.StartDispatchAsync(intent.ExecutionId, async ct =>
         {
+            // The control gate is the dispatch-start linearization point.  A
+            // context evaluated before entering it is only proposal feedback;
+            // do not allow a safety, health, lease, or policy change in that
+            // gap to authorize the simulator effect.
+            var finalResult = evaluator.Evaluate(await admissionContexts.CreateAsync(intent, ct));
+            if (finalResult.State != CommandAdmissionState.Allowed)
+                throw new InvalidOperationException("Dispatch-start admission is no longer allowed.");
+
             dispatch = await ledger.BeginDispatchAsync(intent, expectation, ct);
         }, cancellationToken);
         if (!fence.Accepted)
