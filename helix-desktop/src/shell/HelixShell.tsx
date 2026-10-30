@@ -122,6 +122,7 @@ export default function HelixShell() {
   };
 
   const handleOpenChartPanel = () => workspaceRef.current?.openChartPanel('new-chart-' + Date.now());
+  const handleOpenManualControl = () => workspaceRef.current?.openDeviceTab('simulator');
   const activityBarTabMap: Record<string, string> = { explorer: 'device-explorer', trends: 'trend-explorer' };
   const handlePanelToggle = (panelId: string) => {
     setActivePanel((previous) => (previous === panelId ? null : panelId));
@@ -141,7 +142,7 @@ export default function HelixShell() {
         onRunWorkflow={handleRun}
         onPauseWorkflow={() => void handlePause()}
         onAbortWorkflow={handleAbort}
-        onOpenChartPanel={handleOpenChartPanel}
+        onOpenChartPanel={handleOpenManualControl}
         onSaveLayout={(name) => void handleSaveLayout(name)}
         onLoadLayout={(name) => void handleLoadLayout(name)}
         savedLayoutNames={savedLayoutNames}

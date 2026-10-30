@@ -10,7 +10,7 @@ Deliver one local-first, simulated scientific feedback loop in which the Helix A
 - Integer phases (1, 2, 3): Planned milestone work
 - Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
 
-- [ ] **Phase 1: Agent Safety Boundary** - Make local Agent-only simulation execution safe, attributable, and recoverable.
+- [x] **Phase 1: Agent Safety Boundary** - Execution closed with user-approved waivers; not fully verified.
 - [ ] **Phase 2: Scientific Setup Foundation** - Create revisioned apparatus, procedures, samples, and frozen execution bindings.
 - [ ] **Phase 3: Approved Manual Campaigns** - Run approved, bounded simulated campaigns durably with reconciliation and evidence visibility.
 - [ ] **Phase 4: Reviewed CSV Evidence** - Turn structured CSV imports into reviewed, immutable analytical evidence.
@@ -33,32 +33,32 @@ Deliver one local-first, simulated scientific feedback loop in which the Helix A
 
 Plans:
 **Wave 1**
-- [ ] 01-01-PLAN.md — Real native/session/Agent/PostgreSQL/simulator evidence tracer
+- [x] 01-01-PLAN.md — Real native/session/Agent/PostgreSQL/simulator evidence tracer
 
 **Wave 2** *(blocked on Wave 1 completion)*
-- [ ] 01-02-PLAN.md — Complete deterministic admission and fresh safety/E-stop evidence
-- [ ] 01-03-PLAN.md — Durable controls and matching-only restart reconciliation
-- [ ] 01-05-PLAN.md — Complete native client and local connection/experiment caller migration
+- [x] 01-02-PLAN.md — Complete deterministic admission and fresh safety/E-stop evidence
+- [x] 01-03-PLAN.md — Durable controls and matching-only restart reconciliation
+- [x] 01-05-PLAN.md — Complete native client and local connection/experiment caller migration
 
 **Wave 3** *(blocked on Wave 2 completion)*
-- [ ] 01-09-PLAN.md — SQL immutability/idempotency/accounting and final dispatch races
-- [ ] 01-10-PLAN.md — Canonical read-only variables and checked non-authorizing compilation
-- [ ] 01-12-PLAN.md — Authenticated health/event/discovery caller migration
+- [x] 01-09-PLAN.md — SQL immutability/idempotency/accounting and final dispatch races
+- [x] 01-10-PLAN.md — Canonical read-only variables and checked non-authorizing compilation
+- [x] 01-12-PLAN.md — Authenticated health/event/discovery caller migration
 
 **Wave 4** *(blocked on Wave 3 completion)*
-- [ ] 01-04-PLAN.md — Canonical nonempty REST/gRPC workflow submission and lifecycle
-- [ ] 01-14-PLAN.md — Bounded fail-closed denied-attempt spool and idempotent security-history recovery
+- [x] 01-04-PLAN.md — Canonical nonempty REST/gRPC workflow submission and lifecycle
+- [x] 01-14-PLAN.md — Bounded fail-closed denied-attempt spool and idempotent security-history recovery
 
 **Wave 5** *(blocked on Wave 4 completion)*
-- [ ] 01-06-PLAN.md — Policy approval, actual workflow submission and acknowledged controls UI
-- [ ] 01-07-PLAN.md — Immutable history/safety/annotation endpoints and mounted native cursor consumer
-- [ ] 01-11-PLAN.md — Actual host/alternative executor closure and commit-before-notification
+- [x] 01-06-PLAN.md — Policy approval, actual workflow submission and acknowledged controls UI
+- [x] 01-07-PLAN.md — Immutable history/safety/annotation endpoints and mounted native cursor consumer
+- [x] 01-11-PLAN.md — Actual host/alternative executor closure and commit-before-notification
 
 **Wave 6** *(blocked on Wave 5 completion)*
-- [ ] 01-13-PLAN.md — Complete outcome-first timeline/notes and all evidence/safety UI states
+- [x] 01-13-PLAN.md — Complete outcome-first timeline/notes and all evidence/safety UI states
 
 **Wave 7** *(blocked on Wave 6 completion)*
-- [ ] 01-08-PLAN.md — Effective local deployment, final schema and full native restart acceptance
+- [x] 01-08-PLAN.md — Effective local deployment; final acceptance closed with user-approved waivers, not fully verified
 
 ### Phase 2: Scientific Setup Foundation
 **Goal**: Scientists can define the revisioned scientific setup and sample facts that a campaign will freeze as its evidence base.
@@ -129,7 +129,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Agent Safety Boundary | 0/TBD | Not started | - |
+| 1. Agent Safety Boundary | 14/14 | Complete with user-approved waivers (not fully verified) | 2026-10-30 |
 | 2. Scientific Setup Foundation | 0/TBD | Not started | - |
 | 3. Approved Manual Campaigns | 0/TBD | Not started | - |
 | 4. Reviewed CSV Evidence | 0/TBD | Not started | - |

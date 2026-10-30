@@ -18,6 +18,13 @@ const WINHTTP_ACCESS_TYPE_NO_PROXY: u32 = 1;
 const WINHTTP_OPTION_DISABLE_FEATURE: u32 = 63;
 const WINHTTP_DISABLE_REDIRECTS: u32 = 0x0000_0002;
 
+fn set_request_redirect_policy<H>(
+    request: H,
+    set_option: impl FnOnce(H, u32, u32) -> bool,
+) -> bool {
+    set_option(request, WINHTTP_OPTION_DISABLE_FEATURE, WINHTTP_DISABLE_REDIRECTS)
+}
+
 struct NativeSession {
     token: String,
     verified_scientist: Option<String>,
@@ -311,21 +318,45 @@ fn native_request(verb: &str, path: &str, body: Option<&str>, token: &str) -> Re
     let payload = body.unwrap_or("").as_bytes();
     unsafe {
         let session = WinHttpOpen(user_agent.as_ptr(), WINHTTP_ACCESS_TYPE_NO_PROXY, std::ptr::null(), std::ptr::null(), 0);
-        if session.is_null() { return Err("Unable to open fixed local Agent transport.".to_string()); }
-        let disable_redirects = WINHTTP_DISABLE_REDIRECTS;
-        if WinHttpSetOption(
-            session,
-            WINHTTP_OPTION_DISABLE_FEATURE,
-            &disable_redirects as *const u32 as *mut c_void,
-            std::mem::size_of::<u32>() as u32,
-        ) == 0 || WinHttpSetTimeouts(session, 5_000, 5_000, 5_000, 5_000) == 0 {
+        if session.is_null() {
+            let error = std::io::Error::last_os_error();
+            return Err(format!("Unable to open fixed local Agent transport (OS error: {error})."));
+        }
+        if WinHttpSetTimeouts(session, 5_000, 5_000, 5_000, 5_000) == 0 {
+            let error = std::io::Error::last_os_error();
             WinHttpCloseHandle(session);
-            return Err("Unable to secure the fixed local Agent transport.".to_string());
+            return Err(format!("Unable to set timeouts for fixed local Agent transport (OS error: {error})."));
         }
         let connect = WinHttpConnect(session, host.as_ptr(), AGENT_PORT, 0);
-        if connect.is_null() { WinHttpCloseHandle(session); return Err("Unable to connect to the fixed local Agent.".to_string()); }
+        if connect.is_null() {
+            let error = std::io::Error::last_os_error();
+            WinHttpCloseHandle(session);
+            return Err(format!("Unable to connect to the fixed local Agent (OS error: {error})."));
+        }
         let request = WinHttpOpenRequest(connect, verb.as_ptr(), path.as_ptr(), std::ptr::null(), std::ptr::null(), std::ptr::null(), 0);
-        if request.is_null() { WinHttpCloseHandle(connect); WinHttpCloseHandle(session); return Err("Unable to create local Agent request.".to_string()); }
+        if request.is_null() {
+            let error = std::io::Error::last_os_error();
+            WinHttpCloseHandle(connect);
+            WinHttpCloseHandle(session);
+            return Err(format!("Unable to create local Agent request (OS error: {error})."));
+        }
+        // Redirect suppression is request-scoped in WinHTTP; fail closed before sending.
+        let redirects_disabled = set_request_redirect_policy(request, |handle, option, value| {
+            let mut value = value;
+            WinHttpSetOption(
+                handle,
+                option,
+                &mut value as *mut u32 as *mut c_void,
+                std::mem::size_of::<u32>() as u32,
+            ) != 0
+        });
+        if !redirects_disabled {
+            let error = std::io::Error::last_os_error();
+            WinHttpCloseHandle(request);
+            WinHttpCloseHandle(connect);
+            WinHttpCloseHandle(session);
+            return Err(format!("Unable to disable redirects for the fixed local Agent request (OS error: {error})."));
+        }
         // WinHttpAddRequestHeaders requires an explicit add/replace modifier.
         // Passing zero rejects the request headers on Windows, which meant the
         // authenticated proposal was never sent to the Agent.
@@ -366,7 +397,26 @@ fn native_request(_verb: &str, _path: &str, _body: Option<&str>, _token: &str) -
 #[cfg(test)]
 mod agent_security {
     use super::*;
-    #[test] fn fixed_agent_target_is_loopback_only() { assert_eq!(AGENT_HOST, "127.0.0.1"); assert_eq!(AGENT_PORT, 5080); }
+    #[test] fn fixed_agent_target_is_loopback_only_and_uses_no_proxy() {
+        assert_eq!(AGENT_HOST, "127.0.0.1");
+        assert_eq!(AGENT_PORT, 5080);
+        assert_eq!(WINHTTP_ACCESS_TYPE_NO_PROXY, 1);
+    }
+    #[test] fn redirect_suppression_uses_request_handle_and_fails_closed() {
+        let session_handle = 1usize;
+        let request_handle = 2usize;
+        let mut applied = None;
+
+        let succeeded = set_request_redirect_policy(request_handle, |handle, option, feature| {
+            applied = Some((handle, option, feature));
+            true
+        });
+
+        assert!(succeeded);
+        assert_eq!(applied, Some((request_handle, WINHTTP_OPTION_DISABLE_FEATURE, WINHTTP_DISABLE_REDIRECTS)));
+        assert_ne!(applied.unwrap().0, session_handle);
+        assert!(!set_request_redirect_policy(request_handle, |_, _, _| false));
+    }
     #[test] fn broker_never_serializes_its_session_state() { assert!(AgentBrokerState::new().0.lock().unwrap().session.is_none()); }
     #[test] fn command_ids_do_not_accept_paths() { assert!(validate_command_id("../commands").is_err()); }
     #[test] fn command_ids_require_uuid_shape() { assert!(validate_command_id("------------------------------------").is_err()); }

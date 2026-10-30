@@ -33,11 +33,11 @@ public sealed class PostgresSimulatorStateStore(DbConnectionFactory connectionFa
                       canonical_value AS CanonicalValue, unit AS Unit,
                       generation AS Generation, observed_at AS ObservedAtUtc;
             """;
-        var observation = await connection.QuerySingleOrDefaultAsync<SimulatorObservation>(new CommandDefinition(
+        var observation = await connection.QuerySingleOrDefaultAsync<SimulatorObservationRow>(new CommandDefinition(
             sql, new { deviceId, stateKey, commandId, canonicalValue, unit }, transaction, cancellationToken: cancellationToken));
         await transaction.CommitAsync(cancellationToken);
         if (observation is not null)
-            return observation;
+            return observation.ToObservation();
 
         // Idempotent application returns no row because the original command is already the observed effect.
         return await GetAsync(deviceId, stateKey, cancellationToken)
@@ -58,7 +58,28 @@ public sealed class PostgresSimulatorStateStore(DbConnectionFactory connectionFa
             """;
         await using var connection = connectionFactory.Create();
         await connection.OpenAsync(cancellationToken);
-        return await connection.QuerySingleOrDefaultAsync<SimulatorObservation>(
+        var observation = await connection.QuerySingleOrDefaultAsync<SimulatorObservationRow>(
             new CommandDefinition(sql, new { deviceId, stateKey }, cancellationToken: cancellationToken));
+        return observation?.ToObservation();
+    }
+
+    private sealed class SimulatorObservationRow
+    {
+        public string DeviceId { get; init; } = string.Empty;
+        public string StateKey { get; init; } = string.Empty;
+        public Guid LastAppliedCommandId { get; init; }
+        public string CanonicalValue { get; init; } = string.Empty;
+        public string Unit { get; init; } = string.Empty;
+        public long Generation { get; init; }
+        public DateTime ObservedAtUtc { get; init; }
+
+        public SimulatorObservation ToObservation() => new(
+            DeviceId,
+            StateKey,
+            LastAppliedCommandId,
+            CanonicalValue,
+            Unit,
+            Generation,
+            new DateTimeOffset(ObservedAtUtc.ToUniversalTime()));
     }
 }

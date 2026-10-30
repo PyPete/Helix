@@ -29,4 +29,8 @@
 	<ProjectReference Include="..\..\Helix.Orchestration.Core\Helix.Orchestration.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Reuse the required PostgreSQL fixture and its ordered migration contract. -->
+    <ProjectReference Include="..\Helix.Orchestration.Infrastructure.Tests\Helix.Orchestration.Infrastructure.Tests.csproj" />
+  </ItemGroup>
 </Project>

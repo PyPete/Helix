@@ -1,4 +1,4 @@
-﻿using Helix.Orchestration.Agent.Events;
+using Helix.Orchestration.Agent.Events;
 using Helix.Orchestration.Agent.Experiments;
 using Helix.Orchestration.Agent.Security;
 using Helix.Orchestration.Core.Devices;
@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
+using System.Text.Json;
 
 namespace Helix.Orchestration.Agent.Api;
 
@@ -53,7 +54,12 @@ public static class ExperimentEndpoints
                 if (request.Workflow is null || string.IsNullOrWhiteSpace(request.ApprovedPolicyRevision))
                     return Results.BadRequest(new { code = "experiment.invalid_submission", message = "A workflow and approved policy revision are required." });
 
-                var compilation = compiler.Compile(request.Workflow, deviceRegistry);
+                // Minimal-API binding represents object-valued WSL parameters as
+                // JsonElement. Normalize the transport representation before strict
+                // canonical WSL validation; this does not accept alternate names or
+                // values, it only restores the authored scalar types.
+                var workflow = NormalizeTransportValues(request.Workflow);
+                var compilation = compiler.Compile(workflow, deviceRegistry);
                 if (!compilation.Success || compilation.Definition is null)
                     return Results.BadRequest(new { code = "experiment.workflow_rejected", diagnostics = compilation.Diagnostics });
 
@@ -77,9 +83,11 @@ public static class ExperimentEndpoints
                 var runspace = await runspaceManager.CreateAsync(definition, ct);
                 emitter.Publish(new RunspaceStartedEvent(runspace.RunspaceId)
                     with { ExperimentId = ctx.ExperimentId });
-                await runspace.StartAsync(ct);
-
+                // The execution body resolves its Agent-held canonical definition
+                // from the active runspace. Establish that binding before StartAsync
+                // can schedule the body, never afterwards.
                 experimentManager.SetActiveRunspace(ctx.ExperimentId, runspace.RunspaceId);
+                await runspace.StartAsync(ct);
 
                 // Re-fetch to include the updated ActiveRunspaceId
                 var updated = experimentManager.Get(ctx.ExperimentId) ?? ctx;
@@ -279,4 +287,32 @@ public static class ExperimentEndpoints
         .Produces<IReadOnlyList<ExperimentEventRecord>>(StatusCodes.Status200OK)
         .ProducesProblem(StatusCodes.Status500InternalServerError);
     }
-}
+
+    private static WslDocument NormalizeTransportValues(WslDocument workflow) => workflow with
+    {
+        Nodes = workflow.Nodes.Select(node => node with
+        {
+            Parameters = node.Parameters.ToDictionary(
+                pair => pair.Key,
+                pair => NormalizeTransportValue(pair.Value),
+                StringComparer.Ordinal)
+        }).ToArray()
+    };
+
+    private static object? NormalizeTransportValue(object? value) => value is JsonElement element
+        ? element.ValueKind switch
+        {
+            JsonValueKind.String => element.GetString(),
+            JsonValueKind.Number when element.TryGetDecimal(out var decimalValue) => decimalValue,
+            JsonValueKind.Number => element.GetDouble(),
+            JsonValueKind.True => true,
+            JsonValueKind.False => false,
+            JsonValueKind.Null => null,
+            JsonValueKind.Array => element.EnumerateArray().Select(item => NormalizeTransportValue(item)).ToArray(),
+            JsonValueKind.Object => element.EnumerateObject().ToDictionary(
+                property => property.Name,
+                property => NormalizeTransportValue(property.Value),
+                StringComparer.Ordinal),
+            _ => value
+        }
+        : value;}

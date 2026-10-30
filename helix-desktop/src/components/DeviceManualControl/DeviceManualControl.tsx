@@ -33,6 +33,19 @@ const capabilities: ManualCapability[] = [
   { capability: "GetMode" },
 ];
 
+const genericAgentError = "Agent command failed.";
+const sensitiveAssignment = /(["']?\b(?:password|passwd|token|access[_-]?token|refresh[_-]?token|api[_-]?key|secret)\b["']?\s*[:=]\s*)(?:"[^"]*"|'[^']*'|[^\s,;&}]+)/gi;
+const bearerCredential = /\b(Bearer\s+)[A-Za-z0-9._~+/-]+=*/gi;
+
+function normalizeAgentError(reason: unknown): string {
+  const message = reason instanceof Error ? reason.message : typeof reason === "string" ? reason : "";
+  if (!message.trim()) return genericAgentError;
+
+  return message.trim()
+    .replace(sensitiveAssignment, "$1[REDACTED]")
+    .replace(bearerCredential, "$1[REDACTED]");
+}
+
 /** Manual input forms an Agent proposal only; the Agent remains execution authority. */
 export default function DeviceManualControl({ deviceId }: DeviceManualControlProps) {
   const [sessionReady, setSessionReady] = useState(false);
@@ -106,7 +119,7 @@ export default function DeviceManualControl({ deviceId }: DeviceManualControlPro
       const evidence = await readAgentEvidence(commandId);
       setMessage(`${evidence.evidence.state} command ${evidence.intent.commandId}`);
     } catch (reason) {
-      setMessage(reason instanceof Error ? reason.message : "Agent command failed.");
+      setMessage(normalizeAgentError(reason));
     } finally {
       setPending(false);
     }
@@ -135,7 +148,7 @@ export default function DeviceManualControl({ deviceId }: DeviceManualControlPro
         </label>
       ))}
       <button disabled={!sessionReady || pending} onClick={() => void submit()}>
-        {pending ? "Awaiting acknowledgement…" : "Submit proposal"}
+        {pending ? "Awaiting acknowledgement…" : capability === "SetFlow" ? "Set Flow" : `Submit ${capability} proposal`}
       </button>
       {message && <p role={message.includes("Held") || message.includes("Rejected") || message.includes("No command") ? "alert" : "status"}>{message}</p>}
     </section>

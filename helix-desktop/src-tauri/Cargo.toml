@@ -1,4 +1,5 @@
 [package]
+default-run = "helix-desktop"
 name = "helix-desktop"
 version = "0.1.0"
 description = "Helix Desktop Application"
