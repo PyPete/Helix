@@ -31,9 +31,9 @@ Run an interactive UI design spike using isolated, disposable variants and repre
 
 ### Research references
 
-- **IvoryOS:** inspect its scientific automation interaction patterns for task organization, protocol authoring, and execution observation; record applicable ideas and mismatches with Helix.
-- **IvoryOS-client:** API-only/no UI; use as an API/integration reference, not as evidence for a visual interaction pattern.
-- **ivoryos-next:** inspect available UI/workspace approaches and compare them with IvoryOS and the Helix baseline.
+- **IvoryOS:** [repository UI subtree](https://github.com/ivoryos-ai/IvoryOS/tree/main/ivoryos) · [repository README](https://github.com/ivoryos-ai/IvoryOS). Inspect scientific automation interaction patterns for task organization, protocol authoring, and execution observation; record applicable ideas and mismatches with Helix.
+- **IvoryOS-client:** [repository](https://github.com/ivoryos-ai/IvoryOS-client). API-only/no UI; use as an API/integration reference, not as evidence for a visual interaction pattern.
+- **ivoryos-next:** [repository](https://github.com/ivoryos-ai/ivoryos-next). Inspect available UI/workspace approaches and compare them with IvoryOS and the Helix baseline.
 - Record repository URLs, revisions/dates, screenshots where available, and source-grounded findings during the spike. The capture does not claim these references were newly inspected or their features verified.
 
 ### Non-negotiable Helix constraints
