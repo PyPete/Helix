@@ -16,10 +16,10 @@ Requirements for the initial Mark II release. Each maps to exactly one roadmap p
 
 ### Apparatus & Procedures
 
-- [ ] **APP-01**: A scientist can version an apparatus with typed components, ports, connections, roles, and device-instance bindings.
-- [ ] **APP-02**: A scientist can associate capability constraints and calibration/inspection metadata with an apparatus device.
-- [ ] **APP-03**: A scientist can version procedures and plans independently of apparatus topology.
-- [ ] **APP-04**: The system freezes the apparatus, procedure, and policy revisions used by a campaign execution.
+- [x] **APP-01**: A scientist can version an apparatus with typed components, ports, connections, roles, and device-instance bindings.
+- [x] **APP-02**: A scientist can associate capability constraints and calibration/inspection metadata with an apparatus device.
+- [x] **APP-03**: A scientist can version procedures and plans independently of apparatus topology.
+- [x] **APP-04**: The system freezes the apparatus, procedure, and policy revisions used by a campaign execution.
 
 ### Campaigns & Execution
 
@@ -30,8 +30,8 @@ Requirements for the initial Mark II release. Each maps to exactly one roadmap p
 
 ### Samples & Analysis
 
-- [ ] **SAMP-01**: A scientist can confirm actual sample collection separately from a planned activity.
-- [ ] **SAMP-02**: The system records stable sample identities, custody, transformations, and parent/child lineage.
+- [x] **SAMP-01**: A scientist can confirm actual sample collection separately from a planned activity.
+- [x] **SAMP-02**: The system records stable sample identities, custody, transformations, and parent/child lineage.
 - [ ] **ANLY-01**: A scientist can create an analytical test request linked to a sample and method revision.
 - [ ] **ANLY-02**: A scientist can preview and import structured CSV results with validation, sample matching, units, and duplicate detection.
 - [ ] **ANLY-03**: The system quarantines invalid or ambiguous analytical data and prevents it from advancing a campaign.
@@ -76,12 +76,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SAFE-02 | Phase 1 | Pending |
 | SAFE-03 | Phase 1 | Pending |
 | SAFE-04 | Phase 1 | Pending |
-| APP-01 | Phase 2 | Pending |
-| APP-02 | Phase 2 | Pending |
-| APP-03 | Phase 2 | Pending |
-| APP-04 | Phase 2 | Pending |
-| SAMP-01 | Phase 2 | Pending |
-| SAMP-02 | Phase 2 | Pending |
+| APP-01 | Phase 2 | Complete |
+| APP-02 | Phase 2 | Complete |
+| APP-03 | Phase 2 | Complete |
+| APP-04 | Phase 2 | Complete |
+| SAMP-01 | Phase 2 | Complete |
+| SAMP-02 | Phase 2 | Complete |
 | CAMP-01 | Phase 3 | Pending |
 | CAMP-02 | Phase 3 | Pending |
 | CAMP-03 | Phase 3 | Pending |
