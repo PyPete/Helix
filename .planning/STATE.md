@@ -63,7 +63,7 @@ Decisions are logged in PROJECT.md Key Decisions table. Current roadmap decision
 
 ### Pending Todos
 
-None yet.
+- [2026-10-30] [ui] Spike canvas-first scientific workspace — [todo file](.planning/todos/pending/2026-10-30-spike-canvas-first-scientific-workspace.md)
 
 ### Blockers/Concerns
 
