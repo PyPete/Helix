@@ -1,6 +1,6 @@
 ﻿# Phase 02 Baseline Evidence
 
-Generated UTC: 2026-10-30T16:07:05.9578598Z
+Generated UTC: 2026-10-30T16:11:09.1186343Z
 
 This report records observed baseline evidence only. It neither accesses a live user database nor promotes Phase 1 waivers, unavailable SQL/native acceptance, or successful existing tests into Phase 2 scientific acceptance.
 
@@ -17,18 +17,18 @@ This report records observed baseline evidence only. It neither accesses a live 
 
 | Name | Category | Command | Exit code | Discovered | Seconds | Disposition |
 | --- | --- | --- | ---: | ---: | ---: | --- |
-| Core unit tests | Core | `dotnet test tests/Helix.Orchestration.Core.Tests/Helix.Orchestration.Core.Tests.csproj --no-restore` | 1 | 643664 | 4.41 | baseline failure; not passed evidence |
+| Core unit tests | Core | `dotnet test tests/Helix.Orchestration.Core.Tests/Helix.Orchestration.Core.Tests.csproj --no-restore` | 1 | 144 | 9.84 | baseline failure; not passed evidence |
 
 <details><summary>Core unit tests output tail</summary>
 
 ```text
-  Helix.Orchestration.Infrastructure -> C:\Users\u643664\source\repos\CSharpGitLab\Helix\Helix.Orchestration.Infrastructure\bin\Debug\net10.0\Helix.Orchestration.Infrastructure.dll
-  Helix.Orchestration.Devices -> C:\Users\u643664\source\repos\CSharpGitLab\Helix\Helix.Orchestration.Devices\bin\Debug\net10.0\Helix.Orchestration.Devices.dll
+C:\Users\u643664\source\repos\CSharpGitLab\Helix\Helix.Orchestration.Agent\Adapters\Devices\DeviceAdapterExtensions.cs(490,37): warning CA1416: This call site is reachable on all platforms. 'PicoTc08' is only supported on: 'windows'. (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1416) [C:\Users\u643664\source\repos\CSharpGitLab\Helix\Helix.Orchestration.Agent\Helix.Orchestration.Agent.csproj]
+C:\Users\u643664\source\repos\CSharpGitLab\Helix\Helix.Orchestration.Agent\Adapters\Devices\DeviceAdapterExtensions.cs(487,9): warning CA1416: This call site is reachable on all platforms. 'PicoTc08LowLevelWrapper' is only supported on: 'windows'. (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1416) [C:\Users\u643664\source\repos\CSharpGitLab\Helix\Helix.Orchestration.Agent\Helix.Orchestration.Agent.csproj]
   Helix.Orchestration.Agent -> C:\Users\u643664\source\repos\CSharpGitLab\Helix\Helix.Orchestration.Agent\bin\Debug\net10.0\Helix.Orchestration.Agent.dll
   Helix.Orchestration.Core.Tests -> C:\Users\u643664\source\repos\CSharpGitLab\Helix\tests\Helix.Orchestration.Core.Tests\bin\Debug\net10.0\Helix.Orchestration.Core.Tests.dll
 Test run for C:\Users\u643664\source\repos\CSharpGitLab\Helix\tests\Helix.Orchestration.Core.Tests\bin\Debug\net10.0\Helix.Orchestration.Core.Tests.dll (.NETCoreApp,Version=v10.0)
 A total of 1 test files matched the specified pattern.
-  Failed Helix.Orchestration.Core.Tests.Execution.WorkflowExecutorTests.ExecuteAsync_RunsSimpleWorkflow_Successfully [40 ms]
+  Failed Helix.Orchestration.Core.Tests.Execution.WorkflowExecutorTests.ExecuteAsync_RunsSimpleWorkflow_Successfully [36 ms]
   Error Message:
    System.NotSupportedException : Generic workflow execution is disabled. Execute stable command steps through ICommandDispatcher.
   Stack Trace:
@@ -41,11 +41,11 @@ A total of 1 test files matched the specified pattern.
      at Helix.Orchestration.Core.Tests.Execution.WorkflowExecutorTests.GetStatusAsync_ReturnsCompletedStatus_AfterWorkflowFinishes() in C:\Users\u643664\source\repos\CSharpGitLab\Helix\tests\Helix.Orchestration.Core.Tests\Execution\WorkflowExecutorTests.cs:line 73
 --- End of stack trace from previous location ---
 
-Failed!  - Failed:     2, Passed:   142, Skipped:     0, Total:   144, Duration: 393 ms - Helix.Orchestration.Core.Tests.dll (net10.0)
+Failed!  - Failed:     2, Passed:   142, Skipped:     0, Total:   144, Duration: 362 ms - Helix.Orchestration.Core.Tests.dll (net10.0)
 ```
 </details>
 
-| Agent unit tests | Agent | `dotnet test tests/Helix.Orchestration.Agent.Tests/Helix.Orchestration.Agent.Tests.csproj --no-restore` | 1 | 643664 | 17.37 | baseline failure; not passed evidence |
+| Agent unit tests | Agent | `dotnet test tests/Helix.Orchestration.Agent.Tests/Helix.Orchestration.Agent.Tests.csproj --no-restore` | 1 | 50 | 19.34 | baseline failure; not passed evidence |
 
 <details><summary>Agent unit tests output tail</summary>
 
@@ -69,11 +69,11 @@ A total of 1 test files matched the specified pattern.
    at Helix.Orchestration.Agent.Tests.Runspaces.DurableRunspaceTests.PauseAsync_CancelsCurrentExecution_AndSetsPausedStatus() in C:\Users\u643664\source\repos\CSharpGitLab\Helix\tests\Helix.Orchestration.Agent.Tests\Runspaces\DurableRunspaceTests.cs:line 39
 --- End of stack trace from previous location ---
 
-Failed!  - Failed:     2, Passed:    48, Skipped:     0, Total:    50, Duration: 10 s - Helix.Orchestration.Agent.Tests.dll (net10.0)
+Failed!  - Failed:     2, Passed:    48, Skipped:     0, Total:    50, Duration: 13 s - Helix.Orchestration.Agent.Tests.dll (net10.0)
 ```
 </details>
 
-| Infrastructure unit tests | Infrastructure | `dotnet test tests/Helix.Orchestration.Infrastructure.Tests/Helix.Orchestration.Infrastructure.Tests.csproj --no-restore` | 0 | 643664 | 7.85 | passed baseline command (not Phase 2 acceptance evidence) |
+| Infrastructure unit tests | Infrastructure | `dotnet test tests/Helix.Orchestration.Infrastructure.Tests/Helix.Orchestration.Infrastructure.Tests.csproj --no-restore` | 0 | 4 | 12.93 | passed baseline command (not Phase 2 acceptance evidence) |
 
 <details><summary>Infrastructure unit tests output tail</summary>
 
@@ -86,49 +86,49 @@ C:\Program Files\dotnet\sdk\11.0.100-rc.3.26522.148\Sdks\Microsoft.NET.Sdk\targe
 Test run for C:\Users\u643664\source\repos\CSharpGitLab\Helix\tests\Helix.Orchestration.Infrastructure.Tests\bin\Debug\net10.0\Helix.Orchestration.Infrastructure.Tests.dll (.NETCoreApp,Version=v10.0)
 A total of 1 test files matched the specified pattern.
 
-Passed!  - Failed:     0, Passed:     4, Skipped:     0, Total:     4, Duration: 262 ms - Helix.Orchestration.Infrastructure.Tests.dll (net10.0)
+Passed!  - Failed:     0, Passed:     4, Skipped:     0, Total:     4, Duration: 2 s - Helix.Orchestration.Infrastructure.Tests.dll (net10.0)
 ```
 </details>
 
-| Desktop Vitest suite | Desktop | `npm test --prefix helix-desktop -- --run` | 1 | 5 | 13.96 | baseline failure; not passed evidence |
+| Desktop Vitest suite | Desktop | `npm test --prefix helix-desktop -- --run` | 1 | 125 | 18.25 | baseline failure; not passed evidence |
 
 <details><summary>Desktop Vitest suite output tail</summary>
 
 ```text
-     ├ù renders error message (role=alert) when fetch fails 108ms
-     ├ù does NOT render DeviceManualControl inline ÔÇö only fires onOpenDevice on click 1005ms
- ÔØ» src/components/WorkflowBuilder/DevicePalette.test.tsx (4 tests | 4 failed) 4129ms
-     ├ù renders palette-group-Alicat details element after fetch resolves 1079ms
-     ├ù capability-card element is draggable 1007ms
-     ├ù firing dragstart on a card calls dataTransfer.setData with application/helix-capability key 1023ms
-     ├ù shows Failed to load devices message when fetch errors 1016ms
- ÔØ» src/components/WorkflowBuilder/WorkflowBuilder.test.tsx (15 tests | 6 failed) 5412ms
-     ├ù shows error when devices fetch fails 95ms
-     ├ù fetches devices on mount 1017ms
-     ├ù capability-picker renders when devices are fetched 1012ms
-     ├ù drop on canvas creates a DeviceAction node 1019ms
-     ├ù step-started WebSocket event transitions node to running and shows timing-footer-running 1023ms
-     ├ù exportWsl produces nodeType Step with capability parameter for DeviceAction node 1010ms
+     ├ù renders error message (role=alert) when fetch fails 536ms
+     ├ù does NOT render DeviceManualControl inline ÔÇö only fires onOpenDevice on click 1050ms
+ ÔØ» src/components/WorkflowBuilder/DevicePalette.test.tsx (4 tests | 4 failed) 4376ms
+     ├ù renders palette-group-Alicat details element after fetch resolves 1145ms
+     ├ù capability-card element is draggable 1093ms
+     ├ù firing dragstart on a card calls dataTransfer.setData with application/helix-capability key 1124ms
+     ├ù shows Failed to load devices message when fetch errors 1010ms
+ ÔØ» src/components/WorkflowBuilder/WorkflowBuilder.test.tsx (15 tests | 6 failed) 6241ms
+     ├ù shows error when devices fetch fails 180ms
+     ├ù fetches devices on mount 1020ms
+     ├ù capability-picker renders when devices are fetched 1125ms
+     ├ù drop on canvas creates a DeviceAction node 1148ms
+     ├ù step-started WebSocket event transitions node to running and shows timing-footer-running 1071ms
+     ├ù exportWsl produces nodeType Step with capability parameter for DeviceAction node 1079ms
 
  Test Files  4 failed | 22 passed (26)
       Tests  20 failed | 105 passed (125)
-   Start at  16:06:43
-   Duration  12.77s (transform 8.22s, setup 14.15s, import 22.68s, tests 18.30s, environment 118.24s)
+   Start at  16:10:49
+   Duration  16.48s (transform 9.63s, setup 17.30s, import 34.61s, tests 22.03s, environment 140.70s)
 
 ```
 </details>
 
-| Native Cargo guard tests | Native | `cargo test --manifest-path helix-desktop/src-tauri/Cargo.toml agent_security` | 0 | 0 | 9.4 | unexecuted acceptance: zero discovery; not passed evidence |
+| Native Cargo guard tests | Native | `cargo test --manifest-path helix-desktop/src-tauri/Cargo.toml agent_security` | 0 | 7 | 2.42 | passed baseline command (not Phase 2 acceptance evidence) |
 
 <details><summary>Native Cargo guard tests output tail</summary>
 
 ```text
 test commands::agent::agent_security::broker_never_serializes_its_session_state ... ok
 test commands::agent::agent_security::command_ids_do_not_accept_paths ... ok
-test commands::agent::agent_security::cursor_does_not_accept_query_injection ... ok
 test commands::agent::agent_security::command_ids_require_uuid_shape ... ok
 test commands::agent::agent_security::device_ids_do_not_accept_paths ... ok
 test commands::agent::agent_security::fixed_agent_target_is_loopback_only_and_uses_no_proxy ... ok
+test commands::agent::agent_security::cursor_does_not_accept_query_injection ... ok
 test commands::agent::agent_security::redirect_suppression_uses_request_handle_and_fails_closed ... ok
 
 test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s

@@ -44,14 +44,19 @@ function Get-DiscoveryCount {
     param([string[]]$Output)
 
     $text = $Output -join [Environment]::NewLine
-    $match = [regex]::Match($text, '(?im)(?:Passed|Total tests|Tests)[^0-9]{0,32}(\d+)')
+    $match = [regex]::Match($text, '(?im)Total:\s*(\d+)')
     if ($match.Success) {
         return [int]$match.Groups[1].Value
     }
 
-    $match = [regex]::Match($text, '(?im)running\s+(\d+)\s+tests')
+    $match = [regex]::Match($text, '(?im)^\s*Tests\s+.*\((\d+)\)')
     if ($match.Success) {
         return [int]$match.Groups[1].Value
+    }
+
+    $matches = [regex]::Matches($text, '(?im)test result:.*?\s(\d+)\spassed;')
+    if ($matches.Count -gt 0) {
+        return ($matches | ForEach-Object { [int]$_.Groups[1].Value } | Measure-Object -Maximum).Maximum
     }
 
     return 0
