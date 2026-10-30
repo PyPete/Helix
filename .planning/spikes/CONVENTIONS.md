@@ -1,6 +1,6 @@
 # Spike Conventions
 
-Only patterns explicitly chosen by the user are recorded here; no cross-spike validation is claimed.
+Patterns explicitly chosen by the user or repeated across 001/002 are recorded here; no cross-spike usability validation is claimed.
 
 ## Stack
 
@@ -17,5 +17,7 @@ One model per comparison; switching presentation does not reset apparatus, draft
 Use native labeled controls, keyboard focus, text plus state symbols, reduced-motion support, and responsive layouts with safety always available. Render observer notes as text, not HTML. Export logs locally as JSON; no telemetry or hardware networking.
 
 ## Tools & Libraries
+
+Across 001/002, keep one canonical model and a permanent shared editor while comparing presentation. Preserve unsaved buffers on toggles, review only saved revisions, and export before reload. For 002's explicitly requested fixture replacement, confirm dirty draft/buffer loss and preserve run/log state on cancellation. Reuse the restrained 001 visual stylesheet without importing product code.
 
 Only Node built-ins (`http`, `fs`, `path`, `node:test`, `assert`). Tests target the spike model and localhost server boundary. Do not install reference repositories. Source links pin inspected revisions. Automated semantics and browser checks are distinct from human usability evidence.

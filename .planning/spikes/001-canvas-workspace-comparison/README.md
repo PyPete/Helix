@@ -119,8 +119,14 @@ Record recommendation, rejected alternatives, trade-offs and unanswered question
 
 ## Results
 
-**PENDING — built, awaiting human review.** Automated model and server checks establish simulation semantics and static boundary behavior, not discoverability, accessibility conformance, UI rendering or superiority of either variant. No scientist observations, head-to-head timing dataset or screenshot evidence collected yet. Browser smoke was unavailable; test the page in a browser before drawing findings.
+**PENDING — built, awaiting head-to-head review.** Automated model and server checks establish simulation semantics and static boundary behavior, not discoverability, accessibility conformance or superiority of either variant. No head-to-head task timing dataset or full safety/usability trials collected yet.
+
+### Review update — 2026-10-30
+
+User comment, verbatim: **"this looks really good"**. This is positive visual feedback only, not a validated winner or completed usability/head-to-head safety trial. The user had already approved all three builds in order; work proceeds to 002 without declaring 001 validated.
+
+Parent-session browser smoke evidence, supplied in the 002 dispatch (not independently reproduced by the implementation session): at **1000×700**, the DOM loaded; variant toggling used a DOM click because the native browser click returned `UnknownVizError`; a pause request retained observed Running until SIMULATED confirmation, then Paused; Disconnected disabled start/resume/retry and displayed stale/reconciliation text; no console errors and no horizontal overflow in that tested viewport. This is a limited DOM smoke, **not** full visual, accessibility or user-task verification. The earlier disconnected-browser result remains the record of this implementation session's original attempt.
 
 Constraints: small four-device fixture; no layout dragging/persistence, complex apparatus scaling, real protocol compiler, CSV import, durable execution, real safety admission, backend, real AI or hardware. Only a heat policy rule is implemented; real Agent checks remain mandatory. No actual reconciliation implementation: uncertainty is never cleared by reconnect. Confirmation buttons intentionally stand in for externally observed outcomes, labeled simulation throughout.
 
-**Next:** human checkpoint on 001, then parent-orchestrated 002 (sequence cards vs graph), then 003 (inspector vs permanent panels). Preserve shared scientific/safety semantics. Wrap-up was read but deferred until experiential evidence exists; do not manufacture a validated findings skill or production blueprint from pending work.
+**Next:** parent-orchestrated 002 (sequence cards vs graph), human checkpoint, then 003 (inspector vs permanent panels). Complete comparative 001 safety/usability evidence separately. Preserve shared scientific/safety semantics. Wrap-up was read but deferred until experiential evidence exists; do not manufacture a validated findings skill or production blueprint from pending work.

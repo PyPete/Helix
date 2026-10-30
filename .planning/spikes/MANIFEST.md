@@ -14,15 +14,19 @@ Explore a scientific workspace informed by IvoryOS while preserving Helix's Agen
 - Preserve draft/run isolation, illustrative deterministic review, requested versus observed outcomes, uncertainty and reconciliation. Never imply silent replay is safe.
 - Persistent execution/safety strip survives modes, variants and responsive layouts; blocked/uncertain states carry text as well as semantic symbols.
 - Capture ISO/category/variant/scenario events, task durations and observer notes for export. Human review is required before any winner or production recommendation.
+- 002 must share canonical stable step identities and dependencies across cards/SVG graph; explicitly label conditional branches and parallel lanes instead of flattening them into a single execution sequence.
+- Numeric/unit edits, rename, add and linear reorder are draft-only and available in both representations. Confirm dirty fixture replacement; never mutate reviewed fixtures or the frozen run.
 
 ## Spikes
 
 | # | Idea | Name | Type | Validates | Verdict | Tags |
 |---|---|---|---|---|---|---|
 | 001a / 001b | ivoryos-scientific-workspace | [Canvas workspace comparison](001-canvas-workspace-comparison/README.md) | comparison | Given shared apparatus and run fixtures, when the scientist completes identical tasks in ribbon/dock and canvas, then compare orientation, discoverability and truthful safety-state understanding | PENDING — built, awaiting human review | ui, simulation, safety, high-risk |
-| 002a / 002b | ivoryos-scientific-workspace | Sequence cards versus graph | comparison | Given equivalent linear and branching protocols, when authored/reviewed in both views, then compare clarity without hiding control flow | PENDING — planned, not built | ui, protocol, medium-risk |
+| 002a / 002b | ivoryos-scientific-workspace | [Protocol representation comparison](002-protocol-representation-comparison/README.md) | comparison | Given shared linear/branching/parallel proposals, when authored/reviewed in cards and graph, then compare clarity without hiding dependencies or execution uncertainty | PENDING — built, awaiting human review | ui, protocol, medium-risk |
 | 003a / 003b | ivoryos-scientific-workspace | Contextual inspector versus permanent panels | comparison | Given device/step/sample selection, when inspecting and switching context, then compare discoverability and retained review context | PENDING — planned, not built | ui, inspector, medium-risk |
 
 ## Review gate
+
+001 received the user comment **"this looks really good"** on 2026-10-30: positive visual feedback, not a validated comparison. Limited parent-reported DOM smoke is recorded in its README. The introductory idea paragraph above preserves the original session's capture; this session builds only 002. 003 remains planned.
 
 Launch with `node .planning/spikes/server.mjs`. Record head-to-head task observations and export logs before a verdict. Build completion is not experiential validation. Wrap-up was read but is deferred: no findings skill or production blueprint should be created from pending usability evidence.
