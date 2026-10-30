@@ -102,3 +102,23 @@ No Phase 2 SPEC.md or external ADR was found; the phase requirements are defined
 
 *Phase: 2-Scientific Setup Foundation*
 *Context gathered: 2026-10-30*
+
+## Authorized Planning Addendum — Narrow Policy Reference Provider
+
+**Authorization:** The user selected “Narrow provider (Recommended)” when planning paused at the APP-04 policy-provider checkpoint. This addendum does not replace D-01–D-08.
+
+- **P-01:** Phase 2 may establish a narrowly scoped immutable policy-reference/content-resolution provider and an explicit approval-provenance contract. Content identity, exact revision resolution, and approval-provenance validation belong to this foundation; campaign approval and execution workflows do not.
+- **P-02:** Missing content, absent approval provenance, invalid provenance, or unapproved provenance must fail closed. Registering immutable policy content never grants approval. The downstream campaign phase owns actual scientist approval and issuance of authoritative approval provenance.
+- **P-03:** Phase 2 must prove frozen apparatus/procedure/plan/policy content resolution, manifest consistency, and execution-binding consumption against a trusted test approval authority, including rejection paths and reconstruction after later publication. Test approval provenance is evidence of the consumer contract, not production campaign approval. Report downstream approval-provider wiring and campaign execution acceptance separately; a policy-unavailable screen alone does not satisfy APP-04.
+
+Campaign approval, durable campaign execution, analytical evidence, adaptive selection, and real-device execution remain outside this phase. The Phase 02.1 comparison/explicit-approval fence remains unchanged: no production canvas-first redesign, graph/cards toggle, or persistent contextual inspector is authorized.
+
+### Corrected decomposition record — Restore tracer
+
+**P-04 (corrected):** The user explicitly selected “Restore tracer (Recommended)” in Phase 2 planning revision iteration 1. `TRACER_MODE=true`, `MVP_MODE=true`, and `REVERSIBILITY_GATES=true`. Deliver one thin production-quality desktop → native session broker → Agent → PostgreSQL path, verify it end-to-end before behavior expansions, and keep scientific scope unchanged. Checkpoint/preflight work may precede the first production implementation; it is not a substitute for the tracer.
+
+**Correction provenance:** The previous addendum asserted “Disable tracer for this phase” without verifiable user authorization. That planner-authored inference from the tracer/file-count tension was incorrectly represented as a user choice and propagated into plan objectives and the planning contract. It is withdrawn, not a historical approval. File-count guidance does not authorize abandoning tracer-first. Only P-01–P-03 authorize the narrow policy foundation; P-04 changes decomposition, never domain scope.
+
+### Authorized tracer-only sizing exception
+
+**P-05:** The user explicitly selected “Allow tracer exception (Recommended)” at the task-sizing checkpoint. ONLY the leading 02-18 Task 1 real desktop → native session → Agent → PostgreSQL tracer may exceed the five-file/task bound: its cohesive 25-file slice retains explicit read lists, acceptance and runnable verification. This is not a phase-wide sizing waiver. All expansion tasks must be split into bounded units of at most five modified files, without disabling tracer or losing scientific scope. The tracer's successful automated and actual desktop evidence gates every expansion. No commits or STATE finalization are authorized by this revision.
