@@ -112,6 +112,12 @@ Counterbalance the first view; use identical fixtures/tasks. Separate clean sing
 
 ## Results
 
+### User preference and parent smoke — 2026-10-30
+
+Exact user quote: **"I like the workflow graph a lot but too be honest, being able to alternative between both would be brilliant"**. Positive preference for graph with interchangeable cards, not a validated usability winner. Both remain first-class canonical views with stable IDs, selection and saved/unsaved edit preservation; toggles must not alter control-flow semantics.
+
+Parent-session browser smoke, supplied with the 003 dispatch (not independently reproduced here): at 1000×700 the DOM loaded with no horizontal overflow; DOM-triggered 55 °C draft save followed by graph toggle retained 55 °C and selection, while the frozen run stayed 50 °C; dirty fixture dialog appeared, cancellation kept the draft, confirmed branch replacement displayed YES/NO, and console errors were empty. This is not native pointer, accessibility or full visual/usability verification.
+
 **PENDING — built, awaiting human head-to-head review.** Tests prove limited simulation semantics; DOM smoke proves limited wiring. No scientist comparison dataset, validated winner, full visual/a11y audit or end-to-end download evidence claimed.
 
 Constraints: small synthetic fixtures, fixed graph positions, no arbitrary edge editing/dragging, durable state, actual CSV import, reviewed analytical evidence, AI/backend/compiler/device execution, scientific order validation or Agent admission. Parallel resource/lease feasibility and actual recovery are out of scope. Fit can shrink text; larger fixtures/native interaction need further evidence.

@@ -12,6 +12,8 @@ Standalone vanilla HTML/CSS/JavaScript ES modules. Node 20+ built-ins for static
 
 ## Patterns
 
+Explicit user preference from 002: graph preferred, cards remain first-class interchangeable views with unchanged canonical identities/semantics and retained saved/unsaved fields. Do not infer a usability winner from preference. In 003, keep per-entity pending fields across selection and layout changes; only explicit Save/Discard changes their status. Its isolated stylesheet is named `styles.css` as dispatched.
+
 One model per comparison; switching presentation does not reset apparatus, draft, task or run state. Freeze admitted run revisions; edits invalidate draft review, not the active run. Actions are requests until a separate simulated observation is confirmed. Uncertain lifecycle blocks start/resume/retry, even after reconnecting. Fixture scenario changes are explicit, not recovery commands.
 
 Use native labeled controls, keyboard focus, text plus state symbols, reduced-motion support, and responsive layouts with safety always available. Render observer notes as text, not HTML. Export logs locally as JSON; no telemetry or hardware networking.
