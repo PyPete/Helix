@@ -1,0 +1,106 @@
+using Helix.Orchestration.Core.Devices;
+using Helix.Orchestration.Core.WSL;
+using Helix.Orchestration.Infrastructure.Persistence;
+using Helix.Orchestration.Simulation;
+using Helix.Orchestration.SiteServer.Agent;
+using Helix.Orchestration.SiteServer.Campaigns;
+using Helix.Orchestration.SiteServer.Endpoints;
+using Helix.Orchestration.SiteServer.Mqtt;
+using Helix.Orchestration.SiteServer.WebSockets;
+using Microsoft.AspNetCore.WebSockets;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Add services
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new()
+    {
+        Title = "Helix Site Server API",
+        Version = "v1",
+        Description = "REST API for Helix lab automation control plane + MQTT-over-WebSocket real-time trends"
+    });
+});
+
+// Register simulation layer (includes SimulatedTrendProvider, sim devices, SimCapabilityInvoker)
+builder.Services.AddHelixSimulation();
+
+// Register switchable agent proxy (sim or gRPC)
+builder.Services.AddHelixAgentProxy(builder.Configuration);
+
+// WSL compiler and device registry (devices seeded from agent proxy at startup)
+builder.Services.AddSingleton<IWslCompiler, WslCompiler>();
+builder.Services.AddSingleton<DeviceRegistry>(sp =>
+{
+    var proxy = sp.GetRequiredService<IAgentProxy>();
+    var registry = new DeviceRegistry();
+    var devices = proxy.GetRegisteredDevicesAsync().GetAwaiter().GetResult();
+    foreach (var d in devices)
+        registry.Register(new DeviceDescriptor(d.DeviceId, d.DeviceId, d.DeviceKind, d.Capabilities.ToList(),
+            new Dictionary<string, object?>()));
+    return registry;
+});
+
+// Register campaign services
+builder.Services.AddSingleton<ICampaignIterationStrategy, SequentialStrategy>();
+builder.Services.AddScoped<ICampaignManager, CampaignManager>();
+
+// Register MQTT trend bridge as hosted service
+builder.Services.Configure<MqttBridgeOptions>(builder.Configuration.GetSection("MqttBridge"));
+builder.Services.AddHostedService<MqttTrendBridge>();
+
+// Register WebSocket services for live trend streaming (E5)
+builder.Services.AddSingleton<TrendWebSocketManager>();
+builder.Services.AddWebSockets(options =>
+{
+    options.AllowedOrigins.Add("http://localhost:5174");
+    options.KeepAliveInterval = TimeSpan.FromSeconds(30);
+});
+
+// Register PostgreSQL repositories for campaigns and experiments
+    builder.Services.AddHelixInfrastructure(builder.Configuration);
+
+    var app = builder.Build();
+
+// Configure middleware
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
+// WebSocket clients cannot follow HTTP→HTTPS redirects, so handle WS before the redirect.
+app.UseWebSockets();
+
+var trendWsManager = app.Services.GetRequiredService<TrendWebSocketManager>();
+app.Use(async (context, next) =>
+{
+    if (context.Request.Path == "/api/trends/ws")
+    {
+        if (context.WebSockets.IsWebSocketRequest)
+        {
+            using var ws = await context.WebSockets.AcceptWebSocketAsync();
+            await trendWsManager.HandleClientAsync(ws, context.RequestAborted);
+        }
+        else
+        {
+            context.Response.StatusCode = StatusCodes.Status400BadRequest;
+        }
+    }
+    else { await next(context); }
+});
+
+app.UseHttpsRedirection();
+
+// Map endpoint groups
+app.MapExperimentEndpoints();
+app.MapDeviceEndpoints();
+app.MapTrendEndpoints();
+app.MapCampaignEndpoints();
+app.MapFumehoodEndpoints();
+
+app.Run();
+
+// Required for WebApplicationFactory<Program> in integration tests
+public partial class Program { }

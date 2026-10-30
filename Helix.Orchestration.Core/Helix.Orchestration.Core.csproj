@@ -1,0 +1,38 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Cleipnir.ResilientFunctions" Version="4.*" />
+    <PackageReference Include="MQTTnet" Version="4.*" />
+    <PackageReference Include="NATS.Net" Version="2.*" />
+    <PackageReference Include="System.Reactive" Version="6.*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\docs\README.md" Link="docs\README.md" />
+    <None Include="..\docs\HANDOVER.md" Link="docs\HANDOVER.md" />
+    <None Include="..\docs\CONCEPT.md" Link="docs\CONCEPT.md" />
+    <None Include="..\docs\PHASE1-CORE-DOMAIN-HANDOVER.md" Link="docs\PHASE1-CORE-DOMAIN-HANDOVER.md" />
+    <None Include="..\docs\PHASE2-AGENT-RUNTIME-HANDOVER.md" Link="docs\PHASE2-AGENT-RUNTIME-HANDOVER.md" />
+    <None Include="..\docs\PHASE3-EXECUTION-PATH-HANDOVER.md" Link="docs\PHASE3-EXECUTION-PATH-HANDOVER.md" />
+    <None Include="..\docs\PHASE4-DURABLE-EXECUTION-TREND-FOUNDATION-HANDOVER.md" Link="docs\PHASE4-DURABLE-EXECUTION-TREND-FOUNDATION-HANDOVER.md" />
+    <None Include="..\docs\PHASE5-RUNSPACE-LIFECYCLE-HANDOVER.md" Link="docs\PHASE5-RUNSPACE-LIFECYCLE-HANDOVER.md" />
+    <None Include="..\docs\PHASE6-WSL-COMPILER-HANDOVER.md" Link="docs\PHASE6-WSL-COMPILER-HANDOVER.md" />
+    <None Include="..\docs\PHASE7-VARIABLE-MANAGEMENT-HANDOVER.md" Link="docs\PHASE7-VARIABLE-MANAGEMENT-HANDOVER.md" />
+    <None Include="..\docs\PHASE8-TYPED-ANALYTICAL-DATA-MODEL-HANDOVER.md" Link="docs\PHASE8-TYPED-ANALYTICAL-DATA-MODEL-HANDOVER.md" />
+    <None Include="..\docs\PHASE9-SITE-SERVER-HANDOVER.md" Link="docs\PHASE9-SITE-SERVER-HANDOVER.md" />
+    <None Include="..\docs\PHASE10-GRPC-AGENT-TRANSPORT-HANDOVER.md" Link="docs\PHASE10-GRPC-AGENT-TRANSPORT-HANDOVER.md" />
+    <None Include="..\docs\PHASE11-CAMPAIGN-MANAGER-HANDOVER.md" Link="docs\PHASE11-CAMPAIGN-MANAGER-HANDOVER.md" />
+    <None Include="..\docs\PHASE12-POSTGRESQL-PERSISTENCE-HANDOVER.md" Link="docs\PHASE12-POSTGRESQL-PERSISTENCE-HANDOVER.md" />
+    <None Include="..\docs\PHASE13-DEVICE-INTEGRATION-LAYER-HANDOVER.md" Link="docs\PHASE13-DEVICE-INTEGRATION-LAYER-HANDOVER.md" />
+    <None Include="..\docs\PHASE14-RECORDER-SERVICE-HANDOVER.mdd" Link="docs\PHASE14-RECORDER-SERVICE-HANDOVER.md" />
+    <None Include="..\docs\DEVICE-MIGRATION-HANDOVER.md" Link="docs\DEVICE-MIGRATION-HANDOVER.md" />
+    <None Include="..\docs\CI.md" Link="docs\CI.md" />
+  </ItemGroup>
+
+</Project>

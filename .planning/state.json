@@ -1,0 +1,43 @@
+{
+  "contract": "1.0.0",
+  "flavor": "core",
+  "milestone": null,
+  "phases": [
+    {
+      "number": "1",
+      "name": "Agent Safety Boundary",
+      "status": "complete"
+    },
+    {
+      "number": "2",
+      "name": "Scientific Setup Foundation",
+      "status": "pending"
+    },
+    {
+      "number": "3",
+      "name": "Approved Manual Campaigns",
+      "status": "pending"
+    },
+    {
+      "number": "4",
+      "name": "Reviewed CSV Evidence",
+      "status": "pending"
+    },
+    {
+      "number": "5",
+      "name": "Policy-Bounded Autonomous Simulation",
+      "status": "pending"
+    },
+    {
+      "number": "6",
+      "name": "Evidence Readiness & Hardware Gate",
+      "status": "pending"
+    }
+  ],
+  "next": {
+    "command": "/gsd-progress",
+    "label": "Show progress",
+    "reason": "Unsure of state — showing progress"
+  },
+  "updated_at": "2026-10-30T16:03:26.544Z"
+}

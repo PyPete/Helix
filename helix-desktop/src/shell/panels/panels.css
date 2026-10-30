@@ -1,0 +1,92 @@
+/* panels.css — shared structural styles for all dock panel components
+   All values use CSS custom properties (var(--color-*), etc.)
+   No hardcoded hex values allowed. */
+
+.panel-empty {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  padding: 16px;
+  text-align: center;
+}
+
+.trend-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.trend-item {
+  padding: 4px 8px;
+  cursor: grab;
+  font-size: var(--text-sm);
+  color: var(--color-text);
+  border-radius: var(--radius-sm);
+}
+
+.trend-item:hover {
+  background: var(--color-surface-overlay);
+}
+
+.chart-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 4px;
+  border: 1px solid transparent;
+  transition: border-color 0.12s;
+}
+
+.chart-panel.drag-over {
+  border-color: var(--color-primary);
+  background: var(--color-primary-dim, rgba(157, 127, 255, 0.08));
+}
+
+.log-list {
+  list-style: none;
+  margin: 0;
+  padding: 4px 8px;
+  overflow-y: auto;
+  max-height: 100%;
+}
+
+.log-entry {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  padding: 1px 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.log-entry--runspace {
+  color: var(--color-text-muted);
+}
+
+.log-entry--safety {
+  color: var(--color-danger);
+}
+.timeline-list {
+  list-style: none;
+  margin: 0;
+  padding: 0 8px;
+  max-height: 100%;
+  overflow-y: auto;
+}
+
+.timeline-evidence {
+  margin: 8px 0;
+  padding: 8px;
+  background: var(--color-surface);
+  border-left: 3px solid var(--color-text-muted);
+  overflow-wrap: anywhere;
+}
+
+.timeline-evidence--critical { border-left-color: var(--color-danger); }
+.timeline-evidence__summary { display: flex; flex-wrap: wrap; gap: 4px 8px; font-size: 13px; line-height: 1.4; }
+.timeline-evidence__toggle { margin-top: 8px; }
+.timeline-evidence__details { margin-top: 8px; padding: 8px; background: var(--color-surface-overlay); }
+.timeline-evidence__details dl { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 8px; margin: 0; }
+.timeline-evidence__details dd { margin: 0; overflow-wrap: anywhere; }
+.timeline-evidence__identifier, .timeline-evidence__value { font-family: var(--font-mono); font-size: 11px; user-select: text; white-space: pre-wrap; }
+.timeline-evidence__details textarea { box-sizing: border-box; display: block; width: 100%; min-height: 44px; margin: 4px 0 8px; }

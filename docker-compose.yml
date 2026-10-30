@@ -1,0 +1,38 @@
+# Windows same-user development profile.  The Agent is deliberately *not* a
+# container service: it is launched by the enrolled scientist account and binds
+# only to loopback.  This compose file supplies disposable local dependencies.
+services:
+  postgres:
+    image: postgres:16
+    container_name: helix-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: helix_orchestration
+      POSTGRES_USER: helix
+      POSTGRES_PASSWORD: helix_dev_password
+    ports:
+      - "127.0.0.1:5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U helix -d helix_orchestration"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres/migrations:/docker-entrypoint-initdb.d:ro
+
+  mosquitto:
+    image: eclipse-mosquitto:2
+    container_name: helix-mosquitto
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:1883:1883"
+    volumes:
+      - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - mosquitto_data:/mosquitto/data
+      - mosquitto_log:/mosquitto/log
+
+volumes:
+  postgres_data:
+  mosquitto_data:
+  mosquitto_log:

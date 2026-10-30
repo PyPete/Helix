@@ -1,0 +1,380 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="486561ff-3b4c-49cd-a290-28857e07469c" name="u643664@GBJHLC0J0KR3 2026-05-25 21:04:39" runUser="EAME\u643664" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-05-25T21:04:39.4104776+01:00" queuing="2026-05-25T21:04:39.4104783+01:00" start="2026-05-25T21:04:38.3089350+01:00" finish="2026-05-25T21:04:40.8739173+01:00" />
+  <TestSettings name="default" id="e618a00c-161f-4603-85d5-011ed45ac4b2">
+    <Deployment runDeploymentRoot="u643664_GBJHLC0J0KR3_2026-05-25_21_04_39" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="ca3b287d-6071-4959-a5d4-366bf34f05a8" testId="dd1d19a6-0f7d-2d77-5a96-6052da42da40" testName="Helix.Orchestration.SiteServer.Tests.Endpoints.CampaignEndpointsTests.CreateCampaign_ValidRequest_Returns201" computerName="GBJHLC0J0KR3" duration="00:00:00.0141643" startTime="2026-05-25T21:04:39.7513465+01:00" endTime="2026-05-25T21:04:39.7513466+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="ca3b287d-6071-4959-a5d4-366bf34f05a8" />
+    <UnitTestResult executionId="a07f6391-9b2a-4d0a-a846-796d7a1ebea8" testId="cc9ef7ae-e9ee-dc23-2475-0651d06773ef" testName="Helix.Orchestration.SiteServer.Tests.Simulation.SimulatedTrendProviderTests.GetSpectralTrend_ReceivesSpectrum1D_Via_Observable" computerName="GBJHLC0J0KR3" duration="00:00:00.0034219" startTime="2026-05-25T21:04:39.3644164+01:00" endTime="2026-05-25T21:04:39.3644165+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="a07f6391-9b2a-4d0a-a846-796d7a1ebea8" />
+    <UnitTestResult executionId="5d73d7df-adca-4f07-86fe-349a81fb6e41" testId="500b2429-5257-41cc-7f7b-7afd8278c9e9" testName="Helix.Orchestration.SiteServer.Tests.Agent.GrpcAgentProxyTests.SubmitExperimentAsync_RejectedResponse_ThrowsInvalidOperationException" computerName="GBJHLC0J0KR3" duration="00:00:00.0014682" startTime="2026-05-25T21:04:39.4713279+01:00" endTime="2026-05-25T21:04:39.4713282+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="5d73d7df-adca-4f07-86fe-349a81fb6e41" />
+    <UnitTestResult executionId="d47f5653-595f-40a8-8f50-27accd9618ff" testId="d5716ba4-052f-1ab7-1f4b-7ade9104641c" testName="Helix.Orchestration.SiteServer.Tests.Endpoints.TrendEndpointsTests.GetTrends_Returns200" computerName="GBJHLC0J0KR3" duration="00:00:00.4356272" startTime="2026-05-25T21:04:39.7178902+01:00" endTime="2026-05-25T21:04:39.7178902+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="d47f5653-595f-40a8-8f50-27accd9618ff" />
+    <UnitTestResult executionId="5f805597-b6b3-42c9-887b-b068d7d4ff50" testId="6abbba5b-7ef0-2f85-66d6-c0dccb1316ae" testName="Helix.Orchestration.SiteServer.Tests.Endpoints.DeviceEndpointsTests.GetDevices_Returns200WithThreeSimDevices" computerName="GBJHLC0J0KR3" duration="00:00:00.4446830" startTime="2026-05-25T21:04:39.7269851+01:00" endTime="2026-05-25T21:04:39.7269956+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="5f805597-b6b3-42c9-887b-b068d7d4ff50" />
+    <UnitTestResult executionId="bac6eb88-7fd1-4f5f-9908-dd83dd28dcf6" testId="423e8a44-d90f-8e5c-b969-1d3c158aa624" testName="Helix.Orchestration.SiteServer.Tests.Agent.SimAgentProxyTests.GetRunspaceStatusAsync_AfterSubmit_ReturnsKnownRunspace" computerName="GBJHLC0J0KR3" duration="00:00:00.0031479" startTime="2026-05-25T21:04:39.3633554+01:00" endTime="2026-05-25T21:04:39.3633556+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="bac6eb88-7fd1-4f5f-9908-dd83dd28dcf6" />
+    <UnitTestResult executionId="de3b85b9-c895-416a-8a49-04f255833c5c" testId="9b4ac5fa-8beb-ac1f-cf6f-dc12ebd092e6" testName="Helix.Orchestration.SiteServer.Tests.Endpoints.TrendEndpointsTests.GetTrendHistory_UnknownId_Returns404" computerName="GBJHLC0J0KR3" duration="00:00:00.0061323" startTime="2026-05-25T21:04:39.7318233+01:00" endTime="2026-05-25T21:04:39.7318233+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="de3b85b9-c895-416a-8a49-04f255833c5c" />
+    <UnitTestResult executionId="460bca22-2ce5-4145-a7ba-324ccae1cb8c" testId="dc1032ae-b9ba-190c-9bea-f7922d1e1cda" testName="Helix.Orchestration.SiteServer.Tests.Endpoints.TrendEndpointsTests.GetTrends_ReturnsJsonArray" computerName="GBJHLC0J0KR3" duration="00:00:00.0064632" startTime="2026-05-25T21:04:39.7251405+01:00" endTime="2026-05-25T21:04:39.7251406+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="460bca22-2ce5-4145-a7ba-324ccae1cb8c" />
+    <UnitTestResult executionId="12f5b8ca-d5c9-4c39-9c38-7707225490c3" testId="57642052-0673-248c-4c37-e5da88f4c11b" testName="Helix.Orchestration.SiteServer.Tests.Endpoints.CampaignEndpointsTests.GetCampaigns_Returns200" computerName="GBJHLC0J0KR3" duration="00:00:00.4354466" startTime="2026-05-25T21:04:39.7177781+01:00" endTime="2026-05-25T21:04:39.7177783+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="12f5b8ca-d5c9-4c39-9c38-7707225490c3" />
+    <UnitTestResult executionId="d0ad87ae-4fd9-4508-9550-10408e243362" testId="38861c09-06b6-1f3b-837a-d6a809f90593" testName="Helix.Orchestration.SiteServer.Tests.Simulation.SimulatedTrendProviderTests.RegisterTrend_ThenGetAllTrends_ReturnsRegisteredTrend" computerName="GBJHLC0J0KR3" duration="00:00:00.0100100" startTime="2026-05-25T21:04:39.3644751+01:00" endTime="2026-05-25T21:04:39.3644752+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="d0ad87ae-4fd9-4508-9550-10408e243362" />
+    <UnitTestResult executionId="b4cbc87e-2fd2-4fab-a54f-da4403d4eff2" testId="97488468-db05-f85b-e63a-5a3abe7c73be" testName="Helix.Orchestration.SiteServer.Tests.Endpoints.ExperimentEndpointsTests.PostExperiment_ValidRequest_Returns200WithRunspaceId" computerName="GBJHLC0J0KR3" duration="00:00:00.0032767" startTime="2026-05-25T21:04:39.7457407+01:00" endTime="2026-05-25T21:04:39.7457408+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b4cbc87e-2fd2-4fab-a54f-da4403d4eff2" />
+    <UnitTestResult executionId="404365b8-c40a-4554-9d3b-ae3848522265" testId="27116de8-dc5f-dce9-0a45-4b757cf46756" testName="Helix.Orchestration.SiteServer.Tests.Simulation.SimulatedTrendProviderTests.GetTrendsByKind_FiltersCorrectly" computerName="GBJHLC0J0KR3" duration="00:00:00.0013970" startTime="2026-05-25T21:04:39.3658654+01:00" endTime="2026-05-25T21:04:39.3658655+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="404365b8-c40a-4554-9d3b-ae3848522265" />
+    <UnitTestResult executionId="b3e3e227-3e53-496e-8fae-992938b9faef" testId="ececde95-30cb-53d1-9e69-bde509b15363" testName="Helix.Orchestration.SiteServer.Tests.Agent.SimAgentProxyTests.GetRunspaceStatusAsync_AfterSubmit_StatusIsRunningOrComplete" computerName="GBJHLC0J0KR3" duration="00:00:00.0554459" startTime="2026-05-25T21:04:39.4250282+01:00" endTime="2026-05-25T21:04:39.4250284+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b3e3e227-3e53-496e-8fae-992938b9faef" />
+    <UnitTestResult executionId="4a43686b-85e9-4579-a4e2-eeeb7f331d5e" testId="b455d1b1-f751-ac32-2758-0b1d3c2442b8" testName="Helix.Orchestration.SiteServer.Tests.Agent.SimAgentProxyTests.SubmitExperimentAsync_ReturnsNonEmptyRunspaceId" computerName="GBJHLC0J0KR3" duration="00:00:00.0193643" startTime="2026-05-25T21:04:39.3101542+01:00" endTime="2026-05-25T21:04:39.3101901+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="4a43686b-85e9-4579-a4e2-eeeb7f331d5e" />
+    <UnitTestResult executionId="74637088-342b-4227-9d97-d095ff26230c" testId="8d28722f-a2b4-bd24-3e4d-36cd012c4116" testName="Helix.Orchestration.SiteServer.Tests.Agent.SimAgentProxyTests.GetRegisteredDevices_ReturnsThreeSimDevices" computerName="GBJHLC0J0KR3" duration="00:00:00.0013251" startTime="2026-05-25T21:04:39.3673450+01:00" endTime="2026-05-25T21:04:39.3673453+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="74637088-342b-4227-9d97-d095ff26230c" />
+    <UnitTestResult executionId="cf718502-c2e5-4532-9b58-4fc45787a81e" testId="ebad5e45-073d-55e1-27fd-ef2908325190" testName="Helix.Orchestration.SiteServer.Tests.Endpoints.CampaignEndpointsTests.DeleteCampaign_UnknownId_Returns404" computerName="GBJHLC0J0KR3" duration="00:00:00.0048982" startTime="2026-05-25T21:04:39.7234292+01:00" endTime="2026-05-25T21:04:39.7234294+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="cf718502-c2e5-4532-9b58-4fc45787a81e" />
+    <UnitTestResult executionId="7410011b-0765-4ed7-bf72-eb94c20ab536" testId="c20cef30-c92e-1821-2030-4e2bccccb075" testName="Helix.Orchestration.SiteServer.Tests.Endpoints.ExperimentEndpointsTests.DeleteExperiment_AfterSubmit_Returns204" computerName="GBJHLC0J0KR3" duration="00:00:00.0233699" startTime="2026-05-25T21:04:39.7419484+01:00" endTime="2026-05-25T21:04:39.7419485+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="7410011b-0765-4ed7-bf72-eb94c20ab536" />
+    <UnitTestResult executionId="5f72da66-4555-4e3e-a48a-560f07f56c98" testId="a8e36555-fe1c-c05c-4772-cc9cff8366a2" testName="Helix.Orchestration.SiteServer.Tests.Endpoints.CampaignEndpointsTests.StartCampaign_UnknownId_Returns404" computerName="GBJHLC0J0KR3" duration="00:00:00.0054929" startTime="2026-05-25T21:04:39.7294391+01:00" endTime="2026-05-25T21:04:39.7294392+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="5f72da66-4555-4e3e-a48a-560f07f56c98" />
+    <UnitTestResult executionId="e037da94-5fed-4b80-9c27-ecf62af58a23" testId="88ddfe86-717f-7a07-b4b8-29d7f75eb9cc" testName="Helix.Orchestration.SiteServer.Tests.Campaigns.CampaignManagerTests.StartAsync_SubmitsAllIterations_AndCompletesCampaign" computerName="GBJHLC0J0KR3" duration="00:00:00.1563898" startTime="2026-05-25T21:04:39.4420870+01:00" endTime="2026-05-25T21:04:39.4420875+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="e037da94-5fed-4b80-9c27-ecf62af58a23" />
+    <UnitTestResult executionId="7d389a74-3164-4e70-9de2-8e94e648deab" testId="b052e940-f60f-5c15-203a-e8a7060f42ac" testName="Helix.Orchestration.SiteServer.Tests.Agent.GrpcAgentProxyTests.GetRunspaceStatusAsync_ValidResponse_MapsToDto" computerName="GBJHLC0J0KR3" duration="00:00:00.0034837" startTime="2026-05-25T21:04:39.4363640+01:00" endTime="2026-05-25T21:04:39.4363643+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="7d389a74-3164-4e70-9de2-8e94e648deab" />
+    <UnitTestResult executionId="2fc8e939-9af6-4dca-b7ff-f474d37cf677" testId="fb8e6070-2ef4-a428-1c74-e351988e4596" testName="Helix.Orchestration.SiteServer.Tests.Simulation.SimulatedTrendProviderTests.GetScalarTrend_ByName_ReturnsCorrectTrend" computerName="GBJHLC0J0KR3" duration="00:00:00.0015559" startTime="2026-05-25T21:04:39.3643406+01:00" endTime="2026-05-25T21:04:39.3643407+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="2fc8e939-9af6-4dca-b7ff-f474d37cf677" />
+    <UnitTestResult executionId="404821ec-3eba-4631-96fd-587bab4346d1" testId="9df22b56-27f4-7298-f856-ac0d9c811427" testName="Helix.Orchestration.SiteServer.Tests.Endpoints.DeviceEndpointsTests.GetDevices_EachDeviceHasCapabilities" computerName="GBJHLC0J0KR3" duration="00:00:00.0041885" startTime="2026-05-25T21:04:39.7317929+01:00" endTime="2026-05-25T21:04:39.7317931+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="404821ec-3eba-4631-96fd-587bab4346d1" />
+    <UnitTestResult executionId="45e4b9cc-2889-4ed4-b956-2795c1f5400a" testId="0f6b0d62-16dc-b5a0-6e71-19c04e50c854" testName="Helix.Orchestration.SiteServer.Tests.Campaigns.CampaignManagerTests.DeleteAsync_RemovesCampaign" computerName="GBJHLC0J0KR3" duration="00:00:00.0011324" startTime="2026-05-25T21:04:39.4452765+01:00" endTime="2026-05-25T21:04:39.4452767+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="45e4b9cc-2889-4ed4-b956-2795c1f5400a" />
+    <UnitTestResult executionId="21f882a6-da9f-40e5-9d92-25419c30ee0b" testId="1a081b75-b7fe-8201-9398-e23307329589" testName="Helix.Orchestration.SiteServer.Tests.Endpoints.ExperimentEndpointsTests.GetExperimentStatus_AfterSubmit_Returns200" computerName="GBJHLC0J0KR3" duration="00:00:00.0063709" startTime="2026-05-25T21:04:39.7526614+01:00" endTime="2026-05-25T21:04:39.7526616+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="21f882a6-da9f-40e5-9d92-25419c30ee0b" />
+    <UnitTestResult executionId="53776bba-29b4-4bac-81f6-de148fd584ab" testId="a2e04505-d25e-6185-be81-a6676de94afd" testName="Helix.Orchestration.SiteServer.Tests.Endpoints.CampaignEndpointsTests.CreateCampaign_MissingName_Returns400" computerName="GBJHLC0J0KR3" duration="00:00:00.0065884" startTime="2026-05-25T21:04:39.7365606+01:00" endTime="2026-05-25T21:04:39.7365608+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="53776bba-29b4-4bac-81f6-de148fd584ab" />
+    <UnitTestResult executionId="548929e0-ce78-44c9-a1b8-3dfe835c97e5" testId="24c0a42e-aa6b-df45-e8aa-e4b62c014a4a" testName="Helix.Orchestration.SiteServer.Tests.Endpoints.ExperimentEndpointsTests.DeleteExperiment_UnknownId_Returns404" computerName="GBJHLC0J0KR3" duration="00:00:00.4357081" startTime="2026-05-25T21:04:39.7179493+01:00" endTime="2026-05-25T21:04:39.7179495+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="548929e0-ce78-44c9-a1b8-3dfe835c97e5" />
+    <UnitTestResult executionId="d2936e98-ab98-4f15-9d38-99051b063ee3" testId="b5cda701-0d73-2943-1964-180be096e8e2" testName="Helix.Orchestration.SiteServer.Tests.Simulation.SimulatedTrendProviderTests.PublishValue_UnknownTrendId_DoesNotThrow" computerName="GBJHLC0J0KR3" duration="00:00:00.0004954" startTime="2026-05-25T21:04:39.3645089+01:00" endTime="2026-05-25T21:04:39.3645090+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="d2936e98-ab98-4f15-9d38-99051b063ee3" />
+    <UnitTestResult executionId="990b8eef-a46b-4723-8eb1-b690445edc9c" testId="4e229f2d-2cc7-4cd7-8322-48725ea4f26f" testName="Helix.Orchestration.SiteServer.Tests.Agent.GrpcAgentProxyTests.GetRunspaceStatusAsync_NotFoundStatus_ThrowsKeyNotFoundException" computerName="GBJHLC0J0KR3" duration="00:00:00.0012679" startTime="2026-05-25T21:04:39.4377165+01:00" endTime="2026-05-25T21:04:39.4377168+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="990b8eef-a46b-4723-8eb1-b690445edc9c" />
+    <UnitTestResult executionId="787c0b80-c7d6-4455-86f5-e3ecaf1d97a4" testId="a1191385-aec2-bdaf-fa46-6d3e99e22c57" testName="Helix.Orchestration.SiteServer.Tests.Agent.SimAgentProxyTests.AbortRunspaceAsync_UnknownId_ThrowsKeyNotFound" computerName="GBJHLC0J0KR3" duration="00:00:00.0027691" startTime="2026-05-25T21:04:39.3660040+01:00" endTime="2026-05-25T21:04:39.3660040+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="787c0b80-c7d6-4455-86f5-e3ecaf1d97a4" />
+    <UnitTestResult executionId="9b2bf541-361e-4be7-9183-171f2ce1007a" testId="c95bda8c-5f7e-2ea6-2823-24a121bc2c8b" testName="Helix.Orchestration.SiteServer.Tests.Agent.SimAgentProxyTests.GetRunspaceStatusAsync_UnknownId_ThrowsKeyNotFound" computerName="GBJHLC0J0KR3" duration="00:00:00.0008669" startTime="2026-05-25T21:04:39.3660263+01:00" endTime="2026-05-25T21:04:39.3660263+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="9b2bf541-361e-4be7-9183-171f2ce1007a" />
+    <UnitTestResult executionId="b09c0be5-5358-4f91-9cfa-e7cb482fc2bd" testId="9c7a2f64-2b37-55ec-ec86-f5f9aba0dfd6" testName="Helix.Orchestration.SiteServer.Tests.Simulation.SimulatedTrendProviderTests.PublishValue_Scalar_DeliveredToObserver" computerName="GBJHLC0J0KR3" duration="00:00:00.0336762" startTime="2026-05-25T21:04:39.3642879+01:00" endTime="2026-05-25T21:04:39.3642880+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b09c0be5-5358-4f91-9cfa-e7cb482fc2bd" />
+    <UnitTestResult executionId="b25af2ee-d445-479e-938e-801b78b0ee61" testId="9cc80f87-c144-59be-ff1d-27f4d4f467f8" testName="Helix.Orchestration.SiteServer.Tests.Agent.GrpcAgentProxyTests.AbortRunspaceAsync_FailedAck_ThrowsInvalidOperationException" computerName="GBJHLC0J0KR3" duration="00:00:00.1470582" startTime="2026-05-25T21:04:39.4328082+01:00" endTime="2026-05-25T21:04:39.4328083+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b25af2ee-d445-479e-938e-801b78b0ee61" />
+    <UnitTestResult executionId="82dab8bb-da7a-4871-9043-c45e9b5b67d3" testId="0bbd3b90-1fcb-3ef9-e485-c7beff1c6de2" testName="Helix.Orchestration.SiteServer.Tests.Simulation.SimulatedTrendProviderTests.PublishValue_MultipleValues_WindowAccumulatesAll" computerName="GBJHLC0J0KR3" duration="00:00:00.0089772" startTime="2026-05-25T21:04:39.3643750+01:00" endTime="2026-05-25T21:04:39.3643750+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="82dab8bb-da7a-4871-9043-c45e9b5b67d3" />
+    <UnitTestResult executionId="ef9251ce-fbc5-4f18-9efa-1ed4acffdac4" testId="3df99f55-4003-d5a0-3d1e-d676daed06f6" testName="Helix.Orchestration.SiteServer.Tests.Simulation.SimReactorTests.SetTemperature_UpdatesSetpoint_WithoutThrowing" computerName="GBJHLC0J0KR3" duration="00:00:00.0003604" startTime="2026-05-25T21:04:39.5029153+01:00" endTime="2026-05-25T21:04:39.5029154+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="ef9251ce-fbc5-4f18-9efa-1ed4acffdac4" />
+    <UnitTestResult executionId="ced354d5-ba7d-4ad5-be6d-d9fc16a00ec6" testId="5725e9b7-5322-f044-caa8-1a0740eec3ea" testName="Helix.Orchestration.SiteServer.Tests.Campaigns.CampaignManagerTests.StartAsync_OnSubmissionFailure_MarksCampaignFailed" computerName="GBJHLC0J0KR3" duration="00:00:00.0019398" startTime="2026-05-25T21:04:39.4440811+01:00" endTime="2026-05-25T21:04:39.4440812+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="ced354d5-ba7d-4ad5-be6d-d9fc16a00ec6" />
+    <UnitTestResult executionId="b3918f43-3273-47da-a8a4-8884d761e749" testId="974be1ec-bb61-da16-67f5-85d6bf0f3c2b" testName="Helix.Orchestration.SiteServer.Tests.Simulation.SimReactorTests.ExecuteAsync_RegistersTrends_AfterShortRun" computerName="GBJHLC0J0KR3" duration="00:00:00.2161538" startTime="2026-05-25T21:04:39.5022320+01:00" endTime="2026-05-25T21:04:39.5022324+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b3918f43-3273-47da-a8a4-8884d761e749" />
+    <UnitTestResult executionId="9e065c4c-3e27-4024-b69d-80766f189752" testId="6114b484-1373-e898-8c22-3eca72a56599" testName="Helix.Orchestration.SiteServer.Tests.Agent.SimAgentProxyTests.GetRegisteredDevices_ReactorHasExpectedCapabilities" computerName="GBJHLC0J0KR3" duration="00:00:00.0043163" startTime="2026-05-25T21:04:39.3659625+01:00" endTime="2026-05-25T21:04:39.3659626+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="9e065c4c-3e27-4024-b69d-80766f189752" />
+    <UnitTestResult executionId="ecb13a90-ceeb-495c-b680-c318e0e005d7" testId="0df29c59-ab3e-5f4a-f13b-400d8ac9387b" testName="Helix.Orchestration.SiteServer.Tests.Endpoints.ExperimentEndpointsTests.GetExperimentStatus_UnknownId_Returns404" computerName="GBJHLC0J0KR3" duration="00:00:00.0029448" startTime="2026-05-25T21:04:39.7561946+01:00" endTime="2026-05-25T21:04:39.7561948+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="ecb13a90-ceeb-495c-b680-c318e0e005d7" />
+    <UnitTestResult executionId="d0a695e4-9392-47c2-8b78-22ebd4c597f0" testId="e61cf84f-e09d-bf2b-935f-1cf5c8842236" testName="Helix.Orchestration.SiteServer.Tests.Simulation.SimReactorTests.ExecuteAsync_PublishesAtLeastOneTemperatureValue" computerName="GBJHLC0J0KR3" duration="00:00:01.3045482" startTime="2026-05-25T21:04:40.8085251+01:00" endTime="2026-05-25T21:04:40.8085254+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="d0a695e4-9392-47c2-8b78-22ebd4c597f0" />
+    <UnitTestResult executionId="4df22008-a57d-4542-aa1a-ad579ae2fd03" testId="6777a8fb-3f22-4b61-3fc8-9dc54bacc389" testName="Helix.Orchestration.SiteServer.Tests.Agent.GrpcAgentProxyTests.SubmitExperimentAsync_AcceptedResponse_ReturnsRunspaceId" computerName="GBJHLC0J0KR3" duration="00:00:00.0320238" startTime="2026-05-25T21:04:39.4697958+01:00" endTime="2026-05-25T21:04:39.4697962+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="4df22008-a57d-4542-aa1a-ad579ae2fd03" />
+    <UnitTestResult executionId="6360ce71-e7df-4699-bf3d-bfce2b196a44" testId="87a44ab6-88f4-aa01-5b6b-bc7428b552a3" testName="Helix.Orchestration.SiteServer.Tests.Agent.SimAgentProxyTests.AbortRunspaceAsync_AfterSubmit_DoesNotThrow" computerName="GBJHLC0J0KR3" duration="00:00:00.0261363" startTime="2026-05-25T21:04:39.3659328+01:00" endTime="2026-05-25T21:04:39.3659329+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="6360ce71-e7df-4699-bf3d-bfce2b196a44" />
+    <UnitTestResult executionId="0946ad60-ca24-4da6-8060-17f673867f94" testId="3a511c87-0fa2-3f5e-c125-dc5a777fda80" testName="Helix.Orchestration.SiteServer.Tests.Campaigns.CampaignManagerTests.CreateAsync_WithParameterSets_CreatesDraftCampaignWithIterations" computerName="GBJHLC0J0KR3" duration="00:00:00.0011639" startTime="2026-05-25T21:04:39.4465353+01:00" endTime="2026-05-25T21:04:39.4465355+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="0946ad60-ca24-4da6-8060-17f673867f94" />
+    <UnitTestResult executionId="f55ab440-35d4-4610-809c-047c617cc3f7" testId="a5793603-a2d8-78fb-4d80-aac50a6607a3" testName="Helix.Orchestration.SiteServer.Tests.Agent.SimAgentProxyTests.SubmitExperimentAsync_TwoCalls_ReturnDifferentIds" computerName="GBJHLC0J0KR3" duration="00:00:00.0028086" startTime="2026-05-25T21:04:39.3659857+01:00" endTime="2026-05-25T21:04:39.3659858+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="f55ab440-35d4-4610-809c-047c617cc3f7" />
+    <UnitTestResult executionId="6e142eb5-158f-4dfb-b973-1467d0e2f4fd" testId="2c3c5037-250a-25fa-e1a4-b46040ca885e" testName="Helix.Orchestration.SiteServer.Tests.Simulation.SimulatedTrendProviderTests.GetScalarTrend_UnknownName_ThrowsKeyNotFound" computerName="GBJHLC0J0KR3" duration="00:00:00.0010893" startTime="2026-05-25T21:04:39.3644469+01:00" endTime="2026-05-25T21:04:39.3644470+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="6e142eb5-158f-4dfb-b973-1467d0e2f4fd" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Helix.Orchestration.SiteServer.Tests.Agent.GrpcAgentProxyTests.GetRunspaceStatusAsync_ValidResponse_MapsToDto" storage="c:\users\u643664\source\repos\csharpgitlab\helix\helix.orchestration\tests\helix.orchestration.siteserver.tests\bin\release\net10.0\helix.orchestration.siteserver.tests.dll" id="b052e940-f60f-5c15-203a-e8a7060f42ac">
+      <Execution id="7d389a74-3164-4e70-9de2-8e94e648deab" />
+      <TestMethod codeBase="C:\Users\u643664\source\repos\CSharpGitLab\Helix\Helix.Orchestration\tests\Helix.Orchestration.SiteServer.Tests\bin\Release\net10.0\Helix.Orchestration.SiteServer.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Helix.Orchestration.SiteServer.Tests.Agent.GrpcAgentProxyTests" name="GetRunspaceStatusAsync_ValidResponse_MapsToDto" />
+    </UnitTest>
+    <UnitTest name="Helix.Orchestration.SiteServer.Tests.Agent.GrpcAgentProxyTests.SubmitExperimentAsync_AcceptedResponse_ReturnsRunspaceId" storage="c:\users\u643664\source\repos\csharpgitlab\helix\helix.orchestration\tests\helix.orchestration.siteserver.tests\bin\release\net10.0\helix.orchestration.siteserver.tests.dll" id="6777a8fb-3f22-4b61-3fc8-9dc54bacc389">
+      <Execution id="4df22008-a57d-4542-aa1a-ad579ae2fd03" />
+      <TestMethod codeBase="C:\Users\u643664\source\repos\CSharpGitLab\Helix\Helix.Orchestration\tests\Helix.Orchestration.SiteServer.Tests\bin\Release\net10.0\Helix.Orchestration.SiteServer.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Helix.Orchestration.SiteServer.Tests.Agent.GrpcAgentProxyTests" name="SubmitExperimentAsync_AcceptedResponse_ReturnsRunspaceId" />
+    </UnitTest>
+    <UnitTest name="Helix.Orchestration.SiteServer.Tests.Agent.SimAgentProxyTests.SubmitExperimentAsync_TwoCalls_ReturnDifferentIds" storage="c:\users\u643664\source\repos\csharpgitlab\helix\helix.orchestration\tests\helix.orchestration.siteserver.tests\bin\release\net10.0\helix.orchestration.siteserver.tests.dll" id="a5793603-a2d8-78fb-4d80-aac50a6607a3">
+      <Execution id="f55ab440-35d4-4610-809c-047c617cc3f7" />
+      <TestMethod codeBase="C:\Users\u643664\source\repos\CSharpGitLab\Helix\Helix.Orchestration\tests\Helix.Orchestration.SiteServer.Tests\bin\Release\net10.0\Helix.Orchestration.SiteServer.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Helix.Orchestration.SiteServer.Tests.Agent.SimAgentProxyTests" name="SubmitExperimentAsync_TwoCalls_ReturnDifferentIds" />
+    </UnitTest>
+    <UnitTest name="Helix.Orchestration.SiteServer.Tests.Agent.GrpcAgentProxyTests.SubmitExperimentAsync_RejectedResponse_ThrowsInvalidOperationException" storage="c:\users\u643664\source\repos\csharpgitlab\helix\helix.orchestration\tests\helix.orchestration.siteserver.tests\bin\release\net10.0\helix.orchestration.siteserver.tests.dll" id="500b2429-5257-41cc-7f7b-7afd8278c9e9">
+      <Execution id="5d73d7df-adca-4f07-86fe-349a81fb6e41" />
+      <TestMethod codeBase="C:\Users\u643664\source\repos\CSharpGitLab\Helix\Helix.Orchestration\tests\Helix.Orchestration.SiteServer.Tests\bin\Release\net10.0\Helix.Orchestration.SiteServer.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Helix.Orchestration.SiteServer.Tests.Agent.GrpcAgentProxyTests" name="SubmitExperimentAsync_RejectedResponse_ThrowsInvalidOperationException" />
+    </UnitTest>
+    <UnitTest name="Helix.Orchestration.SiteServer.Tests.Endpoints.DeviceEndpointsTests.GetDevices_Returns200WithThreeSimDevices" storage="c:\users\u643664\source\repos\csharpgitlab\helix\helix.orchestration\tests\helix.orchestration.siteserver.tests\bin\release\net10.0\helix.orchestration.siteserver.tests.dll" id="6abbba5b-7ef0-2f85-66d6-c0dccb1316ae">
+      <Execution id="5f805597-b6b3-42c9-887b-b068d7d4ff50" />
+      <TestMethod codeBase="C:\Users\u643664\source\repos\CSharpGitLab\Helix\Helix.Orchestration\tests\Helix.Orchestration.SiteServer.Tests\bin\Release\net10.0\Helix.Orchestration.SiteServer.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Helix.Orchestration.SiteServer.Tests.Endpoints.DeviceEndpointsTests" name="GetDevices_Returns200WithThreeSimDevices" />
+    </UnitTest>
+    <UnitTest name="Helix.Orchestration.SiteServer.Tests.Campaigns.CampaignManagerTests.DeleteAsync_RemovesCampaign" storage="c:\users\u643664\source\repos\csharpgitlab\helix\helix.orchestration\tests\helix.orchestration.siteserver.tests\bin\release\net10.0\helix.orchestration.siteserver.tests.dll" id="0f6b0d62-16dc-b5a0-6e71-19c04e50c854">
+      <Execution id="45e4b9cc-2889-4ed4-b956-2795c1f5400a" />
+      <TestMethod codeBase="C:\Users\u643664\source\repos\CSharpGitLab\Helix\Helix.Orchestration\tests\Helix.Orchestration.SiteServer.Tests\bin\Release\net10.0\Helix.Orchestration.SiteServer.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Helix.Orchestration.SiteServer.Tests.Campaigns.CampaignManagerTests" name="DeleteAsync_RemovesCampaign" />
+    </UnitTest>
+    <UnitTest name="Helix.Orchestration.SiteServer.Tests.Agent.SimAgentProxyTests.AbortRunspaceAsync_AfterSubmit_DoesNotThrow" storage="c:\users\u643664\source\repos\csharpgitlab\helix\helix.orchestration\tests\helix.orchestration.siteserver.tests\bin\release\net10.0\helix.orchestration.siteserver.tests.dll" id="87a44ab6-88f4-aa01-5b6b-bc7428b552a3">
+      <Execution id="6360ce71-e7df-4699-bf3d-bfce2b196a44" />
+      <TestMethod codeBase="C:\Users\u643664\source\repos\CSharpGitLab\Helix\Helix.Orchestration\tests\Helix.Orchestration.SiteServer.Tests\bin\Release\net10.0\Helix.Orchestration.SiteServer.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Helix.Orchestration.SiteServer.Tests.Agent.SimAgentProxyTests" name="AbortRunspaceAsync_AfterSubmit_DoesNotThrow" />
+    </UnitTest>
+    <UnitTest name="Helix.Orchestration.SiteServer.Tests.Simulation.SimulatedTrendProviderTests.GetTrendsByKind_FiltersCorrectly" storage="c:\users\u643664\source\repos\csharpgitlab\helix\helix.orchestration\tests\helix.orchestration.siteserver.tests\bin\release\net10.0\helix.orchestration.siteserver.tests.dll" id="27116de8-dc5f-dce9-0a45-4b757cf46756">
+      <Execution id="404365b8-c40a-4554-9d3b-ae3848522265" />
+      <TestMethod codeBase="C:\Users\u643664\source\repos\CSharpGitLab\Helix\Helix.Orchestration\tests\Helix.Orchestration.SiteServer.Tests\bin\Release\net10.0\Helix.Orchestration.SiteServer.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Helix.Orchestration.SiteServer.Tests.Simulation.SimulatedTrendProviderTests" name="GetTrendsByKind_FiltersCorrectly" />
+    </UnitTest>
+    <UnitTest name="Helix.Orchestration.SiteServer.Tests.Campaigns.CampaignManagerTests.StartAsync_SubmitsAllIterations_AndCompletesCampaign" storage="c:\users\u643664\source\repos\csharpgitlab\helix\helix.orchestration\tests\helix.orchestration.siteserver.tests\bin\release\net10.0\helix.orchestration.siteserver.tests.dll" id="88ddfe86-717f-7a07-b4b8-29d7f75eb9cc">
+      <Execution id="e037da94-5fed-4b80-9c27-ecf62af58a23" />
+      <TestMethod codeBase="C:\Users\u643664\source\repos\CSharpGitLab\Helix\Helix.Orchestration\tests\Helix.Orchestration.SiteServer.Tests\bin\Release\net10.0\Helix.Orchestration.SiteServer.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Helix.Orchestration.SiteServer.Tests.Campaigns.CampaignManagerTests" name="StartAsync_SubmitsAllIterations_AndCompletesCampaign" />
+    </UnitTest>
+    <UnitTest name="Helix.Orchestration.SiteServer.Tests.Agent.GrpcAgentProxyTests.AbortRunspaceAsync_FailedAck_ThrowsInvalidOperationException" storage="c:\users\u643664\source\repos\csharpgitlab\helix\helix.orchestration\tests\helix.orchestration.siteserver.tests\bin\release\net10.0\helix.orchestration.siteserver.tests.dll" id="9cc80f87-c144-59be-ff1d-27f4d4f467f8">
+      <Execution id="b25af2ee-d445-479e-938e-801b78b0ee61" />
+      <TestMethod codeBase="C:\Users\u643664\source\repos\CSharpGitLab\Helix\Helix.Orchestration\tests\Helix.Orchestration.SiteServer.Tests\bin\Release\net10.0\Helix.Orchestration.SiteServer.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Helix.Orchestration.SiteServer.Tests.Agent.GrpcAgentProxyTests" name="AbortRunspaceAsync_FailedAck_ThrowsInvalidOperationException" />
+    </UnitTest>
+    <UnitTest name="Helix.Orchestration.SiteServer.Tests.Simulation.SimReactorTests.ExecuteAsync_PublishesAtLeastOneTemperatureValue" storage="c:\users\u643664\source\repos\csharpgitlab\helix\helix.orchestration\tests\helix.orchestration.siteserver.tests\bin\release\net10.0\helix.orchestration.siteserver.tests.dll" id="e61cf84f-e09d-bf2b-935f-1cf5c8842236">
+      <Execution id="d0a695e4-9392-47c2-8b78-22ebd4c597f0" />
+      <TestMethod codeBase="C:\Users\u643664\source\repos\CSharpGitLab\Helix\Helix.Orchestration\tests\Helix.Orchestration.SiteServer.Tests\bin\Release\net10.0\Helix.Orchestration.SiteServer.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Helix.Orchestration.SiteServer.Tests.Simulation.SimReactorTests" name="ExecuteAsync_PublishesAtLeastOneTemperatureValue" />
+    </UnitTest>
+    <UnitTest name="Helix.Orchestration.SiteServer.Tests.Endpoints.CampaignEndpointsTests.DeleteCampaign_UnknownId_Returns404" storage="c:\users\u643664\source\repos\csharpgitlab\helix\helix.orchestration\tests\helix.orchestration.siteserver.tests\bin\release\net10.0\helix.orchestration.siteserver.tests.dll" id="ebad5e45-073d-55e1-27fd-ef2908325190">
+      <Execution id="cf718502-c2e5-4532-9b58-4fc45787a81e" />
+      <TestMethod codeBase="C:\Users\u643664\source\repos\CSharpGitLab\Helix\Helix.Orchestration\tests\Helix.Orchestration.SiteServer.Tests\bin\Release\net10.0\Helix.Orchestration.SiteServer.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Helix.Orchestration.SiteServer.Tests.Endpoints.CampaignEndpointsTests" name="DeleteCampaign_UnknownId_Returns404" />
+    </UnitTest>
+    <UnitTest name="Helix.Orchestration.SiteServer.Tests.Endpoints.ExperimentEndpointsTests.DeleteExperiment_AfterSubmit_Returns204" storage="c:\users\u643664\source\repos\csharpgitlab\helix\helix.orchestration\tests\helix.orchestration.siteserver.tests\bin\release\net10.0\helix.orchestration.siteserver.tests.dll" id="c20cef30-c92e-1821-2030-4e2bccccb075">
+      <Execution id="7410011b-0765-4ed7-bf72-eb94c20ab536" />
+      <TestMethod codeBase="C:\Users\u643664\source\repos\CSharpGitLab\Helix\Helix.Orchestration\tests\Helix.Orchestration.SiteServer.Tests\bin\Release\net10.0\Helix.Orchestration.SiteServer.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Helix.Orchestration.SiteServer.Tests.Endpoints.ExperimentEndpointsTests" name="DeleteExperiment_AfterSubmit_Returns204" />
+    </UnitTest>
+    <UnitTest name="Helix.Orchestration.SiteServer.Tests.Simulation.SimulatedTrendProviderTests.GetSpectralTrend_ReceivesSpectrum1D_Via_Observable" storage="c:\users\u643664\source\repos\csharpgitlab\helix\helix.orchestration\tests\helix.orchestration.siteserver.tests\bin\release\net10.0\helix.orchestration.siteserver.tests.dll" id="cc9ef7ae-e9ee-dc23-2475-0651d06773ef">
+      <Execution id="a07f6391-9b2a-4d0a-a846-796d7a1ebea8" />
+      <TestMethod codeBase="C:\Users\u643664\source\repos\CSharpGitLab\Helix\Helix.Orchestration\tests\Helix.Orchestration.SiteServer.Tests\bin\Release\net10.0\Helix.Orchestration.SiteServer.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Helix.Orchestration.SiteServer.Tests.Simulation.SimulatedTrendProviderTests" name="GetSpectralTrend_ReceivesSpectrum1D_Via_Observable" />
+    </UnitTest>
+    <UnitTest name="Helix.Orchestration.SiteServer.Tests.Agent.SimAgentProxyTests.GetRunspaceStatusAsync_AfterSubmit_ReturnsKnownRunspace" storage="c:\users\u643664\source\repos\csharpgitlab\helix\helix.orchestration\tests\helix.orchestration.siteserver.tests\bin\release\net10.0\helix.orchestration.siteserver.tests.dll" id="423e8a44-d90f-8e5c-b969-1d3c158aa624">
+      <Execution id="bac6eb88-7fd1-4f5f-9908-dd83dd28dcf6" />
+      <TestMethod codeBase="C:\Users\u643664\source\repos\CSharpGitLab\Helix\Helix.Orchestration\tests\Helix.Orchestration.SiteServer.Tests\bin\Release\net10.0\Helix.Orchestration.SiteServer.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Helix.Orchestration.SiteServer.Tests.Agent.SimAgentProxyTests" name="GetRunspaceStatusAsync_AfterSubmit_ReturnsKnownRunspace" />
+    </UnitTest>
+    <UnitTest name="Helix.Orchestration.SiteServer.Tests.Endpoints.CampaignEndpointsTests.CreateCampaign_MissingName_Returns400" storage="c:\users\u643664\source\repos\csharpgitlab\helix\helix.orchestration\tests\helix.orchestration.siteserver.tests\bin\release\net10.0\helix.orchestration.siteserver.tests.dll" id="a2e04505-d25e-6185-be81-a6676de94afd">
+      <Execution id="53776bba-29b4-4bac-81f6-de148fd584ab" />
+      <TestMethod codeBase="C:\Users\u643664\source\repos\CSharpGitLab\Helix\Helix.Orchestration\tests\Helix.Orchestration.SiteServer.Tests\bin\Release\net10.0\Helix.Orchestration.SiteServer.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Helix.Orchestration.SiteServer.Tests.Endpoints.CampaignEndpointsTests" name="CreateCampaign_MissingName_Returns400" />
+    </UnitTest>
+    <UnitTest name="Helix.Orchestration.SiteServer.Tests.Endpoints.DeviceEndpointsTests.GetDevices_EachDeviceHasCapabilities" storage="c:\users\u643664\source\repos\csharpgitlab\helix\helix.orchestration\tests\helix.orchestration.siteserver.tests\bin\release\net10.0\helix.orchestration.siteserver.tests.dll" id="9df22b56-27f4-7298-f856-ac0d9c811427">
+      <Execution id="404821ec-3eba-4631-96fd-587bab4346d1" />
+      <TestMethod codeBase="C:\Users\u643664\source\repos\CSharpGitLab\Helix\Helix.Orchestration\tests\Helix.Orchestration.SiteServer.Tests\bin\Release\net10.0\Helix.Orchestration.SiteServer.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Helix.Orchestration.SiteServer.Tests.Endpoints.DeviceEndpointsTests" name="GetDevices_EachDeviceHasCapabilities" />
+    </UnitTest>
+    <UnitTest name="Helix.Orchestration.SiteServer.Tests.Simulation.SimReactorTests.SetTemperature_UpdatesSetpoint_WithoutThrowing" storage="c:\users\u643664\source\repos\csharpgitlab\helix\helix.orchestration\tests\helix.orchestration.siteserver.tests\bin\release\net10.0\helix.orchestration.siteserver.tests.dll" id="3df99f55-4003-d5a0-3d1e-d676daed06f6">
+      <Execution id="ef9251ce-fbc5-4f18-9efa-1ed4acffdac4" />
+      <TestMethod codeBase="C:\Users\u643664\source\repos\CSharpGitLab\Helix\Helix.Orchestration\tests\Helix.Orchestration.SiteServer.Tests\bin\Release\net10.0\Helix.Orchestration.SiteServer.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Helix.Orchestration.SiteServer.Tests.Simulation.SimReactorTests" name="SetTemperature_UpdatesSetpoint_WithoutThrowing" />
+    </UnitTest>
+    <UnitTest name="Helix.Orchestration.SiteServer.Tests.Endpoints.CampaignEndpointsTests.GetCampaigns_Returns200" storage="c:\users\u643664\source\repos\csharpgitlab\helix\helix.orchestration\tests\helix.orchestration.siteserver.tests\bin\release\net10.0\helix.orchestration.siteserver.tests.dll" id="57642052-0673-248c-4c37-e5da88f4c11b">
+      <Execution id="12f5b8ca-d5c9-4c39-9c38-7707225490c3" />
+      <TestMethod codeBase="C:\Users\u643664\source\repos\CSharpGitLab\Helix\Helix.Orchestration\tests\Helix.Orchestration.SiteServer.Tests\bin\Release\net10.0\Helix.Orchestration.SiteServer.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Helix.Orchestration.SiteServer.Tests.Endpoints.CampaignEndpointsTests" name="GetCampaigns_Returns200" />
+    </UnitTest>
+    <UnitTest name="Helix.Orchestration.SiteServer.Tests.Campaigns.CampaignManagerTests.StartAsync_OnSubmissionFailure_MarksCampaignFailed" storage="c:\users\u643664\source\repos\csharpgitlab\helix\helix.orchestration\tests\helix.orchestration.siteserver.tests\bin\release\net10.0\helix.orchestration.siteserver.tests.dll" id="5725e9b7-5322-f044-caa8-1a0740eec3ea">
+      <Execution id="ced354d5-ba7d-4ad5-be6d-d9fc16a00ec6" />
+      <TestMethod codeBase="C:\Users\u643664\source\repos\CSharpGitLab\Helix\Helix.Orchestration\tests\Helix.Orchestration.SiteServer.Tests\bin\Release\net10.0\Helix.Orchestration.SiteServer.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Helix.Orchestration.SiteServer.Tests.Campaigns.CampaignManagerTests" name="StartAsync_OnSubmissionFailure_MarksCampaignFailed" />
+    </UnitTest>
+    <UnitTest name="Helix.Orchestration.SiteServer.Tests.Simulation.SimulatedTrendProviderTests.PublishValue_MultipleValues_WindowAccumulatesAll" storage="c:\users\u643664\source\repos\csharpgitlab\helix\helix.orchestration\tests\helix.orchestration.siteserver.tests\bin\release\net10.0\helix.orchestration.siteserver.tests.dll" id="0bbd3b90-1fcb-3ef9-e485-c7beff1c6de2">
+      <Execution id="82dab8bb-da7a-4871-9043-c45e9b5b67d3" />
+      <TestMethod codeBase="C:\Users\u643664\source\repos\CSharpGitLab\Helix\Helix.Orchestration\tests\Helix.Orchestration.SiteServer.Tests\bin\Release\net10.0\Helix.Orchestration.SiteServer.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Helix.Orchestration.SiteServer.Tests.Simulation.SimulatedTrendProviderTests" name="PublishValue_MultipleValues_WindowAccumulatesAll" />
+    </UnitTest>
+    <UnitTest name="Helix.Orchestration.SiteServer.Tests.Endpoints.CampaignEndpointsTests.CreateCampaign_ValidRequest_Returns201" storage="c:\users\u643664\source\repos\csharpgitlab\helix\helix.orchestration\tests\helix.orchestration.siteserver.tests\bin\release\net10.0\helix.orchestration.siteserver.tests.dll" id="dd1d19a6-0f7d-2d77-5a96-6052da42da40">
+      <Execution id="ca3b287d-6071-4959-a5d4-366bf34f05a8" />
+      <TestMethod codeBase="C:\Users\u643664\source\repos\CSharpGitLab\Helix\Helix.Orchestration\tests\Helix.Orchestration.SiteServer.Tests\bin\Release\net10.0\Helix.Orchestration.SiteServer.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Helix.Orchestration.SiteServer.Tests.Endpoints.CampaignEndpointsTests" name="CreateCampaign_ValidRequest_Returns201" />
+    </UnitTest>
+    <UnitTest name="Helix.Orchestration.SiteServer.Tests.Endpoints.TrendEndpointsTests.GetTrendHistory_UnknownId_Returns404" storage="c:\users\u643664\source\repos\csharpgitlab\helix\helix.orchestration\tests\helix.orchestration.siteserver.tests\bin\release\net10.0\helix.orchestration.siteserver.tests.dll" id="9b4ac5fa-8beb-ac1f-cf6f-dc12ebd092e6">
+      <Execution id="de3b85b9-c895-416a-8a49-04f255833c5c" />
+      <TestMethod codeBase="C:\Users\u643664\source\repos\CSharpGitLab\Helix\Helix.Orchestration\tests\Helix.Orchestration.SiteServer.Tests\bin\Release\net10.0\Helix.Orchestration.SiteServer.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Helix.Orchestration.SiteServer.Tests.Endpoints.TrendEndpointsTests" name="GetTrendHistory_UnknownId_Returns404" />
+    </UnitTest>
+    <UnitTest name="Helix.Orchestration.SiteServer.Tests.Agent.SimAgentProxyTests.GetRunspaceStatusAsync_UnknownId_ThrowsKeyNotFound" storage="c:\users\u643664\source\repos\csharpgitlab\helix\helix.orchestration\tests\helix.orchestration.siteserver.tests\bin\release\net10.0\helix.orchestration.siteserver.tests.dll" id="c95bda8c-5f7e-2ea6-2823-24a121bc2c8b">
+      <Execution id="9b2bf541-361e-4be7-9183-171f2ce1007a" />
+      <TestMethod codeBase="C:\Users\u643664\source\repos\CSharpGitLab\Helix\Helix.Orchestration\tests\Helix.Orchestration.SiteServer.Tests\bin\Release\net10.0\Helix.Orchestration.SiteServer.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Helix.Orchestration.SiteServer.Tests.Agent.SimAgentProxyTests" name="GetRunspaceStatusAsync_UnknownId_ThrowsKeyNotFound" />
+    </UnitTest>
+    <UnitTest name="Helix.Orchestration.SiteServer.Tests.Campaigns.CampaignManagerTests.CreateAsync_WithParameterSets_CreatesDraftCampaignWithIterations" storage="c:\users\u643664\source\repos\csharpgitlab\helix\helix.orchestration\tests\helix.orchestration.siteserver.tests\bin\release\net10.0\helix.orchestration.siteserver.tests.dll" id="3a511c87-0fa2-3f5e-c125-dc5a777fda80">
+      <Execution id="0946ad60-ca24-4da6-8060-17f673867f94" />
+      <TestMethod codeBase="C:\Users\u643664\source\repos\CSharpGitLab\Helix\Helix.Orchestration\tests\Helix.Orchestration.SiteServer.Tests\bin\Release\net10.0\Helix.Orchestration.SiteServer.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Helix.Orchestration.SiteServer.Tests.Campaigns.CampaignManagerTests" name="CreateAsync_WithParameterSets_CreatesDraftCampaignWithIterations" />
+    </UnitTest>
+    <UnitTest name="Helix.Orchestration.SiteServer.Tests.Endpoints.ExperimentEndpointsTests.GetExperimentStatus_AfterSubmit_Returns200" storage="c:\users\u643664\source\repos\csharpgitlab\helix\helix.orchestration\tests\helix.orchestration.siteserver.tests\bin\release\net10.0\helix.orchestration.siteserver.tests.dll" id="1a081b75-b7fe-8201-9398-e23307329589">
+      <Execution id="21f882a6-da9f-40e5-9d92-25419c30ee0b" />
+      <TestMethod codeBase="C:\Users\u643664\source\repos\CSharpGitLab\Helix\Helix.Orchestration\tests\Helix.Orchestration.SiteServer.Tests\bin\Release\net10.0\Helix.Orchestration.SiteServer.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Helix.Orchestration.SiteServer.Tests.Endpoints.ExperimentEndpointsTests" name="GetExperimentStatus_AfterSubmit_Returns200" />
+    </UnitTest>
+    <UnitTest name="Helix.Orchestration.SiteServer.Tests.Agent.SimAgentProxyTests.GetRegisteredDevices_ReturnsThreeSimDevices" storage="c:\users\u643664\source\repos\csharpgitlab\helix\helix.orchestration\tests\helix.orchestration.siteserver.tests\bin\release\net10.0\helix.orchestration.siteserver.tests.dll" id="8d28722f-a2b4-bd24-3e4d-36cd012c4116">
+      <Execution id="74637088-342b-4227-9d97-d095ff26230c" />
+      <TestMethod codeBase="C:\Users\u643664\source\repos\CSharpGitLab\Helix\Helix.Orchestration\tests\Helix.Orchestration.SiteServer.Tests\bin\Release\net10.0\Helix.Orchestration.SiteServer.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Helix.Orchestration.SiteServer.Tests.Agent.SimAgentProxyTests" name="GetRegisteredDevices_ReturnsThreeSimDevices" />
+    </UnitTest>
+    <UnitTest name="Helix.Orchestration.SiteServer.Tests.Endpoints.TrendEndpointsTests.GetTrends_ReturnsJsonArray" storage="c:\users\u643664\source\repos\csharpgitlab\helix\helix.orchestration\tests\helix.orchestration.siteserver.tests\bin\release\net10.0\helix.orchestration.siteserver.tests.dll" id="dc1032ae-b9ba-190c-9bea-f7922d1e1cda">
+      <Execution id="460bca22-2ce5-4145-a7ba-324ccae1cb8c" />
+      <TestMethod codeBase="C:\Users\u643664\source\repos\CSharpGitLab\Helix\Helix.Orchestration\tests\Helix.Orchestration.SiteServer.Tests\bin\Release\net10.0\Helix.Orchestration.SiteServer.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Helix.Orchestration.SiteServer.Tests.Endpoints.TrendEndpointsTests" name="GetTrends_ReturnsJsonArray" />
+    </UnitTest>
+    <UnitTest name="Helix.Orchestration.SiteServer.Tests.Agent.SimAgentProxyTests.AbortRunspaceAsync_UnknownId_ThrowsKeyNotFound" storage="c:\users\u643664\source\repos\csharpgitlab\helix\helix.orchestration\tests\helix.orchestration.siteserver.tests\bin\release\net10.0\helix.orchestration.siteserver.tests.dll" id="a1191385-aec2-bdaf-fa46-6d3e99e22c57">
+      <Execution id="787c0b80-c7d6-4455-86f5-e3ecaf1d97a4" />
+      <TestMethod codeBase="C:\Users\u643664\source\repos\CSharpGitLab\Helix\Helix.Orchestration\tests\Helix.Orchestration.SiteServer.Tests\bin\Release\net10.0\Helix.Orchestration.SiteServer.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Helix.Orchestration.SiteServer.Tests.Agent.SimAgentProxyTests" name="AbortRunspaceAsync_UnknownId_ThrowsKeyNotFound" />
+    </UnitTest>
+    <UnitTest name="Helix.Orchestration.SiteServer.Tests.Endpoints.TrendEndpointsTests.GetTrends_Returns200" storage="c:\users\u643664\source\repos\csharpgitlab\helix\helix.orchestration\tests\helix.orchestration.siteserver.tests\bin\release\net10.0\helix.orchestration.siteserver.tests.dll" id="d5716ba4-052f-1ab7-1f4b-7ade9104641c">
+      <Execution id="d47f5653-595f-40a8-8f50-27accd9618ff" />
+      <TestMethod codeBase="C:\Users\u643664\source\repos\CSharpGitLab\Helix\Helix.Orchestration\tests\Helix.Orchestration.SiteServer.Tests\bin\Release\net10.0\Helix.Orchestration.SiteServer.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Helix.Orchestration.SiteServer.Tests.Endpoints.TrendEndpointsTests" name="GetTrends_Returns200" />
+    </UnitTest>
+    <UnitTest name="Helix.Orchestration.SiteServer.Tests.Agent.GrpcAgentProxyTests.GetRunspaceStatusAsync_NotFoundStatus_ThrowsKeyNotFoundException" storage="c:\users\u643664\source\repos\csharpgitlab\helix\helix.orchestration\tests\helix.orchestration.siteserver.tests\bin\release\net10.0\helix.orchestration.siteserver.tests.dll" id="4e229f2d-2cc7-4cd7-8322-48725ea4f26f">
+      <Execution id="990b8eef-a46b-4723-8eb1-b690445edc9c" />
+      <TestMethod codeBase="C:\Users\u643664\source\repos\CSharpGitLab\Helix\Helix.Orchestration\tests\Helix.Orchestration.SiteServer.Tests\bin\Release\net10.0\Helix.Orchestration.SiteServer.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Helix.Orchestration.SiteServer.Tests.Agent.GrpcAgentProxyTests" name="GetRunspaceStatusAsync_NotFoundStatus_ThrowsKeyNotFoundException" />
+    </UnitTest>
+    <UnitTest name="Helix.Orchestration.SiteServer.Tests.Endpoints.ExperimentEndpointsTests.DeleteExperiment_UnknownId_Returns404" storage="c:\users\u643664\source\repos\csharpgitlab\helix\helix.orchestration\tests\helix.orchestration.siteserver.tests\bin\release\net10.0\helix.orchestration.siteserver.tests.dll" id="24c0a42e-aa6b-df45-e8aa-e4b62c014a4a">
+      <Execution id="548929e0-ce78-44c9-a1b8-3dfe835c97e5" />
+      <TestMethod codeBase="C:\Users\u643664\source\repos\CSharpGitLab\Helix\Helix.Orchestration\tests\Helix.Orchestration.SiteServer.Tests\bin\Release\net10.0\Helix.Orchestration.SiteServer.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Helix.Orchestration.SiteServer.Tests.Endpoints.ExperimentEndpointsTests" name="DeleteExperiment_UnknownId_Returns404" />
+    </UnitTest>
+    <UnitTest name="Helix.Orchestration.SiteServer.Tests.Simulation.SimulatedTrendProviderTests.GetScalarTrend_UnknownName_ThrowsKeyNotFound" storage="c:\users\u643664\source\repos\csharpgitlab\helix\helix.orchestration\tests\helix.orchestration.siteserver.tests\bin\release\net10.0\helix.orchestration.siteserver.tests.dll" id="2c3c5037-250a-25fa-e1a4-b46040ca885e">
+      <Execution id="6e142eb5-158f-4dfb-b973-1467d0e2f4fd" />
+      <TestMethod codeBase="C:\Users\u643664\source\repos\CSharpGitLab\Helix\Helix.Orchestration\tests\Helix.Orchestration.SiteServer.Tests\bin\Release\net10.0\Helix.Orchestration.SiteServer.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Helix.Orchestration.SiteServer.Tests.Simulation.SimulatedTrendProviderTests" name="GetScalarTrend_UnknownName_ThrowsKeyNotFound" />
+    </UnitTest>
+    <UnitTest name="Helix.Orchestration.SiteServer.Tests.Simulation.SimulatedTrendProviderTests.RegisterTrend_ThenGetAllTrends_ReturnsRegisteredTrend" storage="c:\users\u643664\source\repos\csharpgitlab\helix\helix.orchestration\tests\helix.orchestration.siteserver.tests\bin\release\net10.0\helix.orchestration.siteserver.tests.dll" id="38861c09-06b6-1f3b-837a-d6a809f90593">
+      <Execution id="d0ad87ae-4fd9-4508-9550-10408e243362" />
+      <TestMethod codeBase="C:\Users\u643664\source\repos\CSharpGitLab\Helix\Helix.Orchestration\tests\Helix.Orchestration.SiteServer.Tests\bin\Release\net10.0\Helix.Orchestration.SiteServer.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Helix.Orchestration.SiteServer.Tests.Simulation.SimulatedTrendProviderTests" name="RegisterTrend_ThenGetAllTrends_ReturnsRegisteredTrend" />
+    </UnitTest>
+    <UnitTest name="Helix.Orchestration.SiteServer.Tests.Agent.SimAgentProxyTests.SubmitExperimentAsync_ReturnsNonEmptyRunspaceId" storage="c:\users\u643664\source\repos\csharpgitlab\helix\helix.orchestration\tests\helix.orchestration.siteserver.tests\bin\release\net10.0\helix.orchestration.siteserver.tests.dll" id="b455d1b1-f751-ac32-2758-0b1d3c2442b8">
+      <Execution id="4a43686b-85e9-4579-a4e2-eeeb7f331d5e" />
+      <TestMethod codeBase="C:\Users\u643664\source\repos\CSharpGitLab\Helix\Helix.Orchestration\tests\Helix.Orchestration.SiteServer.Tests\bin\Release\net10.0\Helix.Orchestration.SiteServer.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Helix.Orchestration.SiteServer.Tests.Agent.SimAgentProxyTests" name="SubmitExperimentAsync_ReturnsNonEmptyRunspaceId" />
+    </UnitTest>
+    <UnitTest name="Helix.Orchestration.SiteServer.Tests.Simulation.SimulatedTrendProviderTests.PublishValue_Scalar_DeliveredToObserver" storage="c:\users\u643664\source\repos\csharpgitlab\helix\helix.orchestration\tests\helix.orchestration.siteserver.tests\bin\release\net10.0\helix.orchestration.siteserver.tests.dll" id="9c7a2f64-2b37-55ec-ec86-f5f9aba0dfd6">
+      <Execution id="b09c0be5-5358-4f91-9cfa-e7cb482fc2bd" />
+      <TestMethod codeBase="C:\Users\u643664\source\repos\CSharpGitLab\Helix\Helix.Orchestration\tests\Helix.Orchestration.SiteServer.Tests\bin\Release\net10.0\Helix.Orchestration.SiteServer.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Helix.Orchestration.SiteServer.Tests.Simulation.SimulatedTrendProviderTests" name="PublishValue_Scalar_DeliveredToObserver" />
+    </UnitTest>
+    <UnitTest name="Helix.Orchestration.SiteServer.Tests.Simulation.SimulatedTrendProviderTests.PublishValue_UnknownTrendId_DoesNotThrow" storage="c:\users\u643664\source\repos\csharpgitlab\helix\helix.orchestration\tests\helix.orchestration.siteserver.tests\bin\release\net10.0\helix.orchestration.siteserver.tests.dll" id="b5cda701-0d73-2943-1964-180be096e8e2">
+      <Execution id="d2936e98-ab98-4f15-9d38-99051b063ee3" />
+      <TestMethod codeBase="C:\Users\u643664\source\repos\CSharpGitLab\Helix\Helix.Orchestration\tests\Helix.Orchestration.SiteServer.Tests\bin\Release\net10.0\Helix.Orchestration.SiteServer.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Helix.Orchestration.SiteServer.Tests.Simulation.SimulatedTrendProviderTests" name="PublishValue_UnknownTrendId_DoesNotThrow" />
+    </UnitTest>
+    <UnitTest name="Helix.Orchestration.SiteServer.Tests.Endpoints.ExperimentEndpointsTests.PostExperiment_ValidRequest_Returns200WithRunspaceId" storage="c:\users\u643664\source\repos\csharpgitlab\helix\helix.orchestration\tests\helix.orchestration.siteserver.tests\bin\release\net10.0\helix.orchestration.siteserver.tests.dll" id="97488468-db05-f85b-e63a-5a3abe7c73be">
+      <Execution id="b4cbc87e-2fd2-4fab-a54f-da4403d4eff2" />
+      <TestMethod codeBase="C:\Users\u643664\source\repos\CSharpGitLab\Helix\Helix.Orchestration\tests\Helix.Orchestration.SiteServer.Tests\bin\Release\net10.0\Helix.Orchestration.SiteServer.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Helix.Orchestration.SiteServer.Tests.Endpoints.ExperimentEndpointsTests" name="PostExperiment_ValidRequest_Returns200WithRunspaceId" />
+    </UnitTest>
+    <UnitTest name="Helix.Orchestration.SiteServer.Tests.Endpoints.CampaignEndpointsTests.StartCampaign_UnknownId_Returns404" storage="c:\users\u643664\source\repos\csharpgitlab\helix\helix.orchestration\tests\helix.orchestration.siteserver.tests\bin\release\net10.0\helix.orchestration.siteserver.tests.dll" id="a8e36555-fe1c-c05c-4772-cc9cff8366a2">
+      <Execution id="5f72da66-4555-4e3e-a48a-560f07f56c98" />
+      <TestMethod codeBase="C:\Users\u643664\source\repos\CSharpGitLab\Helix\Helix.Orchestration\tests\Helix.Orchestration.SiteServer.Tests\bin\Release\net10.0\Helix.Orchestration.SiteServer.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Helix.Orchestration.SiteServer.Tests.Endpoints.CampaignEndpointsTests" name="StartCampaign_UnknownId_Returns404" />
+    </UnitTest>
+    <UnitTest name="Helix.Orchestration.SiteServer.Tests.Agent.SimAgentProxyTests.GetRegisteredDevices_ReactorHasExpectedCapabilities" storage="c:\users\u643664\source\repos\csharpgitlab\helix\helix.orchestration\tests\helix.orchestration.siteserver.tests\bin\release\net10.0\helix.orchestration.siteserver.tests.dll" id="6114b484-1373-e898-8c22-3eca72a56599">
+      <Execution id="9e065c4c-3e27-4024-b69d-80766f189752" />
+      <TestMethod codeBase="C:\Users\u643664\source\repos\CSharpGitLab\Helix\Helix.Orchestration\tests\Helix.Orchestration.SiteServer.Tests\bin\Release\net10.0\Helix.Orchestration.SiteServer.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Helix.Orchestration.SiteServer.Tests.Agent.SimAgentProxyTests" name="GetRegisteredDevices_ReactorHasExpectedCapabilities" />
+    </UnitTest>
+    <UnitTest name="Helix.Orchestration.SiteServer.Tests.Simulation.SimulatedTrendProviderTests.GetScalarTrend_ByName_ReturnsCorrectTrend" storage="c:\users\u643664\source\repos\csharpgitlab\helix\helix.orchestration\tests\helix.orchestration.siteserver.tests\bin\release\net10.0\helix.orchestration.siteserver.tests.dll" id="fb8e6070-2ef4-a428-1c74-e351988e4596">
+      <Execution id="2fc8e939-9af6-4dca-b7ff-f474d37cf677" />
+      <TestMethod codeBase="C:\Users\u643664\source\repos\CSharpGitLab\Helix\Helix.Orchestration\tests\Helix.Orchestration.SiteServer.Tests\bin\Release\net10.0\Helix.Orchestration.SiteServer.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Helix.Orchestration.SiteServer.Tests.Simulation.SimulatedTrendProviderTests" name="GetScalarTrend_ByName_ReturnsCorrectTrend" />
+    </UnitTest>
+    <UnitTest name="Helix.Orchestration.SiteServer.Tests.Simulation.SimReactorTests.ExecuteAsync_RegistersTrends_AfterShortRun" storage="c:\users\u643664\source\repos\csharpgitlab\helix\helix.orchestration\tests\helix.orchestration.siteserver.tests\bin\release\net10.0\helix.orchestration.siteserver.tests.dll" id="974be1ec-bb61-da16-67f5-85d6bf0f3c2b">
+      <Execution id="b3918f43-3273-47da-a8a4-8884d761e749" />
+      <TestMethod codeBase="C:\Users\u643664\source\repos\CSharpGitLab\Helix\Helix.Orchestration\tests\Helix.Orchestration.SiteServer.Tests\bin\Release\net10.0\Helix.Orchestration.SiteServer.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Helix.Orchestration.SiteServer.Tests.Simulation.SimReactorTests" name="ExecuteAsync_RegistersTrends_AfterShortRun" />
+    </UnitTest>
+    <UnitTest name="Helix.Orchestration.SiteServer.Tests.Agent.SimAgentProxyTests.GetRunspaceStatusAsync_AfterSubmit_StatusIsRunningOrComplete" storage="c:\users\u643664\source\repos\csharpgitlab\helix\helix.orchestration\tests\helix.orchestration.siteserver.tests\bin\release\net10.0\helix.orchestration.siteserver.tests.dll" id="ececde95-30cb-53d1-9e69-bde509b15363">
+      <Execution id="b3e3e227-3e53-496e-8fae-992938b9faef" />
+      <TestMethod codeBase="C:\Users\u643664\source\repos\CSharpGitLab\Helix\Helix.Orchestration\tests\Helix.Orchestration.SiteServer.Tests\bin\Release\net10.0\Helix.Orchestration.SiteServer.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Helix.Orchestration.SiteServer.Tests.Agent.SimAgentProxyTests" name="GetRunspaceStatusAsync_AfterSubmit_StatusIsRunningOrComplete" />
+    </UnitTest>
+    <UnitTest name="Helix.Orchestration.SiteServer.Tests.Endpoints.ExperimentEndpointsTests.GetExperimentStatus_UnknownId_Returns404" storage="c:\users\u643664\source\repos\csharpgitlab\helix\helix.orchestration\tests\helix.orchestration.siteserver.tests\bin\release\net10.0\helix.orchestration.siteserver.tests.dll" id="0df29c59-ab3e-5f4a-f13b-400d8ac9387b">
+      <Execution id="ecb13a90-ceeb-495c-b680-c318e0e005d7" />
+      <TestMethod codeBase="C:\Users\u643664\source\repos\CSharpGitLab\Helix\Helix.Orchestration\tests\Helix.Orchestration.SiteServer.Tests\bin\Release\net10.0\Helix.Orchestration.SiteServer.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Helix.Orchestration.SiteServer.Tests.Endpoints.ExperimentEndpointsTests" name="GetExperimentStatus_UnknownId_Returns404" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="dd1d19a6-0f7d-2d77-5a96-6052da42da40" executionId="ca3b287d-6071-4959-a5d4-366bf34f05a8" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="cc9ef7ae-e9ee-dc23-2475-0651d06773ef" executionId="a07f6391-9b2a-4d0a-a846-796d7a1ebea8" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="500b2429-5257-41cc-7f7b-7afd8278c9e9" executionId="5d73d7df-adca-4f07-86fe-349a81fb6e41" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="d5716ba4-052f-1ab7-1f4b-7ade9104641c" executionId="d47f5653-595f-40a8-8f50-27accd9618ff" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="6abbba5b-7ef0-2f85-66d6-c0dccb1316ae" executionId="5f805597-b6b3-42c9-887b-b068d7d4ff50" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="423e8a44-d90f-8e5c-b969-1d3c158aa624" executionId="bac6eb88-7fd1-4f5f-9908-dd83dd28dcf6" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="9b4ac5fa-8beb-ac1f-cf6f-dc12ebd092e6" executionId="de3b85b9-c895-416a-8a49-04f255833c5c" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="dc1032ae-b9ba-190c-9bea-f7922d1e1cda" executionId="460bca22-2ce5-4145-a7ba-324ccae1cb8c" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="57642052-0673-248c-4c37-e5da88f4c11b" executionId="12f5b8ca-d5c9-4c39-9c38-7707225490c3" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="38861c09-06b6-1f3b-837a-d6a809f90593" executionId="d0ad87ae-4fd9-4508-9550-10408e243362" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="97488468-db05-f85b-e63a-5a3abe7c73be" executionId="b4cbc87e-2fd2-4fab-a54f-da4403d4eff2" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="27116de8-dc5f-dce9-0a45-4b757cf46756" executionId="404365b8-c40a-4554-9d3b-ae3848522265" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="ececde95-30cb-53d1-9e69-bde509b15363" executionId="b3e3e227-3e53-496e-8fae-992938b9faef" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="b455d1b1-f751-ac32-2758-0b1d3c2442b8" executionId="4a43686b-85e9-4579-a4e2-eeeb7f331d5e" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="8d28722f-a2b4-bd24-3e4d-36cd012c4116" executionId="74637088-342b-4227-9d97-d095ff26230c" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="ebad5e45-073d-55e1-27fd-ef2908325190" executionId="cf718502-c2e5-4532-9b58-4fc45787a81e" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="c20cef30-c92e-1821-2030-4e2bccccb075" executionId="7410011b-0765-4ed7-bf72-eb94c20ab536" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="a8e36555-fe1c-c05c-4772-cc9cff8366a2" executionId="5f72da66-4555-4e3e-a48a-560f07f56c98" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="88ddfe86-717f-7a07-b4b8-29d7f75eb9cc" executionId="e037da94-5fed-4b80-9c27-ecf62af58a23" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="b052e940-f60f-5c15-203a-e8a7060f42ac" executionId="7d389a74-3164-4e70-9de2-8e94e648deab" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="fb8e6070-2ef4-a428-1c74-e351988e4596" executionId="2fc8e939-9af6-4dca-b7ff-f474d37cf677" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="9df22b56-27f4-7298-f856-ac0d9c811427" executionId="404821ec-3eba-4631-96fd-587bab4346d1" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="0f6b0d62-16dc-b5a0-6e71-19c04e50c854" executionId="45e4b9cc-2889-4ed4-b956-2795c1f5400a" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="1a081b75-b7fe-8201-9398-e23307329589" executionId="21f882a6-da9f-40e5-9d92-25419c30ee0b" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="a2e04505-d25e-6185-be81-a6676de94afd" executionId="53776bba-29b4-4bac-81f6-de148fd584ab" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="24c0a42e-aa6b-df45-e8aa-e4b62c014a4a" executionId="548929e0-ce78-44c9-a1b8-3dfe835c97e5" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="b5cda701-0d73-2943-1964-180be096e8e2" executionId="d2936e98-ab98-4f15-9d38-99051b063ee3" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="4e229f2d-2cc7-4cd7-8322-48725ea4f26f" executionId="990b8eef-a46b-4723-8eb1-b690445edc9c" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="a1191385-aec2-bdaf-fa46-6d3e99e22c57" executionId="787c0b80-c7d6-4455-86f5-e3ecaf1d97a4" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="c95bda8c-5f7e-2ea6-2823-24a121bc2c8b" executionId="9b2bf541-361e-4be7-9183-171f2ce1007a" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="9c7a2f64-2b37-55ec-ec86-f5f9aba0dfd6" executionId="b09c0be5-5358-4f91-9cfa-e7cb482fc2bd" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="9cc80f87-c144-59be-ff1d-27f4d4f467f8" executionId="b25af2ee-d445-479e-938e-801b78b0ee61" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="0bbd3b90-1fcb-3ef9-e485-c7beff1c6de2" executionId="82dab8bb-da7a-4871-9043-c45e9b5b67d3" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="3df99f55-4003-d5a0-3d1e-d676daed06f6" executionId="ef9251ce-fbc5-4f18-9efa-1ed4acffdac4" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="5725e9b7-5322-f044-caa8-1a0740eec3ea" executionId="ced354d5-ba7d-4ad5-be6d-d9fc16a00ec6" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="974be1ec-bb61-da16-67f5-85d6bf0f3c2b" executionId="b3918f43-3273-47da-a8a4-8884d761e749" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="6114b484-1373-e898-8c22-3eca72a56599" executionId="9e065c4c-3e27-4024-b69d-80766f189752" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="0df29c59-ab3e-5f4a-f13b-400d8ac9387b" executionId="ecb13a90-ceeb-495c-b680-c318e0e005d7" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="e61cf84f-e09d-bf2b-935f-1cf5c8842236" executionId="d0a695e4-9392-47c2-8b78-22ebd4c597f0" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="6777a8fb-3f22-4b61-3fc8-9dc54bacc389" executionId="4df22008-a57d-4542-aa1a-ad579ae2fd03" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="87a44ab6-88f4-aa01-5b6b-bc7428b552a3" executionId="6360ce71-e7df-4699-bf3d-bfce2b196a44" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="3a511c87-0fa2-3f5e-c125-dc5a777fda80" executionId="0946ad60-ca24-4da6-8060-17f673867f94" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="a5793603-a2d8-78fb-4d80-aac50a6607a3" executionId="f55ab440-35d4-4610-809c-047c617cc3f7" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="2c3c5037-250a-25fa-e1a4-b46040ca885e" executionId="6e142eb5-158f-4dfb-b973-1467d0e2f4fd" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Completed">
+    <Counters total="44" executed="44" passed="44" failed="0" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.8.2+699d445a1a (64-bit .NET 10.0.8)&#xD;
+[xUnit.net 00:00:00.12]   Discovering: Helix.Orchestration.SiteServer.Tests&#xD;
+[xUnit.net 00:00:00.18]   Discovered:  Helix.Orchestration.SiteServer.Tests&#xD;
+[xUnit.net 00:00:00.18]   Starting:    Helix.Orchestration.SiteServer.Tests&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[1]&#xD;
+      Hosting starting&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[1]&#xD;
+      Hosting starting&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[1]&#xD;
+      Hosting starting&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[1]&#xD;
+      Hosting starting&#xD;
+info: Microsoft.Hosting.Lifetime[0]&#xD;
+      Application started. Press Ctrl+C to shut down.&#xD;
+info: Microsoft.Hosting.Lifetime[0]&#xD;
+      Application started. Press Ctrl+C to shut down.&#xD;
+info: Microsoft.Hosting.Lifetime[0]&#xD;
+      Hosting environment: Development&#xD;
+info: Microsoft.Hosting.Lifetime[0]&#xD;
+      Hosting environment: Development&#xD;
+info: Microsoft.Hosting.Lifetime[0]&#xD;
+      Content root path: C:\Users\u643664\source\repos\CSharpGitLab\Helix\Helix.Orchestration\Helix.Orchestration.SiteServer&#xD;
+info: Microsoft.Hosting.Lifetime[0]&#xD;
+      Content root path: C:\Users\u643664\source\repos\CSharpGitLab\Helix\Helix.Orchestration\Helix.Orchestration.SiteServer&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[2]&#xD;
+      Hosting started&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[2]&#xD;
+      Hosting started&#xD;
+info: Microsoft.Hosting.Lifetime[0]&#xD;
+      Application started. Press Ctrl+C to shut down.&#xD;
+info: Microsoft.Hosting.Lifetime[0]&#xD;
+      Hosting environment: Development&#xD;
+info: Microsoft.Hosting.Lifetime[0]&#xD;
+      Content root path: C:\Users\u643664\source\repos\CSharpGitLab\Helix\Helix.Orchestration\Helix.Orchestration.SiteServer&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[2]&#xD;
+      Hosting started&#xD;
+info: Microsoft.Hosting.Lifetime[0]&#xD;
+      Application started. Press Ctrl+C to shut down.&#xD;
+info: Microsoft.Hosting.Lifetime[0]&#xD;
+      Hosting environment: Development&#xD;
+info: Microsoft.Hosting.Lifetime[0]&#xD;
+      Content root path: C:\Users\u643664\source\repos\CSharpGitLab\Helix\Helix.Orchestration\Helix.Orchestration.SiteServer&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[2]&#xD;
+      Hosting started&#xD;
+warn: Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware[3]&#xD;
+      Failed to determine the https port for redirect.&#xD;
+warn: Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware[3]&#xD;
+      Failed to determine the https port for redirect.&#xD;
+warn: Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware[3]&#xD;
+      Failed to determine the https port for redirect.&#xD;
+warn: Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware[3]&#xD;
+      Failed to determine the https port for redirect.&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[3]&#xD;
+      Hosting stopping&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[3]&#xD;
+      Hosting stopping&#xD;
+info: Microsoft.Hosting.Lifetime[0]&#xD;
+      Application is shutting down...&#xD;
+info: Microsoft.Hosting.Lifetime[0]&#xD;
+      Application is shutting down...&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[3]&#xD;
+      Hosting stopping&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[3]&#xD;
+      Hosting stopping&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[4]&#xD;
+      Hosting stopped&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[4]&#xD;
+      Hosting stopped&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[4]&#xD;
+      Hosting stopped&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[4]&#xD;
+      Hosting stopped&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[3]&#xD;
+      Hosting stopping&#xD;
+info: Microsoft.Hosting.Lifetime[0]&#xD;
+      Application is shutting down...&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[4]&#xD;
+      Hosting stopped&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[3]&#xD;
+      Hosting stopping&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[4]&#xD;
+      Hosting stopped&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[3]&#xD;
+      Hosting stopping&#xD;
+info: Microsoft.Hosting.Lifetime[0]&#xD;
+      Application is shutting down...&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[4]&#xD;
+      Hosting stopped&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[3]&#xD;
+      Hosting stopping&#xD;
+dbug: Microsoft.Extensions.Hosting.Internal.Host[4]&#xD;
+      Hosting stopped&#xD;
+[xUnit.net 00:00:01.77]   Finished:    Helix.Orchestration.SiteServer.Tests&#xD;
+</StdOut>
+    </Output>
+  </ResultSummary>
+</TestRun>

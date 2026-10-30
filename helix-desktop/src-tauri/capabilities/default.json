@@ -1,0 +1,16 @@
+{
+  "$schema": "../node_modules/@tauri-apps/cli/schema/desktop-schema.json",
+  "identifier": "default",
+  "description": "Capability for main window",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "store:default",
+    "fs:default",
+    "allow-agent-broker",
+    { "identifier": "fs:allow-read-text-file", "allow": [{ "path": "$APPDATA/workflows/*" }] },
+    { "identifier": "fs:allow-write-text-file", "allow": [{ "path": "$APPDATA/workflows/*" }] },
+    { "identifier": "fs:allow-mkdir", "allow": [{ "path": "$APPDATA/workflows" }] },
+    { "identifier": "fs:allow-read-dir", "allow": [{ "path": "$APPDATA/workflows" }] }
+  ]
+}

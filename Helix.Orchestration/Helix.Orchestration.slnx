@@ -1,7 +1,0 @@
-<Solution>
-  <Folder Name="/Solution Items/">
-    <File Path="TextFile1.txt" />
-  </Folder>
-  <Project Path="Helix.Orchestration.Core/Helix.Orchestration.Core.csproj" />
-  <Project Path="tests/Helix.Orchestration.Core.Tests/Helix.Orchestration.Core.Tests.csproj" />
-</Solution>

@@ -1,0 +1,76 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="ad6d93ba-4e6c-4152-87a0-613e9e41ffbc" name="u643664@GBJHLC0J0KR3 2026-05-25 21:04:39" runUser="EAME\u643664" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-05-25T21:04:39.4579282+01:00" queuing="2026-05-25T21:04:39.4579289+01:00" start="2026-05-25T21:04:38.2798395+01:00" finish="2026-05-25T21:04:39.4633595+01:00" />
+  <TestSettings name="default" id="92a0145e-9d9c-4c9f-a930-4f4ea76b9723">
+    <Deployment runDeploymentRoot="u643664_GBJHLC0J0KR3_2026-05-25_21_04_39" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="9a72da31-9748-4791-a6b2-525e2bdcd81d" testId="b86e8687-c004-1271-7d0d-3bdd16f7b420" testName="Helix.Orchestration.Agent.Tests.Trends.InMemoryTrendProvidersTests.TrendAggregator_ProcessesSpectralAndDiodeArrayValues" computerName="GBJHLC0J0KR3" duration="00:00:00.0331950" startTime="2026-05-25T21:04:39.2591066+01:00" endTime="2026-05-25T21:04:39.2591615+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="9a72da31-9748-4791-a6b2-525e2bdcd81d" />
+    <UnitTestResult executionId="707cb64b-2995-4ed5-8bcd-3891252a4327" testId="04f27f02-041e-05d8-e900-dd978974f99c" testName="Helix.Orchestration.Agent.Tests.Runspaces.DurableRunspaceTests.PauseAsync_CancelsCurrentExecution_AndSetsPausedStatus" computerName="GBJHLC0J0KR3" duration="00:00:00.0048363" startTime="2026-05-25T21:04:39.2873985+01:00" endTime="2026-05-25T21:04:39.2873989+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="707cb64b-2995-4ed5-8bcd-3891252a4327" />
+    <UnitTestResult executionId="239279c1-e176-43f7-b468-ef198117764c" testId="89b028ce-47d4-e221-9624-00b63e725ce6" testName="Helix.Orchestration.Agent.Tests.Execution.WslExecutionAdapterTests.ExecuteAsync_WhenDocumentInvalid_ThrowsWslValidationException" computerName="GBJHLC0J0KR3" duration="00:00:00.0050726" startTime="2026-05-25T21:04:39.2875968+01:00" endTime="2026-05-25T21:04:39.2875971+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="239279c1-e176-43f7-b468-ef198117764c" />
+    <UnitTestResult executionId="afc7f554-8b40-4023-8699-d722758500b4" testId="2068f2c7-8b1e-afc4-0752-fd858b14cac7" testName="Helix.Orchestration.Agent.Tests.Trends.InMemoryTrendProvidersTests.SpectralProvider_Push_UpdatesLatestAndBoundedHistory" computerName="GBJHLC0J0KR3" duration="00:00:00.0046400" startTime="2026-05-25T21:04:39.2642292+01:00" endTime="2026-05-25T21:04:39.2642294+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="afc7f554-8b40-4023-8699-d722758500b4" />
+    <UnitTestResult executionId="73668648-dc43-41d7-a499-1a532e6ed6de" testId="dbe559d7-b9e9-7947-430d-6e48b56d891f" testName="Helix.Orchestration.Agent.Tests.Runspaces.DurableRunspaceTests.StartAsync_DelegatesToWorkflowExecutor_AndCompletes" computerName="GBJHLC0J0KR3" duration="00:00:00.0476931" startTime="2026-05-25T21:04:39.2803602+01:00" endTime="2026-05-25T21:04:39.2803609+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="73668648-dc43-41d7-a499-1a532e6ed6de" />
+    <UnitTestResult executionId="a802d2e6-5b52-488c-98eb-f2c4ba249f5e" testId="0f9d6702-3e6e-596e-ff5b-a7d7d5be9057" testName="Helix.Orchestration.Agent.Tests.Execution.WslExecutionAdapterTests.ExecuteAsync_CompilesAndStartsRunspace" computerName="GBJHLC0J0KR3" duration="00:00:00.0476868" startTime="2026-05-25T21:04:39.2803950+01:00" endTime="2026-05-25T21:04:39.2803951+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="a802d2e6-5b52-488c-98eb-f2c4ba249f5e" />
+    <UnitTestResult executionId="b4a35fa9-4155-4f03-b779-bbd3dd181e4f" testId="47d27c69-c5b4-ffa5-109d-efdb64403769" testName="Helix.Orchestration.Agent.Tests.Leasing.LeaseExpiryWorkerTests.ExpiredLease_IsPurged_ByCleanupPass" computerName="GBJHLC0J0KR3" duration="00:00:00.0617699" startTime="2026-05-25T21:04:39.2931218+01:00" endTime="2026-05-25T21:04:39.2931223+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b4a35fa9-4155-4f03-b779-bbd3dd181e4f" />
+    <UnitTestResult executionId="29074389-bd31-49db-9af0-43b56ed9e58a" testId="4f5aa1f5-b5b1-41cf-be9e-816660f11937" testName="Helix.Orchestration.Agent.Tests.Leasing.LeaseExpiryWorkerTests.ActiveLease_IsRetained_ByCleanupPass" computerName="GBJHLC0J0KR3" duration="00:00:00.0012346" startTime="2026-05-25T21:04:39.2951274+01:00" endTime="2026-05-25T21:04:39.2951275+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="29074389-bd31-49db-9af0-43b56ed9e58a" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Helix.Orchestration.Agent.Tests.Execution.WslExecutionAdapterTests.ExecuteAsync_WhenDocumentInvalid_ThrowsWslValidationException" storage="c:\users\u643664\source\repos\csharpgitlab\helix\helix.orchestration\tests\helix.orchestration.agent.tests\bin\release\net10.0\helix.orchestration.agent.tests.dll" id="89b028ce-47d4-e221-9624-00b63e725ce6">
+      <Execution id="239279c1-e176-43f7-b468-ef198117764c" />
+      <TestMethod codeBase="C:\Users\u643664\source\repos\CSharpGitLab\Helix\Helix.Orchestration\tests\Helix.Orchestration.Agent.Tests\bin\Release\net10.0\Helix.Orchestration.Agent.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Helix.Orchestration.Agent.Tests.Execution.WslExecutionAdapterTests" name="ExecuteAsync_WhenDocumentInvalid_ThrowsWslValidationException" />
+    </UnitTest>
+    <UnitTest name="Helix.Orchestration.Agent.Tests.Leasing.LeaseExpiryWorkerTests.ActiveLease_IsRetained_ByCleanupPass" storage="c:\users\u643664\source\repos\csharpgitlab\helix\helix.orchestration\tests\helix.orchestration.agent.tests\bin\release\net10.0\helix.orchestration.agent.tests.dll" id="4f5aa1f5-b5b1-41cf-be9e-816660f11937">
+      <Execution id="29074389-bd31-49db-9af0-43b56ed9e58a" />
+      <TestMethod codeBase="C:\Users\u643664\source\repos\CSharpGitLab\Helix\Helix.Orchestration\tests\Helix.Orchestration.Agent.Tests\bin\Release\net10.0\Helix.Orchestration.Agent.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Helix.Orchestration.Agent.Tests.Leasing.LeaseExpiryWorkerTests" name="ActiveLease_IsRetained_ByCleanupPass" />
+    </UnitTest>
+    <UnitTest name="Helix.Orchestration.Agent.Tests.Runspaces.DurableRunspaceTests.StartAsync_DelegatesToWorkflowExecutor_AndCompletes" storage="c:\users\u643664\source\repos\csharpgitlab\helix\helix.orchestration\tests\helix.orchestration.agent.tests\bin\release\net10.0\helix.orchestration.agent.tests.dll" id="dbe559d7-b9e9-7947-430d-6e48b56d891f">
+      <Execution id="73668648-dc43-41d7-a499-1a532e6ed6de" />
+      <TestMethod codeBase="C:\Users\u643664\source\repos\CSharpGitLab\Helix\Helix.Orchestration\tests\Helix.Orchestration.Agent.Tests\bin\Release\net10.0\Helix.Orchestration.Agent.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Helix.Orchestration.Agent.Tests.Runspaces.DurableRunspaceTests" name="StartAsync_DelegatesToWorkflowExecutor_AndCompletes" />
+    </UnitTest>
+    <UnitTest name="Helix.Orchestration.Agent.Tests.Execution.WslExecutionAdapterTests.ExecuteAsync_CompilesAndStartsRunspace" storage="c:\users\u643664\source\repos\csharpgitlab\helix\helix.orchestration\tests\helix.orchestration.agent.tests\bin\release\net10.0\helix.orchestration.agent.tests.dll" id="0f9d6702-3e6e-596e-ff5b-a7d7d5be9057">
+      <Execution id="a802d2e6-5b52-488c-98eb-f2c4ba249f5e" />
+      <TestMethod codeBase="C:\Users\u643664\source\repos\CSharpGitLab\Helix\Helix.Orchestration\tests\Helix.Orchestration.Agent.Tests\bin\Release\net10.0\Helix.Orchestration.Agent.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Helix.Orchestration.Agent.Tests.Execution.WslExecutionAdapterTests" name="ExecuteAsync_CompilesAndStartsRunspace" />
+    </UnitTest>
+    <UnitTest name="Helix.Orchestration.Agent.Tests.Runspaces.DurableRunspaceTests.PauseAsync_CancelsCurrentExecution_AndSetsPausedStatus" storage="c:\users\u643664\source\repos\csharpgitlab\helix\helix.orchestration\tests\helix.orchestration.agent.tests\bin\release\net10.0\helix.orchestration.agent.tests.dll" id="04f27f02-041e-05d8-e900-dd978974f99c">
+      <Execution id="707cb64b-2995-4ed5-8bcd-3891252a4327" />
+      <TestMethod codeBase="C:\Users\u643664\source\repos\CSharpGitLab\Helix\Helix.Orchestration\tests\Helix.Orchestration.Agent.Tests\bin\Release\net10.0\Helix.Orchestration.Agent.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Helix.Orchestration.Agent.Tests.Runspaces.DurableRunspaceTests" name="PauseAsync_CancelsCurrentExecution_AndSetsPausedStatus" />
+    </UnitTest>
+    <UnitTest name="Helix.Orchestration.Agent.Tests.Trends.InMemoryTrendProvidersTests.SpectralProvider_Push_UpdatesLatestAndBoundedHistory" storage="c:\users\u643664\source\repos\csharpgitlab\helix\helix.orchestration\tests\helix.orchestration.agent.tests\bin\release\net10.0\helix.orchestration.agent.tests.dll" id="2068f2c7-8b1e-afc4-0752-fd858b14cac7">
+      <Execution id="afc7f554-8b40-4023-8699-d722758500b4" />
+      <TestMethod codeBase="C:\Users\u643664\source\repos\CSharpGitLab\Helix\Helix.Orchestration\tests\Helix.Orchestration.Agent.Tests\bin\Release\net10.0\Helix.Orchestration.Agent.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Helix.Orchestration.Agent.Tests.Trends.InMemoryTrendProvidersTests" name="SpectralProvider_Push_UpdatesLatestAndBoundedHistory" />
+    </UnitTest>
+    <UnitTest name="Helix.Orchestration.Agent.Tests.Trends.InMemoryTrendProvidersTests.TrendAggregator_ProcessesSpectralAndDiodeArrayValues" storage="c:\users\u643664\source\repos\csharpgitlab\helix\helix.orchestration\tests\helix.orchestration.agent.tests\bin\release\net10.0\helix.orchestration.agent.tests.dll" id="b86e8687-c004-1271-7d0d-3bdd16f7b420">
+      <Execution id="9a72da31-9748-4791-a6b2-525e2bdcd81d" />
+      <TestMethod codeBase="C:\Users\u643664\source\repos\CSharpGitLab\Helix\Helix.Orchestration\tests\Helix.Orchestration.Agent.Tests\bin\Release\net10.0\Helix.Orchestration.Agent.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Helix.Orchestration.Agent.Tests.Trends.InMemoryTrendProvidersTests" name="TrendAggregator_ProcessesSpectralAndDiodeArrayValues" />
+    </UnitTest>
+    <UnitTest name="Helix.Orchestration.Agent.Tests.Leasing.LeaseExpiryWorkerTests.ExpiredLease_IsPurged_ByCleanupPass" storage="c:\users\u643664\source\repos\csharpgitlab\helix\helix.orchestration\tests\helix.orchestration.agent.tests\bin\release\net10.0\helix.orchestration.agent.tests.dll" id="47d27c69-c5b4-ffa5-109d-efdb64403769">
+      <Execution id="b4a35fa9-4155-4f03-b779-bbd3dd181e4f" />
+      <TestMethod codeBase="C:\Users\u643664\source\repos\CSharpGitLab\Helix\Helix.Orchestration\tests\Helix.Orchestration.Agent.Tests\bin\Release\net10.0\Helix.Orchestration.Agent.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Helix.Orchestration.Agent.Tests.Leasing.LeaseExpiryWorkerTests" name="ExpiredLease_IsPurged_ByCleanupPass" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="b86e8687-c004-1271-7d0d-3bdd16f7b420" executionId="9a72da31-9748-4791-a6b2-525e2bdcd81d" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="04f27f02-041e-05d8-e900-dd978974f99c" executionId="707cb64b-2995-4ed5-8bcd-3891252a4327" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="89b028ce-47d4-e221-9624-00b63e725ce6" executionId="239279c1-e176-43f7-b468-ef198117764c" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="2068f2c7-8b1e-afc4-0752-fd858b14cac7" executionId="afc7f554-8b40-4023-8699-d722758500b4" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="dbe559d7-b9e9-7947-430d-6e48b56d891f" executionId="73668648-dc43-41d7-a499-1a532e6ed6de" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="0f9d6702-3e6e-596e-ff5b-a7d7d5be9057" executionId="a802d2e6-5b52-488c-98eb-f2c4ba249f5e" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="47d27c69-c5b4-ffa5-109d-efdb64403769" executionId="b4a35fa9-4155-4f03-b779-bbd3dd181e4f" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="4f5aa1f5-b5b1-41cf-be9e-816660f11937" executionId="29074389-bd31-49db-9af0-43b56ed9e58a" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Completed">
+    <Counters total="8" executed="8" passed="8" failed="0" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.8.2+699d445a1a (64-bit .NET 10.0.8)&#xD;
+[xUnit.net 00:00:00.10]   Discovering: Helix.Orchestration.Agent.Tests&#xD;
+[xUnit.net 00:00:00.16]   Discovered:  Helix.Orchestration.Agent.Tests&#xD;
+[xUnit.net 00:00:00.17]   Starting:    Helix.Orchestration.Agent.Tests&#xD;
+[xUnit.net 00:00:00.30]   Finished:    Helix.Orchestration.Agent.Tests&#xD;
+</StdOut>
+    </Output>
+  </ResultSummary>
+</TestRun>

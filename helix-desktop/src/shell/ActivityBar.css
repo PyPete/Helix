@@ -1,0 +1,65 @@
+/* ActivityBar.css — 40px activity bar with 2px left-edge active indicator */
+/* All colour values use var(--color-*) tokens — no hardcoded hex */
+
+.actbar {
+  width: 40px;
+  flex-shrink: 0;
+  background: var(--color-surface);
+  border-right: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 4px 0;
+}
+
+.actbar-top {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding-top: 4px;
+}
+
+.actbar-bottom {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-bottom: 4px;
+}
+
+.abtn {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  border: none;
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.abtn:hover {
+  background: var(--color-surface-overlay);
+  color: var(--color-text);
+}
+
+.abtn.active {
+  color: var(--color-text);
+}
+
+/* 2px left-edge indicator per H2 + sketch spec */
+.abtn.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 25%;
+  bottom: 25%;
+  width: 2px;
+  background: var(--color-primary);
+  border-radius: 0 2px 2px 0;
+}

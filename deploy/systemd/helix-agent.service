@@ -1,0 +1,12 @@
+# Unsupported for the Phase 01 Windows same-user enrollment profile.
+# This file is retained solely to prevent an older deployment recipe from being
+# mistaken for a supported authenticated Agent launch.  Do not enable it.
+[Unit]
+Description=UNSUPPORTED Helix Agent deployment (Windows same-user profile only)
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/false
+
+[Install]
+# Intentionally no WantedBy target: enabling this unit is not supported.

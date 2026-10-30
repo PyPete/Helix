@@ -1,0 +1,64 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="dd5d38c0-97b0-412f-b7a6-a412a44653eb" name="u643664@GBJHLC0J0KR3 2026-05-25 21:04:39" runUser="EAME\u643664" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-05-25T21:04:39.3748951+01:00" queuing="2026-05-25T21:04:39.3748957+01:00" start="2026-05-25T21:04:38.2728164+01:00" finish="2026-05-25T21:04:39.3847233+01:00" />
+  <TestSettings name="default" id="db8323ec-e79f-48c3-83e6-1b42056dfbc8">
+    <Deployment runDeploymentRoot="u643664_GBJHLC0J0KR3_2026-05-25_21_04_39" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="a03fc281-a1af-42c5-899f-2d921c5937d1" testId="8c98a5c5-4953-f1ab-0e12-1006c8f6b80c" testName="Helix.Orchestration.Infrastructure.Tests.Persistence.PostgresRepositoriesTests.PostgresCampaignRepository_SaveAndGetById_Works" computerName="GBJHLC0J0KR3" duration="00:00:00.0010000" startTime="2026-05-25T21:04:39.1874491+01:00" endTime="2026-05-25T21:04:39.1875110+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="NotExecuted" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="a03fc281-a1af-42c5-899f-2d921c5937d1">
+      <Output>
+        <ErrorInfo>
+          <Message>Requires Docker. Run with Docker available.</Message>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="89b85c44-9d91-4685-94cb-c802d111e031" testId="ced0bf14-696f-da16-5562-6b704a90cd55" testName="Helix.Orchestration.Infrastructure.Tests.Persistence.PostgresRepositoriesTests.PostgresExperimentRepository_SaveAndGetByRunspaceId_Works" computerName="GBJHLC0J0KR3" duration="00:00:00.0010000" startTime="2026-05-25T21:04:39.1913417+01:00" endTime="2026-05-25T21:04:39.1913419+01:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="NotExecuted" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="89b85c44-9d91-4685-94cb-c802d111e031">
+      <Output>
+        <ErrorInfo>
+          <Message>Requires Docker. Run with Docker available.</Message>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Helix.Orchestration.Infrastructure.Tests.Persistence.PostgresRepositoriesTests.PostgresExperimentRepository_SaveAndGetByRunspaceId_Works" storage="c:\users\u643664\source\repos\csharpgitlab\helix\helix.orchestration\tests\helix.orchestration.infrastructure.tests\bin\release\net10.0\helix.orchestration.infrastructure.tests.dll" id="ced0bf14-696f-da16-5562-6b704a90cd55">
+      <Execution id="89b85c44-9d91-4685-94cb-c802d111e031" />
+      <TestMethod codeBase="C:\Users\u643664\source\repos\CSharpGitLab\Helix\Helix.Orchestration\tests\Helix.Orchestration.Infrastructure.Tests\bin\Release\net10.0\Helix.Orchestration.Infrastructure.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Helix.Orchestration.Infrastructure.Tests.Persistence.PostgresRepositoriesTests" name="PostgresExperimentRepository_SaveAndGetByRunspaceId_Works" />
+    </UnitTest>
+    <UnitTest name="Helix.Orchestration.Infrastructure.Tests.Persistence.PostgresRepositoriesTests.PostgresCampaignRepository_SaveAndGetById_Works" storage="c:\users\u643664\source\repos\csharpgitlab\helix\helix.orchestration\tests\helix.orchestration.infrastructure.tests\bin\release\net10.0\helix.orchestration.infrastructure.tests.dll" id="8c98a5c5-4953-f1ab-0e12-1006c8f6b80c">
+      <Execution id="a03fc281-a1af-42c5-899f-2d921c5937d1" />
+      <TestMethod codeBase="C:\Users\u643664\source\repos\CSharpGitLab\Helix\Helix.Orchestration\tests\Helix.Orchestration.Infrastructure.Tests\bin\Release\net10.0\Helix.Orchestration.Infrastructure.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Helix.Orchestration.Infrastructure.Tests.Persistence.PostgresRepositoriesTests" name="PostgresCampaignRepository_SaveAndGetById_Works" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="8c98a5c5-4953-f1ab-0e12-1006c8f6b80c" executionId="a03fc281-a1af-42c5-899f-2d921c5937d1" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="ced0bf14-696f-da16-5562-6b704a90cd55" executionId="89b85c44-9d91-4685-94cb-c802d111e031" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Completed">
+    <Counters total="2" executed="0" passed="0" failed="0" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.8.2+699d445a1a (64-bit .NET 10.0.8)&#xD;
+[xUnit.net 00:00:00.10]   Discovering: Helix.Orchestration.Infrastructure.Tests&#xD;
+[xUnit.net 00:00:00.15]   Discovered:  Helix.Orchestration.Infrastructure.Tests&#xD;
+[xUnit.net 00:00:00.16]   Starting:    Helix.Orchestration.Infrastructure.Tests&#xD;
+[xUnit.net 00:00:00.20]       Requires Docker. Run with Docker available.&#xD;
+[xUnit.net 00:00:00.20]       Requires Docker. Run with Docker available.&#xD;
+[xUnit.net 00:00:00.21]   Finished:    Helix.Orchestration.Infrastructure.Tests&#xD;
+Test 'Helix.Orchestration.Infrastructure.Tests.Persistence.PostgresRepositoriesTests.PostgresCampaignRepository_SaveAndGetById_Works' was skipped in the test run.&#xD;
+Test 'Helix.Orchestration.Infrastructure.Tests.Persistence.PostgresRepositoriesTests.PostgresExperimentRepository_SaveAndGetByRunspaceId_Works' was skipped in the test run.&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="GBJHLC0J0KR3" outcome="Warning" timestamp="2026-05-25T21:04:39.1857475+01:00">
+        <Text>[xUnit.net 00:00:00.20]     Helix.Orchestration.Infrastructure.Tests.Persistence.PostgresRepositoriesTests.PostgresCampaignRepository_SaveAndGetById_Works [SKIP]</Text>
+      </RunInfo>
+      <RunInfo computerName="GBJHLC0J0KR3" outcome="Warning" timestamp="2026-05-25T21:04:39.1915347+01:00">
+        <Text>[xUnit.net 00:00:00.20]     Helix.Orchestration.Infrastructure.Tests.Persistence.PostgresRepositoriesTests.PostgresExperimentRepository_SaveAndGetByRunspaceId_Works [SKIP]</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>

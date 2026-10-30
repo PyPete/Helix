@@ -1,0 +1,73 @@
+name: Deploy Docs
+
+on:
+  push:
+    branches:
+      - main
+      - stage
+      - dev
+    paths:
+      - 'docs-site/**'
+      - '.github/workflows/deploy-docs.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    name: Deploy (${{ github.ref_name }})
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: docs-site/package-lock.json
+
+      - name: Resolve deploy config
+        id: config
+        shell: bash
+        run: |
+          case "${{ github.ref_name }}" in
+            main)
+              echo "base_url=/Helix/"         >> "$GITHUB_OUTPUT"
+              echo "dest_dir=."               >> "$GITHUB_OUTPUT"
+              ;;
+            stage)
+              echo "base_url=/Helix/stage/"   >> "$GITHUB_OUTPUT"
+              echo "dest_dir=stage"           >> "$GITHUB_OUTPUT"
+              ;;
+            dev)
+              echo "base_url=/Helix/dev/"     >> "$GITHUB_OUTPUT"
+              echo "dest_dir=dev"             >> "$GITHUB_OUTPUT"
+              ;;
+            *)
+              echo "Branch '${{ github.ref_name }}' is not a deployable branch (main/stage/dev). Aborting." >&2
+              exit 1
+              ;;
+          esac
+
+      - name: Install dependencies
+        working-directory: docs-site
+        run: npm ci
+
+      - name: Build
+        working-directory: docs-site
+        env:
+          BASE_URL: ${{ steps.config.outputs.base_url }}
+        run: npm run build
+
+      - name: Deploy to gh-pages
+        uses: peaceiris/actions-gh-pages@84c30a85c19949d7eee79c4ff27748b70285e453 # v4.0.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: docs-site/build
+          destination_dir: ${{ steps.config.outputs.dest_dir }}
+          keep_files: true
+          commit_message: "docs(${{ github.ref_name }}): deploy ${{ github.sha }}"

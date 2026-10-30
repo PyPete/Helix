@@ -1,0 +1,38 @@
+# .dockerignore — keeps Docker build context small (~source only)
+# Without this the context is 4+ GB due to node_modules and Rust target dirs.
+
+# .NET build artifacts
+**/bin/
+**/obj/
+
+# Node / npm
+**/node_modules/
+
+# Rust build output (helix-desktop Tauri)
+helix-desktop/src-tauri/target/
+
+# Test output
+test-results/
+test-results-hang-test/
+coverage-results/
+
+# Git and IDE
+.git/
+.vs/
+.vscode/
+*.user
+
+# Planning / docs (not needed inside containers)
+.planning/
+docs-site/
+.claude/
+
+# Tauri desktop app (not a server process, not deployed in containers)
+helix-desktop/
+
+# Dashboard SPA (served as static files separately, not built inside containers)
+helix-dashboard/
+
+# Logs
+logs/
+*.log

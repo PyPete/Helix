@@ -1,0 +1,112 @@
+﻿:root {
+  /* â”€â”€ Helix design tokens â”€â”€ */
+
+  /* Backgrounds */
+  --color-bg:             #1e1e2e;
+  --color-surface:        #252535;
+  --color-surface-overlay:#2e2e42;
+
+  /* Borders */
+  --color-border:         #3a3a52;
+  --color-border-strong:  #5a5a72;
+
+  /* Text */
+  --color-text:           #cdd6f4;
+  --color-text-muted:     #7e8ba8;
+  --color-text-dim:       #55607a;
+
+  /* Accent */
+  --color-primary:        #9d7fff;
+  --color-primary-dim:    rgba(157, 127, 255, 0.12);
+
+  /* Ribbon-specific (slightly darker than surface) */
+  --color-ribbon-bg:      #1e1e2e;
+  --color-ribbon-active:  #252535;
+
+  /* Semantic */
+  --color-success:        #50fa7b;
+  --color-danger:         #ff5555;
+  --color-warning:        #f5a623;
+
+  /* Typography */
+  --font-sans:   'Inter', 'Segoe UI', system-ui, sans-serif;
+  --font-mono:   'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+  --text-xs:     11px;
+  --text-sm:     13px;
+  --text-base:   14px;
+
+  /* Geometry */
+  --radius-sm:   4px;
+  --radius-md:   6px;
+  --shadow-lg:   0 8px 32px rgba(0, 0, 0, 0.6);
+
+  /* â”€â”€ Base typography â”€â”€ */
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  line-height: 1.5;
+  font-weight: 400;
+  color: var(--color-text);
+  background-color: var(--color-bg);
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+}
+
+.container {
+  margin: 0;
+  padding-top: 10vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+}
+
+.logo {
+  height: 6em;
+  padding: 1.5em;
+  will-change: filter;
+  transition: 0.75s;
+}
+
+.logo.tauri:hover {
+  filter: drop-shadow(0 0 2em #24c8db);
+}
+
+.row {
+  display: flex;
+  justify-content: center;
+}
+
+a {
+  font-weight: 500;
+  color: #646cff;
+  text-decoration: inherit;
+}
+
+a:hover {
+  color: #535bf2;
+}
+
+h1 {
+  text-align: center;
+}
+
+/* Reset browser defaults for form elements â€” shell components style these themselves */
+input,
+button,
+select {
+  font-family: inherit;
+  font-size: inherit;
+  outline: none;
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+}
