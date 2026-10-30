@@ -26,7 +26,7 @@ created: 2026-10-30
 
 Re-read [manifest](../MANIFEST.md), [conventions](../CONVENTIONS.md), pending [TODO](../../todos/spike-canvas-first-scientific-workspace.md), and project AGENTS; checked for nested planning AGENTS (none found). Continues the existing spike workflow, user-selected vanilla/Node stack and restrained 001 visual language. No product changes, dependencies, child agents, original TODO completion or findings wrap-up.
 
-001's **"this looks really good"** remains positive visual feedback/PENDING, not a validated workspace winner. 002's exact comment, dated 2026-10-30, is recorded in its [README](../002-protocol-representation-comparison/README.md): **"I like the workflow graph a lot but too be honest, being able to alternative between both would be brilliant"**. Immediately added that preference under the same idea in MANIFEST: graph preferred, cards first-class and interchangeable, preserving stable IDs, selection and saved/unsaved edits without mutating semantics. Neither inspector layout is preselected.
+001's **"this looks really good"** remains positive visual feedback/PENDING, not a validated workspace winner. 002's exact comment, dated 2026-10-30, is recorded in its [README](../002-protocol-representation-comparison/README.md): **"I like the workflow graph a lot but too be honest, being able to alternative between both would be brilliant"**. Immediately added that preference under the same idea in MANIFEST: graph preferred, cards first-class and interchangeable, preserving stable IDs, selection and saved/unsaved edits without mutating semantics. Neither inspector layout was preselected at construction; the subsequent contextual-inspector preference is recorded below without declaring a validated winner.
 
 ### Source ledger
 
@@ -111,6 +111,12 @@ Counterbalance first layout and run identical tasks in each. Record navigation/s
 6. Implementation-session DOM smoke at 1000×700 showed one contextual versus three permanent panels, six graph buttons and no document horizontal overflow. DOM-triggered unsaved 55 °C survived evidence selection/return; pending heat/label survived permanent/cards toggles; save preserved the other buffer; pending/95 °C review blocked; reset cancellation kept 95 °C; separate reviewed fixture displayed CSV-VALID-r2; reload of Running after Disconnected retained stale reconciliation. Frozen strip remained 50 °C. Used DOM `.click()`/events, not native pointer/a11y/full visual verification.
 
 ## Results
+
+### User preference and independent parent checks — 2026-10-30
+
+Exact user003 quote: **"workflow graph and contextual inspector are quite nice"**. Positive design preference, not full experiential validation or a conclusive usability winner. Preferred direction is graph as primary with an equally preserved card toggle and contextual inspector favored; permanent panels remain a comparison/advanced possibility. Canvas-first received positive visual feedback in 001. This does not approve a definitive production implementation or establish tested safety/accessibility. Verdict remains **PENDING**; human task timings are uncollected.
+
+Parent-session evidence supplied for this documentation follow-up (not independently rerun by this documentation session): parent independently reran **39/39 tests** and a **1000×700 DOM smoke**. Unsaved R-201 55 °C survived selecting quarantined RESULT-014 and returning via permanent layout; cards toggle also preserved 55 °C. Frozen run remained 50 °C. No horizontal overflow or console errors in the tested viewport. Interactions used DOM events, not native pointer/keyboard operation or comprehensive accessibility/visual testing. These checks support limited semantics/wiring, not comparative scientist task success.
 
 Final targeted rerun: **39/39 passed** (12 for 003, 10 for 001, 16 for 002, 1 shared server boundary); 003 app/model syntax and scoped whitespace checks passed. Console warning/error check after loading the updated app returned no messages, no truncation or dropped entries. A programmatic-focus DOM probe retained input focus through rerender and returned focus to the entity field after explicit save; this is not a native keyboard or full accessibility trial.
 

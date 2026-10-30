@@ -13,7 +13,7 @@ files:
 
 ## Problem
 
-The prior UI review supplied research and recommendations, not an implemented experiment or validated redesign. Evaluate whether a canvas-first scientific workspace better supports apparatus understanding, protocol authoring, and safe execution observation than the current ribbon/dock shell. Neither approach is selected yet; retain the existing UI as the comparison baseline.
+At capture, the prior UI review supplied research and recommendations, not an implemented experiment or validated redesign. Three disposable comparisons have since been built; evaluate whether the preferred direction better supports apparatus understanding, protocol authoring, and safe execution observation than the current ribbon/dock shell. Positive design preferences are recorded below, not conclusive usability winners or production approval; retain the existing UI as the comparison baseline.
 
 Severity `major` was confirmed for backlog triage; it does not establish a product defect. This is a pending project TODO, not a completed spike or authorization to redesign production UI.
 
@@ -47,7 +47,7 @@ Run an interactive UI design spike using isolated, disposable variants and repre
 
 ## Acceptance and evidence outcomes
 
-These are future spike completion criteria, not evidence already collected.
+These remain evaluation criteria, not claims that the required evidence is complete. Prototype construction and limited automated/DOM checks are recorded in the linked spike READMEs; detailed human comparative evidence remains outstanding.
 
 | Given | When | Then | Required evidence |
 |---|---|---|---|
@@ -60,7 +60,15 @@ These are future spike completion criteria, not evidence already collected.
 
 ## Next action
 
-Start an interactive `/gsd-spike` to build disposable UI variants: current ribbon/dock baseline, canvas-first workspace, sequence cards versus graph, contextual inspector, and persistent execution/safety strip. Agree representative tasks and evidence collection first. Stop at a reviewed spike report; any production redesign requires a separate scoped plan and approval.
+Evaluate the three existing disposable comparisons using their shared task guidance; collect human task timings, explanation accuracy, native interaction/accessibility and safety-state evidence. Prototype construction is complete; detailed evaluation and a separately scoped, approved production plan remain pending. Stop at a reviewed spike report rather than treating preferences or automated checks as implementation authorization. No further builds are requested by this documentation update.
+
+## Feedback and preferred direction — 2026-10-30
+
+- [001: Canvas workspace comparison](../spikes/001-canvas-workspace-comparison/README.md): user said **"this looks really good"**. Canvas-first direction received positive visual feedback, not a validated head-to-head winner.
+- [002: Protocol representation comparison](../spikes/002-protocol-representation-comparison/README.md): user said **"I like the workflow graph a lot but too be honest, being able to alternative between both would be brilliant"**. Graph preferred as primary; cards remain first-class with an equally preserved toggle. Stable IDs, selection and saved/unsaved edits must survive switching without changing canonical control-flow semantics.
+- [003: Inspector layout comparison](../spikes/003-inspector-layout-comparison/README.md): exact quote **"workflow graph and contextual inspector are quite nice"**. Contextual inspector favored; permanent panels retained as a comparison/advanced possibility. This is positive design preference, not full experiential validation, a conclusive usability winner, or tested safety/accessibility.
+
+All three verdicts remain **PENDING**. Source research and limited automated/DOM evidence are attributed in the READMEs, including parent-reported independent 39/39 regression checks and 003 DOM smoke. Human task timings remain uncollected. This authorized documentation update records feedback in the canonical TODO but does not complete it or approve production changes.
 
 ## Tracking
 
