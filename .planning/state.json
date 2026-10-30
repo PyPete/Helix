@@ -6,7 +6,7 @@
     {
       "number": "1",
       "name": "Agent Safety Boundary",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "number": "2",
@@ -35,9 +35,9 @@
     }
   ],
   "next": {
-    "command": "/gsd-progress --next",
-    "label": "Advance to the next step",
-    "reason": "Phase 1 of 6 · 0% · executing"
+    "command": "/gsd-progress",
+    "label": "Show progress",
+    "reason": "Unsure of state — showing progress"
   },
-  "updated_at": "2026-10-29T15:01:55.086Z"
+  "updated_at": "2026-10-30T16:03:26.544Z"
 }

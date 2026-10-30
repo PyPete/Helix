@@ -61,7 +61,7 @@ Plans:
 - [x] 01-08-PLAN.md — Effective local deployment; final acceptance closed with user-approved waivers, not fully verified
 
 ### Phase 2: Scientific Setup Foundation
-**Goal**: Scientists can define the revisioned scientific setup and sample facts that a campaign will freeze as its evidence base.
+**Goal**: As a scientist, I want to publish revisioned apparatus, procedures, and experiment plans, identify the exact references a campaign will freeze, and confirm traceable sample facts, so that future experiments use a stable scientific evidence base.
 **Mode:** mvp
 **Depends on**: Phase 1
 **Requirements**: APP-01, APP-02, APP-03, APP-04, SAMP-01, SAMP-02
@@ -70,13 +70,91 @@ Plans:
   2. A scientist can create and version procedures and experiment plans independently from apparatus topology.
   3. Before a campaign runs, the scientist can identify the immutable apparatus, procedure, and policy revisions frozen for that execution.
   4. A scientist can confirm an actual sample collection independently of a planned step and trace each sample's stable identity, custody, transformations, and parent/child lineage.
-**Plans**: TBD
+**Plans**: 23 active plans (19 superseded specifications retained; P-05 tracer-only sizing exception)
 **UI hint**: yes
+
+Plans:
+**Wave 1**
+- [x] 02-01-PLAN.md — Wave 1: scientific approval and honest baseline preflight
+
+**Wave 2** *(blocked on Wave 1 completion)*
+- [ ] 02-18-PLAN.md — Wave 2: first-production desktop/native/session/Agent/PostgreSQL apparatus tracer
+
+**Wave 3** *(blocked on Wave 2 completion)*
+- [ ] 02-19-PLAN.md — Wave 3: full topology, assertions, immutable history and concurrency
+
+**Wave 4** *(blocked on Wave 3 completion)*
+- [ ] 02-29-PLAN.md — Wave 4: complete independent procedure/plan content and durable publication
+
+**Wave 5** *(blocked on Wave 4 completion)*
+- [ ] 02-30-PLAN.md — Wave 5: authenticated procedure/plan Agent and native lifecycle
+
+**Wave 6** *(blocked on Wave 5 completion)*
+- [ ] 02-31-PLAN.md — Wave 6: complete reachable procedure/plan UI and exact parameters
+
+**Wave 7** *(blocked on Wave 6 completion)*
+- [ ] 02-32-PLAN.md — Wave 7: reusable source-linked derivation and explicit adoption
+
+**Wave 8** *(blocked on Wave 7 completion)*
+- [ ] 02-33-PLAN.md — Wave 8: actual collection and append-only custody domain/SQL
+
+**Wave 9** *(blocked on Wave 8 completion)*
+- [ ] 02-34-PLAN.md — Wave 9: authenticated collection/custody and classified edge proof
+
+**Wave 10** *(blocked on Wave 9 completion)*
+- [ ] 02-35-PLAN.md — Wave 10: complete reachable sample/custody UI and exact receipts
+
+**Wave 11** *(blocked on Wave 10 completion)*
+- [ ] 02-36-PLAN.md — Wave 11: atomic attributable transformations and bounded lineage SQL
+
+**Wave 12** *(blocked on Wave 11 completion)*
+- [ ] 02-37-PLAN.md — Wave 12: authenticated transformation/lineage Agent and native operations
+
+**Wave 13** *(blocked on Wave 12 completion)*
+- [ ] 02-38-PLAN.md — Wave 13: complete accessible transformation and linked lineage UI
+
+**Wave 14** *(blocked on Wave 13 completion)*
+- [ ] 02-39-PLAN.md — Wave 14: immutable policy content/provenance and freeze repository
+
+**Wave 15** *(blocked on Wave 14 completion)*
+- [ ] 02-40-PLAN.md — Wave 15: exact Agent freeze/resolution with trusted test-only authority
+
+**Wave 16** *(blocked on Wave 15 completion)*
+- [ ] 02-41-PLAN.md — Wave 16: guarded native/client exact policy and assembly operations
+
+**Wave 17** *(blocked on Wave 16 completion)*
+- [ ] 02-42-PLAN.md — Wave 17: complete reachable assembly UI and positive SQL reconstruction
+
+**Wave 18** *(blocked on Wave 17 completion)*
+- [ ] 02-24-PLAN.md — Wave 18: actual canonical execution-binding consumption
+- [ ] 02-25-PLAN.md — Wave 18: isolated runtime roles and migration crash/replay
+
+**Wave 19** *(blocked on Wave 18 completion)*
+- [ ] 02-26-PLAN.md — Wave 19: isolated native guards and typed client recovery
+
+**Wave 20** *(blocked on Wave 19 completion)*
+- [ ] 02-27-PLAN.md — Wave 20: durable intent and close/restore navigation
+
+**Wave 21** *(blocked on Wave 20 completion)*
+- [ ] 02-28-PLAN.md — Wave 21: complete scientific UI states/accessibility
+
+**Wave 22** *(blocked on Wave 21 completion)*
+- [ ] 02-17-PLAN.md — Wave 22: owned-host native integration and honest acceptance handoff
+
+### Phase 02.1: Scientific Workspace UI Rework — validate and establish an accessible, safety-truthful workspace UI for revisioned scientific setup and execution status; promote pending canvas-first, graph/cards, and inspector preferences only after evidence and explicit approval. (INSERTED)
+
+**Goal:** [Urgent work - to be planned]
+**Requirements**: TBD
+**Depends on:** Phase 2
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 02.1 to break down)
 
 ### Phase 3: Approved Manual Campaigns
 **Goal**: Scientists can approve and durably operate a bounded simulated campaign through the Agent before autonomous selection is enabled.
 **Mode:** mvp
-**Depends on**: Phase 2
+**Depends on**: Phase 02.1
 **Requirements**: CAMP-01, CAMP-02, CAMP-03
 **Success Criteria** (what must be TRUE):
   1. A scientist can create and approve a campaign policy with explicit allowed operations, parameter limits, budgets, stop rules, and expiry.
@@ -130,7 +208,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Agent Safety Boundary | 14/14 | Complete with user-approved waivers (not fully verified) | 2026-10-30 |
-| 2. Scientific Setup Foundation | 0/TBD | Not started | - |
+| 2. Scientific Setup Foundation | 1/23 | In Progress | - |
 | 3. Approved Manual Campaigns | 0/TBD | Not started | - |
 | 4. Reviewed CSV Evidence | 0/TBD | Not started | - |
 | 5. Policy-Bounded Autonomous Simulation | 0/TBD | Not started | - |
