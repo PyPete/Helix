@@ -41,9 +41,10 @@ public sealed class PostgresSampleRepository(DbConnectionFactory factory) : ISam
         if (sampleEvent.ServerSequence != expectedSequence + 1) throw new InvalidOperationException("The append sequence must advance exactly once.");
         SampleFactValidation.ValidateEvent(sampleEvent, DateTimeOffset.UtcNow);
         await using var connection = factory.Create(); await connection.OpenAsync(cancellationToken); await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
-        var updated = await connection.ExecuteAsync(new CommandDefinition("UPDATE scientific_sample_heads h SET server_sequence=@next,event_id=@eventId FROM scientific_samples s WHERE h.sample_id=@sampleId AND s.sample_id=h.sample_id AND s.actor_sid=@actor AND h.server_sequence=@expected", new { sampleId, actor = scope.ActorSid, expected = expectedSequence, next = sampleEvent.ServerSequence, eventId = sampleEvent.EventId }, transaction, cancellationToken: cancellationToken));
+        var updated = await connection.ExecuteAsync(new CommandDefinition("UPDATE scientific_sample_heads h SET server_sequence=@next FROM scientific_samples s WHERE h.sample_id=@sampleId AND s.sample_id=h.sample_id AND s.actor_sid=@actor AND h.server_sequence=@expected", new { sampleId, actor = scope.ActorSid, expected = expectedSequence, next = sampleEvent.ServerSequence }, transaction, cancellationToken: cancellationToken));
         if (updated != 1) throw new InvalidOperationException("The sample history changed elsewhere.");
         await InsertEventAsync(connection, transaction, sampleEvent, cancellationToken);
+        await connection.ExecuteAsync(new CommandDefinition("UPDATE scientific_sample_heads SET event_id=@eventId WHERE sample_id=@sampleId", new { sampleId, eventId = sampleEvent.EventId }, transaction, cancellationToken: cancellationToken));
         var receipt = await InsertReceiptAsync(connection, transaction, operationId, "sample.append", sampleId, scope.ActorSid, sampleEvent, cancellationToken);
         await transaction.CommitAsync(cancellationToken);
         return (await ReadAsync(sampleId, scope, cancellationToken) ?? throw new InvalidOperationException("Sample append was not readable."), receipt);
@@ -73,6 +74,20 @@ public sealed class PostgresSampleRepository(DbConnectionFactory factory) : ISam
         await connection.ExecuteAsync(new CommandDefinition("INSERT INTO scientific_sample_operations(actor_sid,operation_id,operation_kind,sample_id,request_hash,payload,recorded_at) VALUES (@actorSid,@operationId,@kind,@sampleId,@hash,CAST(@payload AS jsonb),@now)", new { actorSid, operationId, kind, sampleId, hash, payload, now }, transaction, cancellationToken: ct));
         return new SampleOperationReceipt(operationId, kind, sampleId, actorSid, now, payload);
     }
-    private sealed record Row(Guid EventId, Guid SampleId, string Kind, string? Label, string? Custodian, string Location, DateTimeOffset OccurredAtUtc, DateTimeOffset RecordedAtUtc, string ActorSid, long ServerSequence, Guid? SupersedesEventId, string? CorrectionReason)
-    { public SampleEvent ToEvent() => new(EventId, SampleId, Enum.Parse<SampleEventKind>(Kind, true), Label, Custodian, Location, OccurredAtUtc, RecordedAtUtc, ActorSid, ServerSequence, SupersedesEventId, CorrectionReason); }
+    private sealed class Row
+    {
+        public Guid EventId { get; init; }
+        public Guid SampleId { get; init; }
+        public string Kind { get; init; } = "";
+        public string? Label { get; init; }
+        public string? Custodian { get; init; }
+        public string Location { get; init; } = "";
+        public DateTime OccurredAtUtc { get; init; }
+        public DateTime RecordedAtUtc { get; init; }
+        public string ActorSid { get; init; } = "";
+        public long ServerSequence { get; init; }
+        public Guid? SupersedesEventId { get; init; }
+        public string? CorrectionReason { get; init; }
+        public SampleEvent ToEvent() => new(EventId, SampleId, Enum.Parse<SampleEventKind>(Kind, true), Label, Custodian, Location, new DateTimeOffset(OccurredAtUtc, TimeSpan.Zero), new DateTimeOffset(RecordedAtUtc, TimeSpan.Zero), ActorSid, ServerSequence, SupersedesEventId, CorrectionReason);
+    }
 }
