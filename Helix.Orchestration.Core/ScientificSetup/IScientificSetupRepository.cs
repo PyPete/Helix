@@ -1,4 +1,6 @@
 namespace Helix.Orchestration.Core.ScientificSetup;
+
+public sealed record ScientificContentSummary(Guid ResourceId, string Name, Guid? RevisionId);
 public interface IScientificSetupRepository
 {
     Task<(ApparatusDefinition Apparatus, long Token, ScientificOperationReceipt Receipt)> CreateAsync(ApparatusDefinition apparatus, string actorSid, Guid operationId, CancellationToken ct = default);
@@ -17,4 +19,17 @@ public interface IScientificSetupRepository
     Task<(ExperimentPlanDefinition Plan, long Token)> ReadPlanDraftAsync(Guid planId, string actorSid, CancellationToken ct = default);
     Task<(ScientificRevision Revision, ScientificOperationReceipt Receipt)> PublishProcedureAsync(Guid procedureId, Guid? expectedRevisionId, string name, string actorSid, Guid operationId, CancellationToken ct = default);
     Task<(ScientificRevision Revision, ScientificOperationReceipt Receipt)> PublishPlanAsync(Guid planId, Guid? expectedRevisionId, string name, string actorSid, Guid operationId, CancellationToken ct = default);
+
+    Task<(ProcedureDefinition Procedure, long Token)> ReadProcedureDraftAsync(Guid procedureId, string actorSid, CancellationToken ct = default) => throw new NotSupportedException();
+    Task<(ProcedureDefinition Procedure, long Token, ScientificOperationReceipt Receipt)> SaveProcedureDraftAsync(ProcedureDefinition procedure, long expectedToken, string actorSid, Guid operationId, CancellationToken ct = default) => throw new NotSupportedException();
+    Task<IReadOnlyList<ScientificContentSummary>> ListProceduresAsync(string actorSid, CancellationToken ct = default) => throw new NotSupportedException();
+    Task<ScientificContentSummary?> ReadProcedureLatestAsync(Guid procedureId, string actorSid, CancellationToken ct = default) => throw new NotSupportedException();
+    Task<IReadOnlyList<ScientificOperationReceipt>> ProcedureHistoryAsync(Guid procedureId, string actorSid, CancellationToken ct = default) => throw new NotSupportedException();
+    Task<ScientificRevision?> ReadProcedureAsync(Guid procedureId, Guid revisionId, string actorSid, CancellationToken ct = default) => throw new NotSupportedException();
+    Task<ScientificRevision?> ReadProcedureByRevisionAsync(Guid revisionId, string actorSid, CancellationToken ct = default) => throw new NotSupportedException();
+    Task<(ExperimentPlanDefinition Plan, long Token, ScientificOperationReceipt Receipt)> SavePlanDraftAsync(ExperimentPlanDefinition plan, ProcedureDefinition procedure, long expectedToken, string actorSid, Guid operationId, CancellationToken ct = default) => throw new NotSupportedException();
+    Task<IReadOnlyList<ScientificContentSummary>> ListPlansAsync(string actorSid, CancellationToken ct = default) => throw new NotSupportedException();
+    Task<ScientificContentSummary?> ReadPlanLatestAsync(Guid planId, string actorSid, CancellationToken ct = default) => throw new NotSupportedException();
+    Task<IReadOnlyList<ScientificOperationReceipt>> PlanHistoryAsync(Guid planId, string actorSid, CancellationToken ct = default) => throw new NotSupportedException();
+    Task<ScientificRevision?> ReadPlanAsync(Guid planId, Guid revisionId, string actorSid, CancellationToken ct = default) => throw new NotSupportedException();
 }

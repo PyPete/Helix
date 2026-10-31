@@ -262,6 +262,88 @@ public sealed class PostgresScientificSetupRepository(DbConnectionFactory factor
     public Task<(ScientificRevision Revision, ScientificOperationReceipt Receipt)> PublishPlanAsync(Guid planId, Guid? expectedRevisionId, string name, string actorSid, Guid operationId, CancellationToken ct = default) =>
         PublishScientificContentAsync("plan.publish", "scientific_experiment_plans", "scientific_experiment_plan_revisions", "plan_id", planId, expectedRevisionId, name, actorSid, operationId, "procedure_revision_id", ct);
 
+    public async Task<(ProcedureDefinition Procedure, long Token)> ReadProcedureDraftAsync(Guid procedureId, string actorSid, CancellationToken ct = default) =>
+        await ReadDraftContentAsync<ProcedureDefinition>("scientific_procedures", "procedure_id", procedureId, actorSid, ct);
+
+    public async Task<(ProcedureDefinition Procedure, long Token, ScientificOperationReceipt Receipt)> SaveProcedureDraftAsync(ProcedureDefinition procedure, long expectedToken, string actorSid, Guid operationId, CancellationToken ct = default)
+    {
+        procedure.Validate();
+        var saved = await SaveDraftContentAsync("procedure.save-draft", "scientific_procedures", "procedure_id", procedure.ProcedureId, procedure.Name, procedure, expectedToken, actorSid, operationId, ct);
+        return (procedure, saved.Token, saved.Receipt);
+    }
+
+    public Task<IReadOnlyList<ScientificContentSummary>> ListProceduresAsync(string actorSid, CancellationToken ct = default) => ListScientificContentAsync("scientific_procedures", "procedure_id", actorSid, ct);
+    public Task<ScientificContentSummary?> ReadProcedureLatestAsync(Guid procedureId, string actorSid, CancellationToken ct = default) => ReadScientificLatestAsync("scientific_procedures", "procedure_id", procedureId, actorSid, ct);
+    public Task<IReadOnlyList<ScientificOperationReceipt>> ProcedureHistoryAsync(Guid procedureId, string actorSid, CancellationToken ct = default) => ScientificHistoryAsync(procedureId, actorSid, ct);
+    public Task<ScientificRevision?> ReadProcedureAsync(Guid procedureId, Guid revisionId, string actorSid, CancellationToken ct = default) => ReadScientificRevisionAsync("scientific_procedure_revisions", "scientific_procedures", "procedure_id", procedureId, revisionId, actorSid, ct);
+    public async Task<ScientificRevision?> ReadProcedureByRevisionAsync(Guid revisionId, string actorSid, CancellationToken ct = default)
+    {
+        await using var connection = factory.Create();
+        var row = await connection.QuerySingleOrDefaultAsync<RevisionRow>(new CommandDefinition("SELECT r.revision_id AS RevisionId,r.procedure_id AS ApparatusId,r.revision_name AS Name,r.content_hash AS ContentHash,r.actor_sid AS ActorSid,r.recorded_at AS RecordedAtUtc,r.canonical_content::text AS CanonicalContent FROM scientific_procedure_revisions r JOIN scientific_procedures p ON p.procedure_id=r.procedure_id WHERE r.revision_id=@revisionId AND p.actor_sid=@actorSid;", new { revisionId, actorSid }, cancellationToken: ct));
+        return row is null ? null : new ScientificRevision(row.RevisionId, row.ApparatusId, row.Name, row.ContentHash, row.ActorSid, new DateTimeOffset(DateTime.SpecifyKind(row.RecordedAtUtc, DateTimeKind.Utc)), row.CanonicalContent);
+    }
+
+    public async Task<(ExperimentPlanDefinition Plan, long Token, ScientificOperationReceipt Receipt)> SavePlanDraftAsync(ExperimentPlanDefinition plan, ProcedureDefinition procedure, long expectedToken, string actorSid, Guid operationId, CancellationToken ct = default)
+    {
+        plan.ValidateAgainst(procedure);
+        var saved = await SaveDraftContentAsync("plan.save-draft", "scientific_experiment_plans", "plan_id", plan.PlanId, plan.Name, plan, expectedToken, actorSid, operationId, ct);
+        return (plan, saved.Token, saved.Receipt);
+    }
+
+    public Task<IReadOnlyList<ScientificContentSummary>> ListPlansAsync(string actorSid, CancellationToken ct = default) => ListScientificContentAsync("scientific_experiment_plans", "plan_id", actorSid, ct);
+    public Task<ScientificContentSummary?> ReadPlanLatestAsync(Guid planId, string actorSid, CancellationToken ct = default) => ReadScientificLatestAsync("scientific_experiment_plans", "plan_id", planId, actorSid, ct);
+    public Task<IReadOnlyList<ScientificOperationReceipt>> PlanHistoryAsync(Guid planId, string actorSid, CancellationToken ct = default) => ScientificHistoryAsync(planId, actorSid, ct);
+    public Task<ScientificRevision?> ReadPlanAsync(Guid planId, Guid revisionId, string actorSid, CancellationToken ct = default) => ReadScientificRevisionAsync("scientific_experiment_plan_revisions", "scientific_experiment_plans", "plan_id", planId, revisionId, actorSid, ct);
+
+    private async Task<IReadOnlyList<ScientificContentSummary>> ListScientificContentAsync(string table, string idColumn, string actorSid, CancellationToken ct)
+    {
+        await using var connection = factory.Create();
+        var values = await connection.QueryAsync<ScientificContentSummary>(new CommandDefinition($"SELECT {idColumn} AS ResourceId,name AS Name,latest_revision_id AS RevisionId FROM {table} WHERE actor_sid=@actorSid ORDER BY name,{idColumn};", new { actorSid }, cancellationToken: ct));
+        return values.AsList();
+    }
+
+    private async Task<ScientificContentSummary?> ReadScientificLatestAsync(string table, string idColumn, Guid id, string actorSid, CancellationToken ct)
+    {
+        await using var connection = factory.Create();
+        return await connection.QuerySingleOrDefaultAsync<ScientificContentSummary>(new CommandDefinition($"SELECT {idColumn} AS ResourceId,name AS Name,latest_revision_id AS RevisionId FROM {table} WHERE {idColumn}=@id AND actor_sid=@actorSid;", new { id, actorSid }, cancellationToken: ct));
+    }
+
+    private async Task<(T Value, long Token)> ReadDraftContentAsync<T>(string table, string idColumn, Guid id, string actorSid, CancellationToken ct)
+    {
+        await using var connection = factory.Create();
+        var draft = await connection.QuerySingleOrDefaultAsync<Draft>(new CommandDefinition($"SELECT draft_content::text AS Content,draft_token AS Token FROM {table} WHERE {idColumn}=@id AND actor_sid=@actorSid;", new { id, actorSid }, cancellationToken: ct));
+        if (draft is null) throw new KeyNotFoundException();
+        return (JsonSerializer.Deserialize<T>(draft.Content) ?? throw new InvalidOperationException("Stored scientific draft is invalid."), draft.Token);
+    }
+
+    private async Task<(long Token, ScientificOperationReceipt Receipt)> SaveDraftContentAsync<T>(string kind, string table, string idColumn, Guid id, string name, T content, long expectedToken, string actorSid, Guid operationId, CancellationToken ct)
+    {
+        var requestHash = CanonicalRequestHash(new { content, expectedToken });
+        var existing = await GetOperationAsync(operationId, kind, actorSid, ct);
+        if (existing is not null) { EnsureSameRequest(existing, requestHash); return (expectedToken + 1, existing.Receipt); }
+        var payload = JsonSerializer.Serialize(content);
+        var receipt = new ScientificOperationReceipt(operationId, kind, id, actorSid, DateTimeOffset.UtcNow, payload);
+        await using var connection = factory.Create(); await connection.OpenAsync(ct); await using var transaction = await connection.BeginTransactionAsync(ct);
+        var updated = await connection.ExecuteAsync(new CommandDefinition($"UPDATE {table} SET name=@name,draft_content=CAST(@payload AS jsonb),draft_token=draft_token+1 WHERE {idColumn}=@id AND actor_sid=@actorSid AND draft_token=@expectedToken;", new { id, actorSid, name, payload, expectedToken }, transaction, cancellationToken: ct));
+        if (updated != 1) throw new InvalidOperationException("The scientific draft changed elsewhere.");
+        await connection.ExecuteAsync(new CommandDefinition("INSERT INTO scientific_operations(actor_sid,operation_kind,operation_id,resource_id,payload,request_hash,recorded_at) VALUES (@actorSid,@kind,@operationId,@id,CAST(@payload AS jsonb),@requestHash,@recordedAt);", new { actorSid, kind, operationId, id, payload = receipt.Payload, requestHash, recordedAt = receipt.RecordedAtUtc }, transaction, cancellationToken: ct));
+        await transaction.CommitAsync(ct); return (expectedToken + 1, receipt);
+    }
+
+    private async Task<IReadOnlyList<ScientificOperationReceipt>> ScientificHistoryAsync(Guid id, string actorSid, CancellationToken ct = default)
+    {
+        await using var connection = factory.Create();
+        var values = await connection.QueryAsync<StoredOperation>(new CommandDefinition("SELECT operation_id AS OperationId,operation_kind AS Kind,resource_id AS ResourceId,actor_sid AS ActorSid,recorded_at AS RecordedAtUtc,payload::text AS Payload,request_hash AS RequestHash FROM scientific_operations WHERE resource_id=@id AND actor_sid=@actorSid ORDER BY recorded_at,operation_id;", new { id, actorSid }, cancellationToken: ct));
+        return values.Select(value => value.Receipt).ToList();
+    }
+
+    private async Task<ScientificRevision?> ReadScientificRevisionAsync(string revisionTable, string aggregateTable, string idColumn, Guid id, Guid revisionId, string actorSid, CancellationToken ct)
+    {
+        await using var connection = factory.Create();
+        var row = await connection.QuerySingleOrDefaultAsync<RevisionRow>(new CommandDefinition($"SELECT r.revision_id AS RevisionId,r.{idColumn} AS ApparatusId,r.revision_name AS Name,r.content_hash AS ContentHash,r.actor_sid AS ActorSid,r.recorded_at AS RecordedAtUtc,r.canonical_content::text AS CanonicalContent FROM {revisionTable} r JOIN {aggregateTable} a ON a.{idColumn}=r.{idColumn} WHERE r.{idColumn}=@id AND r.revision_id=@revisionId AND a.actor_sid=@actorSid;", new { id, revisionId, actorSid }, cancellationToken: ct));
+        return row is null ? null : new ScientificRevision(row.RevisionId, row.ApparatusId, row.Name, row.ContentHash, row.ActorSid, new DateTimeOffset(DateTime.SpecifyKind(row.RecordedAtUtc, DateTimeKind.Utc)), row.CanonicalContent);
+    }
+
     private async Task<(ScientificRevision Revision, ScientificOperationReceipt Receipt)> PublishScientificContentAsync(string kind, string aggregateTable, string revisionTable, string aggregateColumn, Guid aggregateId, Guid? expectedRevisionId, string name, string actorSid, Guid operationId, string? procedurePinColumn, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("Publication name is required.", nameof(name));

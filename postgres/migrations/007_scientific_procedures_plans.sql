@@ -55,3 +55,12 @@ CREATE TRIGGER scientific_procedure_revisions_immutable BEFORE UPDATE OR DELETE 
 DROP TRIGGER IF EXISTS scientific_plan_revisions_immutable ON scientific_experiment_plan_revisions;
 CREATE TRIGGER scientific_plan_revisions_immutable BEFORE UPDATE OR DELETE ON scientific_experiment_plan_revisions FOR EACH ROW EXECUTE FUNCTION scientific_setup_immutable_publication();
 REVOKE INSERT, UPDATE, DELETE, TRUNCATE ON scientific_procedures, scientific_procedure_revisions, scientific_experiment_plans, scientific_experiment_plan_revisions FROM PUBLIC;
+DO $$
+BEGIN
+    -- Development fixtures create the constrained role after the additive tables;
+    -- production role provisioning may run before migrations. Support both orders.
+    IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'helix_scientific_runtime') THEN
+        GRANT SELECT, INSERT, UPDATE ON scientific_procedures, scientific_experiment_plans TO helix_scientific_runtime;
+        GRANT SELECT, INSERT ON scientific_procedure_revisions, scientific_experiment_plan_revisions TO helix_scientific_runtime;
+    END IF;
+END $$;

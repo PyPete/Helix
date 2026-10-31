@@ -149,6 +149,10 @@ public sealed class ScientificPostgresFixture : IAsyncLifetime
 
         await using var connection = new NpgsqlConnection(OwnerConnectionString);
         await connection.OpenAsync();
+        // The disposable owner provisions the constrained runtime identity before
+        // migrations so grants are verified exactly as production requires.
+        await using (var role = new NpgsqlCommand("DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'helix_scientific_runtime') THEN CREATE ROLE helix_scientific_runtime; END IF; END $$;", connection))
+            await role.ExecuteNonQueryAsync();
         foreach (var migration in migrations)
         {
             await using var command = new NpgsqlCommand(await File.ReadAllTextAsync(migration), connection);

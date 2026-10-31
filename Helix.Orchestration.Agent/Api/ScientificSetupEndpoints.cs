@@ -1,4 +1,5 @@
 using Helix.Orchestration.Agent.Security;
+using Helix.Orchestration.Agent.ScientificSetup;
 using Helix.Orchestration.Core.ScientificSetup;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -12,6 +13,11 @@ public sealed record ApparatusAdoptRevisionRequest(Guid OperationId, Guid Revisi
 public sealed record ApparatusPublishRequest(Guid OperationId, Guid? ExpectedRevisionId, string? Note);
 public sealed record ScientificOperationResponse(Guid OperationId, Guid ApparatusId, Guid? RevisionId, string Status);
 public sealed record ScientificApparatusResponse(Guid ApparatusId, string Name, Guid? RevisionId);
+public sealed record ProcedureCreateRequest(Guid OperationId, string Name, Helix.Orchestration.Core.WSL.WslDocument Document, IReadOnlyList<ProcedureParameterDeclaration> Parameters, IReadOnlyList<PlannedCollectionDescriptor>? PlannedCollections = null);
+public sealed record PlanCreateRequest(Guid OperationId, string Name, Guid ProcedureRevisionId, IReadOnlyList<ExperimentParameterValue> Parameters);
+public sealed record ProcedureSaveDraftRequest(Guid OperationId, long ExpectedToken, string Name, Helix.Orchestration.Core.WSL.WslDocument Document, IReadOnlyList<ProcedureParameterDeclaration> Parameters, IReadOnlyList<PlannedCollectionDescriptor>? PlannedCollections = null);
+public sealed record PlanSaveDraftRequest(Guid OperationId, long ExpectedToken, string Name, Guid ProcedureRevisionId, IReadOnlyList<ExperimentParameterValue> Parameters);
+public sealed record ScientificPublishRequest(Guid OperationId, Guid? ExpectedRevisionId, string? Name);
 
 public static class ScientificSetupEndpoints
 {
@@ -27,6 +33,12 @@ public static class ScientificSetupEndpoints
         routes.MapGet("/{id:guid}", ReadAsync);
         routes.MapGet("/{id:guid}/publications", HistoryAsync);
         routes.MapGet("/{id:guid}/publications/{revision:guid}", ReadRevisionAsync);
+        app.MapGet("/api/scientific-setup/procedures", ListProceduresAsync);
+        app.MapGet("/api/scientific-setup/plans", ListPlansAsync);
+        app.MapPost("/api/scientific-setup/procedures", CreateProcedureAsync);
+        app.MapPost("/api/scientific-setup/plans", CreatePlanAsync);
+        MapContentRoutes(app, "procedures", ReadProcedureDraftAsync, SaveProcedureDraftAsync, PublishProcedureAsync, ReadProcedureAsync, ProcedureHistoryAsync, ReadProcedureRevisionAsync);
+        MapContentRoutes(app, "plans", ReadPlanDraftAsync, SavePlanDraftAsync, PublishPlanAsync, ReadPlanAsync, PlanHistoryAsync, ReadPlanRevisionAsync);
         app.MapGet("/api/scientific-setup/operations/{operationId:guid}", OperationAsync);
     }
 
@@ -40,6 +52,115 @@ public static class ScientificSetupEndpoints
         }
         catch (KeyNotFoundException) { return Results.NotFound(); }
         catch (InvalidOperationException exception) { return Results.Conflict(new { error = exception.Message }); }
+    }
+
+    private static async Task<IResult> ListProceduresAsync(HttpContext context, ScientificSetupService service, CancellationToken ct) => Results.Ok(await service.ListProceduresAsync(Actor(context).Sid, ct));
+    private static async Task<IResult> ListPlansAsync(HttpContext context, ScientificSetupService service, CancellationToken ct) => Results.Ok(await service.ListPlansAsync(Actor(context).Sid, ct));
+
+    private static async Task<IResult> CreateProcedureAsync(ProcedureCreateRequest request, HttpContext context, ScientificSetupService service, CancellationToken ct)
+    {
+        if (context.Request.ContentLength > 65536) return Results.StatusCode(StatusCodes.Status413PayloadTooLarge);
+        if (request.OperationId == Guid.Empty || string.IsNullOrWhiteSpace(request.Name)) return Results.BadRequest();
+        try
+        {
+            var result = await service.CreateProcedureAsync(new ProcedureDefinition(Guid.Empty, request.Name.Trim(), request.Document, request.Parameters, request.PlannedCollections), Actor(context).Sid, request.OperationId, ct);
+            return Results.Created($"/api/scientific-setup/procedures/{result.Procedure.ProcedureId}", new { result.Procedure.ProcedureId, result.Token, receipt = result.Receipt });
+        }
+        catch (ArgumentException exception) { return Results.BadRequest(new { error = exception.Message }); }
+        catch (InvalidOperationException exception) { return Results.Conflict(new { error = exception.Message }); }
+    }
+
+    private static async Task<IResult> CreatePlanAsync(PlanCreateRequest request, HttpContext context, ScientificSetupService service, IScientificSetupRepository repository, CancellationToken ct)
+    {
+        if (context.Request.ContentLength > 65536) return Results.StatusCode(StatusCodes.Status413PayloadTooLarge);
+        if (request.OperationId == Guid.Empty || request.ProcedureRevisionId == Guid.Empty || string.IsNullOrWhiteSpace(request.Name)) return Results.BadRequest();
+        // Plan values are checked against the exact actor-owned publication, never an inferred latest draft.
+        var procedureRevision = await repository.ReadProcedureByRevisionAsync(request.ProcedureRevisionId, Actor(context).Sid, ct);
+        if (procedureRevision is null) return Results.NotFound();
+        using var document = JsonDocument.Parse(procedureRevision.CanonicalContent);
+        var content = document.RootElement.TryGetProperty("content", out var envelope) ? envelope : document.RootElement;
+        var procedure = JsonSerializer.Deserialize<ProcedureDefinition>(content.GetRawText()) ?? throw new InvalidOperationException("Stored procedure revision is invalid.");
+        try
+        {
+            var result = await service.CreatePlanAsync(new ExperimentPlanDefinition(Guid.Empty, request.Name.Trim(), request.ProcedureRevisionId, request.Parameters), procedure, Actor(context).Sid, request.OperationId, ct);
+            return Results.Created($"/api/scientific-setup/plans/{result.Plan.PlanId}", new { result.Plan.PlanId, result.Token, receipt = result.Receipt });
+        }
+        catch (ArgumentException exception) { return Results.BadRequest(new { error = exception.Message }); }
+        catch (InvalidOperationException exception) { return Results.Conflict(new { error = exception.Message }); }
+    }
+
+    private static void MapContentRoutes(WebApplication app, string kind, Delegate draft, Delegate save, Delegate publish, Delegate read, Delegate history, Delegate revision)
+    {
+        var group = app.MapGroup($"/api/scientific-setup/{kind}");
+        group.MapGet("/{id:guid}/draft", draft);
+        group.MapPut("/{id:guid}/draft", save);
+        group.MapPost("/{id:guid}/publications", publish);
+        group.MapGet("/{id:guid}", read);
+        group.MapGet("/{id:guid}/publications", history);
+        group.MapGet("/{id:guid}/publications/{revisionId:guid}", revision);
+    }
+
+    private static async Task<IResult> ReadProcedureDraftAsync(Guid id, HttpContext context, ScientificSetupService service, CancellationToken ct)
+    {
+        try { var value = await service.ReadProcedureDraftAsync(id, Actor(context).Sid, ct); return Results.Ok(new { procedure = value.Procedure, token = value.Token }); }
+        catch (KeyNotFoundException) { return Results.NotFound(); }
+    }
+
+    private static async Task<IResult> SaveProcedureDraftAsync(Guid id, ProcedureSaveDraftRequest request, HttpContext context, ScientificSetupService service, CancellationToken ct)
+    {
+        if (context.Request.ContentLength > 65536) return Results.StatusCode(StatusCodes.Status413PayloadTooLarge);
+        if (id == Guid.Empty || request.OperationId == Guid.Empty || string.IsNullOrWhiteSpace(request.Name)) return Results.BadRequest();
+        try { var value = await service.SaveProcedureDraftAsync(new ProcedureDefinition(id, request.Name.Trim(), request.Document, request.Parameters, request.PlannedCollections), request.ExpectedToken, Actor(context).Sid, request.OperationId, ct); return Results.Ok(new { token = value.Token, receipt = value.Receipt }); }
+        catch (ArgumentException exception) { return Results.BadRequest(new { error = exception.Message }); }
+        catch (InvalidOperationException exception) { return Results.Conflict(new { error = exception.Message }); }
+    }
+
+    private static async Task<IResult> PublishProcedureAsync(Guid id, ScientificPublishRequest request, HttpContext context, ScientificSetupService service, IScientificSetupRepository repository, CancellationToken ct)
+    {
+        if (request.OperationId == Guid.Empty) return Results.BadRequest();
+        var latest = await repository.ReadProcedureLatestAsync(id, Actor(context).Sid, ct); if (latest is null) return Results.NotFound();
+        try { var value = await service.PublishProcedureAsync(id, request.ExpectedRevisionId, request.Name?.Trim() ?? latest.Name, Actor(context).Sid, request.OperationId, ct); return Results.Ok(new { revision = value.Revision, receipt = value.Receipt }); }
+        catch (InvalidOperationException exception) { return Results.Conflict(new { error = exception.Message }); }
+    }
+
+    private static async Task<IResult> ReadProcedureAsync(Guid id, HttpContext context, IScientificSetupRepository repository, CancellationToken ct) { var value = await repository.ReadProcedureLatestAsync(id, Actor(context).Sid, ct); return value is null ? Results.NotFound() : Results.Ok(value); }
+    private static async Task<IResult> ProcedureHistoryAsync(Guid id, HttpContext context, IScientificSetupRepository repository, CancellationToken ct) => Results.Ok(await repository.ProcedureHistoryAsync(id, Actor(context).Sid, ct));
+    private static async Task<IResult> ReadProcedureRevisionAsync(Guid id, Guid revisionId, HttpContext context, IScientificSetupRepository repository, CancellationToken ct) { var value = await repository.ReadProcedureAsync(id, revisionId, Actor(context).Sid, ct); return value is null ? Results.NotFound() : Results.Ok(value); }
+
+    private static async Task<IResult> ReadPlanDraftAsync(Guid id, HttpContext context, ScientificSetupService service, CancellationToken ct)
+    {
+        try { var value = await service.ReadPlanDraftAsync(id, Actor(context).Sid, ct); return Results.Ok(new { plan = value.Plan, token = value.Token }); }
+        catch (KeyNotFoundException) { return Results.NotFound(); }
+    }
+
+    private static async Task<IResult> SavePlanDraftAsync(Guid id, PlanSaveDraftRequest request, HttpContext context, ScientificSetupService service, IScientificSetupRepository repository, CancellationToken ct)
+    {
+        if (context.Request.ContentLength > 65536) return Results.StatusCode(StatusCodes.Status413PayloadTooLarge);
+        if (id == Guid.Empty || request.OperationId == Guid.Empty || request.ProcedureRevisionId == Guid.Empty || string.IsNullOrWhiteSpace(request.Name)) return Results.BadRequest();
+        var procedure = await ReadPinnedProcedureAsync(request.ProcedureRevisionId, Actor(context).Sid, repository, ct); if (procedure is null) return Results.NotFound();
+        try { var value = await service.SavePlanDraftAsync(new ExperimentPlanDefinition(id, request.Name.Trim(), request.ProcedureRevisionId, request.Parameters), procedure, request.ExpectedToken, Actor(context).Sid, request.OperationId, ct); return Results.Ok(new { token = value.Token, receipt = value.Receipt }); }
+        catch (ArgumentException exception) { return Results.BadRequest(new { error = exception.Message }); }
+        catch (InvalidOperationException exception) { return Results.Conflict(new { error = exception.Message }); }
+    }
+
+    private static async Task<IResult> PublishPlanAsync(Guid id, ScientificPublishRequest request, HttpContext context, ScientificSetupService service, IScientificSetupRepository repository, CancellationToken ct)
+    {
+        if (request.OperationId == Guid.Empty) return Results.BadRequest();
+        var latest = await repository.ReadPlanLatestAsync(id, Actor(context).Sid, ct); if (latest is null) return Results.NotFound();
+        try { var value = await service.PublishPlanAsync(id, request.ExpectedRevisionId, request.Name?.Trim() ?? latest.Name, Actor(context).Sid, request.OperationId, ct); return Results.Ok(new { revision = value.Revision, receipt = value.Receipt }); }
+        catch (InvalidOperationException exception) { return Results.Conflict(new { error = exception.Message }); }
+    }
+
+    private static async Task<IResult> ReadPlanAsync(Guid id, HttpContext context, IScientificSetupRepository repository, CancellationToken ct) { var value = await repository.ReadPlanLatestAsync(id, Actor(context).Sid, ct); return value is null ? Results.NotFound() : Results.Ok(value); }
+    private static async Task<IResult> PlanHistoryAsync(Guid id, HttpContext context, IScientificSetupRepository repository, CancellationToken ct) => Results.Ok(await repository.PlanHistoryAsync(id, Actor(context).Sid, ct));
+    private static async Task<IResult> ReadPlanRevisionAsync(Guid id, Guid revisionId, HttpContext context, IScientificSetupRepository repository, CancellationToken ct) { var value = await repository.ReadPlanAsync(id, revisionId, Actor(context).Sid, ct); return value is null ? Results.NotFound() : Results.Ok(value); }
+
+    private static async Task<ProcedureDefinition?> ReadPinnedProcedureAsync(Guid revisionId, string actorSid, IScientificSetupRepository repository, CancellationToken ct)
+    {
+        var revision = await repository.ReadProcedureByRevisionAsync(revisionId, actorSid, ct); if (revision is null) return null;
+        using var document = JsonDocument.Parse(revision.CanonicalContent);
+        var content = document.RootElement.TryGetProperty("content", out var envelope) ? envelope : document.RootElement;
+        return JsonSerializer.Deserialize<ProcedureDefinition>(content.GetRawText());
     }
 
     private static async Task<IResult> CreateAsync(ApparatusCreateRequest request, HttpContext context, IScientificSetupRepository repository, CancellationToken ct)
