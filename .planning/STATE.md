@@ -2,13 +2,13 @@
 gsd_state_version: "1.0"
 current_phase: 02
 current_phase_name: Scientific Setup Foundation
-current_plan: 8
+current_plan: 9
 status: complete_with_user_approved_waivers
-stopped_at: Completed 02-32-PLAN.md
+stopped_at: Completed 02-33-PLAN.md
 last_updated: "2026-10-31T22:04:41.502Z"
 last_activity: 2026-10-31
-last_activity_desc: Completed 02-18 isolated authenticated apparatus tracer.
-state_head: ed3ca2c707c178d7ee5fd37430ec8e89cb44c634
+last_activity_desc: Completed immutable sample collection and custody foundation.
+state_head: e50d4a13b7d9c3fcc15d3dc498e7e728331c6d64
 progress:
   total_phases: 7
   completed_phases: 1
@@ -32,8 +32,8 @@ Current Plan: 8
 Total Plans in Phase: 23
 
 Phase: 02 (Scientific Setup Foundation) — IN PROGRESS
-Plan: 02-18 complete; 02-19 is ready to execute
-Status: Wave 2 tracer complete with isolated authenticated PostgreSQL evidence
+Plan: 02-33 complete; 02-34 is ready to execute
+Status: Collection and append-only custody foundation complete with isolated PostgreSQL evidence
 Last activity: 2026-10-31 — Completed first-production apparatus tracer.
 
 Progress: [█░░░░░░░░░] 14% (one of six phases closed with waivers; not fully verified)
@@ -66,6 +66,7 @@ Progress: [█░░░░░░░░░] 14% (one of six phases closed with wa
 | Phase 02 P30 | continuation session | 2 tasks | 11 files |
 | Phase 02 P31 | 137s | 2 tasks | 10 files |
 | Phase 02 P32 | 20min | 3 tasks | 11 files |
+| Phase 02 P33 | 25min | 2 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -84,6 +85,7 @@ Decisions are logged in PROJECT.md Key Decisions table. Current roadmap decision
 - [Phase 02]: Procedure revision pins are resolved by actor-scoped exact revision ID before plan acceptance.
 - [Phase 02]: Procedure and plan workspaces use stable independent dock tab IDs and retain uncertain mutation operation IDs.
 - [Phase 02]: Derived procedures retain exact source revisions; compatible adoption changes only a plan draft until independently published.
+- [Phase 02]: Sample custody projections use server sequence while preserving reported backdated timestamps as immutable evidence.
 
 ### Pending Todos
 
@@ -109,5 +111,5 @@ Decisions are logged in PROJECT.md Key Decisions table. Current roadmap decision
 ## Session Continuity
 
 Last session: 2026-10-31T22:04:41.447Z
-Stopped at: Completed 02-32-PLAN.md
+Stopped at: Completed 02-33-PLAN.md
 Resume file: None
