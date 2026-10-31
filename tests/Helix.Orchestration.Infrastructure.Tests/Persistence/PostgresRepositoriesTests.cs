@@ -226,6 +226,29 @@ public sealed class PostgresRepositoriesTests
     }
 
     [Fact]
+    public async Task ScientificSetup_DraftSaveUsesExpectedTokenAndReconstructsHistoricalContent()
+    {
+        if (_fixture.ConnectionFactory == null || !_fixture.IsAvailable)
+            return;
+
+        var repository = new PostgresScientificSetupRepository(_fixture.ConnectionFactory);
+        var created = await repository.CreateAsync(CreateApparatus(), "scientist-draft", Guid.NewGuid());
+        var saved = await repository.SaveDraftAsync(created.Apparatus with { Name = "Saved apparatus" }, created.Token, "scientist-draft", Guid.NewGuid());
+        await Assert.ThrowsAsync<InvalidOperationException>(() => repository.SaveDraftAsync(saved.Apparatus, created.Token, "scientist-draft", Guid.NewGuid()));
+
+        var published = await repository.PublishAsync(created.Apparatus.ApparatusId, null, "immutable revision", "scientist-draft", Guid.NewGuid());
+        var draft = await repository.ReadDraftAsync(created.Apparatus.ApparatusId, "scientist-draft");
+        var adopted = await repository.AdoptRevisionAsync(created.Apparatus.ApparatusId, published.Revision.RevisionId, draft.Token, "scientist-draft", Guid.NewGuid());
+
+        Assert.Equal(published.Revision.RevisionId, adopted.Apparatus.SourceRevisionId);
+        Assert.Equal("Saved apparatus", adopted.Apparatus.Name);
+        var reconstructed = await repository.ReadAsync(created.Apparatus.ApparatusId, published.Revision.RevisionId, "scientist-draft");
+        Assert.NotNull(reconstructed);
+        Assert.Equal(published.Revision.ContentHash, reconstructed!.ContentHash);
+        Assert.Contains("Saved apparatus", reconstructed.CanonicalContent, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task ScientificSetup_RuntimeRoleCannotDeleteAndLeavesDataUnchanged()
     {
         if (_fixture.ConnectionFactory == null || !_fixture.IsAvailable)

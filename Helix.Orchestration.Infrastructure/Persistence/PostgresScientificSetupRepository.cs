@@ -10,6 +10,7 @@ public sealed class PostgresScientificSetupRepository(DbConnectionFactory factor
     private const string CreateKind = "apparatus.create";
     private const string PublishKind = "apparatus.publish";
     private const string SaveDraftKind = "apparatus.save-draft";
+    private const string AdoptRevisionKind = "apparatus.adopt-revision";
     private const string OperationConflictMessage = "Operation ID was previously used with a different request.";
 
     public async Task<(ApparatusDefinition Apparatus, long Token, ScientificOperationReceipt Receipt)> CreateAsync(ApparatusDefinition apparatus, string actorSid, Guid operationId, CancellationToken ct = default)
@@ -86,6 +87,35 @@ public sealed class PostgresScientificSetupRepository(DbConnectionFactory factor
         return (JsonSerializer.Deserialize<ApparatusDefinition>(draft.Content) ?? throw new InvalidOperationException("Stored apparatus draft is invalid."), draft.Token);
     }
 
+    public async Task<(ApparatusDefinition Apparatus, long Token, ScientificOperationReceipt Receipt)> AdoptRevisionAsync(Guid apparatusId, Guid revisionId, long expectedToken, string actorSid, Guid operationId, CancellationToken ct = default)
+    {
+        var existing = await GetOperationAsync(operationId, AdoptRevisionKind, actorSid, ct);
+        if (existing is not null)
+            return await ReplayCreateAsync(existing, CanonicalRequestHash(new { apparatusId, revisionId, expectedToken }), ct);
+
+        var revision = await ReadAsync(apparatusId, revisionId, actorSid, ct) ?? throw new KeyNotFoundException();
+        using var document = JsonDocument.Parse(revision.CanonicalContent);
+        var content = document.RootElement.TryGetProperty("content", out var envelope) ? envelope : document.RootElement;
+        var source = JsonSerializer.Deserialize<ApparatusDefinition>(content.GetRawText()) ?? throw new InvalidOperationException("Stored apparatus revision is invalid.");
+        var adopted = source with { ApparatusId = apparatusId, SourceRevisionId = revisionId };
+        adopted.Validate();
+        var requestHash = CanonicalRequestHash(new { apparatusId, revisionId, expectedToken });
+        var payload = JsonSerializer.Serialize(adopted);
+        var receipt = new ScientificOperationReceipt(operationId, AdoptRevisionKind, apparatusId, actorSid, DateTimeOffset.UtcNow, payload);
+        await using var connection = factory.Create();
+        await connection.OpenAsync(ct);
+        await using var transaction = await connection.BeginTransactionAsync(ct);
+        var updated = await connection.ExecuteAsync(new CommandDefinition(
+            "UPDATE scientific_apparatus SET name=@name,draft_content=CAST(@payload AS jsonb),draft_token=draft_token+1 WHERE apparatus_id=@id AND actor_sid=@actor AND draft_token=@expectedToken;",
+            new { id = apparatusId, actor = actorSid, name = adopted.Name, payload, expectedToken }, transaction, cancellationToken: ct));
+        if (updated != 1) throw new InvalidOperationException("The apparatus draft changed elsewhere.");
+        await connection.ExecuteAsync(new CommandDefinition(
+            "INSERT INTO scientific_operations(actor_sid,operation_kind,operation_id,resource_id,payload,request_hash,recorded_at) VALUES (@actor,@kind,@operationId,@id,CAST(@payload AS jsonb),@requestHash,@at);",
+            new { operationId, id = apparatusId, actor = actorSid, kind = receipt.Kind, payload = receipt.Payload, requestHash, at = receipt.RecordedAtUtc }, transaction, cancellationToken: ct));
+        await transaction.CommitAsync(ct);
+        return (adopted, expectedToken + 1, receipt);
+    }
+
     public async Task<(ScientificRevision Revision, ScientificOperationReceipt Receipt)> PublishAsync(Guid apparatusId, Guid? expectedRevisionId, string name, string actorSid, Guid operationId, CancellationToken ct = default)
     {
         var requestHash = CanonicalRequestHash(new { apparatusId, expectedRevisionId, name });
@@ -123,7 +153,8 @@ public sealed class PostgresScientificSetupRepository(DbConnectionFactory factor
     public async Task<ScientificRevision?> ReadAsync(Guid apparatusId, Guid revisionId, string actorSid, CancellationToken ct = default)
     {
         await using var connection = factory.Create();
-        return await connection.QuerySingleOrDefaultAsync<ScientificRevision>(new CommandDefinition("SELECT revision_id AS RevisionId,r.apparatus_id AS ApparatusId,revision_name AS Name,content_hash AS ContentHash,r.actor_sid AS ActorSid,recorded_at AS RecordedAtUtc,canonical_content::text AS CanonicalContent FROM scientific_apparatus_revisions r JOIN scientific_apparatus a ON a.apparatus_id=r.apparatus_id WHERE r.apparatus_id=@apparatusId AND revision_id=@revisionId AND a.actor_sid=@actorSid;", new { apparatusId, revisionId, actorSid }, cancellationToken: ct));
+        var row = await connection.QuerySingleOrDefaultAsync<RevisionRow>(new CommandDefinition("SELECT revision_id AS RevisionId,r.apparatus_id AS ApparatusId,revision_name AS Name,content_hash AS ContentHash,r.actor_sid AS ActorSid,recorded_at AS RecordedAtUtc,canonical_content::text AS CanonicalContent FROM scientific_apparatus_revisions r JOIN scientific_apparatus a ON a.apparatus_id=r.apparatus_id WHERE r.apparatus_id=@apparatusId AND revision_id=@revisionId AND a.actor_sid=@actorSid;", new { apparatusId, revisionId, actorSid }, cancellationToken: ct));
+        return row is null ? null : new ScientificRevision(row.RevisionId, row.ApparatusId, row.Name, row.ContentHash, row.ActorSid, new DateTimeOffset(DateTime.SpecifyKind(row.RecordedAtUtc, DateTimeKind.Utc)), row.CanonicalContent);
     }
 
     public async Task<IReadOnlyList<ScientificApparatusSummary>> ListAsync(string actorSid, CancellationToken ct = default)
@@ -200,5 +231,16 @@ public sealed class PostgresScientificSetupRepository(DbConnectionFactory factor
         public string Payload { get; init; } = string.Empty;
         public string RequestHash { get; init; } = string.Empty;
         public ScientificOperationReceipt Receipt => new(OperationId, Kind, ResourceId, ActorSid, RecordedAtUtc, Payload);
+    }
+
+    private sealed class RevisionRow
+    {
+        public Guid RevisionId { get; init; }
+        public Guid ApparatusId { get; init; }
+        public string Name { get; init; } = string.Empty;
+        public string ContentHash { get; init; } = string.Empty;
+        public string ActorSid { get; init; } = string.Empty;
+        public DateTime RecordedAtUtc { get; init; }
+        public string CanonicalContent { get; init; } = string.Empty;
     }
 }

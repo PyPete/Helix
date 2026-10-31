@@ -8,6 +8,7 @@ namespace Helix.Orchestration.Agent.Api;
 
 public sealed record ApparatusCreateRequest(Guid OperationId, string Name, string? Description, IReadOnlyList<ApparatusComponent>? Components = null, IReadOnlyList<ApparatusConnection>? Connections = null, IReadOnlyList<ScientificAssertion>? Assertions = null);
 public sealed record ApparatusSaveDraftRequest(Guid OperationId, long ExpectedToken, string Name, IReadOnlyList<ApparatusComponent>? Components, IReadOnlyList<ApparatusConnection>? Connections, IReadOnlyList<ScientificAssertion>? Assertions);
+public sealed record ApparatusAdoptRevisionRequest(Guid OperationId, Guid RevisionId, long ExpectedToken);
 public sealed record ApparatusPublishRequest(Guid OperationId, Guid? ExpectedRevisionId, string? Note);
 public sealed record ScientificOperationResponse(Guid OperationId, Guid ApparatusId, Guid? RevisionId, string Status);
 public sealed record ScientificApparatusResponse(Guid ApparatusId, string Name, Guid? RevisionId);
@@ -20,12 +21,25 @@ public static class ScientificSetupEndpoints
         routes.MapPost("/", CreateAsync);
         routes.MapGet("/{id:guid}/draft", ReadDraftAsync);
         routes.MapPut("/{id:guid}/draft", SaveDraftAsync);
+        routes.MapPost("/{id:guid}/draft/adopt", AdoptRevisionAsync);
         routes.MapPost("/{id:guid}/publications", PublishAsync);
         routes.MapGet("/", ListAsync);
         routes.MapGet("/{id:guid}", ReadAsync);
         routes.MapGet("/{id:guid}/publications", HistoryAsync);
         routes.MapGet("/{id:guid}/publications/{revision:guid}", ReadRevisionAsync);
         app.MapGet("/api/scientific-setup/operations/{operationId:guid}", OperationAsync);
+    }
+
+    private static async Task<IResult> AdoptRevisionAsync(Guid id, ApparatusAdoptRevisionRequest request, HttpContext context, IScientificSetupRepository repository, CancellationToken ct)
+    {
+        if (request.OperationId == Guid.Empty || request.RevisionId == Guid.Empty) return Results.BadRequest(new { error = "Operation and revision IDs are required." });
+        try
+        {
+            var result = await repository.AdoptRevisionAsync(id, request.RevisionId, request.ExpectedToken, Actor(context).Sid, request.OperationId, ct);
+            return Results.Ok(new { receipt = Receipt(result.Receipt, id, null), token = result.Token, apparatus = result.Apparatus });
+        }
+        catch (KeyNotFoundException) { return Results.NotFound(); }
+        catch (InvalidOperationException exception) { return Results.Conflict(new { error = exception.Message }); }
     }
 
     private static async Task<IResult> CreateAsync(ApparatusCreateRequest request, HttpContext context, IScientificSetupRepository repository, CancellationToken ct)
