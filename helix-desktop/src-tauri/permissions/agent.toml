@@ -9,6 +9,8 @@ commands.allow = [
   "agent_status",
   "scientific_create",
   "scientific_create_kind",
+  "scientific_derive_procedure",
+  "scientific_adopt_procedure",
   "scientific_publish",
   "scientific_list",
   "scientific_list_kind",

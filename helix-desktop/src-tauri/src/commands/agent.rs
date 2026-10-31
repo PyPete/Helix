@@ -115,6 +115,43 @@ fn scientific_kind_path(kind: &str) -> Result<&'static str, String> {
     }
 }
 
+#[derive(Deserialize)]
+struct DeriveProcedureRequest {
+    #[serde(alias = "operationId")]
+    operation_id: String,
+    #[serde(alias = "sourceRevisionId")]
+    source_revision_id: String,
+    name: String,
+}
+
+#[derive(Deserialize)]
+struct AdoptProcedureRequest {
+    #[serde(alias = "operationId")]
+    operation_id: String,
+    #[serde(alias = "procedureRevisionId")]
+    procedure_revision_id: String,
+    #[serde(alias = "expectedToken")]
+    expected_token: i64,
+}
+
+fn validate_derive_procedure_request(request: &str) -> Result<(), String> {
+    validate_json(request)?;
+    let value: DeriveProcedureRequest = serde_json::from_str(request).map_err(|_| "Procedure derivation request is invalid.".to_string())?;
+    validate_command_id(&value.operation_id)?;
+    validate_command_id(&value.source_revision_id)?;
+    if value.name.trim().is_empty() || value.name.len() > 256 { return Err("Derived procedure name is invalid.".to_string()); }
+    Ok(())
+}
+
+fn validate_adopt_procedure_request(request: &str) -> Result<(), String> {
+    validate_json(request)?;
+    let value: AdoptProcedureRequest = serde_json::from_str(request).map_err(|_| "Procedure adoption request is invalid.".to_string())?;
+    validate_command_id(&value.operation_id)?;
+    validate_command_id(&value.procedure_revision_id)?;
+    if value.expected_token < 0 { return Err("Expected plan token is invalid.".to_string()); }
+    Ok(())
+}
+
 fn session_status(state: &State<'_, AgentBrokerState>) -> Result<String, String> {
     let state = state.0.lock().map_err(|_| "Agent session state is unavailable.".to_string())?;
     let status = AgentSessionStatus {
@@ -279,6 +316,23 @@ pub async fn scientific_create_kind(window: WebviewWindow, state: State<'_, Agen
     if request.len() > 64 * 1024 { return Err("Scientific request exceeds the permitted size.".to_string()); }
     validate_json(&request)?;
     native_request("POST", &format!("/api/scientific-setup/{}", scientific_kind_path(&kind)?), Some(&request), &require_session(&state)?)
+}
+
+/// Creates a source-linked procedure draft through the only allowed derive route.
+#[tauri::command]
+pub async fn scientific_derive_procedure(window: WebviewWindow, state: State<'_, AgentBrokerState>, request: String) -> Result<String, String> {
+    require_main_window(&window)?;
+    validate_derive_procedure_request(&request)?;
+    native_request("POST", "/api/scientific-setup/procedures/derive", Some(&request), &require_session(&state)?)
+}
+
+/// Re-pins one plan draft after its explicit compatibility check; it never publishes the plan.
+#[tauri::command]
+pub async fn scientific_adopt_procedure(window: WebviewWindow, state: State<'_, AgentBrokerState>, plan_id: String, request: String) -> Result<String, String> {
+    require_main_window(&window)?;
+    validate_command_id(&plan_id)?;
+    validate_adopt_procedure_request(&request)?;
+    native_request("POST", &format!("/api/scientific-setup/plans/{plan_id}/adopt-procedure"), Some(&request), &require_session(&state)?)
 }
 
 /// Lists only the Agent's canonical simulator adapters through the authenticated broker.
@@ -520,6 +574,15 @@ mod agent_security {
         assert_eq!(scientific_kind_path("procedure"), Ok("procedures"));
         assert_eq!(scientific_kind_path("plan"), Ok("plans"));
         assert!(scientific_kind_path("../commands").is_err());
+    }
+
+    #[test] fn agent_security_derive_and_adopt_requests_require_bounded_uuid_evidence() {
+        let valid = r#"{"operationId":"11111111-1111-1111-1111-111111111111","sourceRevisionId":"22222222-2222-2222-2222-222222222222","name":"Derived"}"#;
+        assert!(validate_derive_procedure_request(valid).is_ok());
+        assert!(validate_derive_procedure_request(r#"{"operationId":"bad","sourceRevisionId":"22222222-2222-2222-2222-222222222222","name":"Derived"}"#).is_err());
+        let adopt = r#"{"operationId":"11111111-1111-1111-1111-111111111111","procedureRevisionId":"22222222-2222-2222-2222-222222222222","expectedToken":0}"#;
+        assert!(validate_adopt_procedure_request(adopt).is_ok());
+        assert!(validate_adopt_procedure_request(r#"{"operationId":"11111111-1111-1111-1111-111111111111","procedureRevisionId":"bad","expectedToken":0}"#).is_err());
     }
     /// Live integration is intentionally excluded from ordinary cargo tests. The phase verifier
     /// selects it explicitly after starting its owned Agent/PostgreSQL host.
