@@ -112,5 +112,11 @@ public sealed class ScientificSetupEndpointsTests
         public Task<IReadOnlyList<ScientificOperationReceipt>> HistoryAsync(Guid apparatusId, string actorSid, CancellationToken ct = default) => Task.FromResult<IReadOnlyList<ScientificOperationReceipt>>(_operations.Values.Where(value => value.ResourceId == apparatusId).ToList());
         public Task<ScientificRevision?> ReadAsync(Guid apparatusId, Guid revisionId, string actorSid, CancellationToken ct = default) => Task.FromResult(_revisions.GetValueOrDefault(revisionId));
         public Task<ScientificOperationReceipt?> OperationAsync(Guid operationId, string actorSid, CancellationToken ct = default) => Task.FromResult(_operations.GetValueOrDefault(operationId));
+
+        public Task<(ProcedureDefinition Procedure, long Token, ScientificOperationReceipt Receipt)> CreateProcedureAsync(ProcedureDefinition procedure, string actorSid, Guid operationId, CancellationToken ct = default) => throw new NotImplementedException();
+        public Task<(ExperimentPlanDefinition Plan, long Token, ScientificOperationReceipt Receipt)> CreatePlanAsync(ExperimentPlanDefinition plan, ProcedureDefinition procedure, string actorSid, Guid operationId, CancellationToken ct = default) => throw new NotImplementedException();
+        public Task<(ExperimentPlanDefinition Plan, long Token)> ReadPlanDraftAsync(Guid planId, string actorSid, CancellationToken ct = default) => throw new NotImplementedException();
+        public Task<(ScientificRevision Revision, ScientificOperationReceipt Receipt)> PublishProcedureAsync(Guid procedureId, Guid? expectedRevisionId, string name, string actorSid, Guid operationId, CancellationToken ct = default) => throw new NotImplementedException();
+        public Task<(ScientificRevision Revision, ScientificOperationReceipt Receipt)> PublishPlanAsync(Guid planId, Guid? expectedRevisionId, string name, string actorSid, Guid operationId, CancellationToken ct = default) => throw new NotImplementedException();
     }
 }
