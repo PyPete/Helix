@@ -19,6 +19,8 @@ ALTER TABLE scientific_operations
 
 REVOKE ALL ON TABLE scientific_apparatus, scientific_apparatus_revisions, scientific_operations FROM PUBLIC;
 REVOKE ALL ON TABLE scientific_apparatus, scientific_apparatus_revisions, scientific_operations FROM helix_scientific_runtime;
+REVOKE CREATE ON SCHEMA public FROM PUBLIC;
+REVOKE CREATE ON SCHEMA public FROM helix_scientific_runtime;
 
 GRANT USAGE ON SCHEMA public TO helix_scientific_runtime;
 GRANT SELECT, INSERT ON scientific_apparatus TO helix_scientific_runtime;
