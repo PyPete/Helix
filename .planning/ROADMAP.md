@@ -84,10 +84,10 @@ Plans:
 - [x] 02-19-PLAN.md — Wave 3: full topology, assertions, immutable history and concurrency
 
 **Wave 4** *(blocked on Wave 3 completion)*
-- [ ] 02-29-PLAN.md — Wave 4: complete independent procedure/plan content and durable publication
+- [x] 02-29-PLAN.md — Wave 4: complete independent procedure/plan content and durable publication
 
 **Wave 5** *(blocked on Wave 4 completion)*
-- [ ] 02-30-PLAN.md — Wave 5: authenticated procedure/plan Agent and native lifecycle
+- [x] 02-30-PLAN.md — Wave 5: authenticated procedure/plan Agent and native lifecycle
 
 **Wave 6** *(blocked on Wave 5 completion)*
 - [ ] 02-31-PLAN.md — Wave 6: complete reachable procedure/plan UI and exact parameters
@@ -208,7 +208,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Agent Safety Boundary | 14/14 | Complete with user-approved waivers (not fully verified) | 2026-10-30 |
-| 2. Scientific Setup Foundation | 3/23 | In Progress | - |
+| 2. Scientific Setup Foundation | 5/23 | In Progress | - |
 | 3. Approved Manual Campaigns | 0/TBD | Not started | - |
 | 4. Reviewed CSV Evidence | 0/TBD | Not started | - |
 | 5. Policy-Bounded Autonomous Simulation | 0/TBD | Not started | - |

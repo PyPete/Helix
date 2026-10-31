@@ -2,18 +2,18 @@
 gsd_state_version: "1.0"
 current_phase: 02
 current_phase_name: Scientific Setup Foundation
-current_plan: 5
+current_plan: 6
 status: complete_with_user_approved_waivers
-stopped_at: Completed 02-29-PLAN.md
-last_updated: "2026-10-31T21:36:19.991Z"
+stopped_at: Completed 02-30-PLAN.md
+last_updated: "2026-10-31T21:45:18.075Z"
 last_activity: 2026-10-31
 last_activity_desc: Completed 02-18 isolated authenticated apparatus tracer.
-state_head: f04aba885cca451cdf17d40c7969ad935b8571a9
+state_head: 883adcf7cee28cf8cd1fd564cc7c2c9a187812db
 progress:
   total_phases: 7
   completed_phases: 1
   total_plans: 37
-  completed_plans: 17
+  completed_plans: 19
   percent: 14
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-10-29)
 
 ## Current Position
 
-Current Plan: 5
+Current Plan: 6
 Total Plans in Phase: 23
 
 Phase: 02 (Scientific Setup Foundation) — IN PROGRESS
@@ -63,6 +63,7 @@ Progress: [█░░░░░░░░░] 14% (one of six phases closed with wa
 | Phase 02 P18 | 1d | 2 tasks | 28 files |
 | Phase 02 P19 | continuation execution | 3 tasks | 17 files |
 | Phase 02 P29 | 30min | 2 tasks | 8 files |
+| Phase 02 P30 | continuation session | 2 tasks | 11 files |
 
 ## Accumulated Context
 
@@ -78,6 +79,7 @@ Decisions are logged in PROJECT.md Key Decisions table. Current roadmap decision
 - [Phase 02]: Apparatus mutations use actor-scoped idempotent receipts; owned tracer hosts prove restart readback and zero device dispatch.
 - [Phase 02]: Scientific apparatus drafts use explicit expected-token conflicts; Reload and Compare preserve local scientific input.
 - [Phase 02]: Procedures and plans validate exact decimal targets and units before instantiating copied WSL content.
+- [Phase 02]: Procedure revision pins are resolved by actor-scoped exact revision ID before plan acceptance.
 
 ### Pending Todos
 
@@ -102,6 +104,6 @@ Decisions are logged in PROJECT.md Key Decisions table. Current roadmap decision
 
 ## Session Continuity
 
-Last session: 2026-10-31T21:36:19.934Z
-Stopped at: Completed 02-29-PLAN.md
+Last session: 2026-10-31T21:45:14.903Z
+Stopped at: Completed 02-30-PLAN.md
 Resume file: None
