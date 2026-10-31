@@ -79,6 +79,64 @@ public static class ScientificSetupValidator
             _ = ScientificUnits.DimensionFor(assertion.Unit);
     }
 
+    /// <summary>Validates procedure declarations without compiling for dispatch or contacting any device.</summary>
+    public static void Validate(ProcedureDefinition procedure)
+    {
+        ArgumentNullException.ThrowIfNull(procedure);
+        if (procedure.ProcedureId == Guid.Empty || string.IsNullOrWhiteSpace(procedure.Name))
+            throw new ArgumentException("Procedure identity and name are required.");
+
+        // WslDocument validation is structural only; it does not invoke an Agent, driver, or admission path.
+        _ = procedure.Document?.Compile() ?? throw new ArgumentException("A procedure document is required.");
+        var nodeById = procedure.Document.Nodes.ToDictionary(node => node.NodeId, StringComparer.Ordinal);
+        var declarationNames = new HashSet<string>(StringComparer.Ordinal);
+        var targets = new HashSet<(string NodeId, string ParameterKey)>();
+
+        foreach (var declaration in procedure.Parameters ?? [])
+        {
+            if (string.IsNullOrWhiteSpace(declaration.Name) || !declarationNames.Add(declaration.Name) ||
+                string.IsNullOrWhiteSpace(declaration.Dimension) || declaration.Targets is null || declaration.Targets.Count == 0)
+                throw new ArgumentException("Procedure declarations require unique names, dimensions, and targets.");
+            if (ScientificUnits.DimensionFor(declaration.Unit) != declaration.Dimension ||
+                declaration.LowerBound is { } lower && declaration.UpperBound is { } upper && lower > upper)
+                throw new ArgumentException("Procedure declaration units or bounds are invalid.");
+
+            foreach (var target in declaration.Targets)
+            {
+                if (!nodeById.TryGetValue(target.NodeId, out var node) || string.IsNullOrWhiteSpace(target.ParameterKey) ||
+                    !node.Parameters.TryGetValue(target.ParameterKey, out var current) || current is not decimal ||
+                    !targets.Add((target.NodeId, target.ParameterKey)))
+                    throw new ArgumentException("Procedure targets must be unique existing decimal WSL parameters.");
+            }
+        }
+
+        foreach (var collection in procedure.PlannedCollections ?? [])
+            if (string.IsNullOrWhiteSpace(collection.Name) || !nodeById.ContainsKey(collection.NodeId))
+                throw new ArgumentException("Planned collection descriptors require an existing WSL node and name.");
+    }
+
+    /// <summary>Validates exact plan values against the procedure declarations and pinned revision.</summary>
+    public static void Validate(ExperimentPlanDefinition plan, ProcedureDefinition procedure)
+    {
+        ArgumentNullException.ThrowIfNull(plan);
+        Validate(procedure);
+        if (plan.PlanId == Guid.Empty || plan.ProcedureRevisionId == Guid.Empty || string.IsNullOrWhiteSpace(plan.Name))
+            throw new ArgumentException("Plan identity, name, and published procedure revision are required.");
+
+        var declarations = procedure.Parameters.ToDictionary(value => value.Name, StringComparer.Ordinal);
+        var supplied = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var value in plan.Parameters ?? [])
+        {
+            if (!declarations.TryGetValue(value.Name, out var declaration) || !supplied.Add(value.Name) ||
+                ScientificUnits.DimensionFor(value.Unit) != declaration.Dimension || value.Unit != declaration.Unit ||
+                declaration.LowerBound is { } lower && value.Value < lower || declaration.UpperBound is { } upper && value.Value > upper)
+                throw new ArgumentException("Plan parameters must exactly match declared names, units, dimensions, and bounds.");
+        }
+
+        if (declarations.Values.Any(declaration => declaration.Required && !supplied.Contains(declaration.Name)))
+            throw new ArgumentException("Plan omits a required procedure parameter.");
+    }
+
     private static bool CanSend(string direction) => direction is "Out" or "Bidirectional";
     private static bool CanReceive(string direction) => direction is "In" or "Bidirectional";
 }
