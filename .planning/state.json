@@ -11,7 +11,7 @@
     {
       "number": "2",
       "name": "Scientific Setup Foundation",
-      "status": "pending"
+      "status": "in_progress"
     },
     {
       "number": "3",
@@ -39,5 +39,5 @@
     "label": "Show progress",
     "reason": "Unsure of state — showing progress"
   },
-  "updated_at": "2026-10-30T16:03:26.544Z"
+  "updated_at": "2026-10-31T21:33:15.719Z"
 }
