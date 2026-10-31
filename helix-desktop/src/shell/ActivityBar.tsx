@@ -14,6 +14,8 @@ interface ActivityBarItem {
 const TOP_ITEMS: ActivityBarItem[] = [
   { id: 'explorer', icon: '⬡', title: 'Device Explorer' },
   { id: 'trends', icon: '📈', title: 'Trend Explorer' },
+  { id: 'procedures', icon: 'P', title: 'Procedures' },
+  { id: 'plans', icon: 'L', title: 'Plans' },
 ];
 
 const BOTTOM_ITEMS: ActivityBarItem[] = [
@@ -29,6 +31,7 @@ export function ActivityBar({ activePanel, onPanelToggle }: ActivityBarProps) {
             key={item.id}
             className={`abtn${activePanel === item.id ? ' active' : ''}`}
             title={item.title}
+            aria-label={item.title}
             data-testid={`actbar-${item.id}`}
             onClick={() => onPanelToggle(item.id)}
             aria-pressed={activePanel === item.id}
@@ -43,6 +46,7 @@ export function ActivityBar({ activePanel, onPanelToggle }: ActivityBarProps) {
             key={item.id}
             className={`abtn${activePanel === item.id ? ' active' : ''}`}
             title={item.title}
+            aria-label={item.title}
             data-testid={`actbar-${item.id}`}
             onClick={() => onPanelToggle(item.id)}
             aria-pressed={activePanel === item.id}

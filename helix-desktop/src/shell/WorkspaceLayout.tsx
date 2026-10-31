@@ -18,6 +18,7 @@ import { WorkflowBuilder } from '../components/WorkflowBuilder/WorkflowBuilder';
 import { ExecutionPanel } from '../components/ExecutionPanel/ExecutionPanel';
 import { SafetyPanel } from '../components/SafetyPanel/SafetyPanel';
 import DeviceManualControl from '../components/DeviceManualControl/DeviceManualControl';
+import { ProcedurePlans } from '../components/ScientificSetup/ProcedurePlans';
 
 // ---------------------------------------------------------------------------
 // Props + Handle
@@ -75,7 +76,7 @@ export const DEFAULT_LAYOUT: LayoutBase = {
         children: [
           {
             id: 'panel-main',
-            tabs: [{ id: 'workflow-editor' }, { id: 'execution-panel' }, { id: 'experiment-timeline' }],
+            tabs: [{ id: 'workflow-editor' }, { id: 'execution-panel' }, { id: 'experiment-timeline' }, { id: 'scientific-procedures' }, { id: 'scientific-plans' }],
             activeId: 'workflow-editor',
           },
           {
@@ -239,6 +240,12 @@ export const WorkspaceLayout = React.forwardRef<WorkspaceLayoutHandle, Workspace
           ),
           group: 'main',
           closable: false,
+        }),
+        'scientific-procedures': (): TabData => ({
+          id: 'scientific-procedures', title: 'Procedures', content: <ProcedurePlans kind="procedure" />, group: 'main', closable: true,
+        }),
+        'scientific-plans': (): TabData => ({
+          id: 'scientific-plans', title: 'Plans', content: <ProcedurePlans kind="plan" />, group: 'main', closable: true,
         }),
       }),
       [
