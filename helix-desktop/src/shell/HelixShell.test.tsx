@@ -117,6 +117,12 @@ describe('HelixShell', () => {
     expect(screen.getByTestId('activity-bar')).toBeInTheDocument();
   });
 
+  it('exposes separate reachable Procedures and Plans navigation', () => {
+    render(<HelixShell />);
+    expect(screen.getByRole('button', { name: 'Procedures' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Plans' })).toBeInTheDocument();
+  });
+
   it('mounts the reachable local Agent session surface', async () => {
     render(<HelixShell />);
     expect(await screen.findByLabelText('Local Agent session')).toBeInTheDocument();
