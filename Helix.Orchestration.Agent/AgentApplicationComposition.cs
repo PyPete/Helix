@@ -8,6 +8,7 @@ using Helix.Orchestration.Agent.Leasing;
 using Helix.Orchestration.Agent.Security;
 using Helix.Orchestration.Agent.Streaming;
 using Helix.Orchestration.Agent.ScientificSetup;
+using Helix.Orchestration.Agent.Samples;
 using Helix.Orchestration.Agent.Trends;
 using Helix.Orchestration.Core.Devices;
 using Helix.Orchestration.Core.Capabilities;
@@ -273,6 +274,7 @@ public static class AgentApplicationComposition
     // Infrastructure repositories (scoped, via connection string)
     builder.Services.AddHelixInfrastructure(builder.Configuration);
     builder.Services.AddScoped<ScientificSetupService>();
+    builder.Services.AddScoped<SampleService>();
     builder.Services.AddSingleton<DesktopSessionService>();
     builder.Services.AddHostedService<SessionBootstrapWorker>();
     builder.Services.AddSingleton<CommandAdmissionEvaluator>();
@@ -335,6 +337,7 @@ public static class AgentApplicationComposition
     app.MapDeviceEndpoints();
     app.MapCommandEvidenceEndpoints();
     app.MapScientificSetupEndpoints();
+    app.MapSampleEndpoints();
     app.MapExperimentEndpoints();
 
     // WebSocket /ws endpoint

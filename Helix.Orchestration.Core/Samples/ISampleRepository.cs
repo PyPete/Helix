@@ -14,6 +14,7 @@ public sealed record SamplePage(IReadOnlyList<SampleProjection> Items, long? Nex
 public interface ISampleRepository
 {
     Task<(SampleProjection Projection, SampleOperationReceipt Receipt)> ConfirmAsync(SampleConfirmation confirmation, SampleScope scope, Guid operationId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<SampleProjection>> ListAsync(SampleScope scope, int pageSize = 25, CancellationToken cancellationToken = default);
     Task<SampleProjection?> ReadAsync(Guid sampleId, SampleScope scope, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<SampleEvent>> EventsAsync(Guid sampleId, SampleScope scope, long? afterSequence = null, int pageSize = 25, CancellationToken cancellationToken = default);
     Task<(SampleProjection Projection, SampleOperationReceipt Receipt)> AppendAsync(Guid sampleId, SampleEvent sampleEvent, long expectedSequence, SampleScope scope, Guid operationId, CancellationToken cancellationToken = default);

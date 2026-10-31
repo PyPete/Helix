@@ -26,6 +26,20 @@ public sealed class PostgresSampleRepository(DbConnectionFactory factory) : ISam
         return SampleProjection.Reconstruct(new SampleIdentity(sampleId, SampleOrigin.Collection, []), events);
     }
 
+    public async Task<IReadOnlyList<SampleProjection>> ListAsync(SampleScope scope, int pageSize = 25, CancellationToken cancellationToken = default)
+    {
+        scope.Validate();
+        await using var connection = factory.Create();
+        var sampleIds = await connection.QueryAsync<Guid>(new CommandDefinition("SELECT sample_id FROM scientific_samples WHERE actor_sid=@actor ORDER BY created_at, sample_id LIMIT @limit", new { actor = scope.ActorSid, limit = Math.Clamp(pageSize, 1, 100) }, cancellationToken: cancellationToken));
+        var samples = new List<SampleProjection>();
+        foreach (var sampleId in sampleIds)
+        {
+            var sample = await ReadAsync(sampleId, scope, cancellationToken);
+            if (sample is not null) samples.Add(sample);
+        }
+        return samples;
+    }
+
     public async Task<IReadOnlyList<SampleEvent>> EventsAsync(Guid sampleId, SampleScope scope, long? afterSequence = null, int pageSize = 25, CancellationToken cancellationToken = default)
     {
         scope.Validate();
@@ -53,7 +67,8 @@ public sealed class PostgresSampleRepository(DbConnectionFactory factory) : ISam
     public async Task<SampleOperationReceipt?> OperationAsync(Guid operationId, SampleScope scope, CancellationToken cancellationToken = default)
     {
         scope.Validate(); await using var connection = factory.Create();
-        return await connection.QuerySingleOrDefaultAsync<SampleOperationReceipt>(new CommandDefinition("SELECT operation_id OperationId,operation_kind Kind,sample_id SampleId,actor_sid ActorSid,recorded_at RecordedAtUtc,payload::text Payload FROM scientific_sample_operations WHERE actor_sid=@actor AND operation_id=@operationId", new { actor = scope.ActorSid, operationId }, cancellationToken: cancellationToken));
+        var row = await connection.QuerySingleOrDefaultAsync<ReceiptRow>(new CommandDefinition("SELECT operation_id OperationId,operation_kind Kind,sample_id SampleId,actor_sid ActorSid,recorded_at RecordedAtUtc,payload::text Payload FROM scientific_sample_operations WHERE actor_sid=@actor AND operation_id=@operationId", new { actor = scope.ActorSid, operationId }, cancellationToken: cancellationToken));
+        return row?.ToReceipt();
     }
 
     private async Task<(SampleProjection Projection, SampleOperationReceipt Receipt)> WriteConfirmationAsync(SampleIdentity identity, SampleEvent sampleEvent, SampleScope scope, Guid operationId, CancellationToken cancellationToken)
@@ -89,5 +104,16 @@ public sealed class PostgresSampleRepository(DbConnectionFactory factory) : ISam
         public Guid? SupersedesEventId { get; init; }
         public string? CorrectionReason { get; init; }
         public SampleEvent ToEvent() => new(EventId, SampleId, Enum.Parse<SampleEventKind>(Kind, true), Label, Custodian, Location, new DateTimeOffset(OccurredAtUtc, TimeSpan.Zero), new DateTimeOffset(RecordedAtUtc, TimeSpan.Zero), ActorSid, ServerSequence, SupersedesEventId, CorrectionReason);
+    }
+
+    private sealed class ReceiptRow
+    {
+        public Guid OperationId { get; init; }
+        public string Kind { get; init; } = "";
+        public Guid SampleId { get; init; }
+        public string ActorSid { get; init; } = "";
+        public DateTime RecordedAtUtc { get; init; }
+        public string Payload { get; init; } = "";
+        public SampleOperationReceipt ToReceipt() => new(OperationId, Kind, SampleId, ActorSid, new DateTimeOffset(RecordedAtUtc, TimeSpan.Zero), Payload);
     }
 }

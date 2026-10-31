@@ -40,3 +40,12 @@ CREATE OR REPLACE FUNCTION scientific_sample_event_immutable() RETURNS trigger A
 DROP TRIGGER IF EXISTS scientific_sample_events_immutable ON scientific_sample_events;
 CREATE TRIGGER scientific_sample_events_immutable BEFORE UPDATE OR DELETE ON scientific_sample_events FOR EACH ROW EXECUTE FUNCTION scientific_sample_event_immutable();
 REVOKE INSERT, UPDATE, DELETE, TRUNCATE ON scientific_samples, scientific_sample_events, scientific_sample_heads, scientific_sample_operations FROM PUBLIC;
+DO $$
+BEGIN
+    -- The runtime role may append new immutable evidence and advance only the mutable stream head.
+    -- It never receives UPDATE/DELETE on facts, events, or receipts.
+    IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'helix_scientific_runtime') THEN
+        GRANT SELECT, INSERT ON scientific_samples, scientific_sample_events, scientific_sample_operations TO helix_scientific_runtime;
+        GRANT SELECT, INSERT, UPDATE ON scientific_sample_heads TO helix_scientific_runtime;
+    END IF;
+END $$;
