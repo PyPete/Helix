@@ -2,18 +2,18 @@
 gsd_state_version: "1.0"
 current_phase: 02
 current_phase_name: Scientific Setup Foundation
-current_plan: 7
+current_plan: 8
 status: complete_with_user_approved_waivers
-stopped_at: Completed 02-31-PLAN.md
-last_updated: "2026-10-31T21:48:12.960Z"
+stopped_at: Completed 02-32-PLAN.md
+last_updated: "2026-10-31T22:04:41.502Z"
 last_activity: 2026-10-31
 last_activity_desc: Completed 02-18 isolated authenticated apparatus tracer.
-state_head: 15afa1f4fd872e7feb220f3069b72a08cb5658a2
+state_head: ed3ca2c707c178d7ee5fd37430ec8e89cb44c634
 progress:
   total_phases: 7
   completed_phases: 1
   total_plans: 37
-  completed_plans: 19
+  completed_plans: 21
   percent: 14
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-10-29)
 
 ## Current Position
 
-Current Plan: 7
+Current Plan: 8
 Total Plans in Phase: 23
 
 Phase: 02 (Scientific Setup Foundation) — IN PROGRESS
@@ -65,6 +65,7 @@ Progress: [█░░░░░░░░░] 14% (one of six phases closed with wa
 | Phase 02 P29 | 30min | 2 tasks | 8 files |
 | Phase 02 P30 | continuation session | 2 tasks | 11 files |
 | Phase 02 P31 | 137s | 2 tasks | 10 files |
+| Phase 02 P32 | 20min | 3 tasks | 11 files |
 
 ## Accumulated Context
 
@@ -82,6 +83,7 @@ Decisions are logged in PROJECT.md Key Decisions table. Current roadmap decision
 - [Phase 02]: Procedures and plans validate exact decimal targets and units before instantiating copied WSL content.
 - [Phase 02]: Procedure revision pins are resolved by actor-scoped exact revision ID before plan acceptance.
 - [Phase 02]: Procedure and plan workspaces use stable independent dock tab IDs and retain uncertain mutation operation IDs.
+- [Phase 02]: Derived procedures retain exact source revisions; compatible adoption changes only a plan draft until independently published.
 
 ### Pending Todos
 
@@ -106,6 +108,6 @@ Decisions are logged in PROJECT.md Key Decisions table. Current roadmap decision
 
 ## Session Continuity
 
-Last session: 2026-10-31T21:48:12.907Z
-Stopped at: Completed 02-31-PLAN.md
+Last session: 2026-10-31T22:04:41.447Z
+Stopped at: Completed 02-32-PLAN.md
 Resume file: None
