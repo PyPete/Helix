@@ -107,6 +107,14 @@ fn validate_device_id(device_id: &str) -> Result<(), String> {
     Ok(())
 }
 
+fn scientific_kind_path(kind: &str) -> Result<&'static str, String> {
+    match kind {
+        "procedure" | "procedures" => Ok("procedures"),
+        "plan" | "plans" => Ok("plans"),
+        _ => Err("Scientific kind is invalid.".to_string()),
+    }
+}
+
 fn session_status(state: &State<'_, AgentBrokerState>) -> Result<String, String> {
     let state = state.0.lock().map_err(|_| "Agent session state is unavailable.".to_string())?;
     let status = AgentSessionStatus {
@@ -256,6 +264,21 @@ pub async fn scientific_operation(window: WebviewWindow, state: State<'_, AgentB
     require_main_window(&window)?;
     validate_command_id(&operation_id)?;
     native_request("GET", &format!("/api/scientific-setup/operations/{operation_id}"), None, &require_session(&state)?)
+}
+
+/// Fixed-kind lifecycle commands never accept a renderer-supplied URL or HTTP verb.
+#[tauri::command]
+pub async fn scientific_list_kind(window: WebviewWindow, state: State<'_, AgentBrokerState>, kind: String) -> Result<String, String> {
+    require_main_window(&window)?;
+    native_request("GET", &format!("/api/scientific-setup/{}", scientific_kind_path(&kind)?), None, &require_session(&state)?)
+}
+
+#[tauri::command]
+pub async fn scientific_create_kind(window: WebviewWindow, state: State<'_, AgentBrokerState>, kind: String, request: String) -> Result<String, String> {
+    require_main_window(&window)?;
+    if request.len() > 64 * 1024 { return Err("Scientific request exceeds the permitted size.".to_string()); }
+    validate_json(&request)?;
+    native_request("POST", &format!("/api/scientific-setup/{}", scientific_kind_path(&kind)?), Some(&request), &require_session(&state)?)
 }
 
 /// Lists only the Agent's canonical simulator adapters through the authenticated broker.
@@ -493,6 +516,11 @@ mod agent_security {
     #[test] fn command_ids_require_uuid_shape() { assert!(validate_command_id("------------------------------------").is_err()); }
     #[test] fn cursor_does_not_accept_query_injection() { assert!(validate_cursor("cursor&host=remote").is_err()); }
     #[test] fn device_ids_do_not_accept_paths() { assert!(validate_device_id("../real-device").is_err()); }
+    #[test] fn scientific_kinds_are_fixed_and_reject_paths() {
+        assert_eq!(scientific_kind_path("procedure"), Ok("procedures"));
+        assert_eq!(scientific_kind_path("plan"), Ok("plans"));
+        assert!(scientific_kind_path("../commands").is_err());
+    }
     /// Live integration is intentionally excluded from ordinary cargo tests. The phase verifier
     /// selects it explicitly after starting its owned Agent/PostgreSQL host.
     #[test]
