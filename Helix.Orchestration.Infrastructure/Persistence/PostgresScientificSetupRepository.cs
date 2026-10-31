@@ -184,6 +184,78 @@ public sealed class PostgresScientificSetupRepository(DbConnectionFactory factor
         return operation?.Receipt;
     }
 
+    public async Task<(ProcedureDefinition Procedure, long Token, ScientificOperationReceipt Receipt)> CreateProcedureAsync(ProcedureDefinition procedure, string actorSid, Guid operationId, CancellationToken ct = default)
+    {
+        procedure.Validate();
+        const string kind = "procedure.create";
+        var requestHash = CanonicalRequestHash(procedure);
+        var existing = await GetOperationAsync(operationId, kind, actorSid, ct);
+        if (existing is not null)
+        {
+            EnsureSameRequest(existing, requestHash);
+            return (JsonSerializer.Deserialize<ProcedureDefinition>(existing.Receipt.Payload) ?? throw new InvalidOperationException("Stored procedure receipt is invalid."), 1, existing.Receipt);
+        }
+
+        var payload = JsonSerializer.Serialize(procedure);
+        var receipt = new ScientificOperationReceipt(operationId, kind, procedure.ProcedureId, actorSid, DateTimeOffset.UtcNow, payload);
+        await using var connection = factory.Create();
+        await connection.OpenAsync(ct);
+        await using var transaction = await connection.BeginTransactionAsync(ct);
+        try
+        {
+            await connection.ExecuteAsync(new CommandDefinition("INSERT INTO scientific_procedures(procedure_id,actor_sid,name,draft_content) VALUES (@id,@actor,@name,CAST(@payload AS jsonb)); INSERT INTO scientific_operations(actor_sid,operation_kind,operation_id,resource_id,payload,request_hash,recorded_at) VALUES (@actor,@kind,@operationId,@id,CAST(@payload AS jsonb),@requestHash,@at);", new { id = procedure.ProcedureId, actor = actorSid, name = procedure.Name, payload, kind, operationId, requestHash, at = receipt.RecordedAtUtc }, transaction, cancellationToken: ct));
+            await transaction.CommitAsync(ct);
+            return (procedure, 1, receipt);
+        }
+        catch (PostgresException exception) when (exception.SqlState == PostgresErrorCodes.UniqueViolation)
+        {
+            await transaction.RollbackAsync(ct);
+            var raced = await GetOperationAsync(operationId, kind, actorSid, ct) ?? throw new InvalidOperationException("Procedure operation race did not persist a receipt.");
+            EnsureSameRequest(raced, requestHash);
+            return (JsonSerializer.Deserialize<ProcedureDefinition>(raced.Receipt.Payload) ?? throw new InvalidOperationException("Stored procedure receipt is invalid."), 1, raced.Receipt);
+        }
+    }
+
+    public async Task<(ExperimentPlanDefinition Plan, long Token, ScientificOperationReceipt Receipt)> CreatePlanAsync(ExperimentPlanDefinition plan, ProcedureDefinition procedure, string actorSid, Guid operationId, CancellationToken ct = default)
+    {
+        plan.ValidateAgainst(procedure);
+        const string kind = "plan.create";
+        var requestHash = CanonicalRequestHash(plan);
+        var existing = await GetOperationAsync(operationId, kind, actorSid, ct);
+        if (existing is not null)
+        {
+            EnsureSameRequest(existing, requestHash);
+            return (JsonSerializer.Deserialize<ExperimentPlanDefinition>(existing.Receipt.Payload) ?? throw new InvalidOperationException("Stored plan receipt is invalid."), 1, existing.Receipt);
+        }
+
+        var payload = JsonSerializer.Serialize(plan);
+        var receipt = new ScientificOperationReceipt(operationId, kind, plan.PlanId, actorSid, DateTimeOffset.UtcNow, payload);
+        await using var connection = factory.Create();
+        await connection.OpenAsync(ct);
+        await using var transaction = await connection.BeginTransactionAsync(ct);
+        try
+        {
+            await connection.ExecuteAsync(new CommandDefinition("INSERT INTO scientific_experiment_plans(plan_id,actor_sid,name,draft_content) VALUES (@id,@actor,@name,CAST(@payload AS jsonb)); INSERT INTO scientific_operations(actor_sid,operation_kind,operation_id,resource_id,payload,request_hash,recorded_at) VALUES (@actor,@kind,@operationId,@id,CAST(@payload AS jsonb),@requestHash,@at);", new { id = plan.PlanId, actor = actorSid, name = plan.Name, payload, kind, operationId, requestHash, at = receipt.RecordedAtUtc }, transaction, cancellationToken: ct));
+            await transaction.CommitAsync(ct);
+            return (plan, 1, receipt);
+        }
+        catch (PostgresException exception) when (exception.SqlState == PostgresErrorCodes.UniqueViolation)
+        {
+            await transaction.RollbackAsync(ct);
+            var raced = await GetOperationAsync(operationId, kind, actorSid, ct) ?? throw new InvalidOperationException("Plan operation race did not persist a receipt.");
+            EnsureSameRequest(raced, requestHash);
+            return (JsonSerializer.Deserialize<ExperimentPlanDefinition>(raced.Receipt.Payload) ?? throw new InvalidOperationException("Stored plan receipt is invalid."), 1, raced.Receipt);
+        }
+    }
+
+    public async Task<(ExperimentPlanDefinition Plan, long Token)> ReadPlanDraftAsync(Guid planId, string actorSid, CancellationToken ct = default)
+    {
+        await using var connection = factory.Create();
+        var draft = await connection.QuerySingleOrDefaultAsync<Draft>(new CommandDefinition("SELECT draft_content::text AS Content,draft_token AS Token FROM scientific_experiment_plans WHERE plan_id=@planId AND actor_sid=@actorSid;", new { planId, actorSid }, cancellationToken: ct));
+        if (draft is null) throw new KeyNotFoundException();
+        return (JsonSerializer.Deserialize<ExperimentPlanDefinition>(draft.Content) ?? throw new InvalidOperationException("Stored plan draft is invalid."), draft.Token);
+    }
+
     private async Task<(ApparatusDefinition Apparatus, long Token, ScientificOperationReceipt Receipt)> ReplayCreateAsync(StoredOperation operation, string requestHash, CancellationToken ct)
     {
         EnsureSameRequest(operation, requestHash);
