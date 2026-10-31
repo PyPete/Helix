@@ -1,0 +1,45 @@
+using Helix.Orchestration.Core.Samples;
+using Xunit;
+
+namespace Helix.Orchestration.Core.Tests.Samples;
+
+public sealed class SampleFactsTests
+{
+    [Fact]
+    public void Projection_uses_server_sequence_not_backdated_occurrence_time()
+    {
+        var sampleId = Guid.NewGuid();
+        var identity = new SampleIdentity(sampleId, SampleOrigin.Collection, []);
+        var recordedAt = DateTimeOffset.UtcNow.AddMinutes(-1);
+        var confirmation = new SampleEvent(Guid.NewGuid(), sampleId, SampleEventKind.Confirmed, "initial", "scientist", "hood", recordedAt, recordedAt, "scientist-a", 1);
+        var move = new SampleEvent(Guid.NewGuid(), sampleId, SampleEventKind.CustodyMoved, "moved", "reviewer", "freezer", recordedAt.AddDays(-2), recordedAt.AddSeconds(1), "scientist-a", 2);
+
+        var projection = SampleProjection.Reconstruct(identity, [confirmation, move]);
+
+        Assert.Equal(2, projection.ServerSequence);
+        Assert.Equal("freezer", projection.Location);
+        Assert.Equal("moved", projection.Label);
+    }
+
+    [Fact]
+    public void Correction_requires_prior_event_from_same_stream_and_preserves_identity()
+    {
+        var sampleId = Guid.NewGuid();
+        var identity = new SampleIdentity(sampleId, SampleOrigin.Collection, []);
+        var now = DateTimeOffset.UtcNow.AddMinutes(-2);
+        var confirmed = new SampleEvent(Guid.NewGuid(), sampleId, SampleEventKind.Confirmed, "initial", "scientist", "hood", now, now, "scientist-a", 1);
+        var invalidCorrection = new SampleEvent(Guid.NewGuid(), sampleId, SampleEventKind.Correction, "corrected", "scientist", "bench", now, now.AddSeconds(1), "scientist-a", 2, Guid.NewGuid(), "wrong location");
+
+        Assert.Throws<InvalidOperationException>(() => SampleProjection.Reconstruct(identity, [confirmed, invalidCorrection]));
+        Assert.Equal(sampleId, identity.SampleId);
+        Assert.Equal(SampleOrigin.Collection, identity.Origin);
+    }
+
+    [Fact]
+    public void Confirmation_rejects_future_occurrence_time()
+    {
+        var confirmation = new SampleConfirmation("hood", DateTimeOffset.UtcNow.AddMinutes(1));
+
+        Assert.Throws<ArgumentOutOfRangeException>(() => SampleFactValidation.ValidateConfirmation(confirmation, DateTimeOffset.UtcNow));
+    }
+}
