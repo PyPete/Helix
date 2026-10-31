@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Dapper;
 using Helix.Orchestration.Core.ScientificSetup;
+using Helix.Orchestration.Core.WSL;
 using Npgsql;
 
 namespace Helix.Orchestration.Infrastructure.Persistence;
@@ -12,6 +13,7 @@ public sealed class PostgresScientificSetupRepository(DbConnectionFactory factor
     private const string SaveDraftKind = "apparatus.save-draft";
     private const string AdoptRevisionKind = "apparatus.adopt-revision";
     private const string OperationConflictMessage = "Operation ID was previously used with a different request.";
+    private static readonly JsonSerializerOptions ReadOptions = new() { PropertyNameCaseInsensitive = true };
 
     public async Task<(ApparatusDefinition Apparatus, long Token, ScientificOperationReceipt Receipt)> CreateAsync(ApparatusDefinition apparatus, string actorSid, Guid operationId, CancellationToken ct = default)
     {
@@ -272,6 +274,80 @@ public sealed class PostgresScientificSetupRepository(DbConnectionFactory factor
         return (procedure, saved.Token, saved.Receipt);
     }
 
+    public async Task<(ProcedureDefinition Procedure, long Token, ScientificOperationReceipt Receipt)> DeriveProcedureAsync(Guid sourceRevisionId, string name, string actorSid, Guid operationId, CancellationToken ct = default)
+    {
+        const string kind = "procedure.derive";
+        if (sourceRevisionId == Guid.Empty || string.IsNullOrWhiteSpace(name)) throw new ArgumentException("Source revision and procedure name are required.");
+        var requestHash = CanonicalRequestHash(new { sourceRevisionId, name = name.Trim() });
+        var existing = await GetOperationAsync(operationId, kind, actorSid, ct);
+        if (existing is not null)
+        {
+            EnsureSameRequest(existing, requestHash);
+            var replay = JsonSerializer.Deserialize<ProcedureDefinition>(existing.Receipt.Payload) ?? throw new InvalidOperationException("Stored derived procedure receipt is invalid.");
+            var token = await ReadDraftContentAsync<ProcedureDefinition>("scientific_procedures", "procedure_id", replay.ProcedureId, actorSid, ct);
+            return (replay, token.Token, existing.Receipt);
+        }
+
+        var sourceRevision = await ReadProcedureByRevisionAsync(sourceRevisionId, actorSid, ct) ?? throw new KeyNotFoundException();
+        using var document = JsonDocument.Parse(sourceRevision.CanonicalContent);
+        var content = document.RootElement.TryGetProperty("content", out var envelope) ? envelope : document.RootElement;
+        var source = RehydrateProcedure(content.GetRawText());
+        var derived = source with { ProcedureId = Guid.NewGuid(), Name = name.Trim(), SourceRevisionId = sourceRevisionId };
+        derived.Validate();
+        var payload = JsonSerializer.Serialize(derived);
+        var receipt = new ScientificOperationReceipt(operationId, kind, derived.ProcedureId, actorSid, DateTimeOffset.UtcNow, payload);
+        await using var connection = factory.Create();
+        await connection.OpenAsync(ct);
+        await using var transaction = await connection.BeginTransactionAsync(ct);
+        try
+        {
+            await connection.ExecuteAsync(new CommandDefinition("INSERT INTO scientific_procedures(procedure_id,actor_sid,name,draft_content) VALUES (@id,@actorSid,@name,CAST(@payload AS jsonb)); INSERT INTO scientific_operations(actor_sid,operation_kind,operation_id,resource_id,payload,request_hash,recorded_at) VALUES (@actorSid,@kind,@operationId,@id,CAST(@payload AS jsonb),@requestHash,@recordedAt);", new { id = derived.ProcedureId, actorSid, name = derived.Name, payload, kind, operationId, requestHash, recordedAt = receipt.RecordedAtUtc }, transaction, cancellationToken: ct));
+            await transaction.CommitAsync(ct);
+            return (derived, 1, receipt);
+        }
+        catch (PostgresException exception) when (exception.SqlState == PostgresErrorCodes.UniqueViolation)
+        {
+            await transaction.RollbackAsync(ct);
+            var raced = await GetOperationAsync(operationId, kind, actorSid, ct) ?? throw new InvalidOperationException("Derived procedure race did not persist a receipt.");
+            EnsureSameRequest(raced, requestHash);
+            var replay = JsonSerializer.Deserialize<ProcedureDefinition>(raced.Receipt.Payload) ?? throw new InvalidOperationException("Stored derived procedure receipt is invalid.");
+            var token = await ReadDraftContentAsync<ProcedureDefinition>("scientific_procedures", "procedure_id", replay.ProcedureId, actorSid, ct);
+            return (replay, token.Token, raced.Receipt);
+        }
+    }
+
+    public async Task<(ExperimentPlanDefinition Plan, long Token, ScientificOperationReceipt Receipt)> AdoptProcedureAsync(Guid planId, Guid procedureRevisionId, long expectedToken, string actorSid, Guid operationId, CancellationToken ct = default)
+    {
+        const string kind = "plan.adopt-procedure";
+        var requestHash = CanonicalRequestHash(new { planId, procedureRevisionId, expectedToken });
+        var existing = await GetOperationAsync(operationId, kind, actorSid, ct);
+        if (existing is not null)
+        {
+            EnsureSameRequest(existing, requestHash);
+            var replay = JsonSerializer.Deserialize<ExperimentPlanDefinition>(existing.Receipt.Payload) ?? throw new InvalidOperationException("Stored plan adoption receipt is invalid.");
+            var token = await ReadPlanDraftAsync(planId, actorSid, ct);
+            return (replay, token.Token, existing.Receipt);
+        }
+
+        var procedureRevision = await ReadProcedureByRevisionAsync(procedureRevisionId, actorSid, ct) ?? throw new KeyNotFoundException();
+        using var document = JsonDocument.Parse(procedureRevision.CanonicalContent);
+        var content = document.RootElement.TryGetProperty("content", out var envelope) ? envelope : document.RootElement;
+        var procedure = RehydrateProcedure(content.GetRawText());
+        await using var connection = factory.Create();
+        await connection.OpenAsync(ct);
+        await using var transaction = await connection.BeginTransactionAsync(ct);
+        var draft = await connection.QuerySingleOrDefaultAsync<Draft>(new CommandDefinition("SELECT draft_content::text AS Content,draft_token AS Token FROM scientific_experiment_plans WHERE plan_id=@planId AND actor_sid=@actorSid FOR UPDATE;", new { planId, actorSid }, transaction, cancellationToken: ct)) ?? throw new KeyNotFoundException();
+        if (draft.Token != expectedToken) throw new InvalidOperationException("The scientific draft changed elsewhere.");
+        var current = JsonSerializer.Deserialize<ExperimentPlanDefinition>(draft.Content) ?? throw new InvalidOperationException("Stored plan draft is invalid.");
+        var adopted = current with { ProcedureRevisionId = procedureRevisionId };
+        adopted.ValidateAgainst(procedure);
+        var payload = JsonSerializer.Serialize(adopted);
+        var receipt = new ScientificOperationReceipt(operationId, kind, planId, actorSid, DateTimeOffset.UtcNow, payload);
+        await connection.ExecuteAsync(new CommandDefinition("UPDATE scientific_experiment_plans SET draft_content=CAST(@payload AS jsonb),draft_token=draft_token+1 WHERE plan_id=@planId AND actor_sid=@actorSid; INSERT INTO scientific_operations(actor_sid,operation_kind,operation_id,resource_id,payload,request_hash,recorded_at) VALUES (@actorSid,@kind,@operationId,@planId,CAST(@payload AS jsonb),@requestHash,@recordedAt);", new { planId, actorSid, payload, kind, operationId, requestHash, recordedAt = receipt.RecordedAtUtc }, transaction, cancellationToken: ct));
+        await transaction.CommitAsync(ct);
+        return (adopted, expectedToken + 1, receipt);
+    }
+
     public Task<IReadOnlyList<ScientificContentSummary>> ListProceduresAsync(string actorSid, CancellationToken ct = default) => ListScientificContentAsync("scientific_procedures", "procedure_id", actorSid, ct);
     public Task<ScientificContentSummary?> ReadProcedureLatestAsync(Guid procedureId, string actorSid, CancellationToken ct = default) => ReadScientificLatestAsync("scientific_procedures", "procedure_id", procedureId, actorSid, ct);
     public Task<IReadOnlyList<ScientificOperationReceipt>> ProcedureHistoryAsync(Guid procedureId, string actorSid, CancellationToken ct = default) => ScientificHistoryAsync(procedureId, actorSid, ct);
@@ -301,6 +377,23 @@ public sealed class PostgresScientificSetupRepository(DbConnectionFactory factor
         var values = await connection.QueryAsync<ScientificContentSummary>(new CommandDefinition($"SELECT {idColumn} AS ResourceId,name AS Name,latest_revision_id AS RevisionId FROM {table} WHERE actor_sid=@actorSid ORDER BY name,{idColumn};", new { actorSid }, cancellationToken: ct));
         return values.AsList();
     }
+
+    private static ProcedureDefinition RehydrateProcedure(string content)
+    {
+        var procedure = JsonSerializer.Deserialize<ProcedureDefinition>(content, ReadOptions) ?? throw new InvalidOperationException("Stored procedure revision is invalid.");
+        var document = procedure.Document with
+        {
+            Nodes = procedure.Document.Nodes.Select(node => node with
+            {
+                Parameters = node.Parameters.ToDictionary(pair => pair.Key, pair => RehydrateParameter(pair.Value))
+            }).ToList()
+        };
+        return procedure with { Document = document };
+    }
+
+    private static object? RehydrateParameter(object? value) => value is JsonElement element && element.ValueKind == JsonValueKind.Number && element.TryGetDecimal(out var decimalValue)
+        ? decimalValue
+        : value;
 
     private async Task<ScientificContentSummary?> ReadScientificLatestAsync(string table, string idColumn, Guid id, string actorSid, CancellationToken ct)
     {

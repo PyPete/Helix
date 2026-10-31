@@ -16,6 +16,8 @@ public interface IScientificSetupRepository
 
     Task<(ProcedureDefinition Procedure, long Token, ScientificOperationReceipt Receipt)> CreateProcedureAsync(ProcedureDefinition procedure, string actorSid, Guid operationId, CancellationToken ct = default);
     Task<(ExperimentPlanDefinition Plan, long Token, ScientificOperationReceipt Receipt)> CreatePlanAsync(ExperimentPlanDefinition plan, ProcedureDefinition procedure, string actorSid, Guid operationId, CancellationToken ct = default);
+    Task<(ProcedureDefinition Procedure, long Token, ScientificOperationReceipt Receipt)> DeriveProcedureAsync(Guid sourceRevisionId, string name, string actorSid, Guid operationId, CancellationToken ct = default) => throw new NotSupportedException();
+    Task<(ExperimentPlanDefinition Plan, long Token, ScientificOperationReceipt Receipt)> AdoptProcedureAsync(Guid planId, Guid procedureRevisionId, long expectedToken, string actorSid, Guid operationId, CancellationToken ct = default) => throw new NotSupportedException();
     Task<(ExperimentPlanDefinition Plan, long Token)> ReadPlanDraftAsync(Guid planId, string actorSid, CancellationToken ct = default);
     Task<(ScientificRevision Revision, ScientificOperationReceipt Receipt)> PublishProcedureAsync(Guid procedureId, Guid? expectedRevisionId, string name, string actorSid, Guid operationId, CancellationToken ct = default);
     Task<(ScientificRevision Revision, ScientificOperationReceipt Receipt)> PublishPlanAsync(Guid planId, Guid? expectedRevisionId, string name, string actorSid, Guid operationId, CancellationToken ct = default);

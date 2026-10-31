@@ -18,6 +18,8 @@ public sealed record PlanCreateRequest(Guid OperationId, string Name, Guid Proce
 public sealed record ProcedureSaveDraftRequest(Guid OperationId, long ExpectedToken, string Name, Helix.Orchestration.Core.WSL.WslDocument Document, IReadOnlyList<ProcedureParameterDeclaration> Parameters, IReadOnlyList<PlannedCollectionDescriptor>? PlannedCollections = null);
 public sealed record PlanSaveDraftRequest(Guid OperationId, long ExpectedToken, string Name, Guid ProcedureRevisionId, IReadOnlyList<ExperimentParameterValue> Parameters);
 public sealed record ScientificPublishRequest(Guid OperationId, Guid? ExpectedRevisionId, string? Name);
+public sealed record ProcedureDeriveRequest(Guid OperationId, Guid SourceRevisionId, string Name);
+public sealed record PlanAdoptProcedureRequest(Guid OperationId, Guid ProcedureRevisionId, long ExpectedToken);
 
 public static class ScientificSetupEndpoints
 {
@@ -37,6 +39,8 @@ public static class ScientificSetupEndpoints
         app.MapGet("/api/scientific-setup/plans", ListPlansAsync);
         app.MapPost("/api/scientific-setup/procedures", CreateProcedureAsync);
         app.MapPost("/api/scientific-setup/plans", CreatePlanAsync);
+        app.MapPost("/api/scientific-setup/procedures/derive", DeriveProcedureAsync);
+        app.MapPost("/api/scientific-setup/plans/{id:guid}/adopt-procedure", AdoptProcedureAsync);
         MapContentRoutes(app, "procedures", ReadProcedureDraftAsync, SaveProcedureDraftAsync, PublishProcedureAsync, ReadProcedureAsync, ProcedureHistoryAsync, ReadProcedureRevisionAsync);
         MapContentRoutes(app, "plans", ReadPlanDraftAsync, SavePlanDraftAsync, PublishPlanAsync, ReadPlanAsync, PlanHistoryAsync, ReadPlanRevisionAsync);
         app.MapGet("/api/scientific-setup/operations/{operationId:guid}", OperationAsync);
@@ -85,6 +89,34 @@ public static class ScientificSetupEndpoints
             var result = await service.CreatePlanAsync(new ExperimentPlanDefinition(Guid.Empty, request.Name.Trim(), request.ProcedureRevisionId, request.Parameters), procedure, Actor(context).Sid, request.OperationId, ct);
             return Results.Created($"/api/scientific-setup/plans/{result.Plan.PlanId}", new { result.Plan.PlanId, result.Token, receipt = result.Receipt });
         }
+        catch (ArgumentException exception) { return Results.BadRequest(new { error = exception.Message }); }
+        catch (InvalidOperationException exception) { return Results.Conflict(new { error = exception.Message }); }
+    }
+
+    private static async Task<IResult> DeriveProcedureAsync(ProcedureDeriveRequest request, HttpContext context, IScientificSetupRepository repository, CancellationToken ct)
+    {
+        if (context.Request.ContentLength > 65536) return Results.StatusCode(StatusCodes.Status413PayloadTooLarge);
+        if (request.OperationId == Guid.Empty || request.SourceRevisionId == Guid.Empty || string.IsNullOrWhiteSpace(request.Name)) return Results.BadRequest();
+        try
+        {
+            var value = await repository.DeriveProcedureAsync(request.SourceRevisionId, request.Name.Trim(), Actor(context).Sid, request.OperationId, ct);
+            return Results.Created($"/api/scientific-setup/procedures/{value.Procedure.ProcedureId}", new { procedure = value.Procedure, token = value.Token, receipt = value.Receipt });
+        }
+        catch (KeyNotFoundException) { return Results.NotFound(); }
+        catch (ArgumentException exception) { return Results.BadRequest(new { error = exception.Message }); }
+        catch (InvalidOperationException exception) { return Results.Conflict(new { error = exception.Message }); }
+    }
+
+    private static async Task<IResult> AdoptProcedureAsync(Guid id, PlanAdoptProcedureRequest request, HttpContext context, IScientificSetupRepository repository, CancellationToken ct)
+    {
+        if (context.Request.ContentLength > 65536) return Results.StatusCode(StatusCodes.Status413PayloadTooLarge);
+        if (id == Guid.Empty || request.OperationId == Guid.Empty || request.ProcedureRevisionId == Guid.Empty) return Results.BadRequest();
+        try
+        {
+            var value = await repository.AdoptProcedureAsync(id, request.ProcedureRevisionId, request.ExpectedToken, Actor(context).Sid, request.OperationId, ct);
+            return Results.Ok(new { plan = value.Plan, token = value.Token, receipt = value.Receipt });
+        }
+        catch (KeyNotFoundException) { return Results.NotFound(); }
         catch (ArgumentException exception) { return Results.BadRequest(new { error = exception.Message }); }
         catch (InvalidOperationException exception) { return Results.Conflict(new { error = exception.Message }); }
     }
