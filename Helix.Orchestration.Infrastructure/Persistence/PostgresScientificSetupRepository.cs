@@ -256,6 +256,52 @@ public sealed class PostgresScientificSetupRepository(DbConnectionFactory factor
         return (JsonSerializer.Deserialize<ExperimentPlanDefinition>(draft.Content) ?? throw new InvalidOperationException("Stored plan draft is invalid."), draft.Token);
     }
 
+    public Task<(ScientificRevision Revision, ScientificOperationReceipt Receipt)> PublishProcedureAsync(Guid procedureId, Guid? expectedRevisionId, string name, string actorSid, Guid operationId, CancellationToken ct = default) =>
+        PublishScientificContentAsync("procedure.publish", "scientific_procedures", "scientific_procedure_revisions", "procedure_id", procedureId, expectedRevisionId, name, actorSid, operationId, null, ct);
+
+    public Task<(ScientificRevision Revision, ScientificOperationReceipt Receipt)> PublishPlanAsync(Guid planId, Guid? expectedRevisionId, string name, string actorSid, Guid operationId, CancellationToken ct = default) =>
+        PublishScientificContentAsync("plan.publish", "scientific_experiment_plans", "scientific_experiment_plan_revisions", "plan_id", planId, expectedRevisionId, name, actorSid, operationId, "procedure_revision_id", ct);
+
+    private async Task<(ScientificRevision Revision, ScientificOperationReceipt Receipt)> PublishScientificContentAsync(string kind, string aggregateTable, string revisionTable, string aggregateColumn, Guid aggregateId, Guid? expectedRevisionId, string name, string actorSid, Guid operationId, string? procedurePinColumn, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("Publication name is required.", nameof(name));
+        var requestHash = CanonicalRequestHash(new { aggregateId, expectedRevisionId, name });
+        var existing = await GetOperationAsync(operationId, kind, actorSid, ct);
+        if (existing is not null) return ReplayPublish(existing, requestHash);
+
+        await using var connection = factory.Create();
+        await connection.OpenAsync(ct);
+        await using var transaction = await connection.BeginTransactionAsync(ct);
+        try
+        {
+            var draft = await connection.QuerySingleOrDefaultAsync<Draft>(new CommandDefinition($"SELECT draft_content::text AS Content,latest_revision_id AS LatestRevisionId FROM {aggregateTable} WHERE {aggregateColumn}=@aggregateId AND actor_sid=@actorSid FOR UPDATE;", new { aggregateId, actorSid }, transaction, cancellationToken: ct));
+            if (draft is null) throw new KeyNotFoundException();
+            if (draft.LatestRevisionId != expectedRevisionId) throw new InvalidOperationException("The scientific draft changed elsewhere.");
+            var canonical = ScientificContentCanonicalizer.Canonicalize(JsonDocument.Parse(draft.Content).RootElement);
+            var revision = new ScientificRevision(Guid.NewGuid(), aggregateId, name, canonical.Hash, actorSid, DateTimeOffset.UtcNow, canonical.Content);
+            var receipt = new ScientificOperationReceipt(operationId, kind, aggregateId, actorSid, revision.RecordedAtUtc, JsonSerializer.Serialize(revision));
+            if (procedurePinColumn is null)
+            {
+                await connection.ExecuteAsync(new CommandDefinition($"INSERT INTO {revisionTable}(revision_id,{aggregateColumn},revision_name,content_hash,canonical_content,actor_sid,recorded_at) VALUES (@revisionId,@aggregateId,@name,@hash,CAST(@content AS jsonb),@actorSid,@recordedAt); UPDATE {aggregateTable} SET latest_revision_id=@revisionId,draft_token=draft_token+1 WHERE {aggregateColumn}=@aggregateId; INSERT INTO scientific_operations(actor_sid,operation_kind,operation_id,resource_id,payload,request_hash,recorded_at) VALUES (@actorSid,@kind,@operationId,@aggregateId,CAST(@payload AS jsonb),@requestHash,@recordedAt);", new { revisionId = revision.RevisionId, aggregateId, name, hash = revision.ContentHash, content = revision.CanonicalContent, actorSid, recordedAt = revision.RecordedAtUtc, kind, operationId, payload = receipt.Payload, requestHash }, transaction, cancellationToken: ct));
+            }
+            else
+            {
+                var plan = JsonSerializer.Deserialize<ExperimentPlanDefinition>(draft.Content) ?? throw new InvalidOperationException("Stored plan draft is invalid.");
+                var ownedPin = await connection.ExecuteScalarAsync<int>(new CommandDefinition("SELECT COUNT(*) FROM scientific_procedure_revisions r JOIN scientific_procedures p ON p.procedure_id=r.procedure_id WHERE r.revision_id=@revisionId AND p.actor_sid=@actorSid;", new { revisionId = plan.ProcedureRevisionId, actorSid }, transaction, cancellationToken: ct));
+                if (ownedPin != 1) throw new InvalidOperationException("The plan must pin a published procedure in the same scope.");
+                await connection.ExecuteAsync(new CommandDefinition($"INSERT INTO {revisionTable}(revision_id,{aggregateColumn},{procedurePinColumn},revision_name,content_hash,canonical_content,actor_sid,recorded_at) VALUES (@revisionId,@aggregateId,@procedureRevisionId,@name,@hash,CAST(@content AS jsonb),@actorSid,@recordedAt); UPDATE {aggregateTable} SET latest_revision_id=@revisionId,draft_token=draft_token+1 WHERE {aggregateColumn}=@aggregateId; INSERT INTO scientific_operations(actor_sid,operation_kind,operation_id,resource_id,payload,request_hash,recorded_at) VALUES (@actorSid,@kind,@operationId,@aggregateId,CAST(@payload AS jsonb),@requestHash,@recordedAt);", new { revisionId = revision.RevisionId, aggregateId, procedureRevisionId = plan.ProcedureRevisionId, name, hash = revision.ContentHash, content = revision.CanonicalContent, actorSid, recordedAt = revision.RecordedAtUtc, kind, operationId, payload = receipt.Payload, requestHash }, transaction, cancellationToken: ct));
+            }
+            await transaction.CommitAsync(ct);
+            return (revision, receipt);
+        }
+        catch (PostgresException exception) when (exception.SqlState == PostgresErrorCodes.UniqueViolation)
+        {
+            await transaction.RollbackAsync(ct);
+            var raced = await GetOperationAsync(operationId, kind, actorSid, ct) ?? throw new InvalidOperationException("Publication race did not persist a receipt.");
+            return ReplayPublish(raced, requestHash);
+        }
+    }
+
     private async Task<(ApparatusDefinition Apparatus, long Token, ScientificOperationReceipt Receipt)> ReplayCreateAsync(StoredOperation operation, string requestHash, CancellationToken ct)
     {
         EnsureSameRequest(operation, requestHash);

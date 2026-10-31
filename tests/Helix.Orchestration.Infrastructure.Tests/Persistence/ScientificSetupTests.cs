@@ -15,7 +15,8 @@ public sealed class ScientificSetupTests(PostgresFixture fixture)
         var repository = new PostgresScientificSetupRepository(fixture.ConnectionFactory!);
         var procedure = CreateProcedure();
         var procedureResult = await repository.CreateProcedureAsync(procedure, "scientist-procedure", Guid.NewGuid());
-        var plan = new ExperimentPlanDefinition(Guid.NewGuid(), "Plan", Guid.NewGuid(), [new("temperature", 25m, "Cel")]);
+        var publishedProcedure = await repository.PublishProcedureAsync(procedure.ProcedureId, null, "Procedure v1", "scientist-procedure", Guid.NewGuid());
+        var plan = new ExperimentPlanDefinition(Guid.NewGuid(), "Plan", publishedProcedure.Revision.RevisionId, [new("temperature", 25m, "Cel")]);
 
         var created = await repository.CreatePlanAsync(plan, procedure, "scientist-procedure", Guid.NewGuid());
         var reloaded = await repository.ReadPlanDraftAsync(plan.PlanId, "scientist-procedure");
@@ -23,6 +24,8 @@ public sealed class ScientificSetupTests(PostgresFixture fixture)
         Assert.Equal(procedure.ProcedureId, procedureResult.Procedure.ProcedureId);
         Assert.Equal(plan.ProcedureRevisionId, created.Plan.ProcedureRevisionId);
         Assert.Equal(plan.Parameters, reloaded.Plan.Parameters);
+        var publishedPlan = await repository.PublishPlanAsync(plan.PlanId, null, "Plan v1", "scientist-procedure", Guid.NewGuid());
+        Assert.NotEqual(publishedProcedure.Revision.RevisionId, publishedPlan.Revision.RevisionId);
     }
 
     private static ProcedureDefinition CreateProcedure() => new(Guid.NewGuid(), "Procedure", new WslDocument
