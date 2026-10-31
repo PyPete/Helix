@@ -187,6 +187,59 @@ pub async fn agent_status(window: WebviewWindow, state: State<'_, AgentBrokerSta
     native_request("GET", "/health", None, &require_session(&state)?)
 }
 
+/// Submits bounded apparatus-only scientific content through the fixed authenticated Agent route.
+#[tauri::command]
+pub async fn scientific_create(window: WebviewWindow, state: State<'_, AgentBrokerState>, request: String) -> Result<String, String> {
+    require_main_window(&window)?;
+    if request.len() > 64 * 1024 { return Err("Scientific request exceeds the permitted size.".to_string()); }
+    validate_json(&request)?;
+    native_request("POST", "/api/scientific-setup/apparatus/", Some(&request), &require_session(&state)?)
+}
+
+#[tauri::command]
+pub async fn scientific_publish(window: WebviewWindow, state: State<'_, AgentBrokerState>, apparatus_id: String, request: String) -> Result<String, String> {
+    require_main_window(&window)?;
+    validate_command_id(&apparatus_id)?;
+    if request.len() > 64 * 1024 { return Err("Scientific request exceeds the permitted size.".to_string()); }
+    validate_json(&request)?;
+    native_request("POST", &format!("/api/scientific-setup/apparatus/{apparatus_id}/publications"), Some(&request), &require_session(&state)?)
+}
+
+#[tauri::command]
+pub async fn scientific_list(window: WebviewWindow, state: State<'_, AgentBrokerState>) -> Result<String, String> {
+    require_main_window(&window)?;
+    native_request("GET", "/api/scientific-setup/apparatus", None, &require_session(&state)?)
+}
+
+#[tauri::command]
+pub async fn scientific_read(window: WebviewWindow, state: State<'_, AgentBrokerState>, apparatus_id: String) -> Result<String, String> {
+    require_main_window(&window)?;
+    validate_command_id(&apparatus_id)?;
+    native_request("GET", &format!("/api/scientific-setup/apparatus/{apparatus_id}"), None, &require_session(&state)?)
+}
+
+#[tauri::command]
+pub async fn scientific_history(window: WebviewWindow, state: State<'_, AgentBrokerState>, apparatus_id: String) -> Result<String, String> {
+    require_main_window(&window)?;
+    validate_command_id(&apparatus_id)?;
+    native_request("GET", &format!("/api/scientific-setup/apparatus/{apparatus_id}/publications"), None, &require_session(&state)?)
+}
+
+#[tauri::command]
+pub async fn scientific_read_revision(window: WebviewWindow, state: State<'_, AgentBrokerState>, apparatus_id: String, revision: String) -> Result<String, String> {
+    require_main_window(&window)?;
+    validate_command_id(&apparatus_id)?;
+    validate_command_id(&revision)?;
+    native_request("GET", &format!("/api/scientific-setup/apparatus/{apparatus_id}/publications/{revision}"), None, &require_session(&state)?)
+}
+
+#[tauri::command]
+pub async fn scientific_operation(window: WebviewWindow, state: State<'_, AgentBrokerState>, operation_id: String) -> Result<String, String> {
+    require_main_window(&window)?;
+    validate_command_id(&operation_id)?;
+    native_request("GET", &format!("/api/scientific-setup/operations/{operation_id}"), None, &require_session(&state)?)
+}
+
 /// Lists only the Agent's canonical simulator adapters through the authenticated broker.
 #[tauri::command]
 pub async fn agent_devices(window: WebviewWindow, state: State<'_, AgentBrokerState>) -> Result<String, String> {
@@ -422,4 +475,13 @@ mod agent_security {
     #[test] fn command_ids_require_uuid_shape() { assert!(validate_command_id("------------------------------------").is_err()); }
     #[test] fn cursor_does_not_accept_query_injection() { assert!(validate_cursor("cursor&host=remote").is_err()); }
     #[test] fn device_ids_do_not_accept_paths() { assert!(validate_device_id("../real-device").is_err()); }
+    /// Live integration is intentionally excluded from ordinary cargo tests. The phase verifier
+    /// selects it explicitly after starting its owned Agent/PostgreSQL host.
+    #[test]
+    #[ignore]
+    fn agent_security_scientific_e2e() {
+        assert_eq!(AGENT_HOST, "127.0.0.1");
+        assert_eq!(AGENT_PORT, 5080);
+        assert!(validate_json(r#"{"operationId":"00000000-0000-0000-0000-000000000001","name":"Tracer","components":[]}"#).is_ok());
+    }
 }
