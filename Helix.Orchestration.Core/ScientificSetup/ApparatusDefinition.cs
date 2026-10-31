@@ -1,16 +1,14 @@
 namespace Helix.Orchestration.Core.ScientificSetup;
 
 /// <summary>Typed scientific setup content. It never confers device authority.</summary>
-public sealed record ApparatusDefinition(Guid ApparatusId, string Name, IReadOnlyList<ApparatusComponent> Components)
+public sealed record ApparatusDefinition(Guid ApparatusId, string Name, IReadOnlyList<ApparatusComponent> Components, IReadOnlyList<ApparatusConnection>? Connections = null)
 {
     public void Validate()
     {
-        if (ApparatusId == Guid.Empty || string.IsNullOrWhiteSpace(Name)) throw new ArgumentException("Apparatus identity and name are required.");
-        foreach (var component in Components)
-        {
-            if (component.ComponentId == Guid.Empty || string.IsNullOrWhiteSpace(component.Type) || component.Roles.Count == 0) throw new ArgumentException("Components require identity, type, and role.");
-            if (component.Type == "Vessel" && !component.Roles.Any(role => role is "Source" or "Collection")) throw new ArgumentException("A Vessel must be Source or Collection.");
-        }
+        ScientificSetupValidator.Validate(this);
     }
 }
-public sealed record ApparatusComponent(Guid ComponentId, string Type, IReadOnlyList<string> Roles);
+public sealed record ApparatusComponent(Guid ComponentId, string Type, IReadOnlyList<string> Roles, IReadOnlyList<ApparatusPort>? Ports = null, string? DiscoveredDeviceId = null)
+;
+public sealed record ApparatusPort(Guid PortId, string Medium, string Direction, string Cardinality);
+public sealed record ApparatusConnection(Guid ConnectionId, Guid FromPortId, Guid ToPortId);
