@@ -78,7 +78,7 @@ Plans:
 - [x] 02-01-PLAN.md — Wave 1: scientific approval and honest baseline preflight
 
 **Wave 2** *(blocked on Wave 1 completion)*
-- [ ] 02-18-PLAN.md — Wave 2: first-production desktop/native/session/Agent/PostgreSQL apparatus tracer
+- [x] 02-18-PLAN.md — Wave 2: first-production desktop/native/session/Agent/PostgreSQL apparatus tracer
 
 **Wave 3** *(blocked on Wave 2 completion)*
 - [ ] 02-19-PLAN.md — Wave 3: full topology, assertions, immutable history and concurrency

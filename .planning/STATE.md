@@ -3,11 +3,11 @@ gsd_state_version: "1.0"
 current_phase: 02
 current_phase_name: Scientific Setup Foundation
 status: complete_with_user_approved_waivers
-stopped_at: Completed 02-01-PLAN.md
-last_updated: "2026-10-30T16:12:12.272Z"
-last_activity: 2026-10-30
-last_activity_desc: Phase 01 execution closed with explicit user-approved waivers; not fully verified.
-state_head: 40fd4088b8869ecac2ec3310d1f652421920b7f4
+stopped_at: Completed 02-18-PLAN.md
+last_updated: "2026-10-31T21:20:07Z"
+last_activity: 2026-10-31
+last_activity_desc: Completed 02-18 isolated authenticated apparatus tracer.
+state_head: 8ebdebb
 progress:
   total_phases: 7
   completed_phases: 1
@@ -27,10 +27,10 @@ See: .planning/PROJECT.md (updated 2026-10-29)
 
 ## Current Position
 
-Phase: 02 (Scientific Setup Foundation) — READY TO EXECUTE
-Plan: 14 of 14 in current phase
-Status: Complete with user-approved waivers; acceptance gates remain unrun/failed as detailed in 01-08-SUMMARY.md
-Last activity: 2026-10-30 — Phase 01 closed with user-approved waivers; no claim of full verification.
+Phase: 02 (Scientific Setup Foundation) — IN PROGRESS
+Plan: 02-18 complete; 02-19 is ready to execute
+Status: Wave 2 tracer complete with isolated authenticated PostgreSQL evidence
+Last activity: 2026-10-31 — Completed first-production apparatus tracer.
 
 Progress: [█░░░░░░░░░] 14% (one of six phases closed with waivers; not fully verified)
 
@@ -56,6 +56,7 @@ Progress: [█░░░░░░░░░] 14% (one of six phases closed with wa
 | Plan | Duration | Tasks | Files |
 |------|----------|-------|-------|
 | Phase 02 P01 | 6min | 2 tasks | 4 files |
+| Phase 02 P18 | 1d | 2 tasks | 28 files |
 
 ## Accumulated Context
 
@@ -68,6 +69,7 @@ Decisions are logged in PROJECT.md Key Decisions table. Current roadmap decision
 - [Phase 6]: Real hardware is qualification-gated and is not executed in this MVP.
 - [Phase 02]: Scientist approved the exact Phase 2 scientific contract, including catalog, canonical vectors, provenance semantics, and candidate bounds.
 - [Phase 02]: A plan-pinned older procedure remains authoritative until explicit adoption; topology-size bounds require tracer evidence or explicit adjustment.
+- [Phase 02]: Apparatus mutations use actor-scoped idempotent receipts; owned tracer hosts prove restart readback and zero device dispatch.
 
 ### Pending Todos
 
@@ -92,6 +94,6 @@ Decisions are logged in PROJECT.md Key Decisions table. Current roadmap decision
 
 ## Session Continuity
 
-Last session: 2026-10-30T16:12:12.203Z
-Stopped at: Completed 02-01-PLAN.md
+Last session: 2026-10-31T21:20:07Z
+Stopped at: Completed 02-18-PLAN.md
 Resume file: None
