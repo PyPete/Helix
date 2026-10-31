@@ -38,3 +38,19 @@ export async function revisions(kind: ScientificKind, resourceId: string): Promi
 export async function readScientificOperation(kind: ScientificKind, operationId: string): Promise<ScientificReceipt> {
   return receipt(await invoke<string>("scientific_operation_result", { kind, operationId }), kind);
 }
+
+export async function deriveProcedure(request: { operationId: string; sourceRevisionId: string; name: string }): Promise<ScientificReceipt> {
+  const response = parse<{ receipt?: ScientificReceipt }>(await invoke<string>("scientific_derive_procedure", { request: JSON.stringify(request) }));
+  if (!response.receipt || response.receipt.operationId !== request.operationId || !response.receipt.resourceId) {
+    throw new Error("Agent returned an invalid procedure derivation receipt.");
+  }
+  return response.receipt;
+}
+
+export async function adoptProcedure(planId: string, request: { operationId: string; procedureRevisionId: string; expectedToken: number }): Promise<{ receipt: ScientificReceipt; token: number }> {
+  const response = parse<{ receipt?: ScientificReceipt; token?: number }>(await invoke<string>("scientific_adopt_procedure", { planId, request: JSON.stringify(request) }));
+  if (!response.receipt || response.receipt.operationId !== request.operationId || response.receipt.resourceId !== planId || typeof response.token !== "number") {
+    throw new Error("Agent returned an invalid procedure adoption receipt.");
+  }
+  return { receipt: response.receipt, token: response.token };
+}
