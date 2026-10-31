@@ -1,4 +1,5 @@
 ﻿using Helix.Orchestration.Infrastructure.Persistence;
+using Helix.Orchestration.Core.ScientificSetup;
 using Npgsql;
 using Testcontainers.PostgreSql;
 using Xunit;
@@ -185,5 +186,72 @@ public sealed class PostgresRepositoriesTests
         Assert.Single(loaded.Iterations);
         Assert.Equal("Pending", loaded.Iterations[0].Status);
     }
+
+    [Fact]
+    public async Task ScientificSetup_Create_ReplaysEquivalentRequestAndRejectsConflict()
+    {
+        if (_fixture.ConnectionFactory == null || !_fixture.IsAvailable)
+            return;
+
+        var repository = new PostgresScientificSetupRepository(_fixture.ConnectionFactory);
+        var operationId = Guid.NewGuid();
+        var apparatus = CreateApparatus();
+
+        var created = await repository.CreateAsync(apparatus, "scientist-a", operationId);
+        var replayed = await repository.CreateAsync(CreateApparatus(), "scientist-a", operationId);
+
+        Assert.Equal(created.Apparatus.ApparatusId, replayed.Apparatus.ApparatusId);
+        Assert.Equal(created.Receipt, replayed.Receipt);
+        await Assert.ThrowsAsync<InvalidOperationException>(() => repository.CreateAsync(
+            apparatus with { Name = "Changed apparatus" }, "scientist-a", operationId));
+    }
+
+    [Fact]
+    public async Task ScientificSetup_Create_ConcurrentDuplicateReturnsOneDurableSetup()
+    {
+        if (_fixture.ConnectionFactory == null || !_fixture.IsAvailable)
+            return;
+
+        var operationId = Guid.NewGuid();
+        var apparatus = CreateApparatus();
+        var first = new PostgresScientificSetupRepository(_fixture.ConnectionFactory);
+        var second = new PostgresScientificSetupRepository(_fixture.ConnectionFactory);
+
+        var results = await Task.WhenAll(
+            first.CreateAsync(apparatus, "scientist-concurrent", operationId),
+            second.CreateAsync(apparatus, "scientist-concurrent", operationId));
+
+        Assert.Equal(results[0].Apparatus.ApparatusId, results[1].Apparatus.ApparatusId);
+        Assert.Equal(results[0].Receipt, results[1].Receipt);
+    }
+
+    [Fact]
+    public async Task ScientificSetup_RuntimeRoleCannotDeleteAndLeavesDataUnchanged()
+    {
+        if (_fixture.ConnectionFactory == null || !_fixture.IsAvailable)
+            return;
+
+        var repository = new PostgresScientificSetupRepository(_fixture.ConnectionFactory);
+        var created = await repository.CreateAsync(CreateApparatus(), "scientist-runtime", Guid.NewGuid());
+        await using var connection = _fixture.ConnectionFactory.Create();
+        await connection.OpenAsync();
+        await using (var setRole = new NpgsqlCommand("SET ROLE helix_scientific_runtime;", connection))
+            await setRole.ExecuteNonQueryAsync();
+        await using (var delete = new NpgsqlCommand("DELETE FROM scientific_apparatus WHERE apparatus_id = @id;", connection))
+        {
+            delete.Parameters.AddWithValue("id", created.Apparatus.ApparatusId);
+            await Assert.ThrowsAsync<PostgresException>(() => delete.ExecuteNonQueryAsync());
+        }
+        await using (var resetRole = new NpgsqlCommand("RESET ROLE;", connection))
+            await resetRole.ExecuteNonQueryAsync();
+
+        var stored = await repository.OperationAsync(created.Receipt.OperationId, created.Receipt.Kind, "scientist-runtime");
+        Assert.NotNull(stored);
+    }
+
+    private static ApparatusDefinition CreateApparatus() => new(
+        Guid.NewGuid(),
+        "Example apparatus",
+        [new ApparatusComponent(Guid.Parse("e42b4597-7b99-40bd-9124-f183f3ac6d7e"), "Vessel", ["Source"])]);
 }
 
