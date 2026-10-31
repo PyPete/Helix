@@ -2,13 +2,13 @@
 gsd_state_version: "1.0"
 current_phase: 02
 current_phase_name: Scientific Setup Foundation
-current_plan: 4
+current_plan: 5
 status: complete_with_user_approved_waivers
-stopped_at: Completed 02-19-PLAN.md
-last_updated: "2026-10-31T21:33:16.917Z"
+stopped_at: Completed 02-29-PLAN.md
+last_updated: "2026-10-31T21:36:19.991Z"
 last_activity: 2026-10-31
 last_activity_desc: Completed 02-18 isolated authenticated apparatus tracer.
-state_head: "0bdd648ecf4e05f55f621f86049419cb9d74be35"
+state_head: f04aba885cca451cdf17d40c7969ad935b8571a9
 progress:
   total_phases: 7
   completed_phases: 1
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-10-29)
 
 ## Current Position
 
-Current Plan: 4
+Current Plan: 5
 Total Plans in Phase: 23
 
 Phase: 02 (Scientific Setup Foundation) — IN PROGRESS
@@ -62,6 +62,7 @@ Progress: [█░░░░░░░░░] 14% (one of six phases closed with wa
 | Phase 02 P01 | 6min | 2 tasks | 4 files |
 | Phase 02 P18 | 1d | 2 tasks | 28 files |
 | Phase 02 P19 | continuation execution | 3 tasks | 17 files |
+| Phase 02 P29 | 30min | 2 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -76,6 +77,7 @@ Decisions are logged in PROJECT.md Key Decisions table. Current roadmap decision
 - [Phase 02]: A plan-pinned older procedure remains authoritative until explicit adoption; topology-size bounds require tracer evidence or explicit adjustment.
 - [Phase 02]: Apparatus mutations use actor-scoped idempotent receipts; owned tracer hosts prove restart readback and zero device dispatch.
 - [Phase 02]: Scientific apparatus drafts use explicit expected-token conflicts; Reload and Compare preserve local scientific input.
+- [Phase 02]: Procedures and plans validate exact decimal targets and units before instantiating copied WSL content.
 
 ### Pending Todos
 
@@ -100,6 +102,6 @@ Decisions are logged in PROJECT.md Key Decisions table. Current roadmap decision
 
 ## Session Continuity
 
-Last session: 2026-10-31T21:33:16.869Z
-Stopped at: Completed 02-19-PLAN.md
+Last session: 2026-10-31T21:36:19.934Z
+Stopped at: Completed 02-29-PLAN.md
 Resume file: None
