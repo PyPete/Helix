@@ -1,7 +1,13 @@
 namespace Helix.Orchestration.Core.ScientificSetup;
 
 /// <summary>Typed scientific setup content. It never confers device authority.</summary>
-public sealed record ApparatusDefinition(Guid ApparatusId, string Name, IReadOnlyList<ApparatusComponent> Components, IReadOnlyList<ApparatusConnection>? Connections = null)
+public sealed record ApparatusDefinition(
+    Guid ApparatusId,
+    string Name,
+    IReadOnlyList<ApparatusComponent> Components,
+    IReadOnlyList<ApparatusConnection>? Connections = null,
+    IReadOnlyList<ScientificAssertion>? Assertions = null,
+    Guid? SourceRevisionId = null)
 {
     public void Validate()
     {

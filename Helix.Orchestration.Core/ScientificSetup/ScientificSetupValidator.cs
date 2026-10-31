@@ -60,6 +60,23 @@ public static class ScientificSetupValidator
         foreach (var (portId, uses) in endpointUses)
             if (ports[portId].Cardinality == "One" && uses > 1)
                 throw new ArgumentException("A cardinality One port cannot have multiple connections.");
+
+        foreach (var assertion in apparatus.Assertions ?? [])
+            ValidateAssertion(assertion, DateTimeOffset.UtcNow);
+    }
+
+    public static void ValidateAssertion(ScientificAssertion assertion, DateTimeOffset nowUtc)
+    {
+        if (assertion.AssertionId == Guid.Empty || assertion.Kind is not ("CapabilityConstraint" or "CalibrationRecord" or "InspectionRecord") ||
+            string.IsNullOrWhiteSpace(assertion.SourceReference) || string.IsNullOrWhiteSpace(assertion.RecordedBy) || assertion.ObservedAtUtc > nowUtc ||
+            assertion.ValidThroughUtc is { } validThrough && validThrough < assertion.ObservedAtUtc)
+            throw new ArgumentException("Assertion identity, provenance, and observation dates are invalid.");
+        if (assertion.LowerBound is { } lower && assertion.UpperBound is { } upper && lower > upper)
+            throw new ArgumentException("Assertion lower bound cannot exceed upper bound.");
+        if (assertion.MeasuredValue.HasValue != (assertion.Unit is not null))
+            throw new ArgumentException("An assertion measured value and unit must be supplied together.");
+        if (assertion.Unit is not null)
+            _ = ScientificUnits.DimensionFor(assertion.Unit);
     }
 
     private static bool CanSend(string direction) => direction is "Out" or "Bidirectional";
