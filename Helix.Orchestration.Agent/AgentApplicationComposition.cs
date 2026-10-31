@@ -332,6 +332,7 @@ public static class AgentApplicationComposition
     app.MapRunspaceEndpoints();
     app.MapDeviceEndpoints();
     app.MapCommandEvidenceEndpoints();
+    app.MapScientificSetupEndpoints();
     app.MapExperimentEndpoints();
 
     // WebSocket /ws endpoint

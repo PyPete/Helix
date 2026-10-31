@@ -1,5 +1,6 @@
 ﻿using Helix.Orchestration.Infrastructure.Storage;
 using Helix.Orchestration.Core.Execution;
+using Helix.Orchestration.Core.ScientificSetup;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -17,6 +18,7 @@ public static class InfrastructureServiceExtensions
         services.AddScoped<ICampaignRepository, PostgresCampaignRepository>();
         services.AddScoped<IExperimentEventRepository, PostgresExperimentEventRepository>();
         services.AddScoped<ICommandLedger, PostgresCommandLedger>();
+        services.AddScoped<IScientificSetupRepository, PostgresScientificSetupRepository>();
         services.AddSingleton<IExecutionControlStore, PostgresExecutionControlStore>();
         services.AddSingleton<ISimulatorStateStore, PostgresSimulatorStateStore>();
         services.AddSingleton<ISimulatorObservation>(sp => sp.GetRequiredService<ISimulatorStateStore>());
