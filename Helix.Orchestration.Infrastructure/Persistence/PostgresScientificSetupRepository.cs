@@ -9,6 +9,7 @@ public sealed class PostgresScientificSetupRepository(DbConnectionFactory factor
 {
     private const string CreateKind = "apparatus.create";
     private const string PublishKind = "apparatus.publish";
+    private const string SaveDraftKind = "apparatus.save-draft";
     private const string OperationConflictMessage = "Operation ID was previously used with a different request.";
 
     public async Task<(ApparatusDefinition Apparatus, long Token, ScientificOperationReceipt Receipt)> CreateAsync(ApparatusDefinition apparatus, string actorSid, Guid operationId, CancellationToken ct = default)
@@ -38,6 +39,51 @@ public sealed class PostgresScientificSetupRepository(DbConnectionFactory factor
             if (raced is null) throw;
             return await ReplayCreateAsync(raced, requestHash, ct);
         }
+    }
+
+    public async Task<(ApparatusDefinition Apparatus, long Token, ScientificOperationReceipt Receipt)> SaveDraftAsync(ApparatusDefinition apparatus, long expectedToken, string actorSid, Guid operationId, CancellationToken ct = default)
+    {
+        apparatus.Validate();
+        var requestHash = CanonicalRequestHash(new { apparatus, expectedToken });
+        var existing = await GetOperationAsync(operationId, SaveDraftKind, actorSid, ct);
+        if (existing is not null)
+            return await ReplayCreateAsync(existing, requestHash, ct);
+
+        var payload = JsonSerializer.Serialize(apparatus);
+        var receipt = new ScientificOperationReceipt(operationId, SaveDraftKind, apparatus.ApparatusId, actorSid, DateTimeOffset.UtcNow, payload);
+        await using var connection = factory.Create();
+        await connection.OpenAsync(ct);
+        await using var transaction = await connection.BeginTransactionAsync(ct);
+        try
+        {
+            var updated = await connection.ExecuteAsync(new CommandDefinition(
+                "UPDATE scientific_apparatus SET name=@name,draft_content=CAST(@payload AS jsonb),draft_token=draft_token+1 WHERE apparatus_id=@id AND actor_sid=@actor AND draft_token=@expectedToken;",
+                new { id = apparatus.ApparatusId, actor = actorSid, name = apparatus.Name, payload, expectedToken }, transaction, cancellationToken: ct));
+            if (updated != 1)
+                throw new InvalidOperationException("The apparatus draft changed elsewhere.");
+            await connection.ExecuteAsync(new CommandDefinition(
+                "INSERT INTO scientific_operations(actor_sid,operation_kind,operation_id,resource_id,payload,request_hash,recorded_at) VALUES (@actor,@kind,@operationId,@id,CAST(@payload AS jsonb),@requestHash,@at);",
+                new { operationId, id = apparatus.ApparatusId, actor = actorSid, kind = receipt.Kind, payload = receipt.Payload, requestHash, at = receipt.RecordedAtUtc }, transaction, cancellationToken: ct));
+            await transaction.CommitAsync(ct);
+            return (apparatus, expectedToken + 1, receipt);
+        }
+        catch (PostgresException exception) when (exception.SqlState == PostgresErrorCodes.UniqueViolation)
+        {
+            await transaction.RollbackAsync(ct);
+            var raced = await GetOperationAsync(operationId, SaveDraftKind, actorSid, ct);
+            if (raced is null) throw;
+            return await ReplayCreateAsync(raced, requestHash, ct);
+        }
+    }
+
+    public async Task<(ApparatusDefinition Apparatus, long Token)> ReadDraftAsync(Guid apparatusId, string actorSid, CancellationToken ct = default)
+    {
+        await using var connection = factory.Create();
+        var draft = await connection.QuerySingleOrDefaultAsync<Draft>(new CommandDefinition(
+            "SELECT draft_content::text AS Content,draft_token AS Token,latest_revision_id AS LatestRevisionId FROM scientific_apparatus WHERE apparatus_id=@apparatusId AND actor_sid=@actorSid;",
+            new { apparatusId, actorSid }, cancellationToken: ct));
+        if (draft is null) throw new KeyNotFoundException();
+        return (JsonSerializer.Deserialize<ApparatusDefinition>(draft.Content) ?? throw new InvalidOperationException("Stored apparatus draft is invalid."), draft.Token);
     }
 
     public async Task<(ScientificRevision Revision, ScientificOperationReceipt Receipt)> PublishAsync(Guid apparatusId, Guid? expectedRevisionId, string name, string actorSid, Guid operationId, CancellationToken ct = default)
@@ -141,6 +187,7 @@ public sealed class PostgresScientificSetupRepository(DbConnectionFactory factor
     {
         public string Content { get; init; } = "{}";
         public Guid? LatestRevisionId { get; init; }
+        public long Token { get; init; }
     }
 
     private sealed class StoredOperation

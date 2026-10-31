@@ -6,7 +6,8 @@ using System.Text.Json;
 
 namespace Helix.Orchestration.Agent.Api;
 
-public sealed record ApparatusCreateRequest(Guid OperationId, string Name, string? Description);
+public sealed record ApparatusCreateRequest(Guid OperationId, string Name, string? Description, IReadOnlyList<ApparatusComponent>? Components = null, IReadOnlyList<ApparatusConnection>? Connections = null, IReadOnlyList<ScientificAssertion>? Assertions = null);
+public sealed record ApparatusSaveDraftRequest(Guid OperationId, long ExpectedToken, string Name, IReadOnlyList<ApparatusComponent>? Components, IReadOnlyList<ApparatusConnection>? Connections, IReadOnlyList<ScientificAssertion>? Assertions);
 public sealed record ApparatusPublishRequest(Guid OperationId, Guid? ExpectedRevisionId, string? Note);
 public sealed record ScientificOperationResponse(Guid OperationId, Guid ApparatusId, Guid? RevisionId, string Status);
 public sealed record ScientificApparatusResponse(Guid ApparatusId, string Name, Guid? RevisionId);
@@ -17,6 +18,8 @@ public static class ScientificSetupEndpoints
     {
         var routes = app.MapGroup("/api/scientific-setup/apparatus");
         routes.MapPost("/", CreateAsync);
+        routes.MapGet("/{id:guid}/draft", ReadDraftAsync);
+        routes.MapPut("/{id:guid}/draft", SaveDraftAsync);
         routes.MapPost("/{id:guid}/publications", PublishAsync);
         routes.MapGet("/", ListAsync);
         routes.MapGet("/{id:guid}", ReadAsync);
@@ -32,8 +35,31 @@ public static class ScientificSetupEndpoints
         var actor = Actor(context);
         try
         {
-            var result = await repository.CreateAsync(new ApparatusDefinition(Guid.NewGuid(), request.Name.Trim(), []), actor.Sid, request.OperationId, ct);
+            var result = await repository.CreateAsync(new ApparatusDefinition(Guid.NewGuid(), request.Name.Trim(), request.Components ?? [], request.Connections, request.Assertions), actor.Sid, request.OperationId, ct);
             return Results.Created($"/api/scientific-setup/apparatus/{result.Apparatus.ApparatusId}", Receipt(result.Receipt, result.Apparatus.ApparatusId, null));
+        }
+        catch (ArgumentException exception) { return Results.BadRequest(new { error = exception.Message }); }
+        catch (InvalidOperationException exception) { return Results.Conflict(new { error = exception.Message }); }
+    }
+
+    private static async Task<IResult> ReadDraftAsync(Guid id, HttpContext context, IScientificSetupRepository repository, CancellationToken ct)
+    {
+        try
+        {
+            var result = await repository.ReadDraftAsync(id, Actor(context).Sid, ct);
+            return Results.Ok(new { apparatus = result.Apparatus, token = result.Token });
+        }
+        catch (KeyNotFoundException) { return Results.NotFound(); }
+    }
+
+    private static async Task<IResult> SaveDraftAsync(Guid id, ApparatusSaveDraftRequest request, HttpContext context, IScientificSetupRepository repository, CancellationToken ct)
+    {
+        if (request.OperationId == Guid.Empty || id == Guid.Empty || string.IsNullOrWhiteSpace(request.Name)) return Results.BadRequest(new { error = "Operation ID and name are required." });
+        try
+        {
+            var apparatus = new ApparatusDefinition(id, request.Name.Trim(), request.Components ?? [], request.Connections, request.Assertions);
+            var result = await repository.SaveDraftAsync(apparatus, request.ExpectedToken, Actor(context).Sid, request.OperationId, ct);
+            return Results.Ok(new { receipt = Receipt(result.Receipt, id, null), token = result.Token });
         }
         catch (ArgumentException exception) { return Results.BadRequest(new { error = exception.Message }); }
         catch (InvalidOperationException exception) { return Results.Conflict(new { error = exception.Message }); }

@@ -93,6 +93,9 @@ public sealed class ScientificSetupEndpointsTests
             return Task.FromResult((apparatus, 1L, receipt));
         }
 
+        public Task<(ApparatusDefinition Apparatus, long Token, ScientificOperationReceipt Receipt)> SaveDraftAsync(ApparatusDefinition apparatus, long expectedToken, string actorSid, Guid operationId, CancellationToken ct = default) => throw new NotImplementedException();
+        public Task<(ApparatusDefinition Apparatus, long Token)> ReadDraftAsync(Guid apparatusId, string actorSid, CancellationToken ct = default) => throw new NotImplementedException();
+
         public Task<(ScientificRevision Revision, ScientificOperationReceipt Receipt)> PublishAsync(Guid apparatusId, Guid? expectedRevisionId, string name, string actorSid, Guid operationId, CancellationToken ct = default)
         {
             var revision = new ScientificRevision(Guid.NewGuid(), apparatusId, name, "hash", actorSid, DateTimeOffset.UtcNow, "{}");
