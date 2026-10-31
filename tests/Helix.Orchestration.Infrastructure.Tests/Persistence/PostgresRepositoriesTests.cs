@@ -245,7 +245,7 @@ public sealed class PostgresRepositoriesTests
         await using (var resetRole = new NpgsqlCommand("RESET ROLE;", connection))
             await resetRole.ExecuteNonQueryAsync();
 
-        var stored = await repository.OperationAsync(created.Receipt.OperationId, created.Receipt.Kind, "scientist-runtime");
+        var stored = await repository.OperationAsync(created.Receipt.OperationId, "scientist-runtime");
         Assert.NotNull(stored);
     }
 

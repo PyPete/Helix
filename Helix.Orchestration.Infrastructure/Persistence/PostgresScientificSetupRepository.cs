@@ -40,9 +40,9 @@ public sealed class PostgresScientificSetupRepository(DbConnectionFactory factor
         }
     }
 
-    public async Task<(ScientificRevision Revision, ScientificOperationReceipt Receipt)> PublishAsync(Guid apparatusId, long expectedToken, string name, string actorSid, Guid operationId, CancellationToken ct = default)
+    public async Task<(ScientificRevision Revision, ScientificOperationReceipt Receipt)> PublishAsync(Guid apparatusId, Guid? expectedRevisionId, string name, string actorSid, Guid operationId, CancellationToken ct = default)
     {
-        var requestHash = CanonicalRequestHash(new { apparatusId, expectedToken, name });
+        var requestHash = CanonicalRequestHash(new { apparatusId, expectedRevisionId, name });
         var existing = await GetOperationAsync(operationId, PublishKind, actorSid, ct);
         if (existing is not null)
             return ReplayPublish(existing, requestHash);
@@ -52,9 +52,9 @@ public sealed class PostgresScientificSetupRepository(DbConnectionFactory factor
         await using var transaction = await connection.BeginTransactionAsync(ct);
         try
         {
-            var draft = await connection.QuerySingleOrDefaultAsync<Draft>(new CommandDefinition("SELECT draft_content::text AS Content,draft_token AS Token FROM scientific_apparatus WHERE apparatus_id=@apparatusId AND actor_sid=@actorSid FOR UPDATE;", new { apparatusId, actorSid }, transaction, cancellationToken: ct));
+            var draft = await connection.QuerySingleOrDefaultAsync<Draft>(new CommandDefinition("SELECT draft_content::text AS Content,latest_revision_id AS LatestRevisionId FROM scientific_apparatus WHERE apparatus_id=@apparatusId AND actor_sid=@actorSid FOR UPDATE;", new { apparatusId, actorSid }, transaction, cancellationToken: ct));
             if (draft is null) throw new KeyNotFoundException();
-            if (draft.Token != expectedToken) throw new InvalidOperationException("The apparatus draft changed elsewhere.");
+            if (draft.LatestRevisionId != expectedRevisionId) throw new InvalidOperationException("The apparatus revision changed elsewhere.");
 
             var canonical = ScientificContentCanonicalizer.Canonicalize(JsonDocument.Parse(draft.Content).RootElement);
             var revision = new ScientificRevision(Guid.NewGuid(), apparatusId, name, canonical.Hash, actorSid, DateTimeOffset.UtcNow, canonical.Content);
@@ -80,9 +80,30 @@ public sealed class PostgresScientificSetupRepository(DbConnectionFactory factor
         return await connection.QuerySingleOrDefaultAsync<ScientificRevision>(new CommandDefinition("SELECT revision_id AS RevisionId,r.apparatus_id AS ApparatusId,revision_name AS Name,content_hash AS ContentHash,r.actor_sid AS ActorSid,recorded_at AS RecordedAtUtc,canonical_content::text AS CanonicalContent FROM scientific_apparatus_revisions r JOIN scientific_apparatus a ON a.apparatus_id=r.apparatus_id WHERE r.apparatus_id=@apparatusId AND revision_id=@revisionId AND a.actor_sid=@actorSid;", new { apparatusId, revisionId, actorSid }, cancellationToken: ct));
     }
 
-    public async Task<ScientificOperationReceipt?> OperationAsync(Guid operationId, string kind, string actorSid, CancellationToken ct = default)
+    public async Task<IReadOnlyList<ScientificApparatusSummary>> ListAsync(string actorSid, CancellationToken ct = default)
     {
-        var operation = await GetOperationAsync(operationId, kind, actorSid, ct);
+        await using var connection = factory.Create();
+        var values = await connection.QueryAsync<ScientificApparatusSummary>(new CommandDefinition("SELECT apparatus_id AS ApparatusId,name AS Name,latest_revision_id AS RevisionId FROM scientific_apparatus WHERE actor_sid=@actorSid ORDER BY name, apparatus_id;", new { actorSid }, cancellationToken: ct));
+        return values.AsList();
+    }
+
+    public async Task<ScientificApparatusSummary?> ReadLatestAsync(Guid apparatusId, string actorSid, CancellationToken ct = default)
+    {
+        await using var connection = factory.Create();
+        return await connection.QuerySingleOrDefaultAsync<ScientificApparatusSummary>(new CommandDefinition("SELECT apparatus_id AS ApparatusId,name AS Name,latest_revision_id AS RevisionId FROM scientific_apparatus WHERE apparatus_id=@apparatusId AND actor_sid=@actorSid;", new { apparatusId, actorSid }, cancellationToken: ct));
+    }
+
+    public async Task<IReadOnlyList<ScientificOperationReceipt>> HistoryAsync(Guid apparatusId, string actorSid, CancellationToken ct = default)
+    {
+        await using var connection = factory.Create();
+        var values = await connection.QueryAsync<StoredOperation>(new CommandDefinition("SELECT operation_id AS OperationId,operation_kind AS Kind,resource_id AS ResourceId,actor_sid AS ActorSid,recorded_at AS RecordedAtUtc,payload::text AS Payload,request_hash AS RequestHash FROM scientific_operations WHERE resource_id=@apparatusId AND actor_sid=@actorSid ORDER BY recorded_at, operation_id;", new { apparatusId, actorSid }, cancellationToken: ct));
+        return values.Select(value => value.Receipt).ToList();
+    }
+
+    public async Task<ScientificOperationReceipt?> OperationAsync(Guid operationId, string actorSid, CancellationToken ct = default)
+    {
+        await using var connection = factory.Create();
+        var operation = await connection.QuerySingleOrDefaultAsync<StoredOperation>(new CommandDefinition("SELECT operation_id AS OperationId,operation_kind AS Kind,resource_id AS ResourceId,actor_sid AS ActorSid,recorded_at AS RecordedAtUtc,payload::text AS Payload,request_hash AS RequestHash FROM scientific_operations WHERE operation_id=@operationId AND actor_sid=@actorSid;", new { operationId, actorSid }, cancellationToken: ct));
         return operation?.Receipt;
     }
 
@@ -119,7 +140,7 @@ public sealed class PostgresScientificSetupRepository(DbConnectionFactory factor
     private sealed class Draft
     {
         public string Content { get; init; } = "{}";
-        public long Token { get; init; }
+        public Guid? LatestRevisionId { get; init; }
     }
 
     private sealed class StoredOperation
