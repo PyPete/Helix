@@ -196,6 +196,24 @@ pub async fn scientific_create(window: WebviewWindow, state: State<'_, AgentBrok
     native_request("POST", "/api/scientific-setup/apparatus/", Some(&request), &require_session(&state)?)
 }
 
+/// Reads immutable scientific draft content through a fixed, authenticated local route.
+#[tauri::command]
+pub async fn scientific_read_draft(window: WebviewWindow, state: State<'_, AgentBrokerState>, apparatus_id: String) -> Result<String, String> {
+    require_main_window(&window)?;
+    validate_command_id(&apparatus_id)?;
+    native_request("GET", &format!("/api/scientific-setup/apparatus/{apparatus_id}/draft"), None, &require_session(&state)?)
+}
+
+/// Saves a scientist proposal; validation and commit authority remain in the local Agent.
+#[tauri::command]
+pub async fn scientific_save_draft(window: WebviewWindow, state: State<'_, AgentBrokerState>, apparatus_id: String, request: String) -> Result<String, String> {
+    require_main_window(&window)?;
+    validate_command_id(&apparatus_id)?;
+    if request.len() > 64 * 1024 { return Err("Scientific request exceeds the permitted size.".to_string()); }
+    validate_json(&request)?;
+    native_request("PUT", &format!("/api/scientific-setup/apparatus/{apparatus_id}/draft"), Some(&request), &require_session(&state)?)
+}
+
 #[tauri::command]
 pub async fn scientific_publish(window: WebviewWindow, state: State<'_, AgentBrokerState>, apparatus_id: String, request: String) -> Result<String, String> {
     require_main_window(&window)?;

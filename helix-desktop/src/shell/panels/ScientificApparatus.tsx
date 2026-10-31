@@ -41,6 +41,7 @@ export function ScientificApparatus() {
       </form>
       {error && <p role="alert">{error} Retry uses operation {operationId.current}.</p>}
       {receipt && <p role="status">Created {receipt.apparatusId}; operation {receipt.operationId}{receipt.revisionId ? `; revision ${receipt.revisionId}` : ""}.</p>}
+      <p className="scientific-authority-note">Recorded scientific content is not live verification, safety authority, or equipment dispatch.</p>
     </section>
   );
 }
