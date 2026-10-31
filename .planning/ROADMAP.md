@@ -81,7 +81,7 @@ Plans:
 - [x] 02-18-PLAN.md — Wave 2: first-production desktop/native/session/Agent/PostgreSQL apparatus tracer
 
 **Wave 3** *(blocked on Wave 2 completion)*
-- [ ] 02-19-PLAN.md — Wave 3: full topology, assertions, immutable history and concurrency
+- [x] 02-19-PLAN.md — Wave 3: full topology, assertions, immutable history and concurrency
 
 **Wave 4** *(blocked on Wave 3 completion)*
 - [ ] 02-29-PLAN.md — Wave 4: complete independent procedure/plan content and durable publication
@@ -208,7 +208,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Agent Safety Boundary | 14/14 | Complete with user-approved waivers (not fully verified) | 2026-10-30 |
-| 2. Scientific Setup Foundation | 1/23 | In Progress | - |
+| 2. Scientific Setup Foundation | 3/23 | In Progress | - |
 | 3. Approved Manual Campaigns | 0/TBD | Not started | - |
 | 4. Reviewed CSV Evidence | 0/TBD | Not started | - |
 | 5. Policy-Bounded Autonomous Simulation | 0/TBD | Not started | - |
