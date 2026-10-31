@@ -3,12 +3,20 @@ import type { PlanDraft, ProcedureDraft, ScientificDraftState, ScientificKind, S
 
 function parse<T>(response: string): T { return JSON.parse(response) as T; }
 
+function receipt(response: string, kind: ScientificKind): ScientificReceipt {
+  const value = parse<ScientificReceipt>(response);
+  if (!value || value.kind !== kind || !value.operationId || !value.resourceId || value.status !== "Committed") {
+    throw new Error("Agent returned an invalid scientific receipt.");
+  }
+  return value;
+}
+
 export async function listScientific(kind: ScientificKind): Promise<ScientificSummary[]> {
   return parse(await invoke<string>("scientific_list_kind", { kind }));
 }
 
 export async function createScientific(kind: ScientificKind, draft: ProcedureDraft | PlanDraft): Promise<ScientificReceipt> {
-  return parse(await invoke<string>("scientific_create_kind", { kind, request: JSON.stringify(draft) }));
+  return receipt(await invoke<string>("scientific_create_kind", { kind, request: JSON.stringify(draft) }), kind);
 }
 
 export async function readScientificDraft<T>(kind: ScientificKind, resourceId: string): Promise<ScientificDraftState<T>> {
@@ -20,7 +28,7 @@ export async function saveScientificDraft(kind: ScientificKind, resourceId: stri
 }
 
 export async function publishScientific(kind: ScientificKind, resourceId: string, request: { operationId: string; revisionName: string; expectedToken: number }): Promise<ScientificReceipt> {
-  return parse(await invoke<string>("scientific_publish_kind", { kind, resourceId, request: JSON.stringify(request) }));
+  return receipt(await invoke<string>("scientific_publish_kind", { kind, resourceId, request: JSON.stringify(request) }), kind);
 }
 
 export async function revisions(kind: ScientificKind, resourceId: string): Promise<ScientificRevision[]> {
@@ -28,5 +36,5 @@ export async function revisions(kind: ScientificKind, resourceId: string): Promi
 }
 
 export async function readScientificOperation(kind: ScientificKind, operationId: string): Promise<ScientificReceipt> {
-  return parse(await invoke<string>("scientific_operation_result", { kind, operationId }));
+  return receipt(await invoke<string>("scientific_operation_result", { kind, operationId }), kind);
 }
