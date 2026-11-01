@@ -1,5 +1,5 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import { describe, it, expect, vi, afterEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { WorkflowBuilder } from "./WorkflowBuilder";
 import type { NodeProps } from "@xyflow/react";
 
@@ -59,9 +59,23 @@ vi.mock("@xyflow/react", () => {
   };
 });
 
-// Mock DevicePalette to prevent fetch side-effects in WorkflowBuilder tests
+const deviceActionDescriptor = {
+  verbName: "SetFlow",
+  displayName: "Set Flow",
+  description: "Sets the flow rate",
+  category: "Control",
+  parameters: [],
+  isDestructive: false,
+  requiresActiveRunspace: false,
+};
+
+// The production palette starts pointer drags; expose that contract directly here.
 vi.mock("./DevicePalette", () => ({
-  DevicePalette: () => <div data-testid="device-palette" />,
+  DevicePalette: ({ onDragStart }: { onDragStart: (adapterId: string, capability: string, descriptor: typeof deviceActionDescriptor) => void }) => (
+    <button data-testid="palette-set-flow" onPointerDown={() => onDragStart("simulator", "SetFlow", deviceActionDescriptor)}>
+      Set Flow
+    </button>
+  ),
 }));
 
 // Mock workflowLibrary
@@ -69,6 +83,12 @@ const { mockSave, mockList } = vi.hoisted(() => ({
   mockSave: vi.fn().mockResolvedValue(undefined),
   mockList: vi.fn().mockResolvedValue(["test-workflow"]),
 }));
+
+const { getAgentDevices } = vi.hoisted(() => ({
+  getAgentDevices: vi.fn(),
+}));
+
+let committedRunspaceEvents: Array<Record<string, unknown>> = [];
 
 vi.mock("../../lib/workflowLibrary", () => ({
   saveWorkflow: mockSave,
@@ -83,10 +103,21 @@ vi.mock("../../lib/workflowLibrary", () => ({
   duplicateWorkflow: vi.fn(),
 }));
 
+vi.mock("../../lib/agentClient", () => ({ getAgentDevices }));
+vi.mock("../../hooks/useAgentWebSocket", () => ({
+  useAgentWebSocket: () => ({ runspaceEvents: committedRunspaceEvents }),
+}));
+
 describe("WorkflowBuilder", () => {
+  beforeEach(() => {
+    getAgentDevices.mockResolvedValue([]);
+    committedRunspaceEvents = [];
+  });
+
   afterEach(() => {
     vi.restoreAllMocks();
     vi.clearAllMocks();
+    getAgentDevices.mockReset();
   });
 
   it("renders workflow builder container", () => {
@@ -115,27 +146,16 @@ describe("WorkflowBuilder", () => {
   });
 
   it("shows error when devices fetch fails", async () => {
-    vi.stubGlobal("fetch", vi.fn(() => Promise.reject(new Error("Network error"))));
+    getAgentDevices.mockRejectedValue(new Error("Network error"));
     render(<WorkflowBuilder baseUrl="http://localhost:5080" onExport={vi.fn()} />);
     await waitFor(() => expect(screen.getByRole("alert")).toBeInTheDocument());
     expect(screen.getByRole("alert")).toHaveTextContent("Network error");
   });
 
-  it("fetches devices on mount", async () => {
-    vi.stubGlobal("fetch", vi.fn(() =>
-      Promise.resolve({
-        ok: true,
-        json: () => Promise.resolve([{
-          adapterId: "VapourtecR4",
-          healthy: true,
-          message: "OK",
-          capabilities: ["SetTemperature"],
-        }]),
-      } as unknown as Response)
-    ));
+  it("queries Agent-authoritative devices on mount", async () => {
     render(<WorkflowBuilder baseUrl="http://localhost:5080" onExport={vi.fn()} />);
     await waitFor(() =>
-      expect(fetch).toHaveBeenCalledWith("http://localhost:5080/devices")
+      expect(getAgentDevices).toHaveBeenCalledOnce()
     );
   });
 
@@ -160,17 +180,7 @@ describe("WorkflowBuilder", () => {
   });
 
   it("capability-picker renders when devices are fetched", async () => {
-    vi.stubGlobal("fetch", vi.fn(() =>
-      Promise.resolve({
-        ok: true,
-        json: () => Promise.resolve([{
-          adapterId: "VapourtecR4",
-          healthy: true,
-          message: "OK",
-          capabilities: ["SetTemperature"],
-        }]),
-      } as unknown as Response)
-    ));
+    getAgentDevices.mockResolvedValue([{ adapterId: "simulator", capabilities: ["SetTemperature"] }]);
     render(<WorkflowBuilder baseUrl="http://localhost:5080" onExport={vi.fn()} />);
     await waitFor(() =>
       expect(screen.getByTestId("capability-picker")).toBeInTheDocument()
@@ -213,65 +223,22 @@ describe("WorkflowBuilder", () => {
   });
 
   it("drop on canvas creates a DeviceAction node", async () => {
-    vi.stubGlobal("fetch", vi.fn(() => new Promise(() => {})));
     render(<WorkflowBuilder baseUrl="http://localhost:5080" onExport={vi.fn()} />);
-
-    const descriptor = {
-      verbName: "SetFlow",
-      displayName: "Set Flow",
-      description: "Sets the flow rate",
-      category: "Control",
-      parameters: [],
-      isDestructive: false,
-      requiresActiveRunspace: false,
-    };
-    const payload = JSON.stringify({
-      adapterId: "Alicat",
-      capability: "SetFlow",
-      descriptor,
-    });
-
     const canvas = screen.getByTestId("rete-canvas");
-    fireEvent.drop(canvas, {
-      dataTransfer: {
-        getData: (key: string) => (key === "application/helix-capability" ? payload : ""),
-      },
-      clientX: 300,
-      clientY: 300,
-    });
+    vi.spyOn(canvas, "getBoundingClientRect").mockReturnValue(new DOMRect(0, 0, 500, 500));
+    fireEvent.pointerDown(screen.getByTestId("palette-set-flow"));
+    await waitFor(() => expect(screen.getByTestId("palette-set-flow")).toBeInTheDocument());
+    fireEvent.pointerUp(window, { clientX: 300, clientY: 300 });
 
     await waitFor(() =>
       expect(screen.getByTestId(/node-deviceaction-/)).toBeInTheDocument()
     );
   });
 
-  it("step-started WebSocket event transitions node to running and shows timing-footer-running", async () => {
-    // Capture the WebSocket instance created by useAgentWebSocket
-    let capturedWs: {
-      onopen: ((e: unknown) => void) | null;
-      onclose: ((e: unknown) => void) | null;
-      onerror: ((e: unknown) => void) | null;
-      onmessage: ((e: { data: string }) => void) | null;
-      close: () => void;
-    } | null = null;
+  it("committed evidence event transitions node to running and shows timing-footer-running", async () => {
+    const { rerender } = render(<WorkflowBuilder baseUrl="http://localhost:5080" onExport={vi.fn()} />);
 
-    class MockWebSocket {
-      onopen: ((e: unknown) => void) | null = null;
-      onclose: ((e: unknown) => void) | null = null;
-      onerror: ((e: unknown) => void) | null = null;
-      onmessage: ((e: { data: string }) => void) | null = null;
-      close = vi.fn();
-      constructor() {
-        // eslint-disable-next-line @typescript-eslint/no-this-alias
-        capturedWs = this;
-      }
-    }
-    vi.stubGlobal("WebSocket", MockWebSocket);
-    vi.stubGlobal("fetch", vi.fn(() => new Promise(() => {})));
-
-    render(<WorkflowBuilder baseUrl="http://localhost:5080" onExport={vi.fn()} />);
-
-    // Add a Step node — it will get the next available id from the module-level counter
+    // Add a Step node ï¿½ it will get the next available id from the module-level counter
     const canvas = screen.getByTestId("react-flow-canvas");
     fireEvent.contextMenu(canvas, { clientX: 200, clientY: 200 });
     fireEvent.click(screen.getByTestId("add-node-step"));
@@ -280,17 +247,14 @@ describe("WorkflowBuilder", () => {
     const nodeEl = await screen.findByTestId(/node-step-/);
     const nodeId = nodeEl.getAttribute("data-testid")!.replace("node-step-", "");
 
-    // Trigger the step-started event via the captured WebSocket instance
-    await waitFor(() => expect(capturedWs).not.toBeNull());
-    capturedWs!.onmessage?.({
-      data: JSON.stringify({
-        type: "step-started",
-        runspaceId: "r1",
-        timestamp: new Date().toISOString(),
-        stepId: nodeId,
-        stepLabel: "A",
-      }),
-    });
+    committedRunspaceEvents = [{
+      type: "step-started",
+      runspaceId: "r1",
+      timestamp: new Date().toISOString(),
+      stepId: nodeId,
+      stepLabel: "A",
+    }];
+    rerender(<WorkflowBuilder baseUrl="http://localhost:5080" onExport={vi.fn()} />);
 
     // The node should transition to running and show the timing footer
     await waitFor(() =>
@@ -299,33 +263,13 @@ describe("WorkflowBuilder", () => {
   });
 
   it("exportWsl produces nodeType Step with capability parameter for DeviceAction node", async () => {
-    vi.stubGlobal("fetch", vi.fn(() => new Promise(() => {})));
     const onExport = vi.fn();
     render(<WorkflowBuilder baseUrl="http://localhost:5080" onExport={onExport} />);
-
-    const descriptor = {
-      verbName: "SetFlow",
-      displayName: "Set Flow",
-      description: "Sets the flow rate",
-      category: "Control",
-      parameters: [],
-      isDestructive: false,
-      requiresActiveRunspace: false,
-    };
-    const payload = JSON.stringify({
-      adapterId: "Alicat",
-      capability: "SetFlow",
-      descriptor,
-    });
-
     const canvas = screen.getByTestId("rete-canvas");
-    fireEvent.drop(canvas, {
-      dataTransfer: {
-        getData: (key: string) => (key === "application/helix-capability" ? payload : ""),
-      },
-      clientX: 300,
-      clientY: 300,
-    });
+    vi.spyOn(canvas, "getBoundingClientRect").mockReturnValue(new DOMRect(0, 0, 500, 500));
+    fireEvent.pointerDown(screen.getByTestId("palette-set-flow"));
+    await waitFor(() => expect(screen.getByTestId("palette-set-flow")).toBeInTheDocument());
+    fireEvent.pointerUp(window, { clientX: 300, clientY: 300 });
 
     await waitFor(() =>
       expect(screen.getByTestId(/node-deviceaction-/)).toBeInTheDocument()
@@ -340,7 +284,7 @@ describe("WorkflowBuilder", () => {
           nodes: expect.arrayContaining([
             expect.objectContaining({
               nodeType: "Step",
-              parameters: expect.objectContaining({ capability: "Alicat.SetFlow" }),
+               parameters: expect.objectContaining({ capability: "simulator.SetFlow" }),
             }),
           ]),
         })

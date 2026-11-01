@@ -3,6 +3,13 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import { DevicePalette } from "./DevicePalette";
 import type { CapabilityDescriptor } from "../../types/agent";
 
+const { getAgentDevices, getAgentDeviceCapabilities } = vi.hoisted(() => ({
+  getAgentDevices: vi.fn(),
+  getAgentDeviceCapabilities: vi.fn(),
+}));
+
+vi.mock("../../lib/agentClient", () => ({ getAgentDevices, getAgentDeviceCapabilities }));
+
 const setFlowDescriptor: CapabilityDescriptor = {
   verbName: "SetFlow",
   displayName: "Set Flow",
@@ -23,81 +30,61 @@ const setFlowDescriptor: CapabilityDescriptor = {
   requiresActiveRunspace: false,
 };
 
-function makeFetchMock() {
-  return vi.fn((url: string) => {
-    if (url.endsWith("/devices")) {
-      return Promise.resolve({
-        ok: true,
-        json: () => Promise.resolve([{ adapterId: "Alicat", capabilities: ["SetFlow"] }]),
-      } as unknown as Response);
-    }
-    if (url.includes("/devices/Alicat/capabilities")) {
-      return Promise.resolve({
-        ok: true,
-        json: () =>
-          Promise.resolve({
-            adapterId: "Alicat",
-            capabilities: [setFlowDescriptor],
-          }),
-      } as unknown as Response);
-    }
-    return Promise.reject(new Error(`Unexpected fetch: ${url}`));
-  });
+function arrangeDiscovery() {
+  getAgentDevices.mockResolvedValue([{ adapterId: "simulator", capabilities: ["SetFlow"] }]);
+  getAgentDeviceCapabilities.mockResolvedValue({ adapterId: "simulator", capabilities: [setFlowDescriptor] });
 }
 
 afterEach(() => {
   vi.restoreAllMocks();
   vi.clearAllMocks();
+  getAgentDevices.mockReset();
+  getAgentDeviceCapabilities.mockReset();
 });
 
 describe("DevicePalette", () => {
   it("renders palette-group-Alicat details element after fetch resolves", async () => {
-    vi.stubGlobal("fetch", makeFetchMock());
+    arrangeDiscovery();
     render(<DevicePalette baseUrl="http://localhost:5080" onDragStart={vi.fn()} />);
 
     await waitFor(() =>
-      expect(screen.getByTestId("palette-group-Alicat")).toBeInTheDocument()
+      expect(screen.getByTestId("palette-group-simulator")).toBeInTheDocument()
     );
   });
 
   it("capability-card element is draggable", async () => {
-    vi.stubGlobal("fetch", makeFetchMock());
+    arrangeDiscovery();
     render(<DevicePalette baseUrl="http://localhost:5080" onDragStart={vi.fn()} />);
 
     await waitFor(() =>
-      expect(screen.getByTestId("capability-card-Alicat-SetFlow")).toBeInTheDocument()
+      expect(screen.getByTestId("capability-card-simulator-SetFlow")).toBeInTheDocument()
     );
 
-    const card = screen.getByTestId("capability-card-Alicat-SetFlow");
-    expect(card).toHaveAttribute("draggable", "true");
+    const card = screen.getByTestId("capability-card-simulator-SetFlow");
+    expect(card).toHaveStyle({ cursor: "grab" });
   });
 
-  it("firing dragstart on a card calls dataTransfer.setData with application/helix-capability key", async () => {
-    vi.stubGlobal("fetch", makeFetchMock());
-    render(<DevicePalette baseUrl="http://localhost:5080" onDragStart={vi.fn()} />);
+  it("pointer down on a capability card starts an adapter-scoped drag", async () => {
+    arrangeDiscovery();
+    const onDragStart = vi.fn();
+    render(<DevicePalette baseUrl="http://localhost:5080" onDragStart={onDragStart} />);
 
     await waitFor(() =>
-      expect(screen.getByTestId("capability-card-Alicat-SetFlow")).toBeInTheDocument()
+      expect(screen.getByTestId("capability-card-simulator-SetFlow")).toBeInTheDocument()
     );
 
-    const card = screen.getByTestId("capability-card-Alicat-SetFlow");
-    const setDataSpy = vi.fn();
-    fireEvent.dragStart(card, {
-      dataTransfer: { setData: setDataSpy, effectAllowed: "" },
-    });
+    const card = screen.getByTestId("capability-card-simulator-SetFlow");
+    fireEvent.pointerDown(card);
 
-    expect(setDataSpy).toHaveBeenCalledWith(
-      "application/helix-capability",
-      expect.stringContaining("SetFlow")
-    );
+    expect(onDragStart).toHaveBeenCalledWith("simulator", "SetFlow", setFlowDescriptor);
   });
 
   it("shows Failed to load devices message when fetch errors", async () => {
-    vi.stubGlobal("fetch", vi.fn(() => Promise.reject(new Error("Network error"))));
+    getAgentDevices.mockRejectedValue(new Error("Network error"));
     render(<DevicePalette baseUrl="http://localhost:5080" onDragStart={vi.fn()} />);
 
     await waitFor(() =>
-      expect(screen.getByText("Failed to load devices")).toBeInTheDocument()
+      expect(screen.getByText("Network error")).toBeInTheDocument()
     );
   });
 });

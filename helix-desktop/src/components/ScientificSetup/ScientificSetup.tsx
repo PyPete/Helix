@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { ApparatusDraft, ApparatusDraftState, readApparatusDraft, saveApparatusDraft } from "../../lib/scientificApparatusClient";
+import { ApparatusDraftState, readApparatusDraft, saveApparatusDraft } from "../../lib/scientificApparatusClient";
 import { ScientificRecordUi } from "./ScientificRecordUi";
 
 export interface ScientificSetupProps {

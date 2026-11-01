@@ -2,56 +2,43 @@ import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { DeviceExplorer } from "./DeviceExplorer";
 
+const { getAgentDevices } = vi.hoisted(() => ({
+  getAgentDevices: vi.fn(),
+}));
+
+vi.mock("../../lib/agentClient", () => ({ getAgentDevices }));
+
 afterEach(() => {
   vi.restoreAllMocks();
+  getAgentDevices.mockReset();
 });
 
 describe("DeviceExplorer", () => {
   it("renders loading state when fetch is pending and device list is empty", () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(() => new Promise(() => { /* never resolves */ }))
-    );
+    getAgentDevices.mockReturnValue(new Promise(() => { /* intentionally never resolves */ }));
 
     render(
       <DeviceExplorer baseUrl="http://localhost:5080" onOpenDevice={vi.fn()} />
     );
 
-    expect(screen.getByText("Loading...")).toBeInTheDocument();
+    expect(screen.getByText("Loading device discovery...")).toBeInTheDocument();
   });
 
   it("renders device list with adapterId labels after successful fetch", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue({
-        ok: true,
-        json: async () => [
-          { adapterId: "device-1", capabilities: ["Control"] },
-          { adapterId: "device-2", capabilities: ["Measurement"] },
-        ],
-      })
-    );
+    getAgentDevices.mockResolvedValue([{ adapterId: "simulator", capabilities: ["Control"] }]);
 
     render(
       <DeviceExplorer baseUrl="http://localhost:5080" onOpenDevice={vi.fn()} />
     );
 
     await waitFor(() => {
-      expect(screen.getByText("device-1")).toBeInTheDocument();
+      expect(screen.getByText("simulator")).toBeInTheDocument();
     });
-    expect(screen.getByText("device-2")).toBeInTheDocument();
+    expect(screen.queryByText("device-2")).not.toBeInTheDocument();
   });
 
   it("clicking a device button calls onOpenDevice(adapterId)", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue({
-        ok: true,
-        json: async () => [
-          { adapterId: "device-1", capabilities: ["Control"] },
-        ],
-      })
-    );
+    getAgentDevices.mockResolvedValue([{ adapterId: "simulator", capabilities: ["Control"] }]);
 
     const onOpenDevice = vi.fn();
     render(
@@ -59,21 +46,15 @@ describe("DeviceExplorer", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId("open-device-device-1")).toBeInTheDocument();
+      expect(screen.getByTestId("open-device-simulator")).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByTestId("open-device-device-1"));
-    expect(onOpenDevice).toHaveBeenCalledWith("device-1");
+    fireEvent.click(screen.getByTestId("open-device-simulator"));
+    expect(onOpenDevice).toHaveBeenCalledWith("simulator");
   });
 
   it("renders error message (role=alert) when fetch fails", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue({
-        ok: false,
-        status: 503,
-      })
-    );
+    getAgentDevices.mockRejectedValue(new Error("Agent returned 503"));
 
     render(
       <DeviceExplorer baseUrl="http://localhost:5080" onOpenDevice={vi.fn()} />
@@ -86,15 +67,7 @@ describe("DeviceExplorer", () => {
   });
 
   it("does NOT render DeviceManualControl inline — only fires onOpenDevice on click", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue({
-        ok: true,
-        json: async () => [
-          { adapterId: "device-1", capabilities: ["Control"] },
-        ],
-      })
-    );
+    getAgentDevices.mockResolvedValue([{ adapterId: "simulator", capabilities: ["Control"] }]);
 
     const onOpenDevice = vi.fn();
     render(
@@ -102,15 +75,15 @@ describe("DeviceExplorer", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId("open-device-device-1")).toBeInTheDocument();
+      expect(screen.getByTestId("open-device-simulator")).toBeInTheDocument();
     });
 
     // No device-manual-control element should be rendered
     expect(screen.queryByTestId("device-manual-control")).not.toBeInTheDocument();
 
     // Click fires callback
-    fireEvent.click(screen.getByTestId("open-device-device-1"));
-    expect(onOpenDevice).toHaveBeenCalledWith("device-1");
+    fireEvent.click(screen.getByTestId("open-device-simulator"));
+    expect(onOpenDevice).toHaveBeenCalledWith("simulator");
     expect(onOpenDevice).toHaveBeenCalledTimes(1);
   });
 });

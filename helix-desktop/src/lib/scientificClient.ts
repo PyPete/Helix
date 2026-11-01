@@ -35,8 +35,9 @@ export async function readScientificDraft<T>(kind: ScientificKind, resourceId: s
 
 export async function saveScientificDraft(kind: ScientificKind, resourceId: string, draft: ProcedureDraft | PlanDraft): Promise<{ receipt: ScientificReceipt; token: number }> {
   const value = parse<{ receipt?: unknown; token?: unknown }>(await invoke<string>("scientific_save_draft_kind", { kind, resourceId, request: JSON.stringify(draft) }));
-  if (!Number.isInteger(value.token) || value.token < 0) throw new Error("Agent returned an invalid scientific draft save.");
-  return { receipt: scientificReceipt(value.receipt, kind, draft.operationId, resourceId), token: value.token };
+  const token = value.token;
+  if (typeof token !== "number" || !Number.isInteger(token) || token < 0) throw new Error("Agent returned an invalid scientific draft save.");
+  return { receipt: scientificReceipt(value.receipt, kind, draft.operationId, resourceId), token };
 }
 
 export async function publishScientific(kind: ScientificKind, resourceId: string, request: { operationId: string; revisionName: string; expectedToken: number }): Promise<ScientificReceipt> {
@@ -58,10 +59,11 @@ export async function deriveProcedure(request: { operationId: string; sourceRevi
 
 export async function adoptProcedure(planId: string, request: { operationId: string; procedureRevisionId: string; expectedToken: number }): Promise<{ receipt: ScientificReceipt; token: number }> {
   const response = parse<{ receipt?: ScientificReceipt; token?: number }>(await invoke<string>("scientific_adopt_procedure", { planId, request: JSON.stringify(request) }));
-  if (!Number.isInteger(response.token) || response.token < 0) {
+  const token = response.token;
+  if (typeof token !== "number" || !Number.isInteger(token) || token < 0) {
     throw new Error("Agent returned an invalid procedure adoption receipt.");
   }
-  return { receipt: scientificReceipt(response.receipt, "plan", request.operationId, planId), token: response.token };
+  return { receipt: scientificReceipt(response.receipt, "plan", request.operationId, planId), token };
 }
 
 function exactString(value: unknown): value is string { return typeof value === "string" && value.length > 0; }
