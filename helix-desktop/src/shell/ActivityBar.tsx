@@ -16,6 +16,7 @@ const TOP_ITEMS: ActivityBarItem[] = [
   { id: 'trends', icon: '📈', title: 'Trend Explorer' },
   { id: 'procedures', icon: 'P', title: 'Procedures' },
   { id: 'plans', icon: 'L', title: 'Plans' },
+  { id: 'assembly', icon: 'A', title: 'Assembly' },
   { id: 'samples', icon: 'S', title: 'Samples' },
 ];
 

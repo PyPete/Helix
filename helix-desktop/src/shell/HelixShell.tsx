@@ -122,7 +122,7 @@ export default function HelixShell() {
   };
 
   const handleOpenChartPanel = () => workspaceRef.current?.openChartPanel('new-chart-' + Date.now());
-  const activityBarTabMap: Record<string, string> = { explorer: 'device-explorer', trends: 'trend-explorer', procedures: 'scientific-procedures', plans: 'scientific-plans', samples: 'scientific-samples' };
+  const activityBarTabMap: Record<string, string> = { explorer: 'device-explorer', trends: 'trend-explorer', procedures: 'scientific-procedures', plans: 'scientific-plans', assembly: 'scientific-assembly', samples: 'scientific-samples' };
   const handlePanelToggle = (panelId: string) => {
     setActivePanel((previous) => (previous === panelId ? null : panelId));
     const dockTabId = activityBarTabMap[panelId];

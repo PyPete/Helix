@@ -19,6 +19,7 @@ import { ExecutionPanel } from '../components/ExecutionPanel/ExecutionPanel';
 import { SafetyPanel } from '../components/SafetyPanel/SafetyPanel';
 import DeviceManualControl from '../components/DeviceManualControl/DeviceManualControl';
 import { ProcedurePlans } from '../components/ScientificSetup/ProcedurePlans';
+import { FrozenAssembly } from '../components/ScientificSetup/FrozenAssembly';
 import { Samples } from '../components/Samples/Samples';
 
 // ---------------------------------------------------------------------------
@@ -77,7 +78,7 @@ export const DEFAULT_LAYOUT: LayoutBase = {
         children: [
           {
             id: 'panel-main',
-            tabs: [{ id: 'workflow-editor' }, { id: 'execution-panel' }, { id: 'experiment-timeline' }, { id: 'scientific-procedures' }, { id: 'scientific-plans' }, { id: 'scientific-samples' }],
+            tabs: [{ id: 'workflow-editor' }, { id: 'execution-panel' }, { id: 'experiment-timeline' }, { id: 'scientific-procedures' }, { id: 'scientific-plans' }, { id: 'scientific-assembly' }, { id: 'scientific-samples' }],
             activeId: 'workflow-editor',
           },
           {
@@ -247,6 +248,9 @@ export const WorkspaceLayout = React.forwardRef<WorkspaceLayoutHandle, Workspace
         }),
         'scientific-plans': (): TabData => ({
           id: 'scientific-plans', title: 'Plans', content: <ProcedurePlans kind="plan" />, group: 'main', closable: true,
+        }),
+        'scientific-assembly': (): TabData => ({
+          id: 'scientific-assembly', title: 'Assembly', content: <FrozenAssembly />, group: 'main', closable: true,
         }),
         'scientific-samples': (): TabData => ({
           id: 'scientific-samples', title: 'Samples', content: <Samples />, group: 'main', closable: true,
