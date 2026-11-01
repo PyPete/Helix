@@ -6,6 +6,23 @@ namespace Helix.Orchestration.Core.Tests.Samples;
 public sealed class SampleFactsTests
 {
     [Fact]
+    public void Transformation_requires_distinct_existing_parents_and_new_children()
+    {
+        var parentId = Guid.NewGuid();
+        var transformation = new SampleTransformation(
+            Guid.NewGuid(),
+            SampleTransformationKind.Split,
+            "Split aliquot",
+            [parentId, parentId],
+            [parentId]);
+
+        var result = SampleLineageValidator.Validate(transformation);
+
+        Assert.Contains(result.Diagnostics, diagnostic => diagnostic.Contains("distinct", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(result.Diagnostics, diagnostic => diagnostic.Contains("new", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
     public void Projection_uses_server_sequence_not_backdated_occurrence_time()
     {
         var sampleId = Guid.NewGuid();
