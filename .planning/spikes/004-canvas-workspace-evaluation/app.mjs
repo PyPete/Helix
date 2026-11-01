@@ -13,11 +13,10 @@ let selected = 'Reactor R-12';
 let pendingSelection = null;
 let dirty = false;
 
-function setView(kind) { const isGraph = kind === 'graph'; graph.classList.toggle('hidden', !isGraph); cards.classList.toggle('hidden', isGraph); graphView.classList.toggle('selected', isGraph); cardView.classList.toggle('selected', !isGraph); graphView.setAttribute('aria-pressed', isGraph); cardView.setAttribute('aria-pressed', !isGraph); }
+function setView(kind) { const isGraph = kind === 'graph'; graph.classList.toggle('hidden', !isGraph); cards.classList.toggle('hidden', isGraph); graphView.classList.toggle('selected', isGraph); cardView.classList.toggle('selected', !isGraph); graphView.setAttribute('aria-pressed', isGraph); cardView.setAttribute('aria-pressed', !isGraph); graphView.textContent = isGraph ? 'Graph open: relationships & parallelism' : 'Inspect relationships & parallelism'; cardView.textContent = isGraph ? 'Return to sequence cards' : 'Sequence cards'; }
 function selectEntity(name) { selected = name; entityName.textContent = name; currentEntity.textContent = name; draftValue.value = name === 'Reactor R-12' ? '24.0' : ''; dirty = false; draftState.textContent = 'No unsaved changes'; document.querySelectorAll('[data-entity]').forEach(node => node.classList.toggle('selected-node', node.dataset.entity === name)); }
 function requestSelection(name) { if (name === selected) return; if (!dirty) return selectEntity(name); pendingSelection = name; currentEntity.textContent = selected; resolveDialog.showModal(); }
 function setTheme(choice) { document.documentElement.dataset.theme = choice; localStorage.setItem('helix-spike-theme', choice); document.querySelectorAll('[data-theme-choice]').forEach(button => button.setAttribute('aria-pressed', button.dataset.themeChoice === choice)); }
-function randomizeStudyView() { const kind = Math.random() < 0.5 ? 'graph' : 'cards'; setView(kind); document.querySelector('#studyPrompt').textContent = `Randomized start: ${kind === 'graph' ? 'Canvas graph' : 'Sequence cards'}. Identify the held reconciliation branch, then record what happened.`; }
 
 setTheme(localStorage.getItem('helix-spike-theme') || 'system');
 graphView.addEventListener('click', () => setView('graph')); cardView.addEventListener('click', () => setView('cards'));
@@ -30,6 +29,5 @@ document.querySelector('#discardThenSwitch').addEventListener('click', () => { d
 document.querySelector('#cancelSwitch').addEventListener('click', () => { pendingSelection = null; resolveDialog.close(); });
 document.querySelector('#safetyRoute').addEventListener('click', () => safetyDialog.showModal()); document.querySelector('#closeSafety').addEventListener('click', () => safetyDialog.close());
 document.querySelector('#reviewProposal').addEventListener('click', event => { event.currentTarget.textContent = 'Proposal queued for scientist review'; event.currentTarget.disabled = true; });
-document.querySelector('#startStudy').addEventListener('click', () => { studyFields.forEach(field => { field.disabled = false; }); document.querySelector('#randomizeView').disabled = false; randomizeStudyView(); });
-document.querySelector('#randomizeView').addEventListener('click', randomizeStudyView);
+document.querySelector('#startStudy').addEventListener('click', () => { setView('cards'); studyFields.forEach(field => { field.disabled = false; }); document.querySelector('#studyPrompt').textContent = 'Use cards to locate the held reconciliation branch. Open the graph to explain its parallel relationship to Analyze aliquot, then return to cards and confirm the selected context remains intact.'; });
 document.querySelector('#recordStudy').addEventListener('click', () => { document.querySelector('#studyStatus').textContent = 'Simulated observation recorded locally for this review; it does not select a winner.'; });
