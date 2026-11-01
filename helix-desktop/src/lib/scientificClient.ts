@@ -3,12 +3,22 @@ import type { AssemblyDefaults, PlanDraft, PolicyRevision, ProcedureDraft, Sampl
 
 function parse<T>(response: string): T { return JSON.parse(response) as T; }
 
-function receipt(response: string, kind: ScientificKind): ScientificReceipt {
-  const value = parse<ScientificReceipt>(response);
-  if (!value || value.kind !== kind || !value.operationId || !value.resourceId || value.status !== "Committed") {
+function scientificReceipt(value: unknown, kind: ScientificKind, operationId?: string, resourceId?: string): ScientificReceipt {
+  if (!value || typeof value !== "object") {
     throw new Error("Agent returned an invalid scientific receipt.");
   }
-  return value;
+  const receipt = value as Partial<ScientificReceipt>;
+  if (receipt.kind !== kind || typeof receipt.operationId !== "string" || receipt.operationId.length === 0 ||
+    typeof receipt.resourceId !== "string" || receipt.resourceId.length === 0 || receipt.status !== "Committed" ||
+    (operationId !== undefined && receipt.operationId !== operationId) ||
+    (resourceId !== undefined && receipt.resourceId !== resourceId)) {
+    throw new Error("Agent returned an invalid scientific receipt.");
+  }
+  return receipt as ScientificReceipt;
+}
+
+function receipt(response: string, kind: ScientificKind, operationId?: string, resourceId?: string): ScientificReceipt {
+  return scientificReceipt(parse<unknown>(response), kind, operationId, resourceId);
 }
 
 export async function listScientific(kind: ScientificKind): Promise<ScientificSummary[]> {
@@ -16,7 +26,7 @@ export async function listScientific(kind: ScientificKind): Promise<ScientificSu
 }
 
 export async function createScientific(kind: ScientificKind, draft: ProcedureDraft | PlanDraft): Promise<ScientificReceipt> {
-  return receipt(await invoke<string>("scientific_create_kind", { kind, request: JSON.stringify(draft) }), kind);
+  return receipt(await invoke<string>("scientific_create_kind", { kind, request: JSON.stringify(draft) }), kind, draft.operationId);
 }
 
 export async function readScientificDraft<T>(kind: ScientificKind, resourceId: string): Promise<ScientificDraftState<T>> {
@@ -24,11 +34,13 @@ export async function readScientificDraft<T>(kind: ScientificKind, resourceId: s
 }
 
 export async function saveScientificDraft(kind: ScientificKind, resourceId: string, draft: ProcedureDraft | PlanDraft): Promise<{ receipt: ScientificReceipt; token: number }> {
-  return parse(await invoke<string>("scientific_save_draft_kind", { kind, resourceId, request: JSON.stringify(draft) }));
+  const value = parse<{ receipt?: unknown; token?: unknown }>(await invoke<string>("scientific_save_draft_kind", { kind, resourceId, request: JSON.stringify(draft) }));
+  if (!Number.isInteger(value.token) || value.token < 0) throw new Error("Agent returned an invalid scientific draft save.");
+  return { receipt: scientificReceipt(value.receipt, kind, draft.operationId, resourceId), token: value.token };
 }
 
 export async function publishScientific(kind: ScientificKind, resourceId: string, request: { operationId: string; revisionName: string; expectedToken: number }): Promise<ScientificReceipt> {
-  return receipt(await invoke<string>("scientific_publish_kind", { kind, resourceId, request: JSON.stringify(request) }), kind);
+  return receipt(await invoke<string>("scientific_publish_kind", { kind, resourceId, request: JSON.stringify(request) }), kind, request.operationId, resourceId);
 }
 
 export async function revisions(kind: ScientificKind, resourceId: string): Promise<ScientificRevision[]> {
@@ -41,18 +53,15 @@ export async function readScientificOperation(kind: ScientificKind, operationId:
 
 export async function deriveProcedure(request: { operationId: string; sourceRevisionId: string; name: string }): Promise<ScientificReceipt> {
   const response = parse<{ receipt?: ScientificReceipt }>(await invoke<string>("scientific_derive_procedure", { request: JSON.stringify(request) }));
-  if (!response.receipt || response.receipt.operationId !== request.operationId || !response.receipt.resourceId) {
-    throw new Error("Agent returned an invalid procedure derivation receipt.");
-  }
-  return response.receipt;
+  return scientificReceipt(response.receipt, "procedure", request.operationId);
 }
 
 export async function adoptProcedure(planId: string, request: { operationId: string; procedureRevisionId: string; expectedToken: number }): Promise<{ receipt: ScientificReceipt; token: number }> {
   const response = parse<{ receipt?: ScientificReceipt; token?: number }>(await invoke<string>("scientific_adopt_procedure", { planId, request: JSON.stringify(request) }));
-  if (!response.receipt || response.receipt.operationId !== request.operationId || response.receipt.resourceId !== planId || typeof response.token !== "number") {
+  if (!Number.isInteger(response.token) || response.token < 0) {
     throw new Error("Agent returned an invalid procedure adoption receipt.");
   }
-  return { receipt: response.receipt, token: response.token };
+  return { receipt: scientificReceipt(response.receipt, "plan", request.operationId, planId), token: response.token };
 }
 
 function exactString(value: unknown): value is string { return typeof value === "string" && value.length > 0; }
