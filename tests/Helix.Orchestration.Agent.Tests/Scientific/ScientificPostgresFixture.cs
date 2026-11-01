@@ -7,8 +7,6 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
-using System.Net;
-using System.Net.Sockets;
 using Testcontainers.PostgreSql;
 using Xunit;
 
@@ -20,6 +18,7 @@ namespace Helix.Orchestration.Agent.Tests.Scientific;
 /// </summary>
 public sealed class ScientificPostgresFixture : IAsyncLifetime
 {
+    private const int NativeAgentPort = 5080;
     private readonly PostgreSqlContainer _container = new PostgreSqlBuilder("postgres:16")
         .WithDatabase("helix_scientific_tracer")
         .WithUsername("helix")
@@ -163,13 +162,12 @@ public sealed class ScientificPostgresFixture : IAsyncLifetime
 
     private async Task StartAgentAsync()
     {
-        var port = ReserveLoopbackPort();
         var builder = WebApplication.CreateBuilder();
-        builder.WebHost.UseUrls($"http://127.0.0.1:{port}");
+        builder.WebHost.UseUrls($"http://127.0.0.1:{NativeAgentPort}");
         builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
         {
             ["ConnectionStrings:HelixOrchestration"] = RuntimeConnectionString,
-            ["Kestrel:Endpoints:Http:Url"] = $"http://127.0.0.1:{port}",
+            ["Kestrel:Endpoints:Http:Url"] = $"http://127.0.0.1:{NativeAgentPort}",
             ["Mqtt:BrokerHost"] = "127.0.0.1",
             ["Mqtt:BrokerPort"] = "1"
         });
@@ -177,14 +175,7 @@ public sealed class ScientificPostgresFixture : IAsyncLifetime
         _agent = builder.Build();
         AgentApplicationComposition.ConfigurePipeline(_agent);
         await _agent.StartAsync();
-        AgentAddress = new Uri($"http://127.0.0.1:{port}");
-    }
-
-    private static int ReserveLoopbackPort()
-    {
-        using var listener = new TcpListener(IPAddress.Loopback, 0);
-        listener.Start();
-        return ((IPEndPoint)listener.LocalEndpoint).Port;
+        AgentAddress = new Uri($"http://127.0.0.1:{NativeAgentPort}");
     }
 }
 
