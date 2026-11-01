@@ -114,7 +114,7 @@ Plans:
 - [x] 02-38-PLAN.md — Wave 13: complete accessible transformation and linked lineage UI
 
 **Wave 14** *(blocked on Wave 13 completion)*
-- [ ] 02-39-PLAN.md — Wave 14: immutable policy content/provenance and freeze repository
+- [x] 02-39-PLAN.md — Wave 14: immutable policy content/provenance and freeze repository
 
 **Wave 15** *(blocked on Wave 14 completion)*
 - [ ] 02-40-PLAN.md — Wave 15: exact Agent freeze/resolution with trusted test-only authority
@@ -208,7 +208,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Agent Safety Boundary | 14/14 | Complete with user-approved waivers (not fully verified) | 2026-10-30 |
-| 2. Scientific Setup Foundation | 13/23 | In Progress | - |
+| 2. Scientific Setup Foundation | 14/23 | In Progress | - |
 | 3. Approved Manual Campaigns | 0/TBD | Not started | - |
 | 4. Reviewed CSV Evidence | 0/TBD | Not started | - |
 | 5. Policy-Bounded Autonomous Simulation | 0/TBD | Not started | - |
