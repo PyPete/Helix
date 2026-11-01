@@ -428,6 +428,17 @@ pub async fn sample_events(window: WebviewWindow, state: State<'_, AgentBrokerSt
     native_request("GET", &format!("/api/samples/{sample_id}/events?pageSize={page_size}{after_sequence}"), None, &require_session(&state)?)
 }
 
+/// Reads an actor-scoped sample receipt through the fixed operation route; it never replays a mutation.
+#[tauri::command]
+pub async fn sample_operation(window: WebviewWindow, state: State<'_, AgentBrokerState>, operation_id: String, kind: String) -> Result<String, String> {
+    require_main_window(&window)?;
+    validate_command_id(&operation_id)?;
+    if kind != "sample.confirm" && kind != "sample.append" {
+        return Err("Sample operation kind is invalid.".to_string());
+    }
+    native_request("GET", &format!("/api/scientific-operations/{operation_id}?kind={kind}"), None, &require_session(&state)?)
+}
+
 /// Lists only the Agent's canonical simulator adapters through the authenticated broker.
 #[tauri::command]
 pub async fn agent_devices(window: WebviewWindow, state: State<'_, AgentBrokerState>) -> Result<String, String> {

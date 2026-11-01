@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useRef, useState } from "react";
-import { appendSampleEvent, confirmSample, listSamples, readSample, sampleEvents } from "../../lib/scientificClient";
+import { appendSampleEvent, confirmSample, listSamples, readSampleOperation, sampleEvents } from "../../lib/scientificClient";
 import type { SampleEvent, SampleEventAppendRequest, SampleProjection } from "../../types/scientific";
 
 type MutationState = "idle" | "pending" | "uncertain" | "conflict" | "error";
@@ -87,9 +87,9 @@ export function Samples({ selectedId }: { selectedId?: string }) {
   async function checkOutcome() {
     if (!operationId.current) return;
     try {
-      // Re-read only known evidence. A missing receipt is deliberately not treated as absence or permission to retry.
-      if (selected) await readSample(selected.identity.sampleId);
-      setMutationError("No committed result has been recorded yet. Do not repeat this action.");
+      const kind = confirmationOpen ? "sample.confirm" : "sample.append";
+      await readSampleOperation(kind, operationId.current);
+      operationId.current = undefined; setMutationState("idle"); await reload();
     } catch { setMutationError("No committed result has been recorded yet. Do not repeat this action."); }
   }
 

@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 
 vi.mock("../../lib/scientificClient", () => ({
   listSamples: vi.fn().mockResolvedValue([]), sampleEvents: vi.fn().mockResolvedValue([]),
-  confirmSample: vi.fn(), appendSampleEvent: vi.fn(), readSample: vi.fn(), readScientificOperation: vi.fn(),
+  confirmSample: vi.fn(), appendSampleEvent: vi.fn(), readSampleOperation: vi.fn(),
 }));
 
 import { Samples } from "./Samples";

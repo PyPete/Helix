@@ -114,3 +114,8 @@ export async function sampleEvents(sampleId: string, afterSequence?: number, pag
   })) throw new Error("Agent returned invalid sample history.");
   return result as SampleEvent[];
 }
+
+/** Looks up a sample mutation receipt without replaying the mutation or generating a new key. */
+export async function readSampleOperation(kind: SampleReceipt["kind"], operationId: string): Promise<SampleReceipt> {
+  return sampleReceipt(await invoke<string>("sample_operation", { operationId, kind }), kind, operationId);
+}
