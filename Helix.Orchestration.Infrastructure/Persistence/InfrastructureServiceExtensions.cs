@@ -21,6 +21,9 @@ public static class InfrastructureServiceExtensions
         services.AddScoped<ICommandLedger, PostgresCommandLedger>();
         services.AddScoped<IScientificSetupRepository, PostgresScientificSetupRepository>();
         services.AddScoped<ISampleRepository, PostgresSampleRepository>();
+        services.AddScoped<IFrozenSetupRepository, PostgresFrozenSetupRepository>();
+        services.AddScoped<IPolicyApprovalAuthority, UnavailablePolicyApprovalAuthority>();
+        services.AddScoped<IPolicyRevisionProvider, PostgresPolicyRevisionProvider>();
         services.AddSingleton<IExecutionControlStore, PostgresExecutionControlStore>();
         services.AddSingleton<ISimulatorStateStore, PostgresSimulatorStateStore>();
         services.AddSingleton<ISimulatorObservation>(sp => sp.GetRequiredService<ISimulatorStateStore>());

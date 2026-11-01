@@ -29,7 +29,9 @@ public sealed class PolicyReferenceTests
         var provenance = new PolicyApprovalProvenance(Guid.NewGuid(), policy.RevisionId, policy.ContentHash, policy.Schema, "approver", "authority", "scientist", DateTimeOffset.UtcNow, DateTimeOffset.UtcNow.AddHours(1));
         var reference = new FrozenContentReference(policy.RevisionId, policy.PolicyId, policy.Schema, policy.ContentHash);
 
-        var manifest = new FrozenSetupManifest(Guid.NewGuid(), reference with { RevisionId = Guid.NewGuid() }, reference with { RevisionId = Guid.NewGuid() }, reference with { RevisionId = Guid.NewGuid() }, reference, provenance, "compiled/1", "compiler", [1], "artifact", DateTimeOffset.UtcNow, "scientist", DateTimeOffset.UtcNow);
+        var artifact = new byte[] { 1 };
+        var artifactHash = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(artifact)).ToLowerInvariant();
+        var manifest = new FrozenSetupManifest(Guid.NewGuid(), reference with { RevisionId = Guid.NewGuid() }, reference with { RevisionId = Guid.NewGuid() }, reference with { RevisionId = Guid.NewGuid() }, reference, provenance, "compiled/1", "compiler", artifact, artifactHash, DateTimeOffset.UtcNow, "scientist", DateTimeOffset.UtcNow);
         manifest.Validate();
 
         Assert.Throws<ArgumentException>(() => (policy with { ContentHash = "not-a-hash" }).Validate());

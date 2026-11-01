@@ -35,6 +35,9 @@ public sealed record FrozenSetupManifest(
         if (Approval.PolicyRevisionId != Policy.RevisionId || !string.Equals(Approval.PolicyContentHash, Policy.ContentHash, StringComparison.Ordinal) ||
             !string.Equals(Approval.PolicySchema, Policy.Schema, StringComparison.Ordinal))
             throw new ArgumentException("Approval provenance must bind the exact frozen policy.");
+        var actualHash = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(CompiledDefinition)).ToLowerInvariant();
+        if (!string.Equals(actualHash, CompiledDefinitionHash, StringComparison.Ordinal))
+            throw new ArgumentException("Frozen compiled-definition hash does not match its original bytes.");
     }
 }
 
