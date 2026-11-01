@@ -64,5 +64,39 @@ public sealed class SamplesTests(ScientificPostgresFixture fixture)
         Assert.Single(samples!);
     }
 
+    [Fact]
+    public async Task Transformation_and_lineage_are_scoped_attributable_and_bounded()
+    {
+        using var client = fixture.CreateAuthenticatedClient();
+        var parent = await client.PostAsJsonAsync("/api/samples/confirmations", new
+        {
+            operationId = Guid.NewGuid(),
+            location = "Fumehood collector",
+            occurredAtUtc = DateTimeOffset.UtcNow.AddMinutes(-1)
+        });
+        parent.EnsureSuccessStatusCode();
+        using var parentDocument = JsonDocument.Parse(await parent.Content.ReadAsStringAsync());
+        var parentId = parentDocument.RootElement.GetProperty("sample").GetProperty("identity").GetProperty("sampleId").GetGuid();
+        var childId = Guid.NewGuid();
+
+        var transformed = await client.PostAsJsonAsync("/api/samples/transformations", new
+        {
+            operationId = Guid.NewGuid(),
+            transformationId = Guid.NewGuid(),
+            kind = 0,
+            operation = "Split collected sample",
+            parentSampleIds = new[] { parentId },
+            childSampleIds = new[] { childId },
+            quantitySupplied = false
+        });
+
+        Assert.Equal(HttpStatusCode.Created, transformed.StatusCode);
+        var lineage = await client.GetAsync($"/api/samples/{parentId}/lineage?direction=Descendants&pageSize=1");
+        Assert.Equal(HttpStatusCode.OK, lineage.StatusCode);
+        using var lineageDocument = JsonDocument.Parse(await lineage.Content.ReadAsStringAsync());
+        Assert.Equal(childId, lineageDocument.RootElement.GetProperty("entries")[0].GetProperty("sampleId").GetGuid());
+        await fixture.AssertNoHardwareOrCapabilityDispatchAsync();
+    }
+
     private sealed record SampleSummary(Guid SampleId);
 }
