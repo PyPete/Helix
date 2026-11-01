@@ -104,3 +104,11 @@ Theme is local to this disposable page: Light, Dark, and System choices persist 
 In the randomized held-reconciliation task, the observer reported that **cards were clearer because navigation was clearer**. This is a single comparative observation and evidence against graph-first for this task. It revises the working hypothesis toward cards-first navigation with an on-demand graph for relationship and parallel inspection, while retaining the side-by-side hybrid as the comparison condition. It is not a final representation decision, a general usability verdict, an execution authorization, or approval for production redesign. Follow-up evidence should test the proposed cards-first/on-demand-graph variant against the hybrid and identify whether navigation, information hierarchy, parallelism representation, or visual density drove the difference.
 
 No comparative verdict yet. Existing positive feedback is preserved as preference only; it is not usability validation, an execution authorization, or approval for production redesign.
+
+### 2026-11-01 - Graph renderer defect invalidated prior graph evidence
+
+The prior graph review is **invalid**: its SVG connectors and absolutely positioned cards used incompatible layout coordinates, leaving floating lines and only the Reconcile card reliably visible. It cannot be used as usability evidence. The repaired disposable renderer puts all five cards and six named directional edges in one 900px coordinate stage; its horizontal overflow prevents clipping at a normal desktop viewport. At load, the in-artifact sanity check sets `data-renderer-check="pass"` only if all five stable node identities and all six expected edge elements exist. Re-run the visual review before recording any graph finding.
+
+### Graph visual re-review (required)
+
+At `http://127.0.0.1:4317/004-canvas-workspace-evaluation/`, open **Inspect relationships & parallelism** at a normal desktop viewport. Confirm Reactor R-12 → Prepare S-142 → Irradiate runs left-to-right; both labeled parallel paths terminate at Analyze aliquot and Reconcile state, then visibly join; no line floats without an endpoint; and returning to cards preserves the selected inspector context. In DevTools, `.graph-stage` must report `data-renderer-check="pass"`.

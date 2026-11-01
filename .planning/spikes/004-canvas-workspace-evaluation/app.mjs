@@ -19,6 +19,12 @@ function requestSelection(name) { if (name === selected) return; if (!dirty) ret
 function setTheme(choice) { document.documentElement.dataset.theme = choice; localStorage.setItem('helix-spike-theme', choice); document.querySelectorAll('[data-theme-choice]').forEach(button => button.setAttribute('aria-pressed', button.dataset.themeChoice === choice)); }
 
 setTheme(localStorage.getItem('helix-spike-theme') || 'system');
+const expectedGraphEntities = ['Reactor R-12', 'Prepare sample S-142', 'Irradiate', 'Analyze aliquot', 'Reconcile observed state'];
+const expectedGraphEdges = ['edge-ready-prepare', 'edge-prepare-irradiate', 'edge-irradiate-analyze', 'edge-irradiate-reconcile', 'edge-analyze-join', 'edge-reconcile-join'];
+const graphStage = document.querySelector('.graph-stage');
+const graphIsComplete = expectedGraphEntities.every(entity => graphStage.querySelector(`[data-entity="${entity}"]`)) && expectedGraphEdges.every(id => document.getElementById(id));
+graphStage.dataset.rendererCheck = graphIsComplete ? 'pass' : 'fail';
+console.assert(graphIsComplete, 'Spike 004 graph renderer is missing an expected node or edge.');
 graphView.addEventListener('click', () => setView('graph')); cardView.addEventListener('click', () => setView('cards'));
 document.querySelectorAll('[data-theme-choice]').forEach(button => button.addEventListener('click', () => setTheme(button.dataset.themeChoice)));
 document.querySelectorAll('[data-entity]').forEach(button => button.addEventListener('click', () => requestSelection(button.dataset.entity)));
