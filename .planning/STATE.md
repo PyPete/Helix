@@ -4,11 +4,11 @@ current_phase: 02
 current_phase_name: Scientific Setup Foundation
 current_plan: 42
 status: complete_with_user_approved_waivers
-stopped_at: Completed 02-28-PLAN.md
-last_updated: "2026-11-01T16:17:53.744Z"
+stopped_at: "Blocked 02-17-PLAN.md: runtime-role reconciliation failure"
+last_updated: "2026-11-01T16:22:56.395Z"
 last_activity: 2026-11-01
 last_activity_desc: Completed exact frozen assembly UI and PostgreSQL reconstruction proof.
-state_head: c36967cfd49ceb4a53f7e0e776e5afbb13695cd6
+state_head: 86fdc6b3732b8fc35adf467ccf9b1366fe952606
 progress:
   total_phases: 7
   completed_phases: 1
@@ -134,6 +134,7 @@ Decisions are logged in PROJECT.md Key Decisions table. Current roadmap decision
 - [Phase 1 verification]: The separate checker grader was unavailable. Remaining native/UI/database acceptance was not fully verified; user-reported manual SetFlow/SQL evidence and prior focused checks are documented in the phase summary.
 - [Phase 6]: Obtain EHS, vendor, and site qualification evidence before any real-device integration work.
 - 02-38 requires an architectural extension: the current sample transformation API/persistence cannot persist or return transformation occurrence time, actor, or recording time required by the plan’s immutable evidence UI.
+- 02-17 Integration is blocked: CommandReconciliationWorker reads command_dispatches under the restricted scientific runtime role, stops the owned Agent, and returns HTTP 503 after restart.
 
 ### Roadmap Evolution
 
@@ -148,6 +149,6 @@ Decisions are logged in PROJECT.md Key Decisions table. Current roadmap decision
 
 ## Session Continuity
 
-Last session: 2026-11-01T16:17:53.685Z
-Stopped at: Completed 02-28-PLAN.md
-Resume file: None
+Last session: 2026-11-01T16:22:56.337Z
+Stopped at: Blocked 02-17-PLAN.md: runtime-role reconciliation failure
+Resume file: .planning/phases/02-scientific-setup-foundation/02-17-SUMMARY.md
