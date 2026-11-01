@@ -17,6 +17,7 @@ const WINHTTP_ADDREQ_FLAG_ADD: u32 = 0x2000_0000;
 const WINHTTP_ACCESS_TYPE_NO_PROXY: u32 = 1;
 const WINHTTP_OPTION_DISABLE_FEATURE: u32 = 63;
 const WINHTTP_DISABLE_REDIRECTS: u32 = 0x0000_0002;
+const WINHTTP_QUERY_STATUS_CODE: u32 = 19;
 
 fn set_request_redirect_policy<H>(
     request: H,
@@ -103,6 +104,55 @@ fn validate_cursor(cursor: &str) -> Result<(), String> {
 fn validate_device_id(device_id: &str) -> Result<(), String> {
     if device_id.is_empty() || device_id.len() > 128 || !device_id.bytes().all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'-' | b'_')) {
         return Err("Device identifier is invalid.".to_string());
+    }
+    Ok(())
+}
+
+fn require_success_status(status: u16) -> Result<(), String> {
+    if (200..300).contains(&status) {
+        Ok(())
+    } else {
+        Err(format!("Local Agent rejected the request (HTTP {status})."))
+    }
+}
+
+fn validate_page_size(page_size: u16) -> Result<(), String> {
+    if !(1..=100).contains(&page_size) {
+        return Err("Sample page size is invalid.".to_string());
+    }
+    Ok(())
+}
+
+fn validate_sample_mutation_request(request: &str, requires_sequence: bool) -> Result<(), String> {
+    validate_json(request)?;
+    let value: serde_json::Value = serde_json::from_str(request)
+        .map_err(|_| "Sample request is invalid.".to_string())?;
+    let object = value.as_object().ok_or_else(|| "Sample request is invalid.".to_string())?;
+    let operation_id = object.get("operationId").and_then(serde_json::Value::as_str)
+        .ok_or_else(|| "Sample operation identifier is required.".to_string())?;
+    validate_command_id(operation_id)?;
+    let location = object.get("location").and_then(serde_json::Value::as_str)
+        .ok_or_else(|| "Sample location is required.".to_string())?;
+    if location.trim().is_empty() || location.len() > 512 {
+        return Err("Sample location is invalid.".to_string());
+    }
+    let occurred_at = object.get("occurredAtUtc").and_then(serde_json::Value::as_str)
+        .ok_or_else(|| "Sample occurrence time is required.".to_string())?;
+    if occurred_at.is_empty() || occurred_at.len() > 64 {
+        return Err("Sample occurrence time is invalid.".to_string());
+    }
+    if requires_sequence {
+        let kind = object.get("kind").and_then(serde_json::Value::as_i64)
+            .or_else(|| object.get("kind").and_then(serde_json::Value::as_str).and_then(|value| match value {
+                "Collected" => Some(0), "Moved" => Some(1), "Transferred" => Some(2), "Consumed" => Some(3), "Corrected" => Some(4), _ => None,
+            }))
+            .ok_or_else(|| "Sample event kind is required.".to_string())?;
+        if !(0..=4).contains(&kind) {
+            return Err("Sample event kind is invalid.".to_string());
+        }
+        if object.get("expectedSequence").and_then(serde_json::Value::as_u64).is_none() {
+            return Err("Sample event sequence is required.".to_string());
+        }
     }
     Ok(())
 }
@@ -335,6 +385,49 @@ pub async fn scientific_adopt_procedure(window: WebviewWindow, state: State<'_, 
     native_request("POST", &format!("/api/scientific-setup/plans/{plan_id}/adopt-procedure"), Some(&request), &require_session(&state)?)
 }
 
+/// Lists only the authenticated scientist's sample projections through a fixed local route.
+#[tauri::command]
+pub async fn sample_list(window: WebviewWindow, state: State<'_, AgentBrokerState>, page_size: u16) -> Result<String, String> {
+    require_main_window(&window)?;
+    validate_page_size(page_size)?;
+    native_request("GET", &format!("/api/samples/?pageSize={page_size}"), None, &require_session(&state)?)
+}
+
+/// Reads a single actor-scoped sample projection; IDs never become paths or arbitrary URLs.
+#[tauri::command]
+pub async fn sample_read(window: WebviewWindow, state: State<'_, AgentBrokerState>, sample_id: String) -> Result<String, String> {
+    require_main_window(&window)?;
+    validate_command_id(&sample_id)?;
+    native_request("GET", &format!("/api/samples/{sample_id}"), None, &require_session(&state)?)
+}
+
+/// Submits explicit collection evidence only; the Agent admits facts and preserves replay receipts.
+#[tauri::command]
+pub async fn sample_confirm(window: WebviewWindow, state: State<'_, AgentBrokerState>, request: String) -> Result<String, String> {
+    require_main_window(&window)?;
+    validate_sample_mutation_request(&request, false)?;
+    native_request("POST", "/api/samples/confirmations", Some(&request), &require_session(&state)?)
+}
+
+/// Appends one bounded custody event to an exact sample identity through the fixed Agent route.
+#[tauri::command]
+pub async fn sample_append_event(window: WebviewWindow, state: State<'_, AgentBrokerState>, sample_id: String, request: String) -> Result<String, String> {
+    require_main_window(&window)?;
+    validate_command_id(&sample_id)?;
+    validate_sample_mutation_request(&request, true)?;
+    native_request("POST", &format!("/api/samples/{sample_id}/events"), Some(&request), &require_session(&state)?)
+}
+
+/// Reads bounded custody history without accepting a renderer-supplied destination or cursor syntax.
+#[tauri::command]
+pub async fn sample_events(window: WebviewWindow, state: State<'_, AgentBrokerState>, sample_id: String, after_sequence: Option<u64>, page_size: u16) -> Result<String, String> {
+    require_main_window(&window)?;
+    validate_command_id(&sample_id)?;
+    validate_page_size(page_size)?;
+    let after_sequence = after_sequence.map(|sequence| format!("&afterSequence={sequence}")).unwrap_or_default();
+    native_request("GET", &format!("/api/samples/{sample_id}/events?pageSize={page_size}{after_sequence}"), None, &require_session(&state)?)
+}
+
 /// Lists only the Agent's canonical simulator adapters through the authenticated broker.
 #[tauri::command]
 pub async fn agent_devices(window: WebviewWindow, state: State<'_, AgentBrokerState>) -> Result<String, String> {
@@ -453,6 +546,7 @@ fn native_request(verb: &str, path: &str, body: Option<&str>, token: &str) -> Re
         fn WinHttpAddRequestHeaders(request: Handle, headers: *const u16, length: u32, modifiers: u32) -> i32;
         fn WinHttpSendRequest(request: Handle, headers: *const u16, length: u32, optional: *mut c_void, optional_length: u32, total_length: u32, context: usize) -> i32;
         fn WinHttpReceiveResponse(request: Handle, reserved: *mut c_void) -> i32;
+        fn WinHttpQueryHeaders(request: Handle, info_level: u32, name: *const u16, buffer: *mut c_void, buffer_length: *mut u32, index: *mut u32) -> i32;
         fn WinHttpQueryDataAvailable(request: Handle, available: *mut u32) -> i32;
         fn WinHttpReadData(request: Handle, buffer: *mut c_void, bytes_to_read: u32, bytes_read: *mut u32) -> i32;
         fn WinHttpCloseHandle(handle: Handle) -> i32;
@@ -518,6 +612,18 @@ fn native_request(verb: &str, path: &str, body: Option<&str>, token: &str) -> Re
             WinHttpCloseHandle(request); WinHttpCloseHandle(connect); WinHttpCloseHandle(session);
             return Err(format!("Local Agent request failed ({error})."));
         }
+        let mut status_buffer = [0u16; 4];
+        let mut status_length = (status_buffer.len() * std::mem::size_of::<u16>()) as u32;
+        if WinHttpQueryHeaders(request, WINHTTP_QUERY_STATUS_CODE, std::ptr::null(), status_buffer.as_mut_ptr() as *mut c_void, &mut status_length, std::ptr::null_mut()) == 0 {
+            WinHttpCloseHandle(request); WinHttpCloseHandle(connect); WinHttpCloseHandle(session);
+            return Err("Unable to read local Agent response status.".to_string());
+        }
+        let status = String::from_utf16_lossy(&status_buffer[..(status_length as usize / std::mem::size_of::<u16>())])
+            .trim_end_matches('\0').parse::<u16>().map_err(|_| "Local Agent returned an invalid response status.".to_string())?;
+        if let Err(error) = require_success_status(status) {
+            WinHttpCloseHandle(request); WinHttpCloseHandle(connect); WinHttpCloseHandle(session);
+            return Err(error);
+        }
         let mut response = Vec::new();
         loop {
             let mut available = 0u32;
@@ -574,6 +680,28 @@ mod agent_security {
         assert_eq!(scientific_kind_path("procedure"), Ok("procedures"));
         assert_eq!(scientific_kind_path("plan"), Ok("plans"));
         assert!(scientific_kind_path("../commands").is_err());
+    }
+
+    #[test] fn sample_commands_require_typed_ids_and_bounded_requests() {
+        let confirmation = r#"{"operationId":"11111111-1111-1111-1111-111111111111","location":"hood-a","occurredAtUtc":"2026-11-01T00:00:00Z"}"#;
+        let append = r#"{"operationId":"11111111-1111-1111-1111-111111111111","kind":1,"location":"freezer-a","occurredAtUtc":"2026-11-01T00:00:00Z","expectedSequence":0}"#;
+        assert!(validate_sample_mutation_request(confirmation, false).is_ok());
+        assert!(validate_sample_mutation_request(append, true).is_ok());
+        assert!(validate_sample_mutation_request(r#"{"operationId":"../foreign","location":"hood-a","occurredAtUtc":"2026-11-01T00:00:00Z"}"#, false).is_err());
+        assert!(validate_sample_mutation_request(r#"{"operationId":"11111111-1111-1111-1111-111111111111","kind":9,"location":"hood-a","occurredAtUtc":"2026-11-01T00:00:00Z","expectedSequence":0}"#, true).is_err());
+        assert!(validate_page_size(1).is_ok());
+        assert!(validate_page_size(100).is_ok());
+        assert!(validate_page_size(0).is_err());
+        assert!(validate_page_size(101).is_err());
+    }
+
+    #[test] fn non_success_agent_status_never_becomes_a_receipt() {
+        assert!(require_success_status(200).is_ok());
+        assert!(require_success_status(201).is_ok());
+        assert!(require_success_status(400).is_err());
+        assert!(require_success_status(401).is_err());
+        assert!(require_success_status(409).is_err());
+        assert!(require_success_status(500).is_err());
     }
 
     #[test] fn agent_security_derive_and_adopt_requests_require_bounded_uuid_evidence() {
