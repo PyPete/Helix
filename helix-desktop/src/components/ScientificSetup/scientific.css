@@ -1,0 +1,5 @@
+.scientific-record { background: #1C2A35; color: #fff; padding: 16px; }
+.scientific-evidence-id { display: flex; gap: 8px; align-items: center; font-variant-numeric: tabular-nums; }
+.scientific-record button { min-height: 32px; }
+.scientific-record button:focus-visible { outline: 2px solid #22B8A7; outline-offset: 2px; }
+.scientific-dialog { background: #101820; border: 1px solid #22B8A7; padding: 16px; }
