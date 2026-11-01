@@ -89,4 +89,8 @@ Theme is local to this disposable page: Light, Dark, and System choices persist 
 
 ## Results
 
+### 2026-11-01 - Randomized held-reconciliation task
+
+In the randomized held-reconciliation task, the observer reported that **cards were clearer**. This is a single comparative observation and evidence against the graph-first hypothesis for this task; it is not a final representation decision, a general usability verdict, an execution authorization, or approval for production redesign. Follow-up evidence should identify whether information hierarchy, navigation, parallelism representation, or visual density drove the difference.
+
 No comparative verdict yet. Existing positive feedback is preserved as preference only; it is not usability validation, an execution authorization, or approval for production redesign.

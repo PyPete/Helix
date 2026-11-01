@@ -70,6 +70,10 @@ Evaluate the three existing disposable comparisons using their shared task guida
 
 All three verdicts remain **PENDING**. Source research and limited automated/DOM evidence are attributed in the READMEs, including parent-reported independent 39/39 regression checks and 003 DOM smoke. Human task timings remain uncollected. This authorized documentation update records feedback in the canonical TODO but does not complete it or approve production changes.
 
+## Spike 004 observation — 2026-11-01
+
+During the randomized held-reconciliation task, the observer reported that **cards were clearer**. This is task-specific evidence against the graph-first hypothesis, not a final decision, a general representation winner, or authorization to modify production UI. The TODO remains **pending** while the study gathers the reason for the result and additional comparative evidence.
+
 ## Tracking
 
 - Interactive evaluation artifact: [Spike 004 — Canvas workspace evaluation](../spikes/004-canvas-workspace-evaluation/README.md) (PENDING; no production authorization).
@@ -77,4 +81,4 @@ All three verdicts remain **PENDING**. Source research and limited automated/DOM
 - GSD pending registration: `pending/2026-10-30-spike-canvas-first-scientific-workspace.md`.
 - Registry: `MANIFEST.md`.
 - Duplicate check: no existing todos directory or pending entries at capture time (`init.todos` returned zero).
-- Status remains pending until the interactive spike is actually run and reviewed; research recommendations alone are not completion evidence.
+- Status remains pending until the interactive spike is actually run and reviewed; this single observation does not complete the study, and research recommendations alone are not completion evidence.

@@ -33,11 +33,11 @@ Explore a scientific workspace informed by IvoryOS while preserving Helix's Agen
 
 ## Review gate
 
-Spike 004 records status + route safety handling, resolve-first inspector drafts, and a canvas-graph primary surface with a sequence-card toggle. The disposable interactive artifact and review steps are in [004](004-canvas-workspace-evaluation/README.md); evidence remains pending and it does not authorize production UI changes.
+Spike 004 records status + route safety handling, resolve-first inspector drafts, and a canvas-graph primary surface with a sequence-card toggle. In its randomized held-reconciliation task, one observer found cards clearer; this is evidence against the graph-first hypothesis for that task, not a winner or production recommendation. The disposable interactive artifact and review steps are in [004](004-canvas-workspace-evaluation/README.md); evidence remains pending and it does not authorize production UI changes.
 
 
 001 received the user comment **"this looks really good"** on 2026-10-30: positive visual feedback, not a validated comparison. Limited parent-reported DOM smoke is recorded in its README. 002 received a graph preference with interchangeable cards, recorded verbatim in its README; this is not a validated winner. The introductory idea paragraph preserves the original capture. All three comparisons are now built, with human comparative review still pending. This session built only 003; the original TODO remains pending.
 
 Launch with `node .planning/spikes/server.mjs`. Record head-to-head task observations and export logs before a verdict. Build completion is not experiential validation. Wrap-up was read but is deferred: no findings skill or production blueprint should be created from pending usability evidence.
 
-The canonical TODO now records the three prototype links and feedback; construction is complete, but detailed comparative evaluation, human task timings and a separately approved production plan remain pending. Parent-reported independent 003 regression/DOM smoke is attributed in its README, not treated as comprehensive usability evidence.
+The canonical TODO now records the three prototype links and feedback; construction is complete, but detailed comparative evaluation, human task timings and a separately approved production plan remain pending. The single Spike 004 cards-clearer observation is recorded as task-specific counter-evidence to graph-first, not a conclusive winner. Parent-reported independent 003 regression/DOM smoke is attributed in its README, not treated as comprehensive usability evidence.
