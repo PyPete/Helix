@@ -1,4 +1,4 @@
-# Spike Manifest
+﻿# Spike Manifest
 
 ## Ideas
 
@@ -23,11 +23,15 @@ Explore a scientific workspace informed by IvoryOS while preserving Helix's Agen
 
 | # | Idea | Name | Type | Validates | Verdict | Tags |
 |---|---|---|---|---|---|---|
-| 001a / 001b | ivoryos-scientific-workspace | [Canvas workspace comparison](001-canvas-workspace-comparison/README.md) | comparison | Given shared apparatus and run fixtures, when the scientist completes identical tasks in ribbon/dock and canvas, then compare orientation, discoverability and truthful safety-state understanding | PENDING — built, awaiting human review | ui, simulation, safety, high-risk |
-| 002a / 002b | ivoryos-scientific-workspace | [Protocol representation comparison](002-protocol-representation-comparison/README.md) | comparison | Given shared linear/branching/parallel proposals, when authored/reviewed in cards and graph, then compare clarity without hiding dependencies or execution uncertainty | PENDING — built, awaiting human review | ui, protocol, medium-risk |
-| 003a / 003b | ivoryos-scientific-workspace | [Inspector layout comparison](003-inspector-layout-comparison/README.md) | comparison | Given linked device/step/sample/result records, when switching selection/layout with pending fields, then compare provenance clarity and retained edit/review context | PENDING — built, awaiting human review | ui, inspector, medium-risk |
+| 001a / 001b | ivoryos-scientific-workspace | [Canvas workspace comparison](001-canvas-workspace-comparison/README.md) | comparison | Given shared apparatus and run fixtures, when the scientist completes identical tasks in ribbon/dock and canvas, then compare orientation, discoverability and truthful safety-state understanding | PENDING â€” built, awaiting human review | ui, simulation, safety, high-risk |
+| 002a / 002b | ivoryos-scientific-workspace | [Protocol representation comparison](002-protocol-representation-comparison/README.md) | comparison | Given shared linear/branching/parallel proposals, when authored/reviewed in cards and graph, then compare clarity without hiding dependencies or execution uncertainty | PENDING â€” built, awaiting human review | ui, protocol, medium-risk |
+| 003a / 003b | ivoryos-scientific-workspace | [Inspector layout comparison](003-inspector-layout-comparison/README.md) | comparison | Given linked device/step/sample/result records, when switching selection/layout with pending fields, then compare provenance clarity and retained edit/review context | PENDING â€” built, awaiting human review | ui, inspector, medium-risk |
+| 004 | ivoryos-scientific-workspace | [Canvas workspace evaluation](004-canvas-workspace-evaluation/README.md) | interactive-design-evaluation | Given built 001–003 simulated comparisons, when a scientist completes the shared review tasks, then capture comparative safety and usability evidence without approving production work | PENDING — awaiting human review | ui, evaluation, simulation, safety |
 
 ## Review gate
+
+Spike 004 is the durable human-review entry point for the canonical pending TODO. Its first unresolved interaction decision is the placement of Pause/Hold/Abort affordances while the Agent awaits reconciliation; see [004](004-canvas-workspace-evaluation/README.md). It does not authorize production UI changes.
+
 
 001 received the user comment **"this looks really good"** on 2026-10-30: positive visual feedback, not a validated comparison. Limited parent-reported DOM smoke is recorded in its README. 002 received a graph preference with interchangeable cards, recorded verbatim in its README; this is not a validated winner. The introductory idea paragraph preserves the original capture. All three comparisons are now built, with human comparative review still pending. This session built only 003; the original TODO remains pending.
 
