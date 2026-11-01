@@ -746,6 +746,12 @@ mod agent_security {
         assert!(scientific_kind_path("../commands").is_err());
     }
 
+    #[test] fn scientific_policy_and_assembly_routes_are_fixed_and_reject_paths() {
+        assert_eq!(scientific_kind_path("policy"), Ok("policies"));
+        assert_eq!(scientific_kind_path("assembly"), Ok("assemblies"));
+        assert!(scientific_kind_path("policy/../commands").is_err());
+    }
+
     #[test] fn sample_commands_require_typed_ids_and_bounded_requests() {
         let confirmation = r#"{"operationId":"11111111-1111-1111-1111-111111111111","location":"hood-a","occurredAtUtc":"2026-11-01T00:00:00Z"}"#;
         let append = r#"{"operationId":"11111111-1111-1111-1111-111111111111","kind":1,"location":"freezer-a","occurredAtUtc":"2026-11-01T00:00:00Z","expectedSequence":0}"#;
