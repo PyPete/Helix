@@ -2,18 +2,18 @@
 gsd_state_version: "1.0"
 current_phase: 02
 current_phase_name: Scientific Setup Foundation
-current_plan: 9
+current_plan: 10
 status: complete_with_user_approved_waivers
-stopped_at: Completed 02-34-PLAN.md
-last_updated: "2026-11-01T12:35:50.391Z"
+stopped_at: Completed 02-35-PLAN.md
+last_updated: "2026-11-01T12:44:16.557Z"
 last_activity: 2026-10-31
 last_activity_desc: Completed immutable sample collection and custody foundation.
-state_head: 359ddd6248315147ae500433524c709a29c95731
+state_head: dcad4fea2469fd0e6fa95c860bc0819b3535363c
 progress:
   total_phases: 7
   completed_phases: 1
   total_plans: 37
-  completed_plans: 23
+  completed_plans: 24
   percent: 14
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-10-29)
 
 ## Current Position
 
-Current Plan: 9
+Current Plan: 10
 Total Plans in Phase: 23
 
 Phase: 02 (Scientific Setup Foundation) — IN PROGRESS
@@ -68,6 +68,7 @@ Progress: [█░░░░░░░░░] 14% (one of six phases closed with wa
 | Phase 02 P32 | 20min | 3 tasks | 11 files |
 | Phase 02 P33 | 25min | 2 tasks | 8 files |
 | Phase 02 P34 | continuation session | 2 tasks | 11 files |
+| Phase 02-scientific-setup-foundation P35 | 9min | 3 tasks | 14 files |
 
 ## Accumulated Context
 
@@ -88,6 +89,8 @@ Decisions are logged in PROJECT.md Key Decisions table. Current roadmap decision
 - [Phase 02]: Derived procedures retain exact source revisions; compatible adoption changes only a plan draft until independently published.
 - [Phase 02]: Sample custody projections use server sequence while preserving reported backdated timestamps as immutable evidence.
 - [Phase 02]: Explicit authenticated confirmation alone admits collection facts; native sample IPC remains fixed-target and main-window-scoped.
+- [Phase 02-scientific-setup-foundation]: Sample outcome recovery uses a fixed read-only native receipt lookup and never replaces the original operation ID.
+- [Phase 02-scientific-setup-foundation]: Samples are retained as a stable dock tab; labels are display data and never replace immutable sample identity.
 
 ### Pending Todos
 
@@ -112,6 +115,6 @@ Decisions are logged in PROJECT.md Key Decisions table. Current roadmap decision
 
 ## Session Continuity
 
-Last session: 2026-11-01T12:35:50.315Z
-Stopped at: Completed 02-34-PLAN.md
+Last session: 2026-11-01T12:44:16.499Z
+Stopped at: Completed 02-35-PLAN.md
 Resume file: None
