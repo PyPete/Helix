@@ -18,4 +18,17 @@ describe("scientificClient", () => {
     expect(typeof (scientificClient as Record<string, unknown>).sampleEvents).toBe("function");
     expect(typeof (scientificClient as Record<string, unknown>).readSample).toBe("function");
   });
+
+  it("rejects a confirmation receipt with the wrong original operation identity", async () => {
+    invoke.mockResolvedValueOnce(JSON.stringify({
+      sample: { identity: { sampleId: "sample-1", origin: "Collection", parentSampleIds: [] }, location: "Hood", serverSequence: 1, lastEventId: "event-1" },
+      receipt: { operationId: "different-operation", kind: "sample.confirm", sampleId: "sample-1", actorSid: "scientist", recordedAtUtc: "2026-11-01T12:00:00Z", payload: "{}" },
+    }));
+    await expect(scientificClient.confirmSample({ operationId: "original-operation", location: "Hood", occurredAtUtc: "2026-11-01T11:00:00Z" })).rejects.toThrow("receipt");
+  });
+
+  it("rejects malformed sample history rather than treating it as evidence", async () => {
+    invoke.mockResolvedValueOnce(JSON.stringify([{ eventId: "event-1", sampleId: "other-sample", kind: "Confirmed" }]));
+    await expect(scientificClient.sampleEvents("sample-1")).rejects.toThrow("history");
+  });
 });
