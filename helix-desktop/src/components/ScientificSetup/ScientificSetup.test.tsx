@@ -19,4 +19,13 @@ describe("ScientificSetup", () => {
     fireEvent.click(screen.getByRole("button", { name: "Reload" }));
     await waitFor(() => expect(screen.getByLabelText("Name")).toHaveValue("Agent draft"));
   });
+
+  it("makes the immutable apparatus identity available in a keyboard-operable full-ID dialog", async () => {
+    render(<ScientificSetup apparatusId="apparatus-immutable-id" initialDraft={{ apparatus: { apparatusId: "apparatus-immutable-id", name: "Local draft", operationId: "op" }, token: 1 }} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "View full ID" }));
+
+    expect(screen.getByRole("dialog", { name: "Apparatus draft full ID" })).toHaveTextContent("apparatus-immutable-id");
+    expect(screen.getByRole("button", { name: "Copy ID" })).toBeInTheDocument();
+  });
 });

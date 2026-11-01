@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { ProcedurePlans } from "./ProcedurePlans";
 
@@ -19,5 +19,15 @@ describe("ProcedurePlans", () => {
     render(<ProcedurePlans kind="plan" selectedId="plan-id" />);
     expect(screen.getByRole("button", { name: "Adopt newer procedure" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Publish named revision" })).toBeInTheDocument();
+  });
+
+  it("requires a named immutable publication confirmation that keeps the exact record identity available", () => {
+    render(<ProcedurePlans kind="procedure" selectedId="procedure-immutable-id" />);
+
+    fireEvent.change(screen.getByLabelText("Revision name"), { target: { value: "Published procedure" } });
+    fireEvent.click(screen.getByRole("button", { name: "Publish named revision" }));
+
+    expect(screen.getByRole("dialog", { name: "Confirm procedure publication" })).toHaveTextContent("does not execute equipment");
+    expect(screen.getByRole("button", { name: "View full ID" })).toBeInTheDocument();
   });
 });
