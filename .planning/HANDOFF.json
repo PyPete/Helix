@@ -1,0 +1,30 @@
+{
+  "version": "1.0",
+  "timestamp": "2026-11-01T13:33:44.9549441Z",
+  "phase": "02",
+  "phase_name": "Scientific Setup Foundation",
+  "phase_dir": ".planning/phases/02-scientific-setup-foundation",
+  "plan": 24,
+  "task": 0,
+  "total_tasks": 4,
+  "status": "paused",
+  "completed_tasks": [
+    {"id": 42, "name": "Frozen Assembly UI and immutable SQL reconstruction proof", "status": "done", "commit": "6ba6ca7"}
+  ],
+  "remaining_tasks": [
+    {"id": 24, "name": "Canonical frozen execution-binding consumption", "status": "not_started"},
+    {"id": 25, "name": "Scientific SQL role and migration durability hardening", "status": "not_started"}
+  ],
+  "blockers": [
+    {"description": "Docker is required for 02-25 isolated Testcontainers PostgreSQL verification; skipped, zero-discovery, or ambient-database results are not successful verification.", "type": "technical", "workaround": "Start Docker and use the plan's disposable isolated fixture with no ambient PGHOST fallback."}
+  ],
+  "async_jobs": [],
+  "human_actions_pending": [],
+  "decisions": [
+    {"decision": "Policy content registration never grants approval; production authority is fail-closed.", "rationale": "Immutable content identity and authoritative approval provenance must remain independent.", "phase": "02"},
+    {"decision": "Wave 18 plans 02-24 and 02-25 may run in parallel.", "rationale": "Both depend on completed 02-42 and declare no overlapping files.", "phase": "02"}
+  ],
+  "uncommitted_files": [],
+  "next_action": "Run /gsd-resume-work, confirm Docker before 02-25 SQL tests, then execute 02-24 and 02-25 in parallel. Do not start Wave 19.",
+  "context_notes": "02-42 was completed and summarized at 6ba6ca7. STATE.md and ROADMAP.md contain stale completion/progress references documented in the phase handoff."
+}
