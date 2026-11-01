@@ -1,4 +1,5 @@
 using Helix.Orchestration.Agent.ScientificSetup;
+using Helix.Orchestration.Agent.Experiments;
 using Helix.Orchestration.Core.ScientificSetup;
 using Xunit;
 
@@ -33,6 +34,15 @@ public sealed class FrozenSetupTests
 
         Assert.True(accepted.IsApproved);
         Assert.False(rejected.IsApproved);
+    }
+
+    [Fact]
+    public void Canonical_definition_exposes_optional_typed_frozen_binding()
+    {
+        var binding = typeof(CanonicalExperimentDefinition).GetProperty("FrozenExecutionBinding");
+
+        Assert.NotNull(binding);
+        Assert.Equal(typeof(FrozenExecutionBinding), binding.PropertyType);
     }
 
     private sealed class TrustedTestAuthority : IPolicyApprovalAuthority

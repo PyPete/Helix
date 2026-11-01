@@ -1,8 +1,10 @@
 using Helix.Orchestration.Agent.Events;
 using Helix.Orchestration.Agent.Experiments;
 using Helix.Orchestration.Agent.Security;
+using Helix.Orchestration.Agent.ScientificSetup;
 using Helix.Orchestration.Core.Devices;
 using Helix.Orchestration.Core.Runspace;
+using Helix.Orchestration.Core.ScientificSetup;
 using Helix.Orchestration.Core.WSL;
 using Helix.Orchestration.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Builder;
@@ -26,7 +28,8 @@ public static class ExperimentEndpoints
         string Name,
         WslDocument Workflow,
         string ApprovedPolicyRevision,
-        Dictionary<string, object?>? Metadata = null);
+        Dictionary<string, object?>? Metadata = null,
+        Guid? FrozenManifestId = null);
 
     /// <summary>
     /// Maps the /experiments endpoint group onto <paramref name="app"/>.
@@ -45,6 +48,7 @@ public static class ExperimentEndpoints
             IRunspaceEventEmitter emitter,
             IWslCompiler compiler,
             DeviceRegistry deviceRegistry,
+            FrozenSetupResolver frozenSetupResolver,
             CancellationToken ct) =>
         {
             try
@@ -59,11 +63,25 @@ public static class ExperimentEndpoints
                 // canonical WSL validation; this does not accept alternate names or
                 // values, it only restores the authored scalar types.
                 var workflow = NormalizeTransportValues(request.Workflow);
-                var compilation = compiler.Compile(workflow, deviceRegistry);
-                if (!compilation.Success || compilation.Definition is null)
-                    return Results.BadRequest(new { code = "experiment.workflow_rejected", diagnostics = compilation.Diagnostics });
+                RunspaceDefinition definition;
+                FrozenExecutionBinding? frozenBinding = null;
+                if (request.FrozenManifestId is { } manifestId)
+                {
+                    var resolved = await frozenSetupResolver.ResolveDefinitionAsync(manifestId, actor.Sid, workflow, compiler, deviceRegistry, ct);
+                    if (resolved is null)
+                        return Results.NotFound(new { code = "experiment.frozen_manifest_not_found" });
+                    if (!string.Equals(request.ApprovedPolicyRevision, resolved.Value.Binding.Manifest.Policy.RevisionId.ToString(), StringComparison.Ordinal))
+                        return Results.BadRequest(new { code = "experiment.frozen_policy_mismatch" });
 
-                var definition = compilation.Definition;
+                    (frozenBinding, definition) = resolved.Value;
+                }
+                else
+                {
+                    var compilation = compiler.Compile(workflow, deviceRegistry);
+                    if (!compilation.Success || compilation.Definition is null)
+                        return Results.BadRequest(new { code = "experiment.workflow_rejected", diagnostics = compilation.Diagnostics });
+                    definition = compilation.Definition;
+                }
                 var definitionHash = definition.Metadata.TryGetValue("definitionHash", out var hash)
                     ? hash?.ToString() ?? string.Empty
                     : string.Empty;
@@ -78,7 +96,8 @@ public static class ExperimentEndpoints
                     request.ApprovedPolicyRevision,
                     definitionHash,
                     actor.Sid,
-                    DateTimeOffset.UtcNow));
+                    DateTimeOffset.UtcNow,
+                    frozenBinding));
 
                 var runspace = await runspaceManager.CreateAsync(definition, ct);
                 emitter.Publish(new RunspaceStartedEvent(runspace.RunspaceId)
@@ -101,6 +120,10 @@ public static class ExperimentEndpoints
                     activeRunspaceId = updated.ActiveRunspaceId,
                     definitionHash
                 });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Results.BadRequest(new { code = "experiment.frozen_binding_rejected", message = ex.Message });
             }
             catch (Exception ex)
             {

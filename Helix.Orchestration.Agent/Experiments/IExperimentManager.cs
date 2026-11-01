@@ -1,4 +1,5 @@
 ﻿using Helix.Orchestration.Core.Experiment;
+using Helix.Orchestration.Core.ScientificSetup;
 using Helix.Orchestration.Core.WSL;
 
 namespace Helix.Orchestration.Agent.Experiments;
@@ -47,7 +48,8 @@ public sealed record CanonicalExperimentDefinition(
     string PolicyRevision,
     string DefinitionHash,
     string ActorSid,
-    DateTimeOffset AcceptedAtUtc);
+    DateTimeOffset AcceptedAtUtc,
+    FrozenExecutionBinding? FrozenExecutionBinding = null);
 
 /// <summary>
 /// Manages the in-process lifecycle of experiments: creation, phase transitions, and terminal states.
