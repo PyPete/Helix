@@ -14,7 +14,7 @@ function Invoke-Verified {
     $ErrorActionPreference = $previousErrorAction
     Write-Host $output
     if ($exitCode -ne 0) { throw "$Name failed with exit code $exitCode." }
-    if ($output -notmatch '(?im)(?:Passed!.*Total:\s*[1-9]\d*|test result: ok\.\s*[1-9]\d* passed)') {
+    if ($output -notmatch '(?ims)(?:Test Run Successful\.\s*Total tests:\s*[1-9]\d*\s*Passed:\s*[1-9]\d*|test result: ok\.\s*[1-9]\d* passed)') {
         throw "$Name did not report a nonzero executed-test count."
     }
     return $output
