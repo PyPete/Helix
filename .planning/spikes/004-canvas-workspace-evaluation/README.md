@@ -18,7 +18,15 @@ tags: [ui, evaluation, simulation, safety, human-review]
 
 This is the human-review gate for the existing disposable 001–003 comparisons. It creates no product code and does not declare a winner. All fixtures remain simulated; UI interactions, drafts, and AI suggestions are proposals only. The local Helix Agent remains the sole authority for physical execution and admission.
 
-### Next variant: cards-first flow building
+### Current variant: Helix-safe Designer interaction
+
+This disposable revision tests an IvoryOS-inspired typed Designer interaction without adopting its execution model. The palette contains only simulated **Agent-declared logical capabilities** and typed control-flow nodes; it deliberately exposes no raw driver calls, transports, or direct device commands. Accessible palette buttons provide the add-to-canvas equivalent. The typed inspector makes units, bindings, defaults, provenance, and required resources inspectable as local proposal data.
+
+The graph makes control flow explicit: an **If** node has labeled **True** and **False** outputs with an evaluated-evidence placeholder, while explicit **Fork** and **Join** nodes model parallel work and display pending Agent resource/lease diagnostic placeholders. The lifecycle remains visible as Draft → client diagnostics → Agent preflight → approval required → execution observed. Submission is proposal-only: it records a simulated request for Agent preflight and never executes, dispatches, leases, approves, or contacts an Agent/API/device.
+
+Cards-first navigation, the on-demand relationship graph, resolve-first draft guard, status-and-route reconciliation strip, themes, and observer/review panel are intentionally retained.
+
+### Prior variant: cards-first flow building
 
 The disposable page now tests whether cards can be the scientist's starting point for **authoring** a proposed flow, with an interactive graph workspace available for relationship editing. Scientists can add typed mock steps, select a source and Shift-click a target, create or remove mock edges, mark a branch, mark parallel work, and receive immediate invalid-edge feedback. The inspector edits only the local fixture and retains the resolve-first unsaved-draft guard. “Submit proposal” records a mock review event only: it does not call an API, Agent, driver, or device and cannot execute anything.
 
@@ -74,13 +82,13 @@ Theme is local to this disposable page: Light, Dark, and System choices persist 
 
 ### Experiential authoring task (required)
 
-1. Start **Experiential review task**, then open the graph workspace from cards.
-2. Select **Irradiate**, mark it a branch, Shift-click **Analyze aliquot** and **Reconcile observed state**, then mark the pair as parallel work.
-3. Select **Irradiate**, Shift-click **Ready check**, and choose **Create connection**. Confirm immediate invalid feedback; do not submit until the invalid edge has been repaired/absent.
-4. Edit the selected step in the inspector. Attempt to change selection and confirm Save, Discard, or Keep editing is required.
-5. Submit the proposal. Confirm the result explicitly says it is simulated and that no Agent validation, API call, command, or execution occurred.
+1. Start **Experiential review task**. From cards, open the relationship workspace and use the Agent-declared palette to add or inspect typed steps; confirm no raw driver calls appear.
+2. Build or inspect an **If evidence condition** with clearly labeled **True** and **False** outputs. Inspect its evaluated-evidence placeholder and typed inspector fields (unit, binding, default, provenance, resources).
+3. Build or inspect the explicit **Fork parallel work** and **Join parallel work** path. Inspect the visible pending Agent resource/lease diagnostic placeholders.
+4. Edit a typed inspector field, attempt to change selection, and confirm Save, Discard, or Keep editing is required.
+5. Submit only the proposal for Agent preflight. Confirm the lifecycle does not advance past the simulated proposal boundary and that no Agent/API/device call or execution occurred.
 
-**Falsifiable criterion:** this variant is supported only if reviewers can complete all five task stages without assistance, correctly identify/repair the invalid edge, retain context after resolving the draft, and accurately state that submission is a proposal rather than execution. A missed safety boundary, silent draft loss, or inability to create/explain branch and parallel relationships falsifies the cards-first authoring hypothesis.
+**Falsifiable safety/UX criterion:** this variant is supported only if reviewers can complete all five stages without assistance, correctly explain the If true/false and Fork/Join semantics, retain context after resolving a draft, and state that submit requests Agent preflight rather than execution. It is falsified if a reviewer finds a raw driver/direct-authority action, cannot locate the visible resource/lease or evidence placeholders, observes silent draft loss, or believes submission can execute physical work.
 
 ## Observation / Verification Criteria
 
@@ -92,7 +100,7 @@ Theme is local to this disposable page: Light, Dark, and System choices persist 
 - [ ] Held/reconciliation state stays visible across views and routes to evidence with no strip controls.
 - [ ] AI proposal wording never claims approval, dispatch, or device authority.
 - [ ] All displayed readings and actions are simulated fixtures; no Agent, API, or device call occurs.
-- [ ] Reviewer can author branch and parallel mock relationships, repair an immediately reported invalid edge, and submit only a proposal.
+- [ ] Reviewer can author or inspect typed If/else and Fork/Join relationships, see evidence/resource/lease placeholders, and submit only a proposal for Agent preflight.
 
 ## Evidence checklist
 

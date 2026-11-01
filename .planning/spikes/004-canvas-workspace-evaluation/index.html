@@ -1,25 +1,35 @@
 <!doctype html>
 <html lang="en" data-theme="system">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Spike 004 — Cards-first flow builder</title><link rel="stylesheet" href="./style.css"></head>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spike 004 — Helix-safe Designer</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
 <body>
-  <header class="safety-strip"><strong>SIMULATED SPIKE · Held for reconciliation</strong><span>Uncertainty: observed device state requires review</span><button id="safetyRoute">Open safety evidence</button><span>Route: proposal review → Agent validation → possible execution</span></header>
+  <header class="safety-strip"><strong>SIMULATED SPIKE · Held for reconciliation</strong><span>Observed apparatus state is uncertain.</span><button id="safetyRoute">View reconciliation evidence</button><span>Route: proposal → Agent preflight → possible observed execution</span></header>
   <main>
-    <p class="eyebrow">Disposable mock workspace — no API, Agent, or device is contacted</p>
-    <h1>Build a scientific flow from cards</h1>
-    <p>Cards are navigation. The graph is an editable relationship workspace. Every output is a <strong>proposal</strong>, never an execution command.</p>
-    <div class="toolbar"><button id="cardView" aria-pressed="true">Sequence cards</button><button id="graphView" aria-pressed="false">Open interactive graph</button><button data-theme-choice="light">Light</button><button data-theme-choice="dark">Dark</button><button data-theme-choice="system">System</button></div>
-    <section id="cards" aria-label="Flow cards"><h2>Flow cards</h2><div id="cardList" class="card-list"></div><button id="openBuilder">Add or connect steps in graph workspace</button></section>
-    <section id="graph" class="hidden" aria-label="Interactive graph workspace">
-      <div class="workspace-header"><h2>Interactive graph workspace</h2><p id="connectionFeedback" role="status">Select a source and a target to connect them.</p></div>
+    <p class="eyebrow">Disposable Designer experiment · no API, Agent, driver, or device is contacted</p>
+    <h1>Author a typed scientific-flow proposal</h1>
+    <p>Cards are the primary navigator. The relationship workspace is on demand. The client can diagnose a draft, but only the Agent can preflight, admit, and observe physical work.</p>
+    <ol class="lifecycle" aria-label="Proposal lifecycle"><li class="active">1 Draft</li><li>2 Client diagnostics</li><li>3 Agent preflight</li><li>4 Approval required</li><li>5 Execution observed</li></ol>
+    <div class="toolbar"><button id="cardView" aria-pressed="true">Sequence cards</button><button id="graphView" aria-pressed="false">Inspect relationships &amp; parallelism</button><button data-theme-choice="light">Light</button><button data-theme-choice="dark">Dark</button><button data-theme-choice="system">System</button></div>
+
+    <section id="cards" aria-label="Flow cards"><h2>Typed flow cards</h2><p>Each card is an Agent-declared logical capability or a typed control-flow step, never a raw driver call.</p><div id="cardList" class="card-list"></div><button id="openBuilder">Add typed step or inspect relationships</button></section>
+    <section id="graph" class="hidden" aria-label="Relationship workspace">
+      <div class="workspace-header"><h2>Relationship workspace</h2><p id="connectionFeedback" role="status">Use the accessible palette to add a typed step; select a source, Shift-select a target, then connect.</p></div>
       <div class="workspace">
-        <aside class="palette"><h3>Step palette</h3><p>Add simulated typed steps.</p><button data-add="Prepare sample">+ Prepare sample</button><button data-add="Irradiate">+ Irradiate</button><button data-add="Analyze aliquot">+ Analyze aliquot</button><button data-add="Reconcile observed state">+ Reconcile state</button></aside>
-        <div><div id="graphCanvas" class="graph-canvas" aria-label="Flow canvas"></div><div class="connection-controls"><button id="connectSteps">Create connection</button><button id="removeConnection">Remove selected connection</button><button id="makeBranch">Mark selected source as branch</button><button id="makeParallel">Mark selected steps parallel</button></div></div>
+        <aside class="palette"><h3>Agent-declared palette</h3><p>Accessible add-to-canvas equivalent.</p><button data-add="Prepare sample">Add Prepare sample</button><button data-add="Irradiate">Add Irradiate</button><button data-add="Analyze aliquot">Add Analyze aliquot</button><button data-add="If evidence condition">Add If evidence condition</button><button data-add="Fork parallel work">Add Fork parallel work</button><button data-add="Join parallel work">Add Join parallel work</button><p class="boundary">No driver method, transport command, or Execute action is available.</p></aside>
+        <div><div id="graphCanvas" class="graph-canvas" aria-label="Typed flow canvas"></div><div class="connection-controls"><button id="connectSteps">Create typed connection</button><button id="removeConnection">Remove selected connection</button><button id="makeIf">Make selected step an If node</button><button id="makeFork">Make selected step a Fork</button><button id="makeJoin">Make selected step a Join</button></div></div>
       </div>
     </section>
-    <aside class="inspector" aria-label="Selected step inspector"><h2>Inspector</h2><p id="currentEntity">No step selected</p><label>Step name <input id="stepName" disabled></label><label>Temperature (°C) <input id="draftValue" inputmode="decimal" disabled></label><p id="draftState">Select a step to edit.</p><button id="saveDraft" disabled>Save simulated draft</button><button id="removeStep" disabled>Remove selected step</button><p class="proposal-note">Saved changes are local mock data. Submission is only a proposal requiring scientist review and Agent validation.</p><button id="submitProposal">Submit proposal for Agent validation</button><p id="proposalStatus" role="status"></p></aside>
-    <section class="review"><h2>Experiential review task</h2><ol><li>Add/select typed cards to build a simple flow.</li><li>Create a branch and parallel work.</li><li>Attempt an invalid edge, repair it, then edit a selected step.</li><li>Submit the proposal and verify it is not executed.</li></ol><button id="startStudy">Start task</button><p id="studyPrompt" role="status"></p></section>
+
+    <aside class="inspector" aria-label="Selected typed step inspector"><h2>Typed inspector</h2><p id="currentEntity">No step selected</p><label>Step name <input id="stepName" disabled></label><label>Temperature <span class="field-row"><input id="draftValue" inputmode="decimal" disabled><output>°C</output></span></label><label>Input binding <input id="binding" disabled></label><label>Default value <input id="defaultValue" disabled></label><p id="provenance"></p><p id="resources"></p><p id="draftState">Select a step to edit.</p><button id="saveDraft" disabled>Save simulated draft</button><button id="removeStep" disabled>Remove selected step</button><p class="proposal-note">Local draft only. It has not been preflighted, approved, admitted, dispatched, or executed.</p><button id="submitProposal">Submit proposal for Agent preflight</button><p id="proposalStatus" role="status"></p></aside>
+    <section class="diagnostics"><h2>Diagnostics placeholders</h2><p><strong>Client:</strong> typed units and required bindings are locally checked in this mock.</p><p><strong>Agent-provided at preflight:</strong> resource availability: pending; lease compatibility: pending; safety/capability admission: pending.</p><p><strong>Evaluated evidence:</strong> not evaluated — awaiting Agent preflight. An If node displays this placeholder beside its True and False outputs.</p></section>
+    <section class="review"><h2>Experiential review task</h2><ol><li>Build a typed flow with an If/else and Fork/Join pair.</li><li>Inspect unit, binding, default, provenance, resources, evidence, and diagnostic placeholders.</li><li>Submit only for Agent preflight; confirm no control can execute work.</li></ol><button id="startStudy">Start task</button><p id="studyPrompt" role="status"></p></section>
   </main>
   <dialog id="resolveDialog"><h2>Resolve simulated draft first</h2><p id="resolveCopy"></p><button id="saveThenSwitch">Save draft and continue</button><button id="discardThenSwitch">Discard draft</button><button id="cancelSwitch">Keep editing</button></dialog>
-  <dialog id="safetyDialog"><h2>Safety evidence (simulated)</h2><p>State is held because physical reconciliation is uncertain. This strip routes to evidence only; it has no pause, hold, abort, dispatch, or device control.</p><button id="closeSafety">Close</button></dialog>
+  <dialog id="safetyDialog"><h2>Reconciliation evidence (simulated)</h2><p>The status-and-route strip only exposes evidence. It contains no pause, hold, abort, dispatch, driver, or device control.</p><button id="closeSafety">Close</button></dialog>
   <script type="module" src="./app.mjs"></script>
-</body></html>
+</body>
+</html>
