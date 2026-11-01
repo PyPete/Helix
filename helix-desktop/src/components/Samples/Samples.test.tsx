@@ -23,4 +23,13 @@ describe("Samples", () => {
     expect(screen.getByLabelText("Occurrence time")).toBeRequired();
     expect(screen.getByLabelText("Location")).toBeRequired();
   });
+
+  it("requires complete parent-to-activity-to-child evidence before recording a transformation", async () => {
+    render(<Samples />);
+    await userEvent.click(screen.getByRole("button", { name: "Record transformation" }));
+    expect(screen.getByRole("dialog")).toHaveTextContent("Created by transformation");
+    expect(screen.getByLabelText("Operation description")).toBeRequired();
+    expect(screen.getByLabelText("Parent sample IDs")).toBeRequired();
+    expect(screen.getByLabelText("New child labels")).toBeRequired();
+  });
 });
