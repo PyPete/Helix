@@ -9,34 +9,31 @@ namespace Helix.Orchestration.Agent.Tests.Runspaces;
 public sealed class DurableRunspaceTests
 {
     [Fact]
-    public async Task StartAsync_DelegatesToWorkflowExecutor_AndCompletes()
+    public async Task StartAsync_RejectsLegacyExecutionWithoutDispatchingWorkflow()
     {
         var executor = new StubWorkflowExecutor();
         var definition = CreateDefinition("wf-start");
         await using var runspace = new DurableRunspace(definition, executor);
 
-        await runspace.StartAsync();
-        await runspace.WaitAsync();
+        var exception = await Assert.ThrowsAsync<NotSupportedException>(() => runspace.StartAsync());
 
-        Assert.Equal(RunspaceStatus.Completed, runspace.Status);
-        Assert.Equal("wf-start", executor.LastWorkflowName);
-        Assert.Equal(runspace.RunspaceId, executor.LastWorkflowId);
+        Assert.Equal("Legacy DurableRunspace execution is disabled. Use canonical dispatch with a persisted cursor.", exception.Message);
+        Assert.Equal(RunspaceStatus.Idle, runspace.Status);
+        Assert.Null(executor.LastWorkflowName);
+        Assert.Null(executor.LastWorkflowId);
     }
 
     [Fact]
-    public async Task PauseAsync_CancelsCurrentExecution_AndSetsPausedStatus()
+    public async Task StartAsync_RejectsLegacyExecutionWithoutRequestingCancellation()
     {
         var executor = new BlockingWorkflowExecutor();
         var definition = CreateDefinition("wf-pause");
         await using var runspace = new DurableRunspace(definition, executor);
 
-        await runspace.StartAsync();
-        await executor.ExecutionStarted.Task.WaitAsync(TimeSpan.FromSeconds(1));
+        await Assert.ThrowsAsync<NotSupportedException>(() => runspace.StartAsync());
 
-        await runspace.PauseAsync();
-
-        Assert.Equal(RunspaceStatus.Paused, runspace.Status);
-        Assert.True(executor.CancelCalled);
+        Assert.Equal(RunspaceStatus.Idle, runspace.Status);
+        Assert.False(executor.CancelCalled);
     }
 
     private static RunspaceDefinition CreateDefinition(string name) => new(
