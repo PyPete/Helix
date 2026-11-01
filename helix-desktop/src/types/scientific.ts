@@ -84,7 +84,7 @@ export interface SampleEvent {
 
 export interface SampleReceipt {
   operationId: string;
-  kind: "sample.confirm" | "sample.append";
+  kind: "sample.confirm" | "sample.append" | "sample.transform";
   sampleId: string;
   actorSid: string;
   recordedAtUtc: string;
