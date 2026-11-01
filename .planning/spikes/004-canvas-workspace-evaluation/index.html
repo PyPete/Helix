@@ -1,0 +1,71 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Helix Canvas Workspace - Spike 004</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="safety-strip" aria-label="Execution and safety status">
+    <div><strong>LOCAL AGENT</strong><span class="warning-dot"></span> Awaiting reconciliation</div>
+    <div class="strip-copy">Observed outcome unavailable. No command can be retried.</div>
+    <button id="safetyRoute" class="route-button">Open safety evidence</button>
+  </header>
+  <main class="workspace">
+    <nav class="rail" aria-label="Workspace navigation">
+      <div class="mark">H</div>
+      <button class="rail-item active" type="button">Workspace</button>
+      <button class="rail-item" type="button">Samples</button>
+      <button class="rail-item" type="button">Evidence</button>
+    </nav>
+    <section class="center">
+      <header class="workspace-header">
+        <div><p class="eyebrow">SIMULATED EXPERIMENT / DRAFT REVISION 04</p><h1>Photocatalyst screening</h1></div>
+        <div class="view-toggle" aria-label="Protocol representation"><button id="graphView" class="selected" type="button">Canvas graph</button><button id="cardView" type="button">Sequence cards</button></div>
+      </header>
+      <section id="graph" class="graph-view" aria-label="Protocol graph">
+        <div class="apparatus"><span>REACTOR R-12</span><small>Temp 24.1 C / simulated</small></div>
+        <svg viewBox="0 0 760 330" aria-hidden="true"><path d="M130 165 H250 M350 165 H455 M535 165 H640 M455 165 V75 H590 M455 165 V260 H590" /></svg>
+        <button class="node selected-node" data-entity="Reactor R-12" type="button" style="left:6%;top:120px">Reactor R-12<small>ready check</small></button>
+        <button class="node" data-entity="Prepare sample S-142" type="button" style="left:29%;top:120px">Prepare S-142<small>draft step</small></button>
+        <button class="node" data-entity="Irradiate" type="button" style="left:55%;top:120px">Irradiate<small>conditional</small></button>
+        <button class="node branch" data-entity="Analyze aliquot" type="button" style="left:76%;top:30px">Analyze aliquot<small>parallel lane</small></button>
+        <button class="node branch" data-entity="Reconcile observed state" type="button" style="left:76%;top:220px">Reconcile state<small>held</small></button>
+      </section>
+      <section id="cards" class="cards-view hidden" aria-label="Protocol sequence cards">
+        <button class="step-card" data-entity="Reactor R-12" type="button"><b>01 / Ready check</b><span>Reactor R-12</span><em>admission unknown</em></button>
+        <button class="step-card" data-entity="Prepare sample S-142" type="button"><b>02 / Prepare sample</b><span>S-142, 5.0 mL</span><em>draft</em></button>
+        <button class="step-card" data-entity="Irradiate" type="button"><b>03 / Irradiate</b><span>conditional branch</span><em>not authorized</em></button>
+        <button class="step-card" data-entity="Analyze aliquot" type="button"><b>04a / Analyze aliquot</b><span>parallel lane</span><em>unreviewed</em></button>
+        <button class="step-card" data-entity="Reconcile observed state" type="button"><b>04b / Reconcile state</b><span>parallel lane</span><em>held</em></button>
+      </section>
+      <section class="ai-proposal" aria-label="AI proposal">
+        <div><p class="eyebrow">AI PROPOSAL / UNCERTAINTY 0.31</p><strong>Suggest 10 minute irradiation extension</strong><span>Based on incomplete simulated trend data; requires scientist review and Agent admission.</span></div>
+        <button id="reviewProposal" type="button">Review proposal</button>
+      </section>
+    </section>
+    <aside class="inspector" aria-label="Contextual inspector">
+      <p class="eyebrow">CONTEXTUAL INSPECTOR</p><h2 id="entityName">Reactor R-12</h2>
+      <label for="draftValue">Draft target temperature <span class="unit">C</span></label>
+      <input id="draftValue" value="24.0" inputmode="decimal">
+      <p id="draftState" class="muted">No unsaved changes</p>
+      <dl><div><dt>Provenance</dt><dd>fixture / apparatus-001</dd></div><div><dt>Quality</dt><dd>Observed state unavailable</dd></div><div><dt>Review</dt><dd>Admission unresolved</dd></div></dl>
+      <button id="saveDraft" class="save" type="button">Save simulated draft</button>
+      <p class="authority">Editing creates a proposal only. The local Agent alone may admit or execute a command.</p>
+    </aside>
+  </main>
+  <dialog id="resolveDialog" aria-labelledby="resolveTitle">
+    <p class="eyebrow">UNSAVED DRAFT</p><h2 id="resolveTitle">Resolve draft before changing selection</h2>
+    <p>Your draft stays attached to <strong id="currentEntity">Reactor R-12</strong>. It will not be retained, reassigned, approved, or dispatched automatically.</p>
+    <div class="dialog-actions"><button id="saveThenSwitch" class="save" type="button">Save simulated draft</button><button id="discardThenSwitch" class="danger" type="button">Discard draft</button><button id="cancelSwitch" type="button">Keep editing</button></div>
+  </dialog>
+  <dialog id="safetyDialog" aria-labelledby="safetyTitle">
+    <p class="eyebrow">SAFETY EVIDENCE</p><h2 id="safetyTitle">Held pending reconciliation</h2>
+    <p>The Agent has not confirmed the observed effect. This workspace cannot retry, pause, hold, abort, or dispatch from this strip.</p>
+    <ul><li>Capability: unavailable</li><li>Safety: unknown</li><li>Lease/resource/budget/termination: not recorded</li></ul>
+    <button id="closeSafety" type="button">Return to workspace</button>
+  </dialog>
+  <script type="module" src="app.mjs"></script>
+</body>
+</html>

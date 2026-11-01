@@ -17,6 +17,7 @@ Explore a scientific workspace informed by IvoryOS while preserving Helix's Agen
 - Persistent execution/safety strip survives modes, variants and responsive layouts; blocked/uncertain states carry text as well as semantic symbols.
 - Decision recorded 2026-11-01: while the Agent is awaiting reconciliation, the persistent strip is status + route only; it has no direct Pause/Hold/Abort controls. Detailed controls remain in the safety/evidence view and do not confer Agent authority.
 - Decision recorded 2026-11-01: a contextual-inspector selection change with an unsaved draft requires explicit save, discard, or cancellation. Drafts are never silently retained, reassigned, autosaved, retargeted, approved, or applied to a reviewed fixture/run.
+- Decision recorded 2026-11-01: canvas graph is the primary work surface and sequence cards are an equally preserved toggle over the same stable protocol identities and control flow. View switching never resolves drafts, mutates semantics, or grants execution authority.
 - Capture ISO/category/variant/scenario events, task durations and observer notes for export. Human review is required before any winner or production recommendation.
 - 002 must share canonical stable step identities and dependencies across cards/SVG graph; explicitly label conditional branches and parallel lanes instead of flattening them into a single execution sequence.
 - Numeric/unit edits, rename, add and linear reorder are draft-only and available in both representations. Confirm dirty fixture replacement; never mutate reviewed fixtures or the frozen run.
@@ -32,7 +33,7 @@ Explore a scientific workspace informed by IvoryOS while preserving Helix's Agen
 
 ## Review gate
 
-Spike 004 records status + route safety handling and resolve-first inspector drafts. The next unresolved interactive choice is whether the primary protocol work surface is a canvas graph, sequence cards, or a persistent hybrid, while preserving stable identities and one source of draft state; see [004](004-canvas-workspace-evaluation/README.md). It does not authorize production UI changes.
+Spike 004 records status + route safety handling, resolve-first inspector drafts, and a canvas-graph primary surface with a sequence-card toggle. The disposable interactive artifact and review steps are in [004](004-canvas-workspace-evaluation/README.md); evidence remains pending and it does not authorize production UI changes.
 
 
 001 received the user comment **"this looks really good"** on 2026-10-30: positive visual feedback, not a validated comparison. Limited parent-reported DOM smoke is recorded in its README. 002 received a graph preference with interchangeable cards, recorded verbatim in its README; this is not a validated winner. The introductory idea paragraph preserves the original capture. All three comparisons are now built, with human comparative review still pending. This session built only 003; the original TODO remains pending.

@@ -41,15 +41,27 @@ The persistent execution/safety strip shows the truthful reconciliation/held sta
 
 Changing contextual-inspector selection while the current entity has an unsaved draft requires explicit resolution: save, discard, or cancel the selection change. The draft is never silently retained, reassigned, autosaved, retargeted, approved, dispatched, or applied to a reviewed fixture/run. The resolution surface must retain the current entity's stable identity, provenance, units, quality flags, and review state.
 
-## Next Interactive Decision
+### 2026-11-01 - Primary work surface: canvas graph + cards toggle
 
-**Which primary work surface should the disposable workspace open for authoring and reviewing a protocol, while retaining the status + route strip and resolve-first inspector behavior?**
+The disposable workspace opens on the canvas graph. Sequence cards remain an equally preserved alternate representation of the same stable protocol identities and control flow. Conditional branches and parallel lanes remain explicit in both views; switching views never resolves a draft, changes semantics, or grants execution authority.
 
-- **Canvas graph primary + cards toggle (recommended):** open on the apparatus/protocol graph; expose sequence cards as an equally preserved view of the same stable protocol identities and control flow.
-- **Sequence cards primary + graph on demand:** open on the linear card sequence; require an explicit switch to inspect branches, loops, dependencies, and parallel lanes.
-- **Persistent hybrid:** keep a compact graph and sequence cards visible together, with one selection model and no duplicate or divergent draft state.
+## How to Run and Review
 
-Every option must label conditional branches and parallel lanes, preserve immutable reviewed revisions, and ensure view changes neither resolve drafts nor grant execution authority. This is a simulated comparison only, not a production layout approval.
+1. Run `node .planning/spikes/server.mjs` from the repository root.
+2. Open `http://127.0.0.1:4317/004-canvas-workspace-evaluation/`.
+3. Confirm that Canvas graph opens first; switch to Sequence cards and verify the same named protocol entities, conditional step, and parallel lanes are still visible.
+4. Edit the inspector temperature, then select another graph node/card. Verify the resolve-first dialog requires Save simulated draft, Discard draft, or Keep editing; no draft is silently reassigned.
+5. Select Open safety evidence in the persistent strip. Verify held/reconciliation status routes to evidence without direct operational controls.
+6. Review the AI proposal. It must remain a proposal requiring scientist review and Agent admission, never an execution control.
+
+## Observation / Verification Criteria
+
+- [ ] Graph and cards preserve the same protocol identity and make control flow explicit.
+- [ ] The graph opens as the primary work surface; cards are an alternate, not divergent, view.
+- [ ] Inspector selection is blocked until an unsaved draft is explicitly resolved.
+- [ ] Held/reconciliation state stays visible across views and routes to evidence with no strip controls.
+- [ ] AI proposal wording never claims approval, dispatch, or device authority.
+- [ ] All displayed readings and actions are simulated fixtures; no Agent, API, or device call occurs.
 
 ## Evidence checklist
 
