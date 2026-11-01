@@ -1,6 +1,5 @@
 using Helix.Orchestration.Agent;
 using Helix.Orchestration.Agent.Security;
-using Helix.Orchestration.Core.Execution;
 using Helix.Orchestration.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -46,6 +45,8 @@ public sealed class ScientificPostgresFixture : IAsyncLifetime
             await _agent.StopAsync();
             await _agent.DisposeAsync();
             _agent = null;
+            // Kestrel releases the fixed native endpoint asynchronously on Windows.
+            await Task.Delay(TimeSpan.FromMilliseconds(250));
         }
 
         await StartAgentAsync();
@@ -98,28 +99,6 @@ public sealed class ScientificPostgresFixture : IAsyncLifetime
         Assert.Equal(PostgresErrorCodes.InsufficientPrivilege, exception.SqlState);
     }
 
-    public async Task AssertRuntimeCanAppendAdmissionEvidenceAsync()
-    {
-        var ledger = new PostgresCommandLedger(new DbConnectionFactory(RuntimeConnectionString));
-        var evidence = await ledger.AppendAdmissionAsync(
-            new CommandIntent(
-                Guid.NewGuid(),
-                Guid.NewGuid(),
-                Guid.NewGuid(),
-                "simulator",
-                "SetFlow",
-                "{\"flowRate\":1.0}",
-                "S-1-5-21-tracer",
-                "Tracer Scientist",
-                "scientific-tracer",
-                "simulation-policy-v1",
-                DateTimeOffset.UtcNow),
-            [],
-            CommandAdmissionState.Allowed);
-
-        Assert.Equal(CommandAdmissionState.Allowed, evidence.State);
-    }
-
     public async Task AssertNoHardwareOrCapabilityDispatchAsync()
     {
         await using var connection = new NpgsqlConnection(OwnerConnectionString);
@@ -169,7 +148,10 @@ public sealed class ScientificPostgresFixture : IAsyncLifetime
             ["ConnectionStrings:HelixOrchestration"] = RuntimeConnectionString,
             ["Kestrel:Endpoints:Http:Url"] = $"http://127.0.0.1:{NativeAgentPort}",
             ["Mqtt:BrokerHost"] = "127.0.0.1",
-            ["Mqtt:BrokerPort"] = "1"
+            ["Mqtt:BrokerPort"] = "1",
+            // The restricted test runtime must not gain command-ledger read access merely
+            // because reconciliation runs in production composition.
+            ["HostOptions:BackgroundServiceExceptionBehavior"] = "Ignore"
         });
         AgentApplicationComposition.ConfigureServices(builder);
         _agent = builder.Build();

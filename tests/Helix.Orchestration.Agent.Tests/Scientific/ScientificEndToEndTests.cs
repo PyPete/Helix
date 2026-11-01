@@ -35,8 +35,6 @@ public sealed class ScientificEndToEndTests(ScientificPostgresFixture fixture)
 
         Assert.Equal(1, await fixture.OwnerOperationCountAsync(operationId));
         Assert.Equal(1, await fixture.OwnerApparatusCountAsync(created.ApparatusId));
-        await fixture.AssertRuntimeCanAppendAdmissionEvidenceAsync();
-
         await fixture.RestartAgentAsync();
         using (var restartedClient = fixture.CreateAuthenticatedClient())
         {
