@@ -21,6 +21,7 @@ import DeviceManualControl from '../components/DeviceManualControl/DeviceManualC
 import { ProcedurePlans } from '../components/ScientificSetup/ProcedurePlans';
 import { FrozenAssembly } from '../components/ScientificSetup/FrozenAssembly';
 import { Samples } from '../components/Samples/Samples';
+import { ScientificRecordUi } from '../components/ScientificSetup/ScientificRecordUi';
 
 // ---------------------------------------------------------------------------
 // Props + Handle
@@ -78,7 +79,7 @@ export const DEFAULT_LAYOUT: LayoutBase = {
         children: [
           {
             id: 'panel-main',
-            tabs: [{ id: 'workflow-editor' }, { id: 'execution-panel' }, { id: 'experiment-timeline' }, { id: 'scientific-procedures' }, { id: 'scientific-plans' }, { id: 'scientific-assembly' }, { id: 'scientific-samples' }],
+            tabs: [{ id: 'workflow-editor' }, { id: 'execution-panel' }, { id: 'experiment-timeline' }, { id: 'scientific-apparatus' }, { id: 'scientific-procedures' }, { id: 'scientific-plans' }, { id: 'scientific-assembly' }, { id: 'scientific-samples' }],
             activeId: 'workflow-editor',
           },
           {
@@ -246,6 +247,9 @@ export const WorkspaceLayout = React.forwardRef<WorkspaceLayoutHandle, Workspace
         'scientific-procedures': (): TabData => ({
           id: 'scientific-procedures', title: 'Procedures', content: <ProcedurePlans kind="procedure" />, group: 'main', closable: true,
         }),
+        'scientific-apparatus': (): TabData => ({
+          id: 'scientific-apparatus', title: 'Apparatus', content: <ScientificRecordUi entityLabel="Apparatus" state="Pending acknowledgement"><p>Apparatus records are read from the local Helix Agent.</p></ScientificRecordUi>, group: 'main', closable: true,
+        }),
         'scientific-plans': (): TabData => ({
           id: 'scientific-plans', title: 'Plans', content: <ProcedurePlans kind="plan" />, group: 'main', closable: true,
         }),
@@ -280,6 +284,11 @@ export const WorkspaceLayout = React.forwardRef<WorkspaceLayoutHandle, Workspace
       dockRef.current.updateTab('execution-panel', tabRegistry['execution-panel'](), false);
       dockRef.current.updateTab('chart-0', tabRegistry['chart-0'](), false);
       dockRef.current.updateTab('experiment-timeline', tabRegistry['experiment-timeline'](), false);
+      dockRef.current.updateTab('scientific-apparatus', tabRegistry['scientific-apparatus'](), false);
+      dockRef.current.updateTab('scientific-procedures', tabRegistry['scientific-procedures'](), false);
+      dockRef.current.updateTab('scientific-plans', tabRegistry['scientific-plans'](), false);
+      dockRef.current.updateTab('scientific-assembly', tabRegistry['scientific-assembly'](), false);
+      dockRef.current.updateTab('scientific-samples', tabRegistry['scientific-samples'](), false);
     }, [tabRegistry]);
 
     useImperativeHandle(ref, () => ({

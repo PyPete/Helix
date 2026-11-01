@@ -14,6 +14,7 @@ interface ActivityBarItem {
 const TOP_ITEMS: ActivityBarItem[] = [
   { id: 'explorer', icon: '⬡', title: 'Device Explorer' },
   { id: 'trends', icon: '📈', title: 'Trend Explorer' },
+  { id: 'apparatus', icon: 'A', title: 'Apparatus' },
   { id: 'procedures', icon: 'P', title: 'Procedures' },
   { id: 'plans', icon: 'L', title: 'Plans' },
   { id: 'assembly', icon: 'A', title: 'Assembly' },
