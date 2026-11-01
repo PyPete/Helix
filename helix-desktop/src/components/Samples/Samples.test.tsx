@@ -2,12 +2,15 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
+const sample = { identity: { sampleId: "sample-immutable-id", origin: "Collection" as const, parentSampleIds: [] }, label: "Collected sample", location: "Hood A", serverSequence: 1, lastEventId: "event-1" };
+
 vi.mock("../../lib/scientificClient", () => ({
   listSamples: vi.fn().mockResolvedValue([]), sampleEvents: vi.fn().mockResolvedValue([]),
-  confirmSample: vi.fn(), appendSampleEvent: vi.fn(), readSampleOperation: vi.fn(),
+  confirmSample: vi.fn(), appendSampleEvent: vi.fn(), readSampleOperation: vi.fn(), sampleLineage: vi.fn().mockResolvedValue({ entries: [], isTruncated: false }),
 }));
 
 import { Samples } from "./Samples";
+import { listSamples, sampleEvents } from "../../lib/scientificClient";
 
 describe("Samples", () => {
   it("does not infer sample collection from a planned reference", async () => {
@@ -31,5 +34,14 @@ describe("Samples", () => {
     expect(screen.getByLabelText("Operation description")).toBeRequired();
     expect(screen.getByLabelText("Parent sample IDs")).toBeRequired();
     expect(screen.getByLabelText("New child labels")).toBeRequired();
+  });
+
+  it("keeps a selected sample's exact immutable identity available through accessible evidence controls", async () => {
+    vi.mocked(listSamples).mockResolvedValueOnce([sample]);
+    vi.mocked(sampleEvents).mockResolvedValueOnce([]);
+    render(<Samples selectedId="sample-immutable-id" />);
+
+    expect(await screen.findByLabelText("Sample evidence")).toHaveTextContent("sample-immutable-id");
+    expect(screen.getByRole("button", { name: "View full ID" })).toBeInTheDocument();
   });
 });
