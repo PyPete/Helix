@@ -4,16 +4,16 @@ current_phase: 02
 current_phase_name: Scientific Setup Foundation
 current_plan: 42
 status: complete_with_user_approved_waivers
-stopped_at: Completed 02-27-PLAN.md
-last_updated: "2026-11-01T16:14:01.732Z"
+stopped_at: Completed 02-28-PLAN.md
+last_updated: "2026-11-01T16:17:53.744Z"
 last_activity: 2026-11-01
 last_activity_desc: Completed exact frozen assembly UI and PostgreSQL reconstruction proof.
-state_head: 6843d4eb141d7b5ddfff76d036224a5b43692fba
+state_head: c36967cfd49ceb4a53f7e0e776e5afbb13695cd6
 progress:
   total_phases: 7
   completed_phases: 1
   total_plans: 37
-  completed_plans: 35
+  completed_plans: 36
   percent: 14
 ---
 
@@ -80,6 +80,7 @@ Progress: [█░░░░░░░░░] 14% (one of six phases closed with wa
 | Phase 02-scientific-setup-foundation P25 | 30min | 2 tasks | 6 files |
 | Phase 02-scientific-setup-foundation P26 | 10min | 2 tasks | 3 files |
 | Phase 02 P27 | 2min | 2 tasks | 10 files |
+| Phase 02-scientific-setup-foundation P28 | 3min | 3 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -120,6 +121,8 @@ Decisions are logged in PROJECT.md Key Decisions table. Current roadmap decision
 - [Phase 02-scientific-setup-foundation]: Scientific client mutation success requires a Committed receipt matching its original operation ID, kind, and known resource identity.
 - [Phase 02]: Local operation recovery retains only user-scoped caller intent and reconciles through the Agent before reporting a commit.
 - [Phase 02]: All five scientific entries use stable dock IDs and recreate their current factory content after layout restoration.
+- [Phase 02-scientific-setup-foundation]: Shared ScientificRecordUi evidence controls keep exact identifiers accessible without treating local UI state as scientific authority.
+- [Phase 02-scientific-setup-foundation]: Publication confirmation explicitly states that immutable revision publication does not execute equipment.
 
 ### Pending Todos
 
@@ -145,6 +148,6 @@ Decisions are logged in PROJECT.md Key Decisions table. Current roadmap decision
 
 ## Session Continuity
 
-Last session: 2026-11-01T16:14:01.669Z
-Stopped at: Completed 02-27-PLAN.md
+Last session: 2026-11-01T16:17:53.685Z
+Stopped at: Completed 02-28-PLAN.md
 Resume file: None
