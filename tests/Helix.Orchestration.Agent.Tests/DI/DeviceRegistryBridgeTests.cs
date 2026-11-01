@@ -63,8 +63,8 @@ public sealed class DeviceRegistryBridgeTests
     public void Bridge_SimulatorCapabilities_SimulatorDeviceIsRegistered()
     {
         var capRegistry = new CapabilityRegistry();
-        capRegistry.Register("simulator.SetFlow",  new NoOpInvoker());
-        capRegistry.Register("simulator.GetFlow",  new NoOpInvoker());
+        capRegistry.Register("simulator.SetFlow", new NoOpInvoker());
+        capRegistry.Register("simulator.GetFlow", new NoOpInvoker());
 
         var deviceRegistry = BuildDeviceRegistry(capRegistry);
 
@@ -81,16 +81,16 @@ public sealed class DeviceRegistryBridgeTests
     public void Bridge_MultipleAdapters_CorrectDeviceCountAndAliases()
     {
         var capRegistry = new CapabilityRegistry();
-        capRegistry.Register("simulator.SetFlow",  new NoOpInvoker());
-        capRegistry.Register("pump.Start",         new NoOpInvoker());
-        capRegistry.Register("pump.Stop",          new NoOpInvoker());
+        capRegistry.Register("simulator.SetFlow", new NoOpInvoker());
+        capRegistry.Register("pump.Start", new NoOpInvoker());
+        capRegistry.Register("pump.Stop", new NoOpInvoker());
 
         var deviceRegistry = BuildDeviceRegistry(capRegistry);
 
         var devices = deviceRegistry.GetAllDevices();
         Assert.Equal(2, devices.Count);
         Assert.True(deviceRegistry.TryGetDevice("simulator", out _));
-        Assert.True(deviceRegistry.TryGetDevice("pump",      out _));
+        Assert.True(deviceRegistry.TryGetDevice("pump", out _));
     }
 
     /// <summary>
@@ -99,7 +99,7 @@ public sealed class DeviceRegistryBridgeTests
     [Fact]
     public void Bridge_EmptyCapabilityRegistry_EmptyDeviceRegistry()
     {
-        var capRegistry    = new CapabilityRegistry();
+        var capRegistry = new CapabilityRegistry();
         var deviceRegistry = BuildDeviceRegistry(capRegistry);
 
         Assert.Empty(deviceRegistry.GetAllDevices());

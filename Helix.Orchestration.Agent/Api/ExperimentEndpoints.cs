@@ -101,7 +101,8 @@ public static class ExperimentEndpoints
 
                 var runspace = await runspaceManager.CreateAsync(definition, ct);
                 emitter.Publish(new RunspaceStartedEvent(runspace.RunspaceId)
-                    with { ExperimentId = ctx.ExperimentId });
+                    with
+                { ExperimentId = ctx.ExperimentId });
                 // The execution body resolves its Agent-held canonical definition
                 // from the active runspace. Establish that binding before StartAsync
                 // can schedule the body, never afterwards.
@@ -338,4 +339,5 @@ public static class ExperimentEndpoints
                 StringComparer.Ordinal),
             _ => value
         }
-        : value;}
+        : value;
+}

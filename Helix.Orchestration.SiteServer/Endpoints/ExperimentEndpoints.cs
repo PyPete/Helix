@@ -27,13 +27,13 @@ public static class ExperimentEndpoints
                 var records = await experimentRepository.GetAllAsync(ct);
                 var dtos = records.Select(r => new ExperimentSummaryDto
                 {
-                    RunspaceId   = r.RunspaceId,
-                    CampaignId   = r.CampaignId,
-                    Name         = r.Name,
-                    Status       = r.Status,
-                    CreatedAt    = r.CreatedAt,
-                    StartedAt    = r.StartedAt,
-                    EndedAt      = r.EndedAt,
+                    RunspaceId = r.RunspaceId,
+                    CampaignId = r.CampaignId,
+                    Name = r.Name,
+                    Status = r.Status,
+                    CreatedAt = r.CreatedAt,
+                    StartedAt = r.StartedAt,
+                    EndedAt = r.EndedAt,
                     FaultMessage = r.FaultMessage,
                 });
                 return Results.Ok(dtos);

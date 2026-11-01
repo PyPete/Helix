@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 namespace Helix.Orchestration.Core.ScientificSetup;
+
 public static class ScientificContentCanonicalizer
 {
     public const string Schema = "scientific-setup/1";

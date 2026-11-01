@@ -4,7 +4,7 @@ using Xunit;
 
 namespace Helix.Orchestration.Infrastructure.Tests.Persistence;
 
- [Collection(nameof(PostgresRepositoriesTestsCollection))]
+[Collection(nameof(PostgresRepositoriesTestsCollection))]
 public sealed class SamplesTests(PostgresFixture fixture)
 {
     [Fact]

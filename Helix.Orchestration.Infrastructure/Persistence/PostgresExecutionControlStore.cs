@@ -65,8 +65,14 @@ public sealed class PostgresExecutionControlStore(DbConnectionFactory connection
         var snapshot = updated.ToSnapshot();
         await connection.ExecuteAsync(new CommandDefinition(append, new
         {
-            eventId = Guid.NewGuid(), executionId, revision = snapshot.Revision, state = snapshot.State.ToString(),
-            reasonsJson, actor, evidence, occurredAtUtc = snapshot.ChangedAtUtc
+            eventId = Guid.NewGuid(),
+            executionId,
+            revision = snapshot.Revision,
+            state = snapshot.State.ToString(),
+            reasonsJson,
+            actor,
+            evidence,
+            occurredAtUtc = snapshot.ChangedAtUtc
         }, transaction, cancellationToken: cancellationToken));
         await transaction.CommitAsync(cancellationToken);
         return new ExecutionControlWriteResult(true, snapshot);

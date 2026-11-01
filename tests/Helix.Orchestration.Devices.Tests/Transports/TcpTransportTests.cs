@@ -140,7 +140,7 @@ public sealed class TcpTransportTests
                 using var client = await listener.AcceptTcpClientAsync();
                 using var stream = client.GetStream();
                 var buffer = new byte[64];
-                await stream.ReadAsync(buffer);
+                await stream.ReadExactlyAsync(buffer);
                 var prefix = BitConverter.GetBytes(responseBytes.Length);
                 await stream.WriteAsync(prefix);
                 await stream.WriteAsync(responseBytes);

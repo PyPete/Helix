@@ -5,8 +5,16 @@ public static class ScientificUnits
 {
     private static readonly IReadOnlyDictionary<string, string> Dimensions = new Dictionary<string, string>(StringComparer.Ordinal)
     {
-        ["1"] = "dimensionless", ["mL"] = "volume", ["L"] = "volume", ["g"] = "mass", ["mg"] = "mass",
-        ["s"] = "time", ["min"] = "time", ["Cel"] = "temperature", ["kPa"] = "pressure", ["mL/min"] = "volume-rate"
+        ["1"] = "dimensionless",
+        ["mL"] = "volume",
+        ["L"] = "volume",
+        ["g"] = "mass",
+        ["mg"] = "mass",
+        ["s"] = "time",
+        ["min"] = "time",
+        ["Cel"] = "temperature",
+        ["kPa"] = "pressure",
+        ["mL/min"] = "volume-rate"
     };
 
     public static string DimensionFor(string unit) => Dimensions.TryGetValue(unit, out var dimension)

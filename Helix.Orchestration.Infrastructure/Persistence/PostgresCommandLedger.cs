@@ -137,7 +137,11 @@ public sealed class PostgresCommandLedger(DbConnectionFactory connectionFactory)
             """;
         await connection.ExecuteAsync(new CommandDefinition(insert, new
         {
-            intent.CommandId, intent.ExecutionId, expectation.StateKey, expectation.CanonicalValue, expectation.Unit
+            intent.CommandId,
+            intent.ExecutionId,
+            expectation.StateKey,
+            expectation.CanonicalValue,
+            expectation.Unit
         }, cancellationToken: cancellationToken));
         return await GetDispatchAsync(intent.CommandId, cancellationToken)
             ?? throw new InvalidOperationException("Dispatch start was not durably recorded.");
@@ -173,7 +177,8 @@ public sealed class PostgresCommandLedger(DbConnectionFactory connectionFactory)
             """;
         await connection.ExecuteAsync(new CommandDefinition(update, new
         {
-            commandId, generation = observation.Generation,
+            commandId,
+            generation = observation.Generation,
             resolution = recovered ? "Recovered from independently observed simulator effect." : "Effect confirmed by dispatcher."
         }, cancellationToken: cancellationToken));
         return await GetDispatchAsync(commandId, cancellationToken)

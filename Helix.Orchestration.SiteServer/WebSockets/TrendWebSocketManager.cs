@@ -11,10 +11,10 @@ namespace Helix.Orchestration.SiteServer.WebSockets;
 /// Matches the frontend TrendValue interface: { type, trendName, value, unit, timestamp }.
 /// </summary>
 public sealed record TrendValueWireDto(
-    [property: JsonPropertyName("type")]      string Type,
+    [property: JsonPropertyName("type")] string Type,
     [property: JsonPropertyName("trendName")] string TrendName,
-    [property: JsonPropertyName("value")]     double Value,
-    [property: JsonPropertyName("unit")]      string Unit,
+    [property: JsonPropertyName("value")] double Value,
+    [property: JsonPropertyName("unit")] string Unit,
     [property: JsonPropertyName("timestamp")] string Timestamp
 );
 

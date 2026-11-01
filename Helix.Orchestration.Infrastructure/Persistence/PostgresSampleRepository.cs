@@ -167,10 +167,10 @@ public sealed class PostgresSampleRepository(DbConnectionFactory factory) : ISam
         }
 
         foreach (var parentId in transformation.ParentSampleIds)
-        foreach (var childId in transformation.ChildSampleIds)
-            await connection.ExecuteAsync(new CommandDefinition(
-                "INSERT INTO scientific_sample_lineage_edges(transformation_id,parent_sample_id,child_sample_id) VALUES (@transformationId,@parentId,@childId)",
-                new { transformationId = transformation.TransformationId, parentId, childId }, transaction, cancellationToken: cancellationToken));
+            foreach (var childId in transformation.ChildSampleIds)
+                await connection.ExecuteAsync(new CommandDefinition(
+                    "INSERT INTO scientific_sample_lineage_edges(transformation_id,parent_sample_id,child_sample_id) VALUES (@transformationId,@parentId,@childId)",
+                    new { transformationId = transformation.TransformationId, parentId, childId }, transaction, cancellationToken: cancellationToken));
 
         var receipt = await InsertTransformationReceiptAsync(connection, transaction, operationId, children[0].Identity.SampleId, scope.ActorSid, payload, requestHash, cancellationToken);
         await transaction.CommitAsync(cancellationToken);

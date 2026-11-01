@@ -118,10 +118,10 @@ public sealed class MqttTrendBridge : BackgroundService
             if (value is ScalarValue<double> scalar)
             {
                 var dto = new TrendValueWireDto(
-                    Type:      "trend-value",
+                    Type: "trend-value",
                     TrendName: trend.TrendName,
-                    Value:     scalar.Value,
-                    Unit:      trend.Units ?? "",
+                    Value: scalar.Value,
+                    Unit: trend.Units ?? "",
                     Timestamp: DateTimeOffset.UtcNow.ToString("O"));
                 _ = _trendWsManager.BroadcastAsync(dto, ct);
             }

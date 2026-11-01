@@ -59,9 +59,9 @@ builder.Services.AddWebSockets(options =>
 });
 
 // Register PostgreSQL repositories for campaigns and experiments
-    builder.Services.AddHelixInfrastructure(builder.Configuration);
+builder.Services.AddHelixInfrastructure(builder.Configuration);
 
-    var app = builder.Build();
+var app = builder.Build();
 
 // Configure middleware
 if (app.Environment.IsDevelopment())

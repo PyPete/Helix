@@ -252,13 +252,13 @@ public sealed class KnauerAzura : DeviceAdapterBase
                 continue;
             }
 
-            yield return new TrendSample { TrendName = "knauer.pump.flowrate",    Value = flowRateMlMin, Timestamp = now, Unit = "ml/min" };
-            yield return new TrendSample { TrendName = "knauer.pump.pressure",    Value = pressureBar,   Timestamp = now, Unit = "bar" };
-            yield return new TrendSample { TrendName = "knauer.pump.state",       Value = stateName,     Timestamp = now, Unit = null };
-            yield return new TrendSample { TrendName = "knauer.pump.composition_a", Value = percA,       Timestamp = now, Unit = "%" };
-            yield return new TrendSample { TrendName = "knauer.pump.composition_b", Value = percB,       Timestamp = now, Unit = "%" };
-            yield return new TrendSample { TrendName = "knauer.pump.composition_c", Value = percC,       Timestamp = now, Unit = "%" };
-            yield return new TrendSample { TrendName = "knauer.pump.composition_d", Value = percD,       Timestamp = now, Unit = "%" };
+            yield return new TrendSample { TrendName = "knauer.pump.flowrate", Value = flowRateMlMin, Timestamp = now, Unit = "ml/min" };
+            yield return new TrendSample { TrendName = "knauer.pump.pressure", Value = pressureBar, Timestamp = now, Unit = "bar" };
+            yield return new TrendSample { TrendName = "knauer.pump.state", Value = stateName, Timestamp = now, Unit = null };
+            yield return new TrendSample { TrendName = "knauer.pump.composition_a", Value = percA, Timestamp = now, Unit = "%" };
+            yield return new TrendSample { TrendName = "knauer.pump.composition_b", Value = percB, Timestamp = now, Unit = "%" };
+            yield return new TrendSample { TrendName = "knauer.pump.composition_c", Value = percC, Timestamp = now, Unit = "%" };
+            yield return new TrendSample { TrendName = "knauer.pump.composition_d", Value = percD, Timestamp = now, Unit = "%" };
         }
     }
 }
