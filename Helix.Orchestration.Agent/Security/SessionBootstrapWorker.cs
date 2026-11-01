@@ -3,14 +3,13 @@ using System.Runtime.Versioning;
 using System.Security.Principal;
 using System.Text;
 using Helix.Orchestration.Core.Execution;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 namespace Helix.Orchestration.Agent.Security;
 
 /// <summary>Drains protected denial evidence before serving desktop sessions and issues sessions over a same-user pipe.</summary>
-public sealed class SessionBootstrapWorker(DesktopSessionService sessions, IServiceScopeFactory scopeFactory, ILogger<SessionBootstrapWorker> logger) : BackgroundService
+public sealed class SessionBootstrapWorker(DesktopSessionService sessions, ICommandLedger ledger, ILogger<SessionBootstrapWorker> logger) : BackgroundService
 {
     private const string PipeName = "helix-desktop-session";
 
@@ -69,8 +68,6 @@ public sealed class SessionBootstrapWorker(DesktopSessionService sessions, IServ
 
     private async Task DrainAsync(CancellationToken cancellationToken)
     {
-        using var scope = scopeFactory.CreateScope();
-        var ledger = scope.ServiceProvider.GetRequiredService<ICommandLedger>();
         var result = await sessions.DrainAsync(ledger, cancellationToken);
         if (!result.AdmissionOpen)
             logger.LogWarning("Desktop command admission remains closed while {Pending} denied-attempt records await durable history.", result.Pending);

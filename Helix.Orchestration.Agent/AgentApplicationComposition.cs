@@ -273,22 +273,35 @@ public static class AgentApplicationComposition
     builder.Services.AddSingleton<IExperimentManager, ExperimentManager>();
 
     // Infrastructure repositories (scoped, via connection string)
-     builder.Services.AddHelixInfrastructure(builder.Configuration);
-     // Production intentionally fails closed. Test hosts can replace this registration with a trusted fixture authority.
-     builder.Services.AddScoped<IPolicyApprovalAuthority, Helix.Orchestration.Agent.ScientificSetup.UnavailablePolicyApprovalAuthority>();
-     builder.Services.AddScoped<ScientificSetupService>();
-     builder.Services.AddScoped<FrozenSetupService>();
-     builder.Services.AddScoped<FrozenSetupResolver>();
-     builder.Services.AddScoped<ScientificOperationResultService>();
+    builder.Services.AddHelixInfrastructure(builder.Configuration);
+    // Production intentionally fails closed. Test hosts can replace this registration with a trusted fixture authority.
+    builder.Services.AddScoped<IPolicyApprovalAuthority, Helix.Orchestration.Agent.ScientificSetup.UnavailablePolicyApprovalAuthority>();
+    builder.Services.AddScoped<ScientificSetupService>();
+    builder.Services.AddScoped<FrozenSetupService>();
+    builder.Services.AddScoped<FrozenSetupResolver>();
+    builder.Services.AddScoped<ScientificOperationResultService>();
     builder.Services.AddScoped<SampleService>();
     builder.Services.AddSingleton<DesktopSessionService>();
-    builder.Services.AddHostedService<SessionBootstrapWorker>();
+    // Security-audit draining and command reconciliation are infrastructure work.
+    // Both use the optional dedicated identity so the scientific runtime remains
+    // unable to read or mutate command-dispatch evidence.
+    var reconciliationConnectionString = builder.Configuration.GetConnectionString("Reconciliation")
+        ?? builder.Configuration.GetConnectionString("HelixOrchestration")
+        ?? throw new InvalidOperationException("A reconciliation or HelixOrchestration connection string is required.");
+    builder.Services.AddHostedService(sp => new SessionBootstrapWorker(
+        sp.GetRequiredService<DesktopSessionService>(),
+        new PostgresCommandLedger(new DbConnectionFactory(reconciliationConnectionString)),
+        sp.GetRequiredService<ILogger<SessionBootstrapWorker>>()));
     builder.Services.AddSingleton<CommandAdmissionEvaluator>();
     builder.Services.AddSingleton<IAdmissionStateSource, SimulatorAdmissionStateSource>();
     builder.Services.AddSingleton<AdmissionContextProvider>();
     builder.Services.AddSingleton<ICommandDispatcher, AgentCommandDispatcher>();
     builder.Services.AddSingleton<ExecutionControlService>();
-    builder.Services.AddHostedService<CommandReconciliationWorker>();
+    builder.Services.AddHostedService(sp => new CommandReconciliationWorker(
+        new PostgresCommandLedger(new DbConnectionFactory(reconciliationConnectionString)),
+        sp.GetRequiredService<ISimulatorObservation>(),
+        sp.GetRequiredService<ExecutionControlService>(),
+        sp.GetRequiredService<ILogger<CommandReconciliationWorker>>()));
 
     // AgentService registered as singleton so it is resolvable as the concrete type
     // (AddHostedService<T> only registers as IHostedService, which prevents GetRequiredService<AgentService>())

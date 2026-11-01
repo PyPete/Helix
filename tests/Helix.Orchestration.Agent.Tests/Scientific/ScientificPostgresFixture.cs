@@ -146,12 +146,11 @@ public sealed class ScientificPostgresFixture : IAsyncLifetime
         builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
         {
             ["ConnectionStrings:HelixOrchestration"] = RuntimeConnectionString,
+            ["ConnectionStrings:Reconciliation"] = OwnerConnectionString,
             ["Kestrel:Endpoints:Http:Url"] = $"http://127.0.0.1:{NativeAgentPort}",
             ["Mqtt:BrokerHost"] = "127.0.0.1",
             ["Mqtt:BrokerPort"] = "1",
-            // The restricted test runtime must not gain command-ledger read access merely
-            // because reconciliation runs in production composition.
-            ["HostOptions:BackgroundServiceExceptionBehavior"] = "Ignore"
+            // The restricted test runtime never receives reconciliation privileges.
         });
         AgentApplicationComposition.ConfigureServices(builder);
         _agent = builder.Build();

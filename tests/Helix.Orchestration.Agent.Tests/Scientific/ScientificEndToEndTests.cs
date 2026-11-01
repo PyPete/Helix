@@ -12,8 +12,9 @@ public sealed class ScientificEndToEndTests(ScientificPostgresFixture fixture)
     public async Task Production_authenticated_scientific_trace_is_durable_idempotent_and_never_dispatches_hardware()
     {
         var operationId = Guid.NewGuid();
+        const string actorSid = "S-1-5-21-scientific-tracer";
         ScientificOperationResponse created;
-        using (var client = fixture.CreateAuthenticatedClient())
+        using (var client = fixture.CreateAuthenticatedClient(actorSid))
         {
             var anonymous = new HttpClient { BaseAddress = fixture.AgentAddress };
             Assert.Equal(HttpStatusCode.Unauthorized, (await anonymous.GetAsync("/api/scientific-setup/apparatus/")).StatusCode);
@@ -36,7 +37,7 @@ public sealed class ScientificEndToEndTests(ScientificPostgresFixture fixture)
         Assert.Equal(1, await fixture.OwnerOperationCountAsync(operationId));
         Assert.Equal(1, await fixture.OwnerApparatusCountAsync(created.ApparatusId));
         await fixture.RestartAgentAsync();
-        using (var restartedClient = fixture.CreateAuthenticatedClient())
+        using (var restartedClient = fixture.CreateAuthenticatedClient(actorSid))
         {
             var readback = await restartedClient.GetFromJsonAsync<ScientificApparatusResponse>($"/api/scientific-setup/apparatus/{created.ApparatusId}");
             Assert.NotNull(readback);
