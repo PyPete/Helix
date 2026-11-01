@@ -41,7 +41,7 @@ describe("Samples", () => {
     vi.mocked(sampleEvents).mockResolvedValueOnce([]);
     render(<Samples selectedId="sample-immutable-id" />);
 
-    expect(await screen.findByLabelText("Sample evidence")).toHaveTextContent("sample-immutable-id");
+    expect(await screen.findByRole("article", { name: "Sample evidence" })).toHaveTextContent("sample-immutable-id");
     expect(screen.getByRole("button", { name: "View full ID" })).toBeInTheDocument();
   });
 });

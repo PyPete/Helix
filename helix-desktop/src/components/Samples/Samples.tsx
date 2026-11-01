@@ -1,6 +1,7 @@
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { appendSampleEvent, confirmSample, listSamples, readSampleOperation, sampleEvents, transformSample } from "../../lib/scientificClient";
 import type { SampleEvent, SampleEventAppendRequest, SampleProjection, SampleTransformationKind } from "../../types/scientific";
+import { ScientificRecordUi } from "../ScientificSetup/ScientificRecordUi";
 import { SampleLineage } from "./SampleLineage";
 
 type MutationState = "idle" | "pending" | "uncertain" | "conflict" | "error";
@@ -140,6 +141,7 @@ export function Samples({ selectedId }: { selectedId?: string }) {
       </button>)}
     </div>
     {selected && <article aria-label="Sample evidence">
+      <ScientificRecordUi entityLabel="Sample" entityId={selected.identity.sampleId} state="Confirmed" />
       <h3>{selected.label || "Unlabelled sample"}</h3>
       <p>Helix sample ID: <code>{selected.identity.sampleId}</code></p>
       <p>Origin: {selected.identity.origin}</p><p>Current custody: {selected.location} ({selected.custodian || "no custodian recorded"})</p>
