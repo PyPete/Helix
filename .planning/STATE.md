@@ -4,16 +4,16 @@ current_phase: 02
 current_phase_name: Scientific Setup Foundation
 current_plan: 42
 status: complete_with_user_approved_waivers
-stopped_at: Completed 02-25-PLAN.md
-last_updated: "2026-11-01T16:07:19.191Z"
+stopped_at: Completed 02-26-PLAN.md
+last_updated: "2026-11-01T16:10:55.821Z"
 last_activity: 2026-11-01
 last_activity_desc: Completed exact frozen assembly UI and PostgreSQL reconstruction proof.
-state_head: 84e9ddc389c92e25634145d095690467dfee8a9c
+state_head: f5c11805e66e851edb19b6d2042bd519fd4a1377
 progress:
   total_phases: 7
   completed_phases: 1
   total_plans: 37
-  completed_plans: 33
+  completed_plans: 34
   percent: 14
 ---
 
@@ -78,6 +78,7 @@ Progress: [█░░░░░░░░░] 14% (one of six phases closed with wa
 | Phase 02-scientific-setup-foundation P42 | 8min | 3 tasks | 8 files |
 | Phase 02 P24 | 18min | 2 tasks | 4 files |
 | Phase 02-scientific-setup-foundation P25 | 30min | 2 tasks | 6 files |
+| Phase 02-scientific-setup-foundation P26 | 10min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -114,6 +115,8 @@ Decisions are logged in PROJECT.md Key Decisions table. Current roadmap decision
 - [Phase 02]: Frozen canonical submissions reconstruct a stored runspace only after exact scoped scientific-source and current-authority checks.
 - [Phase 02-scientific-setup-foundation]: Runtime privileges are reset and explicitly regranted only to draft, stream-head, and append paths by additive migration 011.
 - [Phase 02-scientific-setup-foundation]: Migration SQL and checksum receipts are atomic under an advisory lock on explicit owned targets.
+- [Phase 02-scientific-setup-foundation]: Native scientific JSON rejects nesting deeper than the approved 32-level contract before it can reach Agent authority.
+- [Phase 02-scientific-setup-foundation]: Scientific client mutation success requires a Committed receipt matching its original operation ID, kind, and known resource identity.
 
 ### Pending Todos
 
@@ -139,6 +142,6 @@ Decisions are logged in PROJECT.md Key Decisions table. Current roadmap decision
 
 ## Session Continuity
 
-Last session: 2026-11-01T16:07:19.135Z
-Stopped at: Completed 02-25-PLAN.md
+Last session: 2026-11-01T16:10:55.767Z
+Stopped at: Completed 02-26-PLAN.md
 Resume file: None
