@@ -4,10 +4,10 @@
 
 | Area | Evidence | Status |
 | --- | --- | --- |
-| Native Agent endpoint | The owned disposable Agent fixture binds `127.0.0.1:5080`; the native target remains fixed-loopback. | partial — focused endpoint assertion passed before the full restart scenario exposed its runtime-role failure. |
-| Authenticated SQL tracer | `ScientificEndToEndTests` exercises Bearer-authenticated apparatus creation, idempotent replay/conflict, restart readback, and zero device dispatch. | failed — the constrained runtime role cannot read `command_dispatches`, causing the reconciliation worker to stop the host and the next authenticated request to return 503. |
+| Native Agent endpoint | The owned disposable Agent fixture binds `127.0.0.1:5080`; the native target remains fixed-loopback. | verified — Integration completed. |
+| Authenticated SQL tracer | `ScientificEndToEndTests` exercises Bearer-authenticated apparatus creation, idempotent replay/conflict, restart readback, and zero device dispatch. | verified — reconciliation/security-audit workers use the separate owner connection while the runtime role remains restricted. |
 | APP-04 foundation | Earlier 02-39–02-42 tests cover immutable policy content, trusted test-only approval, SQL freeze/reconstruction, and canonical binding; production authority remains unavailable. | verified foundation only — not production approval or campaign execution. |
-| Native guard suite | `cargo test --manifest-path helix-desktop/src-tauri/Cargo.toml agent_security` remains required separately from live evidence. | pending rerun after the Agent host failure is corrected. |
+| Native guard suite | `cargo test --manifest-path helix-desktop/src-tauri/Cargo.toml agent_security` runs separately; Integration executes exactly one explicitly ignored live fixture. | verified in Integration. |
 
 ## Requirement and decision boundary
 
@@ -22,7 +22,7 @@ These checks have not been performed in an authenticated installed Tauri applica
 
 ## Blocking verification result
 
-`powershell -NoProfile -File scripts/verification/phase02-e2e.ps1 -Mode Integration` currently fails. The failure is deliberate evidence, not a waiver: the test runtime role is denied access to `command_dispatches` while the production reconciliation worker starts. The worker stops the owned host, so the post-restart authenticated setup request returns HTTP 503. Do not mark Phase 02 accepted until the runtime role/reconciliation composition boundary is resolved and Integration and Acceptance both pass.
+Integration now passes. Acceptance remains blocked: the Agent suite executes 65 tests, with 61 passing and two `DurableRunspaceTests` failing because they expect an intentionally disabled legacy execution path. The full suite's two scientific endpoint DI failures were fixed after that run and their focused tests pass. Do not mark Phase 02 accepted until the owning safety/runspace work updates or retires the stale legacy expectations and Acceptance passes end-to-end.
 
 ## Phase 3 handoff
 

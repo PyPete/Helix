@@ -4,11 +4,11 @@ current_phase: 02
 current_phase_name: Scientific Setup Foundation
 current_plan: 42
 status: complete_with_user_approved_waivers
-stopped_at: "Blocked 02-17-PLAN.md: runtime-role reconciliation failure"
-last_updated: "2026-11-01T16:22:56.395Z"
+stopped_at: "Blocked 02-17-PLAN.md: legacy DurableRunspace tests fail aggregate Acceptance"
+last_updated: "2026-11-01T16:35:00Z"
 last_activity: 2026-11-01
-last_activity_desc: Completed exact frozen assembly UI and PostgreSQL reconstruction proof.
-state_head: 86fdc6b3732b8fc35adf467ccf9b1366fe952606
+last_activity_desc: Verified separate reconciliation identity and native Agent/SQL Integration; Acceptance blocked by stale legacy runspace tests.
+state_head: 17627e99d48003ac0f43aab24e0b977d84569e54
 progress:
   total_phases: 7
   completed_phases: 1
