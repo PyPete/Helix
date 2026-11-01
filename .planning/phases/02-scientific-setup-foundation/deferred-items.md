@@ -1,3 +1,3 @@
 # Deferred Items
 
-- 2026-11-01: `npm --prefix helix-desktop run build` is blocked by pre-existing `TS6133` in `helix-desktop/src/components/ScientificSetup/ScientificSetup.tsx` (`ApparatusDraft` is imported but unused). It is outside Plan 02-35's file scope.
+- **02-17 Acceptance:** `DurableRunspaceTests.StartAsync_DelegatesToWorkflowExecutor_AndCompletes` and `PauseAsync_CancelsCurrentExecution_AndSetsPausedStatus` expect legacy execution that `DurableRunspace` intentionally disables for safety. Their owning safety/runspace work must update or retire the stale expectations before aggregate Acceptance can pass.
