@@ -7,6 +7,7 @@ using Helix.Orchestration.Devices.Transports.Serial;
 using Helix.Orchestration.Devices.Transports.Tcp;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using System.Runtime.Versioning;
 
 namespace Helix.Orchestration.Agent.Adapters.Devices;
 
@@ -175,13 +176,16 @@ public static class DeviceAdapterExtensions
                 logger.LogInformation("Registered capability: {CapabilityName}", key);
             }
 
-            // PicoTc08
-            var pico = sp.GetRequiredService<PicoTc08>();
-            foreach (var cap in pico.GetCapabilities())
+            // PicoTc08 is backed by the vendor's Windows-only native API.
+            if (OperatingSystem.IsWindows())
             {
-                var key = $"picotc08.{cap.Name}";
-                registry.Register(key, new HelixAdapterCapabilityBridge(pico));
-                logger.LogInformation("Registered capability: {CapabilityName}", key);
+                var pico = sp.GetRequiredService<PicoTc08>();
+                foreach (var cap in pico.GetCapabilities())
+                {
+                    var key = $"picotc08.{cap.Name}";
+                    registry.Register(key, new HelixAdapterCapabilityBridge(pico));
+                    logger.LogInformation("Registered capability: {CapabilityName}", key);
+                }
             }
 
             // NOTE: OceanViewDriver and PicoTc08LowLevelWrapper are NOT registered in the
@@ -468,6 +472,15 @@ public static class DeviceAdapterExtensions
             sp.GetRequiredService<NullDeviceTransport>(),
             sp.GetRequiredService<ILogger<IfmMasterController>>()));
 
+        if (OperatingSystem.IsWindows())
+        {
+            AddWindowsNativeAdapters(services);
+        }
+    }
+
+    [SupportedOSPlatform("windows")]
+    private static void AddWindowsNativeAdapters(IServiceCollection services)
+    {
         // OceanViewDriver — CDll IOceanViewDriver implementation (native integration layer)
         services.AddSingleton<IOceanViewDriver, OceanViewDriver>();
 

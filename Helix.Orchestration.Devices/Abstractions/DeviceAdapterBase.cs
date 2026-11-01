@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
 
@@ -77,7 +78,7 @@ public abstract class DeviceAdapterBase : IHelixAdapter
     }
 
     /// <inheritdoc/>
-    public virtual async IAsyncEnumerable<TrendSample> StreamTrendsAsync(CancellationToken cancellationToken = default)
+    public virtual async IAsyncEnumerable<TrendSample> StreamTrendsAsync([EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         // Default implementation: no trends
         await Task.CompletedTask;

@@ -47,7 +47,7 @@ public sealed class OpcFoundationSession : IOpcSession
                 return;
             }
 
-            var endpoint = CoreClientUtils.SelectEndpoint(_endpointUrl, false);
+            var endpoint = CoreClientUtils.SelectEndpoint(_appConfig, _endpointUrl, false);
             var endpointConfiguration = EndpointConfiguration.Create(_appConfig);
             var configuredEndpoint = new ConfiguredEndpoint(null, endpoint, endpointConfiguration);
 
