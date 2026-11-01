@@ -52,4 +52,13 @@ describe("scientificClient", () => {
     invoke.mockResolvedValueOnce(JSON.stringify({ entries: [{ sampleId: "other-sample", origin: "Transformation" }], continuation: null, isTruncated: false }));
     await expect(client.sampleLineage("sample-1", "Ancestors")).rejects.toThrow("lineage");
   });
+
+  it("preserves exact policy and assembly references and rejects unavailable authority", async () => {
+    const client = scientificClient as Record<string, unknown>;
+    expect(typeof client.assemblyDefaults).toBe("function");
+    expect(typeof client.assembleScientific).toBe("function");
+    expect(typeof client.readScientificAssembly).toBe("function");
+    expect(typeof client.listScientificPolicies).toBe("function");
+    expect(typeof client.readScientificPolicy).toBe("function");
+  });
 });
