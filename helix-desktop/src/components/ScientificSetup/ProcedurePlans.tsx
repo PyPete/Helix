@@ -1,6 +1,7 @@
 import { FormEvent, useRef, useState } from "react";
 import { adoptProcedure, createScientific, deriveProcedure, publishScientific, readScientificOperation } from "../../lib/scientificClient";
 import type { PlanDraft, ProcedureDraft, ScientificKind, ScientificReceipt } from "../../types/scientific";
+import { ScientificRecordUi } from "./ScientificRecordUi";
 
 export interface ProcedurePlansProps { kind: ScientificKind; selectedId?: string; }
 
@@ -14,6 +15,7 @@ export function ProcedurePlans({ kind, selectedId }: ProcedurePlansProps) {
   const [revisionName, setRevisionName] = useState("");
   const [sourceRevisionId, setSourceRevisionId] = useState("");
   const [confirmAdoption, setConfirmAdoption] = useState(false);
+  const [confirmPublish, setConfirmPublish] = useState(false);
   const [receipt, setReceipt] = useState<ScientificReceipt>();
   const [state, setState] = useState<"idle" | "pending" | "uncertain" | "conflict" | "error">("idle");
   const [error, setError] = useState<string>();
@@ -73,7 +75,10 @@ export function ProcedurePlans({ kind, selectedId }: ProcedurePlansProps) {
     } catch (reason) { setState("uncertain"); setError(reason instanceof Error ? reason.message : "Outcome uncertain."); }
   }
 
-  return <section aria-labelledby={`${kind}-title`}>
+  const recordState = state === "pending" ? "Pending acknowledgement" : state === "uncertain" ? "Uncertain" : receipt?.revisionId ? "Published" : "Draft";
+
+  return <ScientificRecordUi entityLabel={label.slice(0, -1)} entityId={resourceId.current} state={recordState}>
+    <section aria-labelledby={`${kind}-title`}>
     <h2 id={`${kind}-title`}>{label}</h2>
     <p>Loading Agent-backed scientific records…</p>
     <p>No published procedures or plans yet</p>
@@ -83,12 +88,14 @@ export function ProcedurePlans({ kind, selectedId }: ProcedurePlansProps) {
       <button type="submit" disabled={state === "pending" || state === "uncertain"}>{state === "pending" ? "Awaiting Agent acknowledgement…" : "Save draft"}</button>
     </form>
     <label htmlFor={`${kind}-revision-name`}>Revision name</label><input id={`${kind}-revision-name`} value={revisionName} onChange={(event) => setRevisionName(event.target.value)} />
-    <button type="button" onClick={() => void publish()} disabled={!resourceId.current || !revisionName.trim() || state !== "idle"}>Publish named revision</button>
+    <button type="button" onClick={() => setConfirmPublish(true)} disabled={!resourceId.current || !revisionName.trim() || state !== "idle"}>Publish named revision</button>
     {state === "uncertain" && <p role="alert">Outcome uncertain. Do not repeat this action. Check outcome using operation ID {operationId.current}. <button type="button" onClick={() => void checkOutcome()}>Check outcome</button></p>}
     {error && state !== "uncertain" && <p role="alert">{error}</p>}
     {receipt && <p role="status">Committed revision {receipt.revisionId ?? "draft"}; operation {receipt.operationId}</p>}
     {confirmAdoption && <div role="dialog" aria-modal="true" aria-label="Confirm procedure adoption"><p>Adopt procedure revision {procedureRevisionId} into this plan draft? This does not publish the plan.</p><button type="button" onClick={() => void confirmProcedureAdoption()}>Confirm adoption</button><button type="button" onClick={() => setConfirmAdoption(false)}>Cancel</button></div>}
+    {confirmPublish && <div role="dialog" aria-modal="true" aria-label={`Confirm ${kind} publication`}><p>Publish “{revisionName}” as an immutable revision? This does not execute equipment.</p><p>Record identity: <code>{resourceId.current}</code></p><button type="button" onClick={() => { setConfirmPublish(false); void publish(); }}>Confirm publish named revision</button><button type="button" onClick={() => setConfirmPublish(false)}>Cancel</button></div>}
     <h3>Revision history</h3><table><thead><tr><th>Name</th><th>Revision ID</th><th>Published by</th><th>Recorded time</th><th>Content hash</th></tr></thead><tbody><tr><td colSpan={5}>Immutable history loads from the local Helix Agent.</td></tr></tbody></table>
     <p>Published revisions are read-only. Opening a newer procedure never adopts it into a plan.</p>
-  </section>;
+    </section>
+  </ScientificRecordUi>;
 }

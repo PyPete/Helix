@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { ApparatusDraft, ApparatusDraftState, readApparatusDraft, saveApparatusDraft } from "../../lib/scientificApparatusClient";
+import { ScientificRecordUi } from "./ScientificRecordUi";
 
 export interface ScientificSetupProps {
   apparatusId: string;
@@ -43,12 +44,14 @@ export function ScientificSetup({ apparatusId, initialDraft }: ScientificSetupPr
     setCurrent(await readApparatusDraft(apparatusId));
   }
 
-  return <section aria-labelledby="scientific-setup-title">
+  return <ScientificRecordUi entityLabel="Apparatus draft" entityId={apparatusId} state={conflict ? "Uncertain" : "Draft"}>
+    <section aria-labelledby="scientific-setup-title">
     <h2 id="scientific-setup-title">Scientific setup draft</h2>
     <label htmlFor="scientific-setup-name">Name</label>
     <input id="scientific-setup-name" value={localName} onChange={(event) => setLocalName(event.target.value)} />
     <button type="button" onClick={save}>Save draft</button>
     {conflict && <div role="alert">Draft changed elsewhere. <button type="button" onClick={reload}>Reload</button> <button type="button" onClick={compare}>Compare</button> <span>Operation {operationId.current}</span></div>}
     {current && <dl aria-label="Draft comparison"><dt>Local name</dt><dd>{localName}</dd><dt>Current name</dt><dd>{current.apparatus.name}</dd><dt>Current token</dt><dd>{current.token}</dd></dl>}
-  </section>;
+    </section>
+  </ScientificRecordUi>;
 }
