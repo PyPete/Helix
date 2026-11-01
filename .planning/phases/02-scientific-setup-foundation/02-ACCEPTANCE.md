@@ -7,7 +7,9 @@
 | Native Agent endpoint | The owned disposable Agent fixture binds `127.0.0.1:5080`; the native target remains fixed-loopback. | verified — Integration completed. |
 | Authenticated SQL tracer | `ScientificEndToEndTests` exercises Bearer-authenticated apparatus creation, idempotent replay/conflict, restart readback, and zero device dispatch. | verified — reconciliation/security-audit workers use the separate owner connection while the runtime role remains restricted. |
 | APP-04 foundation | Earlier 02-39–02-42 tests cover immutable policy content, trusted test-only approval, SQL freeze/reconstruction, and canonical binding; production authority remains unavailable. | verified foundation only — not production approval or campaign execution. |
-| Native guard suite | `cargo test --manifest-path helix-desktop/src-tauri/Cargo.toml agent_security` runs separately; Integration executes exactly one explicitly ignored live fixture. | verified in Integration. |
+| Native guard suite | `cargo test --manifest-path helix-desktop/src-tauri/Cargo.toml agent_security` runs separately; Integration executes exactly one explicitly ignored live fixture. | verified — 14 passed, 1 ignored live fixture. |
+| Aggregate Agent suite | `dotnet test tests/Helix.Orchestration.Agent.Tests/Helix.Orchestration.Agent.Tests.csproj --no-restore` | verified — 65 passed. |
+| Agent warning-as-error build | `dotnet build Helix.Orchestration.Agent/Helix.Orchestration.Agent.csproj --no-restore -warnaserror` | verified — 0 warnings, 0 errors. |
 
 ## Requirement and decision boundary
 
@@ -22,7 +24,7 @@ These checks have not been performed in an authenticated installed Tauri applica
 
 ## Blocking verification result
 
-Integration now passes. Acceptance remains blocked: the Agent suite executes 65 tests, with 61 passing and two `DurableRunspaceTests` failing because they expect an intentionally disabled legacy execution path. The full suite's two scientific endpoint DI failures were fixed after that run and their focused tests pass. Do not mark Phase 02 accepted until the owning safety/runspace work updates or retires the stale legacy expectations and Acceptance passes end-to-end.
+Integration now passes; the native guard suite passes 14 tests; the Agent suite passes 65 tests; and the Agent warnings-as-errors build is clean. Acceptance remains blocked at `dotnet format Helix.Orchestration.slnx --verify-no-changes --no-restore` by repository-wide, pre-existing whitespace violations outside this plan's changed files. The script correctly does not run the remaining desktop Vitest and production-build steps after that failure. Do not mark Phase 02 accepted until the formatting baseline is repaired and Acceptance completes end-to-end.
 
 ## Phase 3 handoff
 

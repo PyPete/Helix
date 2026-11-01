@@ -4,11 +4,11 @@ current_phase: 02
 current_phase_name: Scientific Setup Foundation
 current_plan: 42
 status: complete_with_user_approved_waivers
-stopped_at: "Blocked 02-17-PLAN.md: legacy DurableRunspace tests fail aggregate Acceptance"
-last_updated: "2026-11-01T16:35:00Z"
+stopped_at: "Blocked 02-17-PLAN.md: repository-wide dotnet format gate fails after clean Agent acceptance evidence"
+last_updated: "2026-11-01T16:50:00Z"
 last_activity: 2026-11-01
-last_activity_desc: Verified separate reconciliation identity and native Agent/SQL Integration; Acceptance blocked by stale legacy runspace tests.
-state_head: 17627e99d48003ac0f43aab24e0b977d84569e54
+last_activity_desc: Updated stale legacy runspace tests, repaired Agent warning-as-error dependency validation, and verified 65/65 Agent tests; Acceptance now blocks only at pre-existing repository-wide formatting violations.
+state_head: dbced6c
 progress:
   total_phases: 7
   completed_phases: 1
@@ -134,7 +134,7 @@ Decisions are logged in PROJECT.md Key Decisions table. Current roadmap decision
 - [Phase 1 verification]: The separate checker grader was unavailable. Remaining native/UI/database acceptance was not fully verified; user-reported manual SetFlow/SQL evidence and prior focused checks are documented in the phase summary.
 - [Phase 6]: Obtain EHS, vendor, and site qualification evidence before any real-device integration work.
 - 02-38 requires an architectural extension: the current sample transformation API/persistence cannot persist or return transformation occurrence time, actor, or recording time required by the plan’s immutable evidence UI.
-- 02-17 Integration is blocked: CommandReconciliationWorker reads command_dispatches under the restricted scientific runtime role, stops the owned Agent, and returns HTTP 503 after restart.
+- 02-17 Acceptance is blocked: the full script passes Integration (3 .NET + exactly 1 ignored native fixture), native security guards (14), Agent suite (65), and warnings-as-errors build (0 warnings/errors), then stops at pre-existing repository-wide `dotnet format --verify-no-changes` whitespace violations. Desktop Vitest and production build remain unrun.
 
 ### Roadmap Evolution
 
@@ -150,5 +150,5 @@ Decisions are logged in PROJECT.md Key Decisions table. Current roadmap decision
 ## Session Continuity
 
 Last session: 2026-11-01T16:22:56.337Z
-Stopped at: Blocked 02-17-PLAN.md: runtime-role reconciliation failure
+Stopped at: Blocked 02-17-PLAN.md: repository-wide C# formatting verification failure
 Resume file: .planning/phases/02-scientific-setup-foundation/02-17-SUMMARY.md

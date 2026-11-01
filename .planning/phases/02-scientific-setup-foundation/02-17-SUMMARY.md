@@ -30,7 +30,7 @@ plan_head_before: af55964464b79cc649854086211c9740602fce75
 
 # Phase 02 Plan 17: Scientific End-to-End Acceptance Summary
 
-**The native authenticated Agent/SQL tracer passes under a separate reconciliation identity while legacy runspace tests still block aggregate acceptance.**
+**The authenticated native Agent/SQL tracer and all 65 Agent tests pass, but the prescribed Acceptance gate remains blocked by pre-existing repository-wide C# formatting violations.**
 
 ## Accomplishments
 
@@ -45,7 +45,9 @@ plan_head_before: af55964464b79cc649854086211c9740602fce75
 - GREEN: the focused fixed-endpoint assertion passed after the fixture bound port 5080.
 - PASS: `powershell -NoProfile -File scripts/verification/phase02-e2e.ps1 -Mode Integration` completed with three .NET tests and exactly one ignored native fixture test.
 - PASS: focused `ScientificEndToEndTests.Production_authenticated_scientific_trace_is_durable_idempotent_and_never_dispatches_hardware` and `ScientificSetupEndpointsTests` passed.
-- BLOCKED: Acceptance runs 65 Agent tests; 61 pass and two unrelated legacy `DurableRunspaceTests` still expect execution that the safety boundary intentionally disables. The original Acceptance run also exposed two endpoint-DI failures, fixed in `17627e9`; its full rerun remains blocked by the legacy failures.
+- PASS: `DurableRunspaceTests` now assert the intentional `NotSupportedException` safety boundary; the aggregate Agent suite passes 65/65.
+- PASS: `dotnet build Helix.Orchestration.Agent/Helix.Orchestration.Agent.csproj --no-restore -warnaserror` completes with 0 warnings and 0 errors after the OPC UA dependency and platform-guard corrections.
+- BLOCKED: the prescribed Acceptance rerun reaches `dotnet format Helix.Orchestration.slnx --verify-no-changes --no-restore`, which reports pre-existing whitespace violations across Agent, Core, Infrastructure, SiteServer, and test projects. The script therefore correctly stops before the desktop Vitest and production-build steps.
 
 ## Deviations from Plan
 
@@ -69,7 +71,12 @@ plan_head_before: af55964464b79cc649854086211c9740602fce75
 4. **[Rule 1 - Bug] Declared scientific endpoint services as DI dependencies**
    - **Found during:** Task 2 Acceptance
    - **Fix:** Added explicit `FromServices` binding so minimal API route construction cannot treat `ScientificSetupService` as a request body.
-   - **Commit:** `17627e9`
+    - **Commit:** `17627e9`
+
+5. **[Rule 1 - Build safety] Restored warning-as-error Agent validation**
+    - **Found during:** Task 2 Acceptance
+    - **Fix:** Updated unavailable/vulnerable OPC UA and mismatched reactive dependencies, consumed async iterator cancellation, used the configuration-aware OPC endpoint selector, and guarded Windows-native registrations.
+    - **Commit:** `dbced6c`
 
 ## Known Stubs
 
@@ -77,9 +84,9 @@ None.
 
 ## Blocker
 
-`DurableRunspaceTests.StartAsync_DelegatesToWorkflowExecutor_AndCompletes` and `PauseAsync_CancelsCurrentExecution_AndSetsPausedStatus` expect the deliberately disabled legacy runspace execution path. They fail with `NotSupportedException: Legacy DurableRunspace execution is disabled. Use canonical dispatch with a persisted cursor.` This is outside the scientific reconciliation scope; acceptance and phase completion routing cannot be marked complete until the owning safety/runspace work updates or retires those stale tests.
+The required formatting gate fails on existing whitespace violations outside this plan's files, including `AgentApplicationComposition.cs`, scientific Core/Infrastructure persistence files, SiteServer files, and multiple test projects. Per scope boundaries, they were not reformatted here. Acceptance and phase-completion routing cannot be marked complete until the repository's formatting baseline is repaired and the full Acceptance script completes, including the remaining desktop checks.
 
 ## Self-Check: PASSED
 
 - Required acceptance report exists.
-- Task commits `a0e957a`, `d5da621`, `7d32323`, `86fdc6b`, `4fc5127`, `d9892a9`, and `17627e9` are ancestors of HEAD.
+- Task commits `a0e957a`, `d5da621`, `7d32323`, `86fdc6b`, `4fc5127`, `d9892a9`, `17627e9`, `0218ab4`, and `dbced6c` are ancestors of HEAD.
