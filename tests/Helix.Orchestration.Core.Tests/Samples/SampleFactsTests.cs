@@ -23,6 +23,55 @@ public sealed class SampleFactsTests
     }
 
     [Fact]
+    public void Transformation_accepts_many_distinct_parents_and_new_children_without_quantity()
+    {
+        var transformation = new SampleTransformation(
+            Guid.NewGuid(),
+            SampleTransformationKind.Pool,
+            "Pool retained fractions",
+            [Guid.NewGuid(), Guid.NewGuid()],
+            [Guid.NewGuid(), Guid.NewGuid()]);
+
+        var result = SampleLineageValidator.Validate(transformation);
+
+        Assert.True(result.IsValid, string.Join(Environment.NewLine, result.Diagnostics));
+    }
+
+    [Fact]
+    public void Transformation_requires_positive_exact_compatible_supplied_quantity()
+    {
+        var transformation = new SampleTransformation(
+            Guid.NewGuid(),
+            SampleTransformationKind.Processing,
+            "Process fraction",
+            [Guid.NewGuid()],
+            [Guid.NewGuid()],
+            new SampleQuantity(0, "mL", "mass"),
+            QuantitySupplied: true);
+
+        var result = SampleLineageValidator.Validate(transformation);
+
+        Assert.Contains(result.Diagnostics, diagnostic => diagnostic.Contains("positive", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(result.Diagnostics, diagnostic => diagnostic.Contains("incompatible", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void Transformation_does_not_infer_quantity_when_not_supplied()
+    {
+        var transformation = new SampleTransformation(
+            Guid.NewGuid(),
+            SampleTransformationKind.Split,
+            "Split observation",
+            [Guid.NewGuid()],
+            [Guid.NewGuid()],
+            new SampleQuantity(1, "mL", "volume"));
+
+        var result = SampleLineageValidator.Validate(transformation);
+
+        Assert.Contains(result.Diagnostics, diagnostic => diagnostic.Contains("explicitly", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
     public void Projection_uses_server_sequence_not_backdated_occurrence_time()
     {
         var sampleId = Guid.NewGuid();

@@ -14,6 +14,38 @@ public enum SampleEventKind
     Correction
 }
 
+public enum SampleTransformationKind
+{
+    Split,
+    Pool,
+    Processing
+}
+
+public sealed record SampleQuantity(decimal Value, string UnitCode, string Dimension);
+
+public sealed record SampleTransformation(
+    Guid TransformationId,
+    SampleTransformationKind Kind,
+    string Operation,
+    IReadOnlyList<Guid> ParentSampleIds,
+    IReadOnlyList<Guid> ChildSampleIds,
+    SampleQuantity? Quantity = null,
+    bool QuantitySupplied = false);
+
+public sealed record SampleLineageValidationResult(IReadOnlyList<string> Diagnostics)
+{
+    public bool IsValid => Diagnostics.Count == 0;
+}
+
+public enum SampleLineageDirection
+{
+    Ancestors,
+    Descendants
+}
+
+public sealed record SampleLineageEntry(Guid SampleId, SampleOrigin Origin, Guid? TransformationId, int Depth);
+public sealed record SampleLineage(IReadOnlyList<SampleLineageEntry> Entries, Guid? Continuation, bool IsTruncated);
+
 public sealed record SampleIdentity(Guid SampleId, SampleOrigin Origin, IReadOnlyList<Guid> ParentSampleIds)
 {
     public void Validate()
