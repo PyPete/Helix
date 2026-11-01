@@ -48,3 +48,70 @@ export interface ScientificRevision {
   recordedAt: string;
   contentHash: string;
 }
+
+export type SampleOrigin = "Collection" | "Transformation";
+export type SampleEventKind = "Confirmed" | "Relabeled" | "CustodyMoved" | "Correction";
+
+export interface SampleIdentity {
+  sampleId: string;
+  origin: SampleOrigin;
+  parentSampleIds: string[];
+}
+
+export interface SampleProjection {
+  identity: SampleIdentity;
+  label?: string;
+  custodian?: string;
+  location: string;
+  serverSequence: number;
+  lastEventId: string;
+}
+
+export interface SampleEvent {
+  eventId: string;
+  sampleId: string;
+  kind: SampleEventKind;
+  label?: string;
+  custodian?: string;
+  location: string;
+  occurredAtUtc: string;
+  recordedAtUtc: string;
+  actorSid: string;
+  serverSequence: number;
+  supersedesEventId?: string;
+  correctionReason?: string;
+}
+
+export interface SampleReceipt {
+  operationId: string;
+  kind: "sample.confirm" | "sample.append";
+  sampleId: string;
+  actorSid: string;
+  recordedAtUtc: string;
+  payload: string;
+}
+
+export interface SampleConfirmationRequest {
+  operationId: string;
+  location: string;
+  occurredAtUtc: string;
+  label?: string;
+  custodian?: string;
+}
+
+export interface SampleEventAppendRequest {
+  operationId: string;
+  kind: Exclude<SampleEventKind, "Confirmed">;
+  label?: string;
+  custodian?: string;
+  location: string;
+  occurredAtUtc: string;
+  expectedSequence: number;
+  supersedesEventId?: string;
+  correctionReason?: string;
+}
+
+export interface SampleMutationResult {
+  sample: SampleProjection;
+  receipt: SampleReceipt;
+}

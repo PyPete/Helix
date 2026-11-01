@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import type { PlanDraft, ProcedureDraft, ScientificDraftState, ScientificKind, ScientificReceipt, ScientificRevision, ScientificSummary } from "../types/scientific";
+import type { PlanDraft, ProcedureDraft, SampleConfirmationRequest, SampleEvent, SampleEventAppendRequest, SampleMutationResult, SampleProjection, SampleReceipt, ScientificDraftState, ScientificKind, ScientificReceipt, ScientificRevision, ScientificSummary } from "../types/scientific";
 
 function parse<T>(response: string): T { return JSON.parse(response) as T; }
 
@@ -53,4 +53,64 @@ export async function adoptProcedure(planId: string, request: { operationId: str
     throw new Error("Agent returned an invalid procedure adoption receipt.");
   }
   return { receipt: response.receipt, token: response.token };
+}
+
+function validProjection(value: unknown): value is SampleProjection {
+  if (!value || typeof value !== "object") return false;
+  const sample = value as Partial<SampleProjection>;
+  return !!sample.identity && typeof sample.identity.sampleId === "string" &&
+    (sample.identity.origin === "Collection" || sample.identity.origin === "Transformation") &&
+    Array.isArray(sample.identity.parentSampleIds) && typeof sample.location === "string" &&
+    typeof sample.serverSequence === "number" && typeof sample.lastEventId === "string";
+}
+
+function sampleReceipt(value: unknown, expectedKind: SampleReceipt["kind"], operationId?: string): SampleReceipt {
+  if (!value || typeof value !== "object") throw new Error("Agent returned an invalid sample receipt.");
+  const receipt = value as Partial<SampleReceipt>;
+  if (receipt.kind !== expectedKind || typeof receipt.operationId !== "string" ||
+    (operationId && receipt.operationId !== operationId) || typeof receipt.sampleId !== "string" ||
+    typeof receipt.actorSid !== "string" || typeof receipt.recordedAtUtc !== "string" || typeof receipt.payload !== "string") {
+    throw new Error("Agent returned an invalid sample receipt.");
+  }
+  return receipt as SampleReceipt;
+}
+
+function sampleMutation(response: string, expectedKind: SampleReceipt["kind"], operationId: string): SampleMutationResult {
+  const value = parse<{ sample?: unknown; receipt?: unknown }>(response);
+  if (!validProjection(value.sample)) throw new Error("Agent returned an invalid sample mutation result.");
+  const receipt = sampleReceipt(value.receipt, expectedKind, operationId);
+  if (receipt.sampleId !== value.sample.identity.sampleId) throw new Error("Agent returned a sample receipt for a different identity.");
+  return { sample: value.sample, receipt };
+}
+
+export async function listSamples(pageSize = 25): Promise<SampleProjection[]> {
+  const result = parse<unknown>(await invoke<string>("sample_list", { pageSize }));
+  if (!Array.isArray(result) || !result.every(validProjection)) throw new Error("Agent returned an invalid sample list.");
+  return result;
+}
+
+export async function readSample(sampleId: string): Promise<SampleProjection> {
+  const result = parse<unknown>(await invoke<string>("sample_read", { sampleId }));
+  if (!validProjection(result) || result.identity.sampleId !== sampleId) throw new Error("Agent returned an invalid sample projection.");
+  return result;
+}
+
+export async function confirmSample(request: SampleConfirmationRequest): Promise<SampleMutationResult> {
+  return sampleMutation(await invoke<string>("sample_confirm", { request: JSON.stringify(request) }), "sample.confirm", request.operationId);
+}
+
+export async function appendSampleEvent(sampleId: string, request: SampleEventAppendRequest): Promise<SampleMutationResult> {
+  return sampleMutation(await invoke<string>("sample_append_event", { sampleId, request: JSON.stringify(request) }), "sample.append", request.operationId);
+}
+
+export async function sampleEvents(sampleId: string, afterSequence?: number, pageSize = 25): Promise<SampleEvent[]> {
+  const result = parse<unknown>(await invoke<string>("sample_events", { sampleId, afterSequence, pageSize }));
+  if (!Array.isArray(result) || !result.every((event) => {
+    const value = event as Partial<SampleEvent>;
+    return !!value && value.sampleId === sampleId && typeof value.eventId === "string" &&
+      typeof value.kind === "string" && typeof value.location === "string" &&
+      typeof value.occurredAtUtc === "string" && typeof value.recordedAtUtc === "string" &&
+      typeof value.actorSid === "string" && typeof value.serverSequence === "number";
+  })) throw new Error("Agent returned invalid sample history.");
+  return result as SampleEvent[];
 }
