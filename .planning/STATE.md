@@ -2,18 +2,18 @@
 gsd_state_version: "1.0"
 current_phase: 02
 current_phase_name: Scientific Setup Foundation
-current_plan: 14
+current_plan: 15
 status: complete_with_user_approved_waivers
-stopped_at: Completed 02-39-PLAN.md
-last_updated: "2026-11-01T13:20:46.182Z"
+stopped_at: Completed 02-40-PLAN.md
+last_updated: "2026-11-01T13:23:50.461Z"
 last_activity: 2026-10-31
 last_activity_desc: Completed immutable sample collection and custody foundation.
-state_head: 5127535ef0bdf82c190dc8874ddace228ba03378
+state_head: 59a217f909b3fa1a946253a17559b848069c90a7
 progress:
   total_phases: 7
   completed_phases: 1
   total_plans: 37
-  completed_plans: 28
+  completed_plans: 29
   percent: 14
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-10-29)
 
 ## Current Position
 
-Current Plan: 14
+Current Plan: 15
 Total Plans in Phase: 23
 
 Phase: 02 (Scientific Setup Foundation) — IN PROGRESS
@@ -73,6 +73,7 @@ Progress: [█░░░░░░░░░] 14% (one of six phases closed with wa
 | Phase 02 P37 | 33min | 2 tasks | 9 files |
 | Phase 02 P38 | 9min | 2 tasks | 12 files |
 | Phase 02 P39 | 15min | 2 tasks | 10 files |
+| Phase 02 P40 | 12min | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -101,6 +102,8 @@ Decisions are logged in PROJECT.md Key Decisions table. Current roadmap decision
 - [Phase 02-scientific-setup-foundation]: Transformation occurrence is supplied as evidence, while actor and recording time are Agent-derived and immutable.
 - [Phase 02-scientific-setup-foundation]: Lineage entries expose activity provenance only from persisted transformation rows, never inferred UI state.
 - [Phase 02]: Policy content registration is immutable and cannot manufacture approval; production authority fails closed until downstream wiring.
+- [Phase 02]: Agent production composition explicitly overrides policy approval with a fail-closed authority.
+- [Phase 02]: Frozen resolution validates stored evidence and fresh policy authority without recompiling or dispatching.
 
 ### Pending Todos
 
@@ -126,6 +129,6 @@ Decisions are logged in PROJECT.md Key Decisions table. Current roadmap decision
 
 ## Session Continuity
 
-Last session: 2026-11-01T13:20:46.127Z
-Stopped at: Completed 02-39-PLAN.md
+Last session: 2026-11-01T13:23:50.397Z
+Stopped at: Completed 02-40-PLAN.md
 Resume file: None
