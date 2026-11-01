@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { assemblyDefaults, assembleScientific, listScientificPolicies, readScientificAssembly } from "../../lib/scientificClient";
 import type { AssemblyDefaults, PolicyRevision, ScientificAssembly } from "../../types/scientific";
+import { ScientificRecordUi } from "./ScientificRecordUi";
 
 interface FrozenAssemblyProps {
   sessionId?: string;
@@ -70,6 +71,7 @@ export function FrozenAssembly(_props: FrozenAssemblyProps) {
 
   return <section aria-labelledby="assembly-title" data-testid="frozen-assembly">
     <h2 id="assembly-title">Execution reference assembly</h2>
+    <ScientificRecordUi entityLabel="Assembly plan reference" entityId={defaults.planRevisionId} state={assembly ? "Frozen" : "Draft"} />
     <p>Latest published at assembly start</p>
     {assembly ? <><p><strong>Frozen</strong></p><p>Immutable manifest: <code>{assembly.assemblyId}</code></p></> : null}
     <dl>{references.map(([label, value]) => <div key={label}><dt>{label}</dt><dd><code title={value}>{value}</code></dd></div>)}</dl>
