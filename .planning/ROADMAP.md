@@ -133,7 +133,7 @@ Plans:
 - [x] 02-26-PLAN.md — Wave 19: isolated native guards and typed client recovery
 
 **Wave 20** *(blocked on Wave 19 completion)*
-- [ ] 02-27-PLAN.md — Wave 20: durable intent and close/restore navigation
+- [x] 02-27-PLAN.md — Wave 20: durable intent and close/restore navigation
 
 **Wave 21** *(blocked on Wave 20 completion)*
 - [ ] 02-28-PLAN.md — Wave 21: complete scientific UI states/accessibility
@@ -208,7 +208,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Agent Safety Boundary | 14/14 | Complete with user-approved waivers (not fully verified) | 2026-10-30 |
-| 2. Scientific Setup Foundation | 20/23 | In Progress | - |
+| 2. Scientific Setup Foundation | 21/23 | In Progress | - |
 | 3. Approved Manual Campaigns | 0/TBD | Not started | - |
 | 4. Reviewed CSV Evidence | 0/TBD | Not started | - |
 | 5. Policy-Bounded Autonomous Simulation | 0/TBD | Not started | - |

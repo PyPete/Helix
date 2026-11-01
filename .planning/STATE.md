@@ -4,16 +4,16 @@ current_phase: 02
 current_phase_name: Scientific Setup Foundation
 current_plan: 42
 status: complete_with_user_approved_waivers
-stopped_at: Completed 02-26-PLAN.md
-last_updated: "2026-11-01T16:10:55.821Z"
+stopped_at: Completed 02-27-PLAN.md
+last_updated: "2026-11-01T16:14:01.732Z"
 last_activity: 2026-11-01
 last_activity_desc: Completed exact frozen assembly UI and PostgreSQL reconstruction proof.
-state_head: f5c11805e66e851edb19b6d2042bd519fd4a1377
+state_head: 6843d4eb141d7b5ddfff76d036224a5b43692fba
 progress:
   total_phases: 7
   completed_phases: 1
   total_plans: 37
-  completed_plans: 34
+  completed_plans: 35
   percent: 14
 ---
 
@@ -79,6 +79,7 @@ Progress: [█░░░░░░░░░] 14% (one of six phases closed with wa
 | Phase 02 P24 | 18min | 2 tasks | 4 files |
 | Phase 02-scientific-setup-foundation P25 | 30min | 2 tasks | 6 files |
 | Phase 02-scientific-setup-foundation P26 | 10min | 2 tasks | 3 files |
+| Phase 02 P27 | 2min | 2 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -117,6 +118,8 @@ Decisions are logged in PROJECT.md Key Decisions table. Current roadmap decision
 - [Phase 02-scientific-setup-foundation]: Migration SQL and checksum receipts are atomic under an advisory lock on explicit owned targets.
 - [Phase 02-scientific-setup-foundation]: Native scientific JSON rejects nesting deeper than the approved 32-level contract before it can reach Agent authority.
 - [Phase 02-scientific-setup-foundation]: Scientific client mutation success requires a Committed receipt matching its original operation ID, kind, and known resource identity.
+- [Phase 02]: Local operation recovery retains only user-scoped caller intent and reconciles through the Agent before reporting a commit.
+- [Phase 02]: All five scientific entries use stable dock IDs and recreate their current factory content after layout restoration.
 
 ### Pending Todos
 
@@ -142,6 +145,6 @@ Decisions are logged in PROJECT.md Key Decisions table. Current roadmap decision
 
 ## Session Continuity
 
-Last session: 2026-11-01T16:10:55.767Z
-Stopped at: Completed 02-26-PLAN.md
+Last session: 2026-11-01T16:14:01.669Z
+Stopped at: Completed 02-27-PLAN.md
 Resume file: None
