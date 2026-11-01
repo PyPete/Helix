@@ -74,6 +74,12 @@ All three verdicts remain **PENDING**. Source research and limited automated/DOM
 
 During the randomized held-reconciliation task, the observer reported that **cards were clearer because navigation was clearer**. This shifts the working hypothesis away from graph-first: the next disposable variant should treat cards as the navigational default, with the graph available on demand for relationship and parallel-inspection tasks. This single task-specific observation is evidence, not a final representation decision, a general usability winner, or authorization to modify production UI. The TODO remains **pending** while the study compares that cards-first variant against the existing side-by-side hybrid and gathers further evidence.
 
+## Clean-room Designer boundary — 2026-11-01
+
+Future Helix Designer work must be a clean-room, MIT-only reimplementation inspired only by observed interaction behavior. It must not copy or adapt IvoryOS source, shared-ui code, styles, exact text or layout, assets, API shapes, name/logo, or branding. The transferable scope is limited to conceptual patterns: three-phase authoring; palette, canvas, and typed inspector; explicit control flow; and draft, preflight, and review stages.
+
+Any separately approved production plan must first document MIT-only clean-room provenance and independently designed terminology, visuals, layout, APIs, assets, and branding. It must retain Helix's proposal-only UI and Agent-only execution authority, with deterministic safety validation, review, and auditability at the Agent boundary. This decision does not authorize production work or create a production phase.
+
 ## Tracking
 
 - Interactive evaluation artifact: [Spike 004 — Canvas workspace evaluation](../spikes/004-canvas-workspace-evaluation/README.md) (PENDING; no production authorization).
