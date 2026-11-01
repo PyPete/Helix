@@ -19,18 +19,18 @@ metrics:
   duration: 42min
   completed: 2026-11-01
   tasks: 2
-status: blocked
+  status: complete
 actuals:
-  tokens: 5100
+  tokens: 31289
   tasks: 2
-  commits: 8
+  commits: 15
 plan_head_before: af55964464b79cc649854086211c9740602fce75
-  plan_head_after: 17627e99d48003ac0f43aab24e0b977d84569e54
+  plan_head_after: 5d8fc5b6b218cbb3ab6b7de4502462baac1d2b82
 ---
 
 # Phase 02 Plan 17: Scientific End-to-End Acceptance Summary
 
-**The authenticated native Agent/SQL tracer and all 65 Agent tests pass, but the prescribed Acceptance gate remains blocked by pre-existing repository-wide C# formatting violations.**
+**An authenticated native Agent/SQL tracer, clean C# formatting baseline, 65 Agent tests, and 155 desktop tests now complete the Phase 02 automated acceptance evidence.**
 
 ## Accomplishments
 
@@ -47,7 +47,8 @@ plan_head_before: af55964464b79cc649854086211c9740602fce75
 - PASS: focused `ScientificEndToEndTests.Production_authenticated_scientific_trace_is_durable_idempotent_and_never_dispatches_hardware` and `ScientificSetupEndpointsTests` passed.
 - PASS: `DurableRunspaceTests` now assert the intentional `NotSupportedException` safety boundary; the aggregate Agent suite passes 65/65.
 - PASS: `dotnet build Helix.Orchestration.Agent/Helix.Orchestration.Agent.csproj --no-restore -warnaserror` completes with 0 warnings and 0 errors after the OPC UA dependency and platform-guard corrections.
-- BLOCKED: the prescribed Acceptance rerun reaches `dotnet format Helix.Orchestration.slnx --verify-no-changes --no-restore`, which reports pre-existing whitespace violations across Agent, Core, Infrastructure, SiteServer, and test projects. The script therefore correctly stops before the desktop Vitest and production-build steps.
+- PASS: `dotnet format Helix.Orchestration.slnx --verify-no-changes --no-restore` passes after applying the approved repository formatter correction.
+- PASS: `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verification/phase02-e2e.ps1 -Mode Acceptance` completed end-to-end: Integration (3 .NET tests and exactly one ignored native fixture), native guards (14 passed, 1 intentionally ignored live fixture), Agent suite (65 passed), warning-free Agent build, formatting, desktop Vitest (37 files/155 tests), and desktop production build.
 
 ## Deviations from Plan
 
@@ -78,15 +79,20 @@ plan_head_before: af55964464b79cc649854086211c9740602fce75
     - **Fix:** Updated unavailable/vulnerable OPC UA and mismatched reactive dependencies, consumed async iterator cancellation, used the configuration-aware OPC endpoint selector, and guarded Windows-native registrations.
     - **Commit:** `dbced6c`
 
+6. **[Rule 1 - Stale tests and build boundary] Aligned desktop verification with Agent-authoritative behavior**
+    - **Found during:** Task 2 Acceptance
+    - **Fix:** Replaced obsolete renderer fetch/HTML drag-and-drop/WebSocket expectations with Agent-client, pointer-drag, and committed-evidence tests; narrowed native receipt token values before use so the production TypeScript build remains safe.
+    - **Commit:** `5d8fc5b`
+
 ## Known Stubs
 
 None.
 
-## Blocker
+## Human-Needed Follow-Up
 
-The required formatting gate fails on existing whitespace violations outside this plan's files, including `AgentApplicationComposition.cs`, scientific Core/Infrastructure persistence files, SiteServer files, and multiple test projects. Per scope boundaries, they were not reformatted here. Acceptance and phase-completion routing cannot be marked complete until the repository's formatting baseline is repaired and the full Acceptance script completes, including the remaining desktop checks.
+The authenticated installed-Tauri native/UI checklist remains unperformed and is explicitly **not passed** in `02-ACCEPTANCE.md`. Automated acceptance and Phase 02 routing are complete; a scientist must still record that experiential evidence before treating those visual, scaling, keyboard, high-contrast, and representative/oversized-payload observations as verified.
 
 ## Self-Check: PASSED
 
 - Required acceptance report exists.
-- Task commits `a0e957a`, `d5da621`, `7d32323`, `86fdc6b`, `4fc5127`, `d9892a9`, `17627e9`, `0218ab4`, and `dbced6c` are ancestors of HEAD.
+- Task commits `a0e957a`, `d5da621`, `7d32323`, `86fdc6b`, `4fc5127`, `d9892a9`, `17627e9`, `0218ab4`, `dbced6c`, `9173db3`, and `5d8fc5b` are ancestors of HEAD.

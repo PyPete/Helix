@@ -2,13 +2,13 @@
 gsd_state_version: "1.0"
 current_phase: 02
 current_phase_name: Scientific Setup Foundation
-current_plan: 42
-status: complete_with_user_approved_waivers
-stopped_at: "Blocked 02-17-PLAN.md: repository-wide dotnet format gate fails after clean Agent acceptance evidence"
-last_updated: "2026-11-01T16:50:00Z"
+current_plan: 17
+status: complete_with_human_needed_ui_checks
+stopped_at: "Completed 02-17-PLAN.md automated acceptance; authenticated installed-Tauri human checks remain unperformed"
+last_updated: "2026-11-01T17:00:00Z"
 last_activity: 2026-11-01
-last_activity_desc: Updated stale legacy runspace tests, repaired Agent warning-as-error dependency validation, and verified 65/65 Agent tests; Acceptance now blocks only at pre-existing repository-wide formatting violations.
-state_head: dbced6c
+last_activity_desc: Completed 02-17 Acceptance end-to-end: native/SQL integration, native guards, 65 Agent tests, warning-free Agent build, formatting, 155 desktop tests, and production build passed.
+state_head: 5d8fc5b
 progress:
   total_phases: 7
   completed_phases: 1
@@ -28,15 +28,15 @@ See: .planning/PROJECT.md (updated 2026-10-29)
 
 ## Current Position
 
-Current Plan: 42
+Current Plan: 17
 Total Plans in Phase: 23
 
-Phase: 02 (Scientific Setup Foundation) — IN PROGRESS
-Plan: 02-42 complete
-Status: Exact frozen assembly and immutable PostgreSQL reconstruction evidence complete
-Last activity: 2026-11-01 — Completed frozen reference SQL reconstruction proof.
+Phase: 02 (Scientific Setup Foundation) — AUTOMATED ACCEPTANCE COMPLETE
+Plan: 02-17 complete
+Status: Automated requirements evidence is complete; authenticated installed-Tauri human checks remain unperformed and are not passed.
+Last activity: 2026-11-01 — Completed end-to-end acceptance including desktop Vitest and production build.
 
-Progress: [█░░░░░░░░░] 14% (one of six phases closed with waivers; not fully verified)
+Progress: [██░░░░░░░░] 29% (Phase 1 closed with waivers; Phase 2 automated acceptance complete with human-native/UI checks pending)
 
 ## Performance Metrics
 
@@ -134,7 +134,7 @@ Decisions are logged in PROJECT.md Key Decisions table. Current roadmap decision
 - [Phase 1 verification]: The separate checker grader was unavailable. Remaining native/UI/database acceptance was not fully verified; user-reported manual SetFlow/SQL evidence and prior focused checks are documented in the phase summary.
 - [Phase 6]: Obtain EHS, vendor, and site qualification evidence before any real-device integration work.
 - 02-38 requires an architectural extension: the current sample transformation API/persistence cannot persist or return transformation occurrence time, actor, or recording time required by the plan’s immutable evidence UI.
-- 02-17 Acceptance is blocked: the full script passes Integration (3 .NET + exactly 1 ignored native fixture), native security guards (14), Agent suite (65), and warnings-as-errors build (0 warnings/errors), then stops at pre-existing repository-wide `dotnet format --verify-no-changes` whitespace violations. Desktop Vitest and production build remain unrun.
+- [Phase 2 human-needed] Authenticated installed-Tauri UI/native checklist remains unperformed: five entries/restored tabs; apparatus/procedure/plan pins; immutable history; custody/lineage; unavailable production authority; original-key uncertainty; scaling, dock, focus/keyboard/high-contrast, long IDs, and representative/oversized payloads. Automated acceptance passed; this is not green human evidence.
 
 ### Roadmap Evolution
 
@@ -149,6 +149,6 @@ Decisions are logged in PROJECT.md Key Decisions table. Current roadmap decision
 
 ## Session Continuity
 
-Last session: 2026-11-01T16:22:56.337Z
-Stopped at: Blocked 02-17-PLAN.md: repository-wide C# formatting verification failure
-Resume file: .planning/phases/02-scientific-setup-foundation/02-17-SUMMARY.md
+Last session: 2026-11-01T17:00:00Z
+Stopped at: Completed 02-17-PLAN.md automated acceptance; route to Phase 02.1 planning after recording any optional human-native/UI evidence
+Resume file: None

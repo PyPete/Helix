@@ -10,6 +10,9 @@
 | Native guard suite | `cargo test --manifest-path helix-desktop/src-tauri/Cargo.toml agent_security` runs separately; Integration executes exactly one explicitly ignored live fixture. | verified — 14 passed, 1 ignored live fixture. |
 | Aggregate Agent suite | `dotnet test tests/Helix.Orchestration.Agent.Tests/Helix.Orchestration.Agent.Tests.csproj --no-restore` | verified — 65 passed. |
 | Agent warning-as-error build | `dotnet build Helix.Orchestration.Agent/Helix.Orchestration.Agent.csproj --no-restore -warnaserror` | verified — 0 warnings, 0 errors. |
+| C# formatting baseline | `dotnet format Helix.Orchestration.slnx --verify-no-changes --no-restore` | verified — clean after the repository formatter correction. |
+| Desktop renderer tests | `npm --prefix helix-desktop test -- --run` | verified — 37 files, 155 tests passed. |
+| Desktop production build | `npm --prefix helix-desktop run build` | verified — TypeScript and Vite production build completed. |
 
 ## Requirement and decision boundary
 
@@ -22,9 +25,11 @@
 
 These checks have not been performed in an authenticated installed Tauri application and are **not passed**: five entries and restored tabs; apparatus assertions, derived procedure and plan pins; immutable history; confirmation/custody/transformation/lineage; unavailable production authority; original-key uncertainty; 125–200% scaling; dock sizing; keyboard/focus/high contrast; long IDs; and representative/oversized native payloads.
 
-## Blocking verification result
+## Automated acceptance result
 
-Integration now passes; the native guard suite passes 14 tests; the Agent suite passes 65 tests; and the Agent warnings-as-errors build is clean. Acceptance remains blocked at `dotnet format Helix.Orchestration.slnx --verify-no-changes --no-restore` by repository-wide, pre-existing whitespace violations outside this plan's changed files. The script correctly does not run the remaining desktop Vitest and production-build steps after that failure. Do not mark Phase 02 accepted until the formatting baseline is repaired and Acceptance completes end-to-end.
+`powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verification/phase02-e2e.ps1 -Mode Acceptance` completed end-to-end on 2026-11-01. It ran the owned authenticated Agent/isolated SQL scenario (3 tests and exactly one explicitly invoked ignored native fixture), the ordinary native guard suite (14 passed, 1 intentionally ignored live fixture), the aggregate Agent suite (65 passed), a warning-free Agent build, the clean formatting gate, desktop Vitest (37 files/155 tests), and the desktop production build. The known Vite large-chunk advisory is non-failing and does not change the checked exit.
+
+This completes automated Phase 02 acceptance. It does not convert the unperformed authenticated installed-Tauri checks below into passed evidence.
 
 ## Phase 3 handoff
 

@@ -11,7 +11,7 @@ Deliver one local-first, simulated scientific feedback loop in which the Helix A
 - Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
 
 - [x] **Phase 1: Agent Safety Boundary** - Execution closed with user-approved waivers; not fully verified.
-- [ ] **Phase 2: Scientific Setup Foundation** - Create revisioned apparatus, procedures, samples, and frozen execution bindings.
+- [x] **Phase 2: Scientific Setup Foundation** - Automated acceptance complete for revisioned apparatus, procedures, samples, and frozen execution bindings; authenticated installed-Tauri human checks remain explicitly unperformed.
 - [ ] **Phase 3: Approved Manual Campaigns** - Run approved, bounded simulated campaigns durably with reconciliation and evidence visibility.
 - [ ] **Phase 4: Reviewed CSV Evidence** - Turn structured CSV imports into reviewed, immutable analytical evidence.
 - [ ] **Phase 5: Policy-Bounded Autonomous Simulation** - Use accepted evidence to select and execute only permitted next simulated experiments.
@@ -139,7 +139,7 @@ Plans:
 - [x] 02-28-PLAN.md — Wave 21: complete scientific UI states/accessibility
 
 **Wave 22** *(blocked on Wave 21 completion)*
-- [ ] 02-17-PLAN.md — Wave 22: owned-host native integration and honest acceptance handoff
+- [x] 02-17-PLAN.md — Wave 22: owned-host native integration and honest acceptance handoff
 
 ### Phase 02.1: Scientific Workspace UI Rework — validate and establish an accessible, safety-truthful workspace UI for revisioned scientific setup and execution status; promote pending canvas-first, graph/cards, and inspector preferences only after evidence and explicit approval. (INSERTED)
 
@@ -208,7 +208,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Agent Safety Boundary | 14/14 | Complete with user-approved waivers (not fully verified) | 2026-10-30 |
-| 2. Scientific Setup Foundation | 22/23 | In Progress | - |
+| 2. Scientific Setup Foundation | 23/23 | Automated acceptance complete; human-native/UI checks remain unperformed | 2026-11-01 |
 | 3. Approved Manual Campaigns | 0/TBD | Not started | - |
 | 4. Reviewed CSV Evidence | 0/TBD | Not started | - |
 | 5. Policy-Bounded Autonomous Simulation | 0/TBD | Not started | - |
