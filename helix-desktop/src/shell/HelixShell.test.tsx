@@ -117,8 +117,9 @@ describe('HelixShell', () => {
     expect(screen.getByTestId('activity-bar')).toBeInTheDocument();
   });
 
-  it('exposes separate reachable Procedures, Plans, Assembly, and Samples navigation', () => {
+  it('exposes all five reachable scientific entry points', () => {
     render(<HelixShell />);
+    expect(screen.getByRole('button', { name: 'Apparatus' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Procedures' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Plans' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Assembly' })).toBeInTheDocument();
