@@ -2,18 +2,18 @@
 gsd_state_version: "1.0"
 current_phase: 02
 current_phase_name: Scientific Setup Foundation
-current_plan: 11
+current_plan: 12
 status: complete_with_user_approved_waivers
-stopped_at: Completed 02-36-PLAN.md
-last_updated: "2026-11-01T12:53:29.136Z"
+stopped_at: Completed 02-37-PLAN.md
+last_updated: "2026-11-01T13:09:54.725Z"
 last_activity: 2026-10-31
 last_activity_desc: Completed immutable sample collection and custody foundation.
-state_head: 04c1fbfb47a590db6bbd20442679a20fd111495c
+state_head: 02bde57d2e914e11a1d63232a7bdc7ee25b14977
 progress:
   total_phases: 7
   completed_phases: 1
   total_plans: 37
-  completed_plans: 25
+  completed_plans: 26
   percent: 14
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-10-29)
 
 ## Current Position
 
-Current Plan: 11
+Current Plan: 12
 Total Plans in Phase: 23
 
 Phase: 02 (Scientific Setup Foundation) — IN PROGRESS
@@ -70,6 +70,7 @@ Progress: [█░░░░░░░░░] 14% (one of six phases closed with wa
 | Phase 02 P34 | continuation session | 2 tasks | 11 files |
 | Phase 02-scientific-setup-foundation P35 | 9min | 3 tasks | 14 files |
 | Phase 02-scientific-setup-foundation P36 | 18min | 2 tasks | 8 files |
+| Phase 02 P37 | 33min | 2 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -94,6 +95,7 @@ Decisions are logged in PROJECT.md Key Decisions table. Current roadmap decision
 - [Phase 02-scientific-setup-foundation]: Samples are retained as a stable dock tab; labels are display data and never replace immutable sample identity.
 - [Phase 02-scientific-setup-foundation]: Transformation child identities are transformation-origin samples with immutable parent links, never inferred collection records.
 - [Phase 02-scientific-setup-foundation]: Transformation writes lock scoped parent samples in UUID order and persist activity, children, edges, heads, and operation receipt in one transaction.
+- [Phase 02]: Transformation persistence uses transaction-scoped advisory locks so restricted runtime roles need no UPDATE grant.
 
 ### Pending Todos
 
@@ -118,6 +120,6 @@ Decisions are logged in PROJECT.md Key Decisions table. Current roadmap decision
 
 ## Session Continuity
 
-Last session: 2026-11-01T12:53:29.074Z
-Stopped at: Completed 02-36-PLAN.md
+Last session: 2026-11-01T13:09:54.657Z
+Stopped at: Completed 02-37-PLAN.md
 Resume file: None
