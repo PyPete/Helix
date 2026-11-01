@@ -33,4 +33,11 @@ describe("FrozenAssembly", () => {
     expect(screen.queryByRole("button", { name: "Assemble frozen references" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /approve|start/i })).not.toBeInTheDocument();
   });
+
+  it("keeps frozen-reference evidence accessible by exact immutable assembly ID", async () => {
+    render(<FrozenAssembly />);
+
+    await screen.findByText("Plan-pinned procedure revision");
+    expect(screen.getByRole("button", { name: "View full ID" })).toBeInTheDocument();
+  });
 });
