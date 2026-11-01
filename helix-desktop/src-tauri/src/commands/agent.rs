@@ -157,6 +157,37 @@ fn validate_sample_mutation_request(request: &str, requires_sequence: bool) -> R
     Ok(())
 }
 
+fn validate_sample_transformation_request(request: &str) -> Result<(), String> {
+    validate_json(request)?;
+    let value: serde_json::Value = serde_json::from_str(request)
+        .map_err(|_| "Sample transformation request is invalid.".to_string())?;
+    let object = value.as_object().ok_or_else(|| "Sample transformation request is invalid.".to_string())?;
+    for field in ["operationId", "transformationId"] {
+        let id = object.get(field).and_then(serde_json::Value::as_str)
+            .ok_or_else(|| format!("Sample transformation {field} is required."))?;
+        validate_command_id(id)?;
+    }
+    let operation = object.get("operation").and_then(serde_json::Value::as_str)
+        .ok_or_else(|| "Sample transformation operation is required.".to_string())?;
+    if operation.trim().is_empty() || operation.len() > 512 {
+        return Err("Sample transformation operation is invalid.".to_string());
+    }
+    for field in ["parentSampleIds", "childSampleIds"] {
+        let ids = object.get(field).and_then(serde_json::Value::as_array)
+            .ok_or_else(|| format!("Sample transformation {field} is required."))?;
+        if ids.is_empty() || ids.len() > 32 { return Err(format!("Sample transformation {field} is invalid.")); }
+        for id in ids {
+            validate_command_id(id.as_str().ok_or_else(|| format!("Sample transformation {field} is invalid."))?)?;
+        }
+    }
+    Ok(())
+}
+
+fn validate_lineage_direction(direction: &str) -> Result<(), String> {
+    if matches!(direction, "Ancestors" | "Descendants") { Ok(()) }
+    else { Err("Sample lineage direction is invalid.".to_string()) }
+}
+
 fn scientific_kind_path(kind: &str) -> Result<&'static str, String> {
     match kind {
         "procedure" | "procedures" => Ok("procedures"),
@@ -433,10 +464,32 @@ pub async fn sample_events(window: WebviewWindow, state: State<'_, AgentBrokerSt
 pub async fn sample_operation(window: WebviewWindow, state: State<'_, AgentBrokerState>, operation_id: String, kind: String) -> Result<String, String> {
     require_main_window(&window)?;
     validate_command_id(&operation_id)?;
-    if kind != "sample.confirm" && kind != "sample.append" {
+    if kind != "sample.confirm" && kind != "sample.append" && kind != "sample.transform" {
         return Err("Sample operation kind is invalid.".to_string());
     }
     native_request("GET", &format!("/api/scientific-operations/{operation_id}?kind={kind}"), None, &require_session(&state)?)
+}
+
+/// Proposes a bounded, new-child-only transformation through the fixed Agent route.
+#[tauri::command]
+pub async fn sample_transform(window: WebviewWindow, state: State<'_, AgentBrokerState>, request: String) -> Result<String, String> {
+    require_main_window(&window)?;
+    validate_sample_transformation_request(&request)?;
+    native_request("POST", "/api/samples/transformations", Some(&request), &require_session(&state)?)
+}
+
+/// Reads bounded ancestor or descendant evidence without accepting a renderer-provided route.
+#[tauri::command]
+pub async fn sample_lineage(window: WebviewWindow, state: State<'_, AgentBrokerState>, sample_id: String, direction: String, continuation: Option<String>, page_size: u16) -> Result<String, String> {
+    require_main_window(&window)?;
+    validate_command_id(&sample_id)?;
+    validate_lineage_direction(&direction)?;
+    validate_page_size(page_size)?;
+    let continuation = match continuation {
+        Some(value) => { validate_command_id(&value)?; format!("&continuation={value}") },
+        None => String::new(),
+    };
+    native_request("GET", &format!("/api/samples/{sample_id}/lineage?direction={direction}&pageSize={page_size}{continuation}"), None, &require_session(&state)?)
 }
 
 /// Lists only the Agent's canonical simulator adapters through the authenticated broker.
@@ -704,6 +757,14 @@ mod agent_security {
         assert!(validate_page_size(100).is_ok());
         assert!(validate_page_size(0).is_err());
         assert!(validate_page_size(101).is_err());
+    }
+
+    #[test] fn transformation_and_lineage_commands_use_fixed_bounded_inputs() {
+        let transformation = r#"{"operationId":"11111111-1111-1111-1111-111111111111","transformationId":"22222222-2222-2222-2222-222222222222","operation":"split","parentSampleIds":["33333333-3333-3333-3333-333333333333"],"childSampleIds":["44444444-4444-4444-4444-444444444444"]}"#;
+        assert!(validate_sample_transformation_request(transformation).is_ok());
+        assert!(validate_sample_transformation_request(r#"{"operationId":"../foreign","transformationId":"22222222-2222-2222-2222-222222222222","operation":"split","parentSampleIds":["33333333-3333-3333-3333-333333333333"],"childSampleIds":["44444444-4444-4444-4444-444444444444"]}"#).is_err());
+        assert!(validate_lineage_direction("Ancestors").is_ok());
+        assert!(validate_lineage_direction("../commands").is_err());
     }
 
     #[test] fn non_success_agent_status_never_becomes_a_receipt() {
