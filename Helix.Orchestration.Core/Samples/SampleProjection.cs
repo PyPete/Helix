@@ -18,8 +18,9 @@ public sealed record SampleProjection(
 
         var current = events[0];
         SampleFactValidation.ValidateEvent(current, DateTimeOffset.UtcNow);
-        if (current.Kind != SampleEventKind.Confirmed || current.SampleId != identity.SampleId)
-            throw new InvalidOperationException("The first event must confirm this sample.");
+        var initialKind = identity.Origin == SampleOrigin.Collection ? SampleEventKind.Confirmed : SampleEventKind.Transformed;
+        if (current.Kind != initialKind || current.SampleId != identity.SampleId)
+            throw new InvalidOperationException("The first event must establish this sample's immutable origin.");
 
         foreach (var next in events.Skip(1))
         {

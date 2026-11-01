@@ -9,6 +9,7 @@ public enum SampleOrigin
 public enum SampleEventKind
 {
     Confirmed,
+    Transformed,
     Relabeled,
     CustodyMoved,
     Correction
