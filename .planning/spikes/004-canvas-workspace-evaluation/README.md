@@ -18,6 +18,10 @@ tags: [ui, evaluation, simulation, safety, human-review]
 
 This is the human-review gate for the existing disposable 001–003 comparisons. It creates no product code and does not declare a winner. All fixtures remain simulated; UI interactions, drafts, and AI suggestions are proposals only. The local Helix Agent remains the sole authority for physical execution and admission.
 
+### Next variant: cards-first flow building
+
+The disposable page now tests whether cards can be the scientist's starting point for **authoring** a proposed flow, with an interactive graph workspace available for relationship editing. Scientists can add typed mock steps, select a source and Shift-click a target, create or remove mock edges, mark a branch, mark parallel work, and receive immediate invalid-edge feedback. The inspector edits only the local fixture and retains the resolve-first unsaved-draft guard. “Submit proposal” records a mock review event only: it does not call an API, Agent, driver, or device and cannot execute anything.
+
 ## Status
 
 **PENDING — interactive review required.** The canonical TODO remains pending: [canvas-first scientific workspace](../../todos/spike-canvas-first-scientific-workspace.md). This artifact reconciles the already-built comparisons with the outstanding evidence rather than rebuilding or redesigning them.
@@ -68,6 +72,16 @@ Theme is local to this disposable page: Light, Dark, and System choices persist 
 7. Select Open safety evidence in the persistent strip. Verify held/reconciliation status routes to evidence without direct operational controls.
 8. Review the AI proposal. It must remain a proposal requiring scientist review and Agent admission, never an execution control.
 
+### Experiential authoring task (required)
+
+1. Start **Experiential review task**, then open the graph workspace from cards.
+2. Select **Irradiate**, mark it a branch, Shift-click **Analyze aliquot** and **Reconcile observed state**, then mark the pair as parallel work.
+3. Select **Irradiate**, Shift-click **Ready check**, and choose **Create connection**. Confirm immediate invalid feedback; do not submit until the invalid edge has been repaired/absent.
+4. Edit the selected step in the inspector. Attempt to change selection and confirm Save, Discard, or Keep editing is required.
+5. Submit the proposal. Confirm the result explicitly says it is simulated and that no Agent validation, API call, command, or execution occurred.
+
+**Falsifiable criterion:** this variant is supported only if reviewers can complete all five task stages without assistance, correctly identify/repair the invalid edge, retain context after resolving the draft, and accurately state that submission is a proposal rather than execution. A missed safety boundary, silent draft loss, or inability to create/explain branch and parallel relationships falsifies the cards-first authoring hypothesis.
+
 ## Observation / Verification Criteria
 
 - [ ] Light, Dark, and System themes preserve contrast, focus indication, connector meaning, and status meaning.
@@ -78,6 +92,7 @@ Theme is local to this disposable page: Light, Dark, and System choices persist 
 - [ ] Held/reconciliation state stays visible across views and routes to evidence with no strip controls.
 - [ ] AI proposal wording never claims approval, dispatch, or device authority.
 - [ ] All displayed readings and actions are simulated fixtures; no Agent, API, or device call occurs.
+- [ ] Reviewer can author branch and parallel mock relationships, repair an immediately reported invalid edge, and submit only a proposal.
 
 ## Evidence checklist
 
