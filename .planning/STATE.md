@@ -2,13 +2,13 @@
 gsd_state_version: "1.0"
 current_phase: 02
 current_phase_name: Scientific Setup Foundation
-current_plan: 16
+current_plan: 42
 status: complete_with_user_approved_waivers
-stopped_at: Completed 02-41-PLAN.md
-last_updated: "2026-11-01T13:27:05.041Z"
-last_activity: 2026-10-31
-last_activity_desc: Completed immutable sample collection and custody foundation.
-state_head: c23a0993539093e4907673137e58abc1f034368d
+stopped_at: Completed 02-42-PLAN.md
+last_updated: "2026-11-01T13:36:00Z"
+last_activity: 2026-11-01
+last_activity_desc: Completed exact frozen assembly UI and PostgreSQL reconstruction proof.
+state_head: 32976ea
 progress:
   total_phases: 7
   completed_phases: 1
@@ -28,13 +28,13 @@ See: .planning/PROJECT.md (updated 2026-10-29)
 
 ## Current Position
 
-Current Plan: 16
+Current Plan: 42
 Total Plans in Phase: 23
 
 Phase: 02 (Scientific Setup Foundation) — IN PROGRESS
-Plan: 02-33 complete; 02-34 is ready to execute
-Status: Collection and append-only custody foundation complete with isolated PostgreSQL evidence
-Last activity: 2026-10-31 — Completed first-production apparatus tracer.
+Plan: 02-42 complete
+Status: Exact frozen assembly and immutable PostgreSQL reconstruction evidence complete
+Last activity: 2026-11-01 — Completed frozen reference SQL reconstruction proof.
 
 Progress: [█░░░░░░░░░] 14% (one of six phases closed with waivers; not fully verified)
 
@@ -75,6 +75,7 @@ Progress: [█░░░░░░░░░] 14% (one of six phases closed with wa
 | Phase 02 P39 | 15min | 2 tasks | 10 files |
 | Phase 02 P40 | 12min | 2 tasks | 7 files |
 | Phase 02-scientific-setup-foundation P41 | 12min | 2 tasks | 8 files |
+| Phase 02-scientific-setup-foundation P42 | 8min | 3 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -98,6 +99,7 @@ Decisions are logged in PROJECT.md Key Decisions table. Current roadmap decision
 - [Phase 02-scientific-setup-foundation]: Sample outcome recovery uses a fixed read-only native receipt lookup and never replaces the original operation ID.
 - [Phase 02-scientific-setup-foundation]: Samples are retained as a stable dock tab; labels are display data and never replace immutable sample identity.
 - [Phase 02-scientific-setup-foundation]: Transformation child identities are transformation-origin samples with immutable parent links, never inferred collection records.
+- [Phase 02-scientific-setup-foundation]: Frozen assembly is read-only and proves original SQL-persisted references after later publication; test-only trusted authority does not alter production fail-closed authority.
 - [Phase 02-scientific-setup-foundation]: Transformation writes lock scoped parent samples in UUID order and persist activity, children, edges, heads, and operation receipt in one transaction.
 - [Phase 02]: Transformation persistence uses transaction-scoped advisory locks so restricted runtime roles need no UPDATE grant.
 - [Phase 02-scientific-setup-foundation]: Transformation occurrence is supplied as evidence, while actor and recording time are Agent-derived and immutable.
