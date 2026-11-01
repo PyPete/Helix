@@ -37,15 +37,19 @@ This is the human-review gate for the existing disposable 001–003 comparisons.
 
 The persistent execution/safety strip shows the truthful reconciliation/held status and routes the scientist to the detailed safety/evidence view. It exposes no direct `Pause`, `Hold`, or `Abort` controls while reconciliation is pending. Consequential controls remain beside their admission evidence, require their existing confirmations/acknowledgements, and never imply that the UI can authorize execution.
 
+### 2026-11-01 - Inspector drafts: resolve before selection change
+
+Changing contextual-inspector selection while the current entity has an unsaved draft requires explicit resolution: save, discard, or cancel the selection change. The draft is never silently retained, reassigned, autosaved, retargeted, approved, dispatched, or applied to a reviewed fixture/run. The resolution surface must retain the current entity's stable identity, provenance, units, quality flags, and review state.
+
 ## Next Interactive Decision
 
-**When a scientist changes contextual-inspector selection while the current entity has an unsaved draft, how should the spike preserve that draft and its safety/provenance context?**
+**Which primary work surface should the disposable workspace open for authoring and reviewing a protocol, while retaining the status + route strip and resolve-first inspector behavior?**
 
-- **Persistent per-entity draft tray (recommended):** switch selection immediately; retain a clearly labeled, non-autosaved draft for the prior stable entity ID, with its provenance, units, quality flags, and review state.
-- **Resolve-before-switch:** keep selection fixed until the scientist explicitly keeps or discards the draft.
-- **Shared unsaved draft:** retain one workspace-level draft while selection changes, with an explicit reassignment step before it can be reviewed.
+- **Canvas graph primary + cards toggle (recommended):** open on the apparatus/protocol graph; expose sequence cards as an equally preserved view of the same stable protocol identities and control flow.
+- **Sequence cards primary + graph on demand:** open on the linear card sequence; require an explicit switch to inspect branches, loops, dependencies, and parallel lanes.
+- **Persistent hybrid:** keep a compact graph and sequence cards visible together, with one selection model and no duplicate or divergent draft state.
 
-No option may silently save, retarget, approve, dispatch, or mutate a reviewed fixture/run. This decision tests inspector clarity and traceability with simulated data only.
+Every option must label conditional branches and parallel lanes, preserve immutable reviewed revisions, and ensure view changes neither resolve drafts nor grant execution authority. This is a simulated comparison only, not a production layout approval.
 
 ## Evidence checklist
 
