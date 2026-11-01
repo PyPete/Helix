@@ -115,3 +115,42 @@ export interface SampleMutationResult {
   sample: SampleProjection;
   receipt: SampleReceipt;
 }
+
+export type SampleTransformationKind = "Split" | "Pool" | "Processing";
+export type SampleLineageDirection = "Ancestors" | "Descendants";
+
+export interface SampleQuantity {
+  value: string;
+  unitCode: string;
+  dimension: string;
+}
+
+/** New child IDs are supplied up front and remain immutable evidence after acknowledgement. */
+export interface SampleTransformationRequest {
+  operationId: string;
+  transformationId: string;
+  kind: SampleTransformationKind;
+  operation: string;
+  parentSampleIds: string[];
+  childSampleIds: string[];
+  quantity?: SampleQuantity;
+  quantitySupplied: boolean;
+}
+
+export interface SampleTransformationResult {
+  operationId: string;
+  childIds: string[];
+}
+
+export interface SampleLineageEntry {
+  sampleId: string;
+  origin: SampleOrigin;
+  transformationId?: string;
+  depth: number;
+}
+
+export interface SampleLineage {
+  entries: SampleLineageEntry[];
+  continuation?: string;
+  isTruncated: boolean;
+}

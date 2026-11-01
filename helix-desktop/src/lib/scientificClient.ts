@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import type { PlanDraft, ProcedureDraft, SampleConfirmationRequest, SampleEvent, SampleEventAppendRequest, SampleMutationResult, SampleProjection, SampleReceipt, ScientificDraftState, ScientificKind, ScientificReceipt, ScientificRevision, ScientificSummary } from "../types/scientific";
+import type { PlanDraft, ProcedureDraft, SampleConfirmationRequest, SampleEvent, SampleEventAppendRequest, SampleLineage, SampleLineageDirection, SampleMutationResult, SampleProjection, SampleReceipt, SampleTransformationRequest, SampleTransformationResult, ScientificDraftState, ScientificKind, ScientificReceipt, ScientificRevision, ScientificSummary } from "../types/scientific";
 
 function parse<T>(response: string): T { return JSON.parse(response) as T; }
 
@@ -118,4 +118,38 @@ export async function sampleEvents(sampleId: string, afterSequence?: number, pag
 /** Looks up a sample mutation receipt without replaying the mutation or generating a new key. */
 export async function readSampleOperation(kind: SampleReceipt["kind"], operationId: string): Promise<SampleReceipt> {
   return sampleReceipt(await invoke<string>("sample_operation", { operationId, kind }), kind, operationId);
+}
+
+function validTransformationResult(value: unknown, request: SampleTransformationRequest): value is SampleTransformationResult {
+  if (!value || typeof value !== "object") return false;
+  const result = value as Partial<SampleTransformationResult>;
+  return result.operationId === request.operationId && Array.isArray(result.childIds) &&
+    result.childIds.length === request.childSampleIds.length &&
+    result.childIds.every((childId, index) => childId === request.childSampleIds[index]);
+}
+
+function validLineage(value: unknown): value is SampleLineage {
+  if (!value || typeof value !== "object") return false;
+  const lineage = value as Partial<SampleLineage>;
+  return Array.isArray(lineage.entries) && typeof lineage.isTruncated === "boolean" &&
+    (lineage.continuation === undefined || lineage.continuation === null || typeof lineage.continuation === "string") &&
+    lineage.entries.every((entry) => !!entry && typeof entry.sampleId === "string" &&
+      (entry.origin === "Collection" || entry.origin === "Transformation") &&
+      (entry.transformationId === undefined || typeof entry.transformationId === "string") &&
+      typeof entry.depth === "number" && Number.isInteger(entry.depth) && entry.depth >= 0);
+}
+
+/** Submits exactly one new-child transformation with its caller-owned operation identity. */
+export async function transformSample(request: SampleTransformationRequest): Promise<SampleTransformationResult> {
+  const result = parse<unknown>(await invoke<string>("sample_transform", { request: JSON.stringify(request) }));
+  if (!validTransformationResult(result, request)) throw new Error("Agent returned an invalid sample transformation acknowledgement.");
+  return result;
+}
+
+/** Reads one bounded lineage page; continuation is returned only as Agent-provided evidence. */
+export async function sampleLineage(sampleId: string, direction: SampleLineageDirection, continuation?: string, pageSize = 25): Promise<SampleLineage> {
+  if (!Number.isInteger(pageSize) || pageSize < 1 || pageSize > 100) throw new Error("Sample lineage page size must be between 1 and 100.");
+  const result = parse<unknown>(await invoke<string>("sample_lineage", { sampleId, direction, continuation, pageSize }));
+  if (!validLineage(result)) throw new Error("Agent returned invalid sample lineage evidence.");
+  return result;
 }

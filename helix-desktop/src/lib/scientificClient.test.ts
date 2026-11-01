@@ -49,7 +49,7 @@ describe("scientificClient", () => {
       sampleLineage: (sampleId: string, direction: string, continuation?: string, pageSize?: number) => Promise<unknown>;
     };
     expect(typeof client.sampleLineage).toBe("function");
-    invoke.mockResolvedValueOnce(JSON.stringify({ entries: [{ sampleId: "other-sample", origin: "Transformation", depth: 1 }], continuation: null, isTruncated: false }));
+    invoke.mockResolvedValueOnce(JSON.stringify({ entries: [{ sampleId: "other-sample", origin: "Transformation" }], continuation: null, isTruncated: false }));
     await expect(client.sampleLineage("sample-1", "Ancestors")).rejects.toThrow("lineage");
   });
 });
