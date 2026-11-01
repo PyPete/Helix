@@ -120,7 +120,7 @@ Plans:
 - [x] 02-40-PLAN.md — Wave 15: exact Agent freeze/resolution with trusted test-only authority
 
 **Wave 16** *(blocked on Wave 15 completion)*
-- [ ] 02-41-PLAN.md — Wave 16: guarded native/client exact policy and assembly operations
+- [x] 02-41-PLAN.md — Wave 16: guarded native/client exact policy and assembly operations
 
 **Wave 17** *(blocked on Wave 16 completion)*
 - [ ] 02-42-PLAN.md — Wave 17: complete reachable assembly UI and positive SQL reconstruction
@@ -208,7 +208,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Agent Safety Boundary | 14/14 | Complete with user-approved waivers (not fully verified) | 2026-10-30 |
-| 2. Scientific Setup Foundation | 15/23 | In Progress | - |
+| 2. Scientific Setup Foundation | 16/23 | In Progress | - |
 | 3. Approved Manual Campaigns | 0/TBD | Not started | - |
 | 4. Reviewed CSV Evidence | 0/TBD | Not started | - |
 | 5. Policy-Bounded Autonomous Simulation | 0/TBD | Not started | - |
