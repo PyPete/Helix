@@ -90,7 +90,7 @@ public sealed class SamplesTests(ScientificPostgresFixture fixture)
             quantitySupplied = false
         });
 
-        Assert.Equal(HttpStatusCode.Created, transformed.StatusCode);
+        Assert.True(transformed.StatusCode == HttpStatusCode.Created, await transformed.Content.ReadAsStringAsync());
         var lineage = await client.GetAsync($"/api/samples/{parentId}/lineage?direction=Descendants&pageSize=1");
         Assert.Equal(HttpStatusCode.OK, lineage.StatusCode);
         using var lineageDocument = JsonDocument.Parse(await lineage.Content.ReadAsStringAsync());

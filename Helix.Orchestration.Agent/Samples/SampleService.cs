@@ -43,4 +43,24 @@ public sealed class SampleService(ISampleRepository repository)
 
     public Task<SampleOperationReceipt?> OperationAsync(Guid operationId, string actorSid, CancellationToken ct) =>
         repository.OperationAsync(operationId, new SampleScope(actorSid), ct);
+
+    public async Task<(IReadOnlyList<SampleProjection> Children, SampleOperationReceipt Receipt, bool Replayed)> TransformAsync(SampleTransformation transformation, string actorSid, Guid operationId, CancellationToken ct)
+    {
+        var scope = new SampleScope(actorSid);
+        scope.Validate();
+        if (operationId == Guid.Empty) throw new ArgumentException("An operation identifier is required.", nameof(operationId));
+
+        var prior = await repository.OperationAsync(operationId, scope, ct);
+        if (prior is not null && prior.Kind != "sample.transform")
+            throw new InvalidOperationException("Operation identity was reused for a different sample operation.");
+
+        var result = await repository.TransformAsync(transformation, scope, operationId, ct);
+        return (result.Children, result.Receipt, prior is not null);
+    }
+
+    public Task<SampleLineage> LineageAsync(Guid sampleId, SampleLineageDirection direction, Guid? continuation, int pageSize, string actorSid, CancellationToken ct)
+    {
+        if (!Enum.IsDefined(direction)) throw new ArgumentOutOfRangeException(nameof(direction));
+        return repository.LineageAsync(sampleId, direction, new SampleScope(actorSid), continuation, pageSize, ct);
+    }
 }

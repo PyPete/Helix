@@ -52,10 +52,10 @@ public sealed class ScientificPostgresFixture : IAsyncLifetime
         await StartAgentAsync();
     }
 
-    public HttpClient CreateAuthenticatedClient()
+    public HttpClient CreateAuthenticatedClient(string? actorSid = null)
     {
         var issue = _agent!.Services.GetRequiredService<DesktopSessionService>()
-            .Issue("S-1-5-21-tracer", "Tracer Scientist", TimeSpan.FromMinutes(15));
+            .Issue(actorSid ?? $"S-1-5-21-tracer-{Guid.NewGuid():N}", "Tracer Scientist", TimeSpan.FromMinutes(15));
         var client = new HttpClient { BaseAddress = AgentAddress };
         client.DefaultRequestHeaders.Authorization = new("Bearer", issue.Token);
         return client;

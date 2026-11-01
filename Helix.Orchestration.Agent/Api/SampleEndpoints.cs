@@ -8,6 +8,7 @@ namespace Helix.Orchestration.Agent.Api;
 
 public sealed record SampleConfirmationRequest(Guid OperationId, string Location, DateTimeOffset OccurredAtUtc, string? Label = null, string? Custodian = null, Guid? PlannedReferenceId = null);
 public sealed record SampleEventAppendRequest(Guid OperationId, SampleEventKind Kind, string? Label, string? Custodian, string Location, DateTimeOffset OccurredAtUtc, long ExpectedSequence, Guid? SupersedesEventId = null, string? CorrectionReason = null);
+public sealed record SampleTransformationRequest(Guid OperationId, Guid TransformationId, SampleTransformationKind Kind, string Operation, IReadOnlyList<Guid> ParentSampleIds, IReadOnlyList<Guid> ChildSampleIds, SampleQuantity? Quantity = null, bool QuantitySupplied = false);
 
 public static class SampleEndpoints
 {
@@ -19,6 +20,8 @@ public static class SampleEndpoints
         routes.MapPost("/confirmations", ConfirmAsync);
         routes.MapPost("/{id:guid}/events", AppendAsync);
         routes.MapGet("/{id:guid}/events", EventsAsync);
+        routes.MapPost("/transformations", TransformAsync);
+        routes.MapGet("/{id:guid}/lineage", LineageAsync);
         app.MapGet("/api/scientific-operations/{operationId:guid}", OperationAsync);
     }
 
@@ -60,9 +63,33 @@ public static class SampleEndpoints
     private static async Task<IResult> EventsAsync(Guid id, HttpContext context, SampleService service, long? afterSequence, int? pageSize, CancellationToken ct) =>
         Results.Ok(await service.EventsAsync(id, Actor(context).Sid, afterSequence, Math.Clamp(pageSize ?? 25, 1, 100), ct));
 
+    private static async Task<IResult> TransformAsync(SampleTransformationRequest request, HttpContext context, SampleService service, CancellationToken ct)
+    {
+        if (context.Request.ContentLength > 16 * 1024) return Results.StatusCode(StatusCodes.Status413PayloadTooLarge);
+        try
+        {
+            var transformation = new SampleTransformation(request.TransformationId, request.Kind, request.Operation, request.ParentSampleIds ?? [], request.ChildSampleIds ?? [], request.Quantity, request.QuantitySupplied);
+            var result = await service.TransformAsync(transformation, Actor(context).Sid, request.OperationId, ct);
+            var response = new { childIds = result.Children.Select(child => child.Identity.SampleId), operationId = result.Receipt.OperationId };
+            return result.Replayed ? Results.Ok(response) : Results.Created($"/api/samples/{result.Children[0].Identity.SampleId}", response);
+        }
+        catch (ArgumentOutOfRangeException exception) { return Results.BadRequest(new { error = exception.Message }); }
+        catch (ArgumentException exception) { return Results.BadRequest(new { error = exception.Message }); }
+        catch (InvalidOperationException exception) { return Results.Conflict(new { error = exception.Message }); }
+    }
+
+    private static async Task<IResult> LineageAsync(Guid id, string direction, Guid? continuation, int? pageSize, HttpContext context, SampleService service, CancellationToken ct)
+    {
+        if (!Enum.TryParse<SampleLineageDirection>(direction, ignoreCase: false, out var parsedDirection)) return Results.BadRequest(new { error = "Lineage direction is invalid." });
+        try { return Results.Ok(await service.LineageAsync(id, parsedDirection, continuation, Math.Clamp(pageSize ?? 25, 1, 100), Actor(context).Sid, ct)); }
+        catch (ArgumentOutOfRangeException exception) { return Results.BadRequest(new { error = exception.Message }); }
+        catch (ArgumentException exception) { return Results.BadRequest(new { error = exception.Message }); }
+        catch (InvalidOperationException) { return Results.NotFound(); }
+    }
+
     private static async Task<IResult> OperationAsync(Guid operationId, string? kind, HttpContext context, SampleService service, CancellationToken ct)
     {
-        if (!string.Equals(kind, "sample.confirm", StringComparison.Ordinal) && !string.Equals(kind, "sample.append", StringComparison.Ordinal)) return Results.BadRequest();
+        if (!string.Equals(kind, "sample.confirm", StringComparison.Ordinal) && !string.Equals(kind, "sample.append", StringComparison.Ordinal) && !string.Equals(kind, "sample.transform", StringComparison.Ordinal)) return Results.BadRequest();
         var receipt = await service.OperationAsync(operationId, Actor(context).Sid, ct);
         return receipt is null || receipt.Kind != kind ? Results.NotFound() : Results.Ok(receipt);
     }

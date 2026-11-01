@@ -1,3 +1,4 @@
+using System.Buffers.Binary;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -83,14 +84,23 @@ public sealed class PostgresSampleRepository(DbConnectionFactory factory) : ISam
         var validation = SampleLineageValidator.Validate(transformation);
         if (!validation.IsValid) throw new ArgumentException(string.Join(" ", validation.Diagnostics), nameof(transformation));
 
+        transformation = transformation with
+        {
+            ParentSampleIds = transformation.ParentSampleIds.OrderBy(id => id).ToArray(),
+            ChildSampleIds = transformation.ChildSampleIds.OrderBy(id => id).ToArray()
+        };
         var payload = JsonSerializer.Serialize(transformation);
         var requestHash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(payload))).ToLowerInvariant();
         await using var connection = factory.Create();
         await connection.OpenAsync(cancellationToken);
         await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
 
+        // Transaction-scoped advisory locks preserve least privilege: the runtime never needs
+        // UPDATE permission merely to serialize idempotency or overlapping parent validation.
+        await AcquireAdvisoryLockAsync(connection, transaction, AdvisoryLockKey("sample.transform.operation", scope.ActorSid, operationId), cancellationToken);
+
         var receiptRow = await connection.QuerySingleOrDefaultAsync<ReceiptHashRow>(new CommandDefinition(
-            "SELECT request_hash RequestHash,operation_kind Kind,sample_id SampleId,actor_sid ActorSid,recorded_at RecordedAtUtc,payload::text Payload FROM scientific_sample_operations WHERE actor_sid=@actor AND operation_id=@operationId FOR UPDATE",
+            "SELECT request_hash RequestHash,operation_kind Kind,sample_id SampleId,actor_sid ActorSid,recorded_at RecordedAtUtc,payload::text Payload FROM scientific_sample_operations WHERE actor_sid=@actor AND operation_id=@operationId",
             new { actor = scope.ActorSid, operationId }, transaction, cancellationToken: cancellationToken));
         if (receiptRow is not null)
         {
@@ -101,8 +111,11 @@ public sealed class PostgresSampleRepository(DbConnectionFactory factory) : ISam
             return (existingChildren, receiptRow.ToReceipt());
         }
 
+        foreach (var parentId in transformation.ParentSampleIds)
+            await AcquireAdvisoryLockAsync(connection, transaction, AdvisoryLockKey("sample.transform.parent", scope.ActorSid, parentId), cancellationToken);
+
         var lockedParents = (await connection.QueryAsync<Guid>(new CommandDefinition(
-            "SELECT sample_id FROM scientific_samples WHERE actor_sid=@actor AND sample_id = ANY(@parentIds) ORDER BY sample_id FOR UPDATE",
+            "SELECT sample_id FROM scientific_samples WHERE actor_sid=@actor AND sample_id = ANY(@parentIds) ORDER BY sample_id",
             new { actor = scope.ActorSid, parentIds = transformation.ParentSampleIds.ToArray() }, transaction, cancellationToken: cancellationToken))).ToArray();
         if (lockedParents.Length != transformation.ParentSampleIds.Count)
             throw new InvalidOperationException("Every transformation parent must exist in the authenticated scope.");
@@ -160,6 +173,15 @@ public sealed class PostgresSampleRepository(DbConnectionFactory factory) : ISam
         var receipt = await InsertTransformationReceiptAsync(connection, transaction, operationId, children[0].Identity.SampleId, scope.ActorSid, payload, requestHash, cancellationToken);
         await transaction.CommitAsync(cancellationToken);
         return (children, receipt);
+    }
+
+    private static Task AcquireAdvisoryLockAsync(NpgsqlConnection connection, NpgsqlTransaction transaction, long lockKey, CancellationToken cancellationToken) =>
+        connection.ExecuteAsync(new CommandDefinition("SELECT pg_advisory_xact_lock(@lockKey)", new { lockKey }, transaction, cancellationToken: cancellationToken));
+
+    private static long AdvisoryLockKey(string domain, string actorSid, Guid identity)
+    {
+        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes($"{domain}\n{actorSid}\n{identity:D}"));
+        return BinaryPrimitives.ReadInt64BigEndian(bytes);
     }
 
     public async Task<SampleLineage> LineageAsync(Guid sampleId, SampleLineageDirection direction, SampleScope scope, Guid? continuation = null, int pageSize = 25, CancellationToken cancellationToken = default)
