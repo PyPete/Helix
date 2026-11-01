@@ -26,8 +26,8 @@ This is the human-review gate for the existing disposable 001–003 comparisons.
 
 1. Launch the disposable comparison host: `node .planning/spikes/server.mjs`.
 2. Complete the same apparatus-orientation and linear-protocol task in ribbon/dock and canvas variants; record discoverability, completion, errors, and explanation accuracy.
-3. Switch between graph and sequence-card representations for the same stable protocol identities, including a branching/parallel example; record whether control flow stays explicit.
-4. Change device, step, sample, and result selection while a draft is pending; record whether the contextual inspector preserves draft, provenance, units, quality, and safety-review context.
+3. Use the randomized graph/card starting view for the same five stable protocol identities: ready check, prepare sample, irradiate, analyze aliquot, and reconcile observed state. Record whether the labeled directional graph and grouped parallel-card branch make the same control flow explicit.
+4. Change device, step, sample, and result selection while a draft is pending; record whether the contextual inspector preserves draft, provenance, units, quality, and safety-review context. Repeat in Light, Dark, and System theme settings, including keyboard focus visibility.
 5. Review blocked, active, paused, disconnected, AI-proposal, unreviewed-result, and reconciliation scenarios. Confirm the persistent execution/safety strip remains truthful and that no gesture appears to dispatch a physical command.
 6. Export the fixture event log and attach task observations, screenshots, timings, and the state matrix here before updating any verdict.
 
@@ -43,21 +43,29 @@ Changing contextual-inspector selection while the current entity has an unsaved 
 
 ### 2026-11-01 - Primary work surface: canvas graph + cards toggle
 
-The disposable workspace opens on the canvas graph. Sequence cards remain an equally preserved alternate representation of the same stable protocol identities and control flow. Conditional branches and parallel lanes remain explicit in both views; switching views never resolves a draft, changes semantics, or grants execution authority.
+The study randomizes its starting representation rather than treating graph-first as evidence. The graph has directional, labeled connectors and a compact legend; cards present the same five nodes as a main path plus an explicitly grouped parallel branch. Switching views never resolves a draft, changes semantics, or grants execution authority.
+
+### 2026-11-01 - Theme and representation parity
+
+Theme is local to this disposable page: Light, Dark, and System choices persist in browser storage and use local `data-theme` CSS variables. Connector, status, warning, and focus colors retain distinct, high-contrast roles in each mode. The observer panel follows Spike 003's task-observation framing: it randomizes a starting representation and records task outcome, confusion moment, and preference without asserting a winner.
 
 ## How to Run and Review
 
 1. Run `node .planning/spikes/server.mjs` from the repository root.
 2. Open `http://127.0.0.1:4317/004-canvas-workspace-evaluation/`.
-3. Confirm that Canvas graph opens first; switch to Sequence cards and verify the same named protocol entities, conditional step, and parallel lanes are still visible.
+3. Choose each Theme setting and check readable text, distinct status/connector colors, and visible keyboard focus.
+4. Start the observer study. It randomizes graph or cards; locate the held reconciliation branch, then record outcome, any confusion moment, and a preference (including no preference).
+5. Switch representations and verify the same five named nodes and statuses, selection, inspector, and draft-resolution dialog are preserved. In cards, verify branches are grouped as parallel rather than numbered fake-sequential steps.
 4. Edit the inspector temperature, then select another graph node/card. Verify the resolve-first dialog requires Save simulated draft, Discard draft, or Keep editing; no draft is silently reassigned.
 5. Select Open safety evidence in the persistent strip. Verify held/reconciliation status routes to evidence without direct operational controls.
 6. Review the AI proposal. It must remain a proposal requiring scientist review and Agent admission, never an execution control.
 
 ## Observation / Verification Criteria
 
-- [ ] Graph and cards preserve the same protocol identity and make control flow explicit.
-- [ ] The graph opens as the primary work surface; cards are an alternate, not divergent, view.
+- [ ] Light, Dark, and System themes preserve contrast, focus indication, connector meaning, and status meaning.
+- [ ] Graph and cards preserve the same five protocol identities, statuses, selection, inspector, and draft dialog.
+- [ ] Graph connectors are directional and labeled; cards express branches as parallel, not fake sequential steps.
+- [ ] Randomized study observations do not presume a graph or cards winner.
 - [ ] Inspector selection is blocked until an unsaved draft is explicitly resolved.
 - [ ] Held/reconciliation state stays visible across views and routes to evidence with no strip controls.
 - [ ] AI proposal wording never claims approval, dispatch, or device authority.
@@ -77,6 +85,7 @@ The disposable workspace opens on the canvas graph. Sequence cards remain an equ
 ## Investigation Trail
 
 - 2026-11-01: Reconciled the canonical pending TODO with built spikes 001–003. No production source was changed and no human comparative evidence has been recorded in this artifact.
+- 2026-11-01: Revised the disposable fixture for accessible local theme choice and structurally equivalent graph/cards study. The hypothesis remains falsifiable: if randomized participants complete the shared task faster, more accurately, and with less reported confusion in cards (or show no meaningful difference), graph-first preference is not supported.
 
 ## Results
 
