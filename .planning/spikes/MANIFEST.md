@@ -15,6 +15,7 @@ Explore a scientific workspace informed by IvoryOS while preserving Helix's Agen
 - All readings, progress and actions are simulation fixtures; never call an Agent, API or device. The real Agent remains sole execution authority.
 - Preserve draft/run isolation, illustrative deterministic review, requested versus observed outcomes, uncertainty and reconciliation. Never imply silent replay is safe.
 - Persistent execution/safety strip survives modes, variants and responsive layouts; blocked/uncertain states carry text as well as semantic symbols.
+- Decision recorded 2026-11-01: while the Agent is awaiting reconciliation, the persistent strip is status + route only; it has no direct Pause/Hold/Abort controls. Detailed controls remain in the safety/evidence view and do not confer Agent authority.
 - Capture ISO/category/variant/scenario events, task durations and observer notes for export. Human review is required before any winner or production recommendation.
 - 002 must share canonical stable step identities and dependencies across cards/SVG graph; explicitly label conditional branches and parallel lanes instead of flattening them into a single execution sequence.
 - Numeric/unit edits, rename, add and linear reorder are draft-only and available in both representations. Confirm dirty fixture replacement; never mutate reviewed fixtures or the frozen run.
@@ -30,7 +31,7 @@ Explore a scientific workspace informed by IvoryOS while preserving Helix's Agen
 
 ## Review gate
 
-Spike 004 is the durable human-review entry point for the canonical pending TODO. Its first unresolved interaction decision is the placement of Pause/Hold/Abort affordances while the Agent awaits reconciliation; see [004](004-canvas-workspace-evaluation/README.md). It does not authorize production UI changes.
+Spike 004 records the status + route reconciliation-strip decision: no direct controls appear in the persistent strip while reconciliation is pending. The next unresolved interactive choice is how an unsaved contextual-inspector draft remains attached to its stable entity, provenance, units, quality, and review state when selection changes; see [004](004-canvas-workspace-evaluation/README.md). It does not authorize production UI changes.
 
 
 001 received the user comment **"this looks really good"** on 2026-10-30: positive visual feedback, not a validated comparison. Limited parent-reported DOM smoke is recorded in its README. 002 received a graph preference with interchangeable cards, recorded verbatim in its README; this is not a validated winner. The introductory idea paragraph preserves the original capture. All three comparisons are now built, with human comparative review still pending. This session built only 003; the original TODO remains pending.

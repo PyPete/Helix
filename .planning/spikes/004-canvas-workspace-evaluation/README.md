@@ -31,15 +31,21 @@ This is the human-review gate for the existing disposable 001–003 comparisons.
 5. Review blocked, active, paused, disconnected, AI-proposal, unreviewed-result, and reconciliation scenarios. Confirm the persistent execution/safety strip remains truthful and that no gesture appears to dispatch a physical command.
 6. Export the fixture event log and attach task observations, screenshots, timings, and the state matrix here before updating any verdict.
 
-## First Interactive Decision
+## Decision Log
 
-**When the Agent is awaiting reconciliation, should the persistent execution/safety strip expose Pause/Hold/Abort controls directly, or show truthful held state plus a route to the evidence/control panel?**
+### 2026-11-01 - Reconciliation strip: status + route
 
-- **Status + route (recommended):** keeps the strip persistent and unmistakable while placing consequential controls beside their admission/evidence context.
-- **Direct controls:** makes operator intervention immediately available from every view, with explicit confirmation and durable acknowledgement requirements.
-- **Hybrid:** show only `Hold` in the strip; expose `Pause` and `Abort` in the contextual control panel.
+The persistent execution/safety strip shows the truthful reconciliation/held status and routes the scientist to the detailed safety/evidence view. It exposes no direct `Pause`, `Hold`, or `Abort` controls while reconciliation is pending. Consequential controls remain beside their admission evidence, require their existing confirmations/acknowledgements, and never imply that the UI can authorize execution.
 
-This decision affects layout only. It never changes Agent-side authority, deterministic admission, immutable approval records, or reconciliation behavior.
+## Next Interactive Decision
+
+**When a scientist changes contextual-inspector selection while the current entity has an unsaved draft, how should the spike preserve that draft and its safety/provenance context?**
+
+- **Persistent per-entity draft tray (recommended):** switch selection immediately; retain a clearly labeled, non-autosaved draft for the prior stable entity ID, with its provenance, units, quality flags, and review state.
+- **Resolve-before-switch:** keep selection fixed until the scientist explicitly keeps or discards the draft.
+- **Shared unsaved draft:** retain one workspace-level draft while selection changes, with an explicit reassignment step before it can be reviewed.
+
+No option may silently save, retarget, approve, dispatch, or mutate a reviewed fixture/run. This decision tests inspector clarity and traceability with simulated data only.
 
 ## Evidence checklist
 
