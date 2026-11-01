@@ -78,10 +78,22 @@ fn require_session(state: &State<'_, AgentBrokerState>) -> Result<String, String
         .ok_or_else(|| "No desktop Agent session is available.".to_string())
 }
 
+fn json_depth(value: &serde_json::Value) -> usize {
+    match value {
+        serde_json::Value::Array(values) => 1 + values.iter().map(json_depth).max().unwrap_or(0),
+        serde_json::Value::Object(values) => 1 + values.values().map(json_depth).max().unwrap_or(0),
+        _ => 0,
+    }
+}
+
 fn validate_json(value: &str) -> Result<(), String> {
     if value.len() > MAX_REQUEST_BYTES { return Err("Agent request exceeds the permitted size.".to_string()); }
-    serde_json::from_str::<serde_json::Value>(value)
-        .map(|_| ()).map_err(|_| "Agent request must be valid JSON.".to_string())
+    let parsed = serde_json::from_str::<serde_json::Value>(value)
+        .map_err(|_| "Agent request must be valid JSON.".to_string())?;
+    if json_depth(&parsed) > 32 {
+        return Err("Agent request exceeds the permitted JSON depth.".to_string());
+    }
+    Ok(())
 }
 
 fn validate_command_id(command_id: &str) -> Result<(), String> {
