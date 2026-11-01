@@ -31,4 +31,25 @@ describe("scientificClient", () => {
     invoke.mockResolvedValueOnce(JSON.stringify([{ eventId: "event-1", sampleId: "other-sample", kind: "Confirmed" }]));
     await expect(scientificClient.sampleEvents("sample-1")).rejects.toThrow("history");
   });
+
+  it("submits complete transformations with the original operation identity and rejects malformed acknowledgements", async () => {
+    const client = scientificClient as typeof scientificClient & {
+      transformSample: (request: unknown) => Promise<unknown>;
+    };
+    expect(typeof client.transformSample).toBe("function");
+    invoke.mockResolvedValueOnce(JSON.stringify({ operationId: "different-operation", childIds: ["child-1"] }));
+    await expect(client.transformSample({
+      operationId: "original-operation", transformationId: "activity-1", kind: "Split", operation: "Aliquot",
+      parentSampleIds: ["parent-1"], childSampleIds: ["child-1"], quantitySupplied: false,
+    })).rejects.toThrow("transformation");
+  });
+
+  it("reads bounded lineage only when every entry and continuation match the requested sample", async () => {
+    const client = scientificClient as typeof scientificClient & {
+      sampleLineage: (sampleId: string, direction: string, continuation?: string, pageSize?: number) => Promise<unknown>;
+    };
+    expect(typeof client.sampleLineage).toBe("function");
+    invoke.mockResolvedValueOnce(JSON.stringify({ entries: [{ sampleId: "other-sample", origin: "Transformation", depth: 1 }], continuation: null, isTruncated: false }));
+    await expect(client.sampleLineage("sample-1", "Ancestors")).rejects.toThrow("lineage");
+  });
 });
