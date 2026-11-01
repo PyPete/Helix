@@ -16,6 +16,7 @@ Deliver one local-first, simulated scientific feedback loop in which the Helix A
 - [ ] **Phase 4: Reviewed CSV Evidence** - Turn structured CSV imports into reviewed, immutable analytical evidence.
 - [ ] **Phase 5: Policy-Bounded Autonomous Simulation** - Use accepted evidence to select and execute only permitted next simulated experiments.
 - [ ] **Phase 6: Evidence Readiness & Hardware Gate** - Export reconstructable evidence and make hardware rollout a qualification decision, not execution scope.
+- [ ] **Phase 7: Clean-room Scientific Workflow Designer** - Deliver an original MIT-only, proposal-only scientific workflow authoring workspace from Spike 004 evidence.
 
 ## Phase Details
 
@@ -203,7 +204,7 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
+Phases execute in numeric order: 1 → 2 → 2.1 → 3 → 4 → 5 → 6 → 7
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -213,3 +214,14 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 4. Reviewed CSV Evidence | 0/TBD | Not started | - |
 | 5. Policy-Bounded Autonomous Simulation | 0/TBD | Not started | - |
 | 6. Evidence Readiness & Hardware Gate | 0/TBD | Not started | - |
+| 7. Clean-room Scientific Workflow Designer | 0/TBD | Not started | - |
+
+### Phase 7: Clean-room Scientific Workflow Designer
+
+**Goal:** [To be planned]
+**Requirements**: TBD
+**Depends on:** Phase 6
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 7 to break down)

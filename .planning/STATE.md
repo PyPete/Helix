@@ -10,7 +10,7 @@ last_activity: 2026-11-01
 last_activity_desc: Completed 02-17 Acceptance end-to-end: native/SQL integration, native guards, 65 Agent tests, warning-free Agent build, formatting, 155 desktop tests, and production build passed.
 state_head: 5d8fc5b
 progress:
-  total_phases: 7
+  total_phases: 8
   completed_phases: 1
   total_plans: 37
   completed_plans: 36
@@ -140,6 +140,7 @@ Decisions are logged in PROJECT.md Key Decisions table. Current roadmap decision
 
 - Phase 02.1 inserted after Phase 2: Scientific Workspace UI Rework — validate and establish an accessible, safety-truthful workspace UI for revisioned scientific setup and execution status; promote pending canvas-first, graph/cards, and inspector preferences only after evidence and explicit approval. (URGENT)
 - Phase 3 edited: depends_on updated to Phase 02.1, making the urgent UI rework a prerequisite for Phase 3 campaign work
+- Phase 7 added: Clean-room Scientific Workflow Designer — dedicated MIT-only clean-room, cards-first, proposal-only Designer scope traced to Spike 004; no Phase 2 implementation changes.
 
 ## Deferred Items
 
