@@ -87,7 +87,8 @@ public sealed class SamplesTests(ScientificPostgresFixture fixture)
             operation = "Split collected sample",
             parentSampleIds = new[] { parentId },
             childSampleIds = new[] { childId },
-            quantitySupplied = false
+            quantitySupplied = false,
+            occurredAtUtc = DateTimeOffset.UtcNow.AddMinutes(-1)
         });
 
         Assert.True(transformed.StatusCode == HttpStatusCode.Created, await transformed.Content.ReadAsStringAsync());
@@ -95,6 +96,10 @@ public sealed class SamplesTests(ScientificPostgresFixture fixture)
         Assert.Equal(HttpStatusCode.OK, lineage.StatusCode);
         using var lineageDocument = JsonDocument.Parse(await lineage.Content.ReadAsStringAsync());
         Assert.Equal(childId, lineageDocument.RootElement.GetProperty("entries")[0].GetProperty("sampleId").GetGuid());
+        Assert.False(string.IsNullOrWhiteSpace(lineageDocument.RootElement.GetProperty("entries")[0].GetProperty("actorSid").GetString()));
+        Assert.Equal("Split collected sample", lineageDocument.RootElement.GetProperty("entries")[0].GetProperty("operation").GetString());
+        Assert.True(lineageDocument.RootElement.GetProperty("entries")[0].GetProperty("occurredAtUtc").GetDateTimeOffset() <= DateTimeOffset.UtcNow);
+        Assert.True(lineageDocument.RootElement.GetProperty("entries")[0].GetProperty("recordedAtUtc").GetDateTimeOffset() <= DateTimeOffset.UtcNow);
         await fixture.AssertNoHardwareOrCapabilityDispatchAsync();
     }
 

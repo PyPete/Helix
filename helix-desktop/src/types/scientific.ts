@@ -135,6 +135,7 @@ export interface SampleTransformationRequest {
   childSampleIds: string[];
   quantity?: SampleQuantity;
   quantitySupplied: boolean;
+  occurredAtUtc: string;
 }
 
 export interface SampleTransformationResult {
@@ -147,6 +148,12 @@ export interface SampleLineageEntry {
   origin: SampleOrigin;
   transformationId?: string;
   depth: number;
+  operation?: string;
+  actorSid?: string;
+  occurredAtUtc?: string;
+  recordedAtUtc?: string;
+  quantity?: SampleQuantity;
+  quantitySupplied: boolean;
 }
 
 export interface SampleLineage {

@@ -136,7 +136,11 @@ function validLineage(value: unknown): value is SampleLineage {
     lineage.entries.every((entry) => !!entry && typeof entry.sampleId === "string" &&
       (entry.origin === "Collection" || entry.origin === "Transformation") &&
       (entry.transformationId === undefined || typeof entry.transformationId === "string") &&
-      typeof entry.depth === "number" && Number.isInteger(entry.depth) && entry.depth >= 0);
+      typeof entry.depth === "number" && Number.isInteger(entry.depth) && entry.depth >= 0 &&
+      typeof entry.quantitySupplied === "boolean" &&
+      (entry.actorSid === undefined || typeof entry.actorSid === "string") &&
+      (entry.occurredAtUtc === undefined || typeof entry.occurredAtUtc === "string") &&
+      (entry.recordedAtUtc === undefined || typeof entry.recordedAtUtc === "string"));
 }
 
 /** Submits exactly one new-child transformation with its caller-owned operation identity. */

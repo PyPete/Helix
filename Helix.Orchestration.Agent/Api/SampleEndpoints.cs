@@ -8,7 +8,7 @@ namespace Helix.Orchestration.Agent.Api;
 
 public sealed record SampleConfirmationRequest(Guid OperationId, string Location, DateTimeOffset OccurredAtUtc, string? Label = null, string? Custodian = null, Guid? PlannedReferenceId = null);
 public sealed record SampleEventAppendRequest(Guid OperationId, SampleEventKind Kind, string? Label, string? Custodian, string Location, DateTimeOffset OccurredAtUtc, long ExpectedSequence, Guid? SupersedesEventId = null, string? CorrectionReason = null);
-public sealed record SampleTransformationRequest(Guid OperationId, Guid TransformationId, SampleTransformationKind Kind, string Operation, IReadOnlyList<Guid> ParentSampleIds, IReadOnlyList<Guid> ChildSampleIds, SampleQuantity? Quantity = null, bool QuantitySupplied = false);
+public sealed record SampleTransformationRequest(Guid OperationId, Guid TransformationId, SampleTransformationKind Kind, string Operation, IReadOnlyList<Guid> ParentSampleIds, IReadOnlyList<Guid> ChildSampleIds, SampleQuantity? Quantity = null, bool QuantitySupplied = false, DateTimeOffset? OccurredAtUtc = null);
 
 public static class SampleEndpoints
 {
@@ -68,7 +68,7 @@ public static class SampleEndpoints
         if (context.Request.ContentLength > 16 * 1024) return Results.StatusCode(StatusCodes.Status413PayloadTooLarge);
         try
         {
-            var transformation = new SampleTransformation(request.TransformationId, request.Kind, request.Operation, request.ParentSampleIds ?? [], request.ChildSampleIds ?? [], request.Quantity, request.QuantitySupplied);
+            var transformation = new SampleTransformation(request.TransformationId, request.Kind, request.Operation, request.ParentSampleIds ?? [], request.ChildSampleIds ?? [], request.Quantity, request.QuantitySupplied, request.OccurredAtUtc);
             var result = await service.TransformAsync(transformation, Actor(context).Sid, request.OperationId, ct);
             var response = new { childIds = result.Children.Select(child => child.Identity.SampleId), operationId = result.Receipt.OperationId };
             return result.Replayed ? Results.Ok(response) : Results.Created($"/api/samples/{result.Children[0].Identity.SampleId}", response);

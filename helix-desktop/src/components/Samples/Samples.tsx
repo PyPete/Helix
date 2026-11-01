@@ -105,6 +105,7 @@ export function Samples({ selectedId }: { selectedId?: string }) {
         kind: String(data.get("kind")) as SampleTransformationKind,
         operation: String(data.get("operation") ?? ""), parentSampleIds,
         childSampleIds: childLabels.map(() => newOperationId()), quantitySupplied,
+        occurredAtUtc: String(data.get("occurredAtUtc") ?? ""),
         quantity: quantitySupplied ? { value: quantityValue, unitCode: String(data.get("quantityUnit") ?? ""), dimension: String(data.get("quantityDimension") ?? "") } : undefined,
       });
       setTransformationResult({ activityId: transformationId.current, childIds: result.childIds });

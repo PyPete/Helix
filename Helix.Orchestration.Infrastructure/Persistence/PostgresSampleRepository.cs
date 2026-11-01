@@ -83,6 +83,8 @@ public sealed class PostgresSampleRepository(DbConnectionFactory factory) : ISam
         scope.Validate();
         var validation = SampleLineageValidator.Validate(transformation);
         if (!validation.IsValid) throw new ArgumentException(string.Join(" ", validation.Diagnostics), nameof(transformation));
+        if (transformation.OccurredAtUtc is null || transformation.OccurredAtUtc > DateTimeOffset.UtcNow)
+            throw new ArgumentException("A transformation requires a non-future occurrence time.", nameof(transformation));
 
         transformation = transformation with
         {
@@ -145,7 +147,7 @@ public sealed class PostgresSampleRepository(DbConnectionFactory factory) : ISam
                 QuantityUnitCode = transformation.Quantity?.UnitCode,
                 QuantityDimension = transformation.Quantity?.Dimension,
                 transformation.QuantitySupplied,
-                OccurredAt = now,
+                OccurredAt = transformation.OccurredAtUtc.Value,
                 RecordedAt = now
             }, transaction, cancellationToken: cancellationToken));
 
@@ -206,8 +208,11 @@ public sealed class PostgresSampleRepository(DbConnectionFactory factory) : ISam
                 JOIN scientific_samples s ON s.sample_id = {nextId} AND s.actor_sid = @actor
                 WHERE walk.depth < 32 AND NOT ({nextId} = ANY(walk.path))
             )
-            SELECT walk.sample_id SampleId,s.origin Origin,walk.transformation_id TransformationId,walk.depth Depth
+            SELECT walk.sample_id SampleId,s.origin Origin,walk.transformation_id TransformationId,walk.depth Depth,
+                t.operation_description Operation,t.actor_sid ActorSid,t.occurred_at OccurredAtUtc,t.recorded_at RecordedAtUtc,
+                t.quantity_value QuantityValue,t.quantity_unit_code QuantityUnitCode,t.quantity_dimension QuantityDimension,t.quantity_supplied QuantitySupplied
             FROM walk JOIN scientific_samples s ON s.sample_id = walk.sample_id
+            LEFT JOIN scientific_sample_transformations t ON t.transformation_id = walk.transformation_id
             WHERE walk.depth > 0 AND (@continuation IS NULL OR walk.sample_id > @continuation)
             ORDER BY walk.depth,walk.sample_id LIMIT @take
             """;
@@ -294,7 +299,17 @@ public sealed class PostgresSampleRepository(DbConnectionFactory factory) : ISam
         public string Origin { get; init; } = "";
         public Guid? TransformationId { get; init; }
         public int Depth { get; init; }
-        public SampleLineageEntry ToEntry() => new(SampleId, Enum.Parse<SampleOrigin>(Origin, true), TransformationId, Depth);
+        public string? Operation { get; init; }
+        public string? ActorSid { get; init; }
+        public DateTime? OccurredAtUtc { get; init; }
+        public DateTime? RecordedAtUtc { get; init; }
+        public decimal? QuantityValue { get; init; }
+        public string? QuantityUnitCode { get; init; }
+        public string? QuantityDimension { get; init; }
+        public bool QuantitySupplied { get; init; }
+        public SampleLineageEntry ToEntry() => new(SampleId, Enum.Parse<SampleOrigin>(Origin, true), TransformationId, Depth, Operation, ActorSid,
+            OccurredAtUtc is null ? null : new DateTimeOffset(OccurredAtUtc.Value, TimeSpan.Zero), RecordedAtUtc is null ? null : new DateTimeOffset(RecordedAtUtc.Value, TimeSpan.Zero),
+            QuantitySupplied && QuantityValue is not null && QuantityUnitCode is not null && QuantityDimension is not null ? new SampleQuantity(QuantityValue.Value, QuantityUnitCode, QuantityDimension) : null, QuantitySupplied);
     }
 
     private sealed class IdentityRow

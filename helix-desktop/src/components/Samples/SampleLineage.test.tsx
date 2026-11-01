@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("../../lib/scientificClient", () => ({ sampleLineage: vi.fn().mockResolvedValue({ entries: [], isTruncated: false }) }));
+vi.mock("../../lib/scientificClient", () => ({ sampleLineage: vi.fn().mockResolvedValue({ entries: [], isTruncated: false, continuation: undefined }) }));
 
 import { SampleLineage } from "./SampleLineage";
 

@@ -31,7 +31,8 @@ public sealed record SampleTransformation(
     IReadOnlyList<Guid> ParentSampleIds,
     IReadOnlyList<Guid> ChildSampleIds,
     SampleQuantity? Quantity = null,
-    bool QuantitySupplied = false);
+    bool QuantitySupplied = false,
+    DateTimeOffset? OccurredAtUtc = null);
 
 public sealed record SampleLineageValidationResult(IReadOnlyList<string> Diagnostics)
 {
@@ -44,7 +45,7 @@ public enum SampleLineageDirection
     Descendants
 }
 
-public sealed record SampleLineageEntry(Guid SampleId, SampleOrigin Origin, Guid? TransformationId, int Depth);
+public sealed record SampleLineageEntry(Guid SampleId, SampleOrigin Origin, Guid? TransformationId, int Depth, string? Operation = null, string? ActorSid = null, DateTimeOffset? OccurredAtUtc = null, DateTimeOffset? RecordedAtUtc = null, SampleQuantity? Quantity = null, bool QuantitySupplied = false);
 public sealed record SampleLineage(IReadOnlyList<SampleLineageEntry> Entries, Guid? Continuation, bool IsTruncated);
 
 public sealed record SampleIdentity(Guid SampleId, SampleOrigin Origin, IReadOnlyList<Guid> ParentSampleIds)
