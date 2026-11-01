@@ -11,6 +11,14 @@ describe("scientificClient", () => {
     await expect(scientificClient.createScientific("procedure", { name: "P", operationId: "op", wsl: { nodes: [], edges: [] }, declarations: [], plannedCollections: [] })).rejects.toThrow("receipt");
   });
 
+  it("rejects a draft save without a matching committed receipt or numeric token", async () => {
+    invoke.mockResolvedValueOnce(JSON.stringify({ receipt: { operationId: "other", kind: "procedure", resourceId: "procedure-1", status: "Committed" }, token: "1" }));
+
+    await expect(scientificClient.saveScientificDraft("procedure", "procedure-1", {
+      name: "P", operationId: "original", wsl: { nodes: [], edges: [] }, declarations: [], plannedCollections: [],
+    })).rejects.toThrow("draft save");
+  });
+
   it("exposes typed native operations for immutable sample evidence", () => {
     expect(typeof (scientificClient as Record<string, unknown>).listSamples).toBe("function");
     expect(typeof (scientificClient as Record<string, unknown>).confirmSample).toBe("function");
