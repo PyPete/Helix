@@ -49,6 +49,42 @@ export interface ScientificRevision {
   contentHash: string;
 }
 
+export interface PolicyRevision {
+  revisionId: string;
+  policyId: string;
+  schema: string;
+  contentHash: string;
+  recordedAtUtc: string;
+  approval?: { approvalId: string; revisionId: string; contentHash: string; schema: string; status: "Approved" | "Unavailable" | "Unapproved" };
+}
+
+export interface AssemblyDefaults {
+  apparatusRevisionId: string;
+  procedureRevisionId: string;
+  planRevisionId: string;
+  policyRevisionId?: string;
+  previewToken: string;
+}
+
+export interface ScientificAssemblyRequest {
+  operationId: string;
+  apparatusRevisionId: string;
+  procedureRevisionId: string;
+  planRevisionId: string;
+  policyRevisionId: string;
+  previewToken: string;
+}
+
+export interface ScientificAssembly {
+  assemblyId: string;
+  operationId: string;
+  apparatusRevisionId: string;
+  procedureRevisionId: string;
+  planRevisionId: string;
+  policyRevisionId: string;
+  status: "Committed" | "Unavailable" | "Conflict" | "Rejected";
+}
+
 export type SampleOrigin = "Collection" | "Transformation";
 export type SampleEventKind = "Confirmed" | "Relabeled" | "CustodyMoved" | "Correction";
 

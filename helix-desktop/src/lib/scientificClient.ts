@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import type { PlanDraft, ProcedureDraft, SampleConfirmationRequest, SampleEvent, SampleEventAppendRequest, SampleLineage, SampleLineageDirection, SampleMutationResult, SampleProjection, SampleReceipt, SampleTransformationRequest, SampleTransformationResult, ScientificDraftState, ScientificKind, ScientificReceipt, ScientificRevision, ScientificSummary } from "../types/scientific";
+import type { AssemblyDefaults, PlanDraft, PolicyRevision, ProcedureDraft, SampleConfirmationRequest, SampleEvent, SampleEventAppendRequest, SampleLineage, SampleLineageDirection, SampleMutationResult, SampleProjection, SampleReceipt, SampleTransformationRequest, SampleTransformationResult, ScientificAssembly, ScientificAssemblyRequest, ScientificDraftState, ScientificKind, ScientificReceipt, ScientificRevision, ScientificSummary } from "../types/scientific";
 
 function parse<T>(response: string): T { return JSON.parse(response) as T; }
 
@@ -53,6 +53,65 @@ export async function adoptProcedure(planId: string, request: { operationId: str
     throw new Error("Agent returned an invalid procedure adoption receipt.");
   }
   return { receipt: response.receipt, token: response.token };
+}
+
+function exactString(value: unknown): value is string { return typeof value === "string" && value.length > 0; }
+
+function validPolicy(value: unknown): value is PolicyRevision {
+  if (!value || typeof value !== "object") return false;
+  const policy = value as Partial<PolicyRevision>;
+  if (!exactString(policy.revisionId) || !exactString(policy.policyId) || !exactString(policy.schema) || !exactString(policy.contentHash) || !exactString(policy.recordedAtUtc)) return false;
+  if (!policy.approval) return true;
+  return exactString(policy.approval.approvalId) && policy.approval.revisionId === policy.revisionId &&
+    policy.approval.contentHash === policy.contentHash && policy.approval.schema === policy.schema &&
+    ["Approved", "Unavailable", "Unapproved"].includes(policy.approval.status);
+}
+
+function validAssembly(value: unknown, request?: ScientificAssemblyRequest): value is ScientificAssembly {
+  if (!value || typeof value !== "object") return false;
+  const assembly = value as Partial<ScientificAssembly>;
+  if (!exactString(assembly.assemblyId) || !exactString(assembly.operationId) || !exactString(assembly.apparatusRevisionId) ||
+    !exactString(assembly.procedureRevisionId) || !exactString(assembly.planRevisionId) || !exactString(assembly.policyRevisionId) ||
+    !["Committed", "Unavailable", "Conflict", "Rejected"].includes(assembly.status ?? "")) return false;
+  return !request || (assembly.operationId === request.operationId && assembly.apparatusRevisionId === request.apparatusRevisionId &&
+    assembly.procedureRevisionId === request.procedureRevisionId && assembly.planRevisionId === request.planRevisionId &&
+    assembly.policyRevisionId === request.policyRevisionId);
+}
+
+/** Reads a single consistent preview; it does not infer or mint policy approval. */
+export async function assemblyDefaults(): Promise<AssemblyDefaults> {
+  const value = parse<unknown>(await invoke<string>("scientific_assembly_defaults"));
+  const defaults = value as Partial<AssemblyDefaults>;
+  if (!exactString(defaults.apparatusRevisionId) || !exactString(defaults.procedureRevisionId) || !exactString(defaults.planRevisionId) ||
+    !exactString(defaults.previewToken) || (defaults.policyRevisionId !== undefined && !exactString(defaults.policyRevisionId))) {
+    throw new Error("Agent returned invalid assembly defaults.");
+  }
+  return defaults as AssemblyDefaults;
+}
+
+/** Preserves the caller-owned operation identity if Agent authority is unavailable or the preview drifts. */
+export async function assembleScientific(request: ScientificAssemblyRequest): Promise<ScientificAssembly> {
+  const value = parse<unknown>(await invoke<string>("scientific_assemble", { request: JSON.stringify(request) }));
+  if (!validAssembly(value, request)) throw new Error("Agent returned an invalid scientific assembly receipt.");
+  return value;
+}
+
+export async function readScientificAssembly(assemblyId: string): Promise<ScientificAssembly> {
+  const value = parse<unknown>(await invoke<string>("scientific_read_assembly", { assemblyId }));
+  if (!validAssembly(value) || value.assemblyId !== assemblyId) throw new Error("Agent returned an invalid scientific assembly.");
+  return value;
+}
+
+export async function listScientificPolicies(): Promise<PolicyRevision[]> {
+  const value = parse<unknown>(await invoke<string>("scientific_policies"));
+  if (!Array.isArray(value) || !value.every(validPolicy)) throw new Error("Agent returned invalid policy content.");
+  return value;
+}
+
+export async function readScientificPolicy(revisionId: string): Promise<PolicyRevision> {
+  const value = parse<unknown>(await invoke<string>("scientific_read_policy", { revisionId }));
+  if (!validPolicy(value) || value.revisionId !== revisionId) throw new Error("Agent returned an invalid policy revision.");
+  return value;
 }
 
 function validProjection(value: unknown): value is SampleProjection {
