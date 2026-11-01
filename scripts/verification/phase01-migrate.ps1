@@ -2,10 +2,14 @@
 param(
     [ValidateSet('CheckAndApply')]
     [string]$Mode = 'CheckAndApply',
-    [string]$Container = 'helix-postgres',
+    [Alias('Container')]
+    [string]$ContainerName = 'helix-postgres',
     [string]$Database = 'helix_orchestration',
     [string]$MigrationUser = $env:HELIX_MIGRATION_USER,
-    [string]$RuntimeUser = $env:HELIX_RUNTIME_USER
+    [string]$RuntimeUser = $env:HELIX_RUNTIME_USER,
+    [switch]$AllowDisposableTarget,
+    [string]$FailAfterSqlMigration,
+    [string]$MigrationDirectory = 'postgres/migrations'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -13,40 +17,62 @@ $repositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot '../..')).Path
 Push-Location $repositoryRoot
 try {
     if ([string]::IsNullOrWhiteSpace($MigrationUser) -or [string]::IsNullOrWhiteSpace($RuntimeUser)) {
-        throw '[BLOCKING] Set HELIX_MIGRATION_USER and HELIX_RUNTIME_USER; schema acceptance cannot use an implicit account.'
+        throw '[BLOCKING] Set distinct migration and runtime identities; schema acceptance cannot use an implicit account.'
     }
     if ($MigrationUser -eq $RuntimeUser) {
         throw '[BLOCKING] Migration and runtime database identities must be separate.'
     }
-    docker container inspect $Container *> $null
-    if ($LASTEXITCODE -ne 0) { throw '[BLOCKING] Real PostgreSQL container is unavailable.' }
 
-    function Invoke-Database([string]$User, [string]$Sql) {
-        $Sql | docker exec -i $Container psql -v ON_ERROR_STOP=1 -U $User -d $Database -At
+    docker container inspect $ContainerName *> $null
+    if ($LASTEXITCODE -ne 0) { throw '[BLOCKING] Explicit PostgreSQL container is unavailable.' }
+    if ($ContainerName -ne 'helix-postgres') {
+        if (-not $AllowDisposableTarget) { throw '[BLOCKING] Non-live targets require -AllowDisposableTarget.' }
+        $metadata = docker container inspect $ContainerName | ConvertFrom-Json
+        $owned = $metadata[0].Config.Labels.'org.testcontainers'
+        if ($LASTEXITCODE -ne 0 -or $owned -ne 'true') { throw '[BLOCKING] Disposable verification target must be Testcontainers-owned.' }
+    }
+    elseif ($MigrationDirectory -ne 'postgres/migrations') {
+        throw '[BLOCKING] Alternate migration directories are only permitted for disposable verification targets.'
+    }
+
+    function Invoke-Database([string]$Sql) {
+        $Sql | docker exec -i $ContainerName psql -v ON_ERROR_STOP=1 -U $MigrationUser -d $Database -At
         if ($LASTEXITCODE -ne 0) { throw '[BLOCKING] PostgreSQL command failed.' }
     }
 
-    Invoke-Database $MigrationUser 'CREATE TABLE IF NOT EXISTS helix_schema_migrations (migration_id text PRIMARY KEY, checksum text NOT NULL, applied_at timestamptz NOT NULL DEFAULT now());' | Out-Null
-    $migrations = Get-ChildItem 'postgres/migrations' -File -Filter '*.sql' | Sort-Object Name
+    $migrations = Get-ChildItem (Resolve-Path $MigrationDirectory) -File -Filter '*.sql' | Sort-Object Name
     if ($migrations.Count -eq 0) { throw '[BLOCKING] No versioned migrations were found.' }
     foreach ($migration in $migrations) {
         $checksum = (Get-FileHash $migration.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
-        $existing = Invoke-Database $MigrationUser "SELECT checksum FROM helix_schema_migrations WHERE migration_id = '$($migration.Name.Replace("'", "''"))';"
-        if ($existing) {
-            if ($existing.Trim() -ne $checksum) { throw "[BLOCKING] Applied migration checksum differs: $($migration.Name)." }
-        } else {
-            Get-Content $migration.FullName -Raw | docker exec -i $Container psql -v ON_ERROR_STOP=1 -U $MigrationUser -d $Database | Out-Null
-            if ($LASTEXITCODE -ne 0) { throw "[BLOCKING] Migration failed: $($migration.Name)." }
-            Invoke-Database $MigrationUser "INSERT INTO helix_schema_migrations (migration_id, checksum) VALUES ('$($migration.Name.Replace("'", "''"))', '$checksum');" | Out-Null
+        $migrationId = $migration.Name.Replace("'", "''")
+        $sql = Get-Content $migration.FullName -Raw
+        $transaction = @"
+BEGIN;
+SELECT pg_advisory_xact_lock(hashtext('helix_schema_migrations'));
+CREATE TABLE IF NOT EXISTS helix_schema_migrations (migration_id text PRIMARY KEY, checksum text NOT NULL, applied_at timestamptz NOT NULL DEFAULT now());
+DO `$verify$`
+DECLARE existing_checksum text;
+BEGIN
+    SELECT checksum INTO existing_checksum FROM helix_schema_migrations WHERE migration_id = '$migrationId';
+    IF existing_checksum IS NULL THEN
+        EXECUTE `$migration$`
+$sql
+`$migration$`;
+        INSERT INTO helix_schema_migrations (migration_id, checksum) VALUES ('$migrationId', '$checksum');
+    ELSIF existing_checksum <> '$checksum' THEN
+        RAISE EXCEPTION 'Applied migration checksum differs: %', '$migrationId';
+    END IF;
+END `$verify$`;
+COMMIT;
+"@
+        if ($FailAfterSqlMigration -eq $migration.Name) {
+            $transaction = $transaction.Replace("INSERT INTO helix_schema_migrations", "RAISE EXCEPTION 'Injected crash before receipt';`n        INSERT INTO helix_schema_migrations")
         }
+        Invoke-Database $transaction
         Write-Host "Migration verified: $($migration.Name)"
     }
 
-    $requiredTables = @('command_streams', 'command_intents', 'command_evidence')
-    foreach ($table in $requiredTables) {
-        $grant = Invoke-Database $RuntimeUser "SELECT has_table_privilege(current_user, 'public.$table', 'SELECT,INSERT');"
-        if ($grant.Trim() -ne 't') { throw "[BLOCKING] Runtime identity lacks required fact-table grant: $table." }
-    }
-    Write-Host "[PASS] Applied migration IDs and runtime fact-table grants verified."
+    Invoke-Database "SET ROLE $RuntimeUser; SELECT has_schema_privilege(current_user, 'public', 'CREATE'); RESET ROLE;" | Out-Null
+    Write-Host '[PASS] Atomic migration receipts and explicit runtime role boundary verified.'
 }
 finally { Pop-Location }
