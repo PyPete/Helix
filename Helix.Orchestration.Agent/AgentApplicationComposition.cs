@@ -16,6 +16,7 @@ using Helix.Orchestration.Core.Execution;
 using Helix.Orchestration.Core.Leasing;
 using Helix.Orchestration.Core.Runspace;
 using Helix.Orchestration.Core.Safety;
+using Helix.Orchestration.Core.ScientificSetup;
 using Helix.Orchestration.Core.Trends;
 using Helix.Orchestration.Core.WSL;
 using Helix.Orchestration.Devices.Transports.Null;
@@ -272,8 +273,13 @@ public static class AgentApplicationComposition
     builder.Services.AddSingleton<IExperimentManager, ExperimentManager>();
 
     // Infrastructure repositories (scoped, via connection string)
-    builder.Services.AddHelixInfrastructure(builder.Configuration);
-    builder.Services.AddScoped<ScientificSetupService>();
+     builder.Services.AddHelixInfrastructure(builder.Configuration);
+     // Production intentionally fails closed. Test hosts can replace this registration with a trusted fixture authority.
+     builder.Services.AddScoped<IPolicyApprovalAuthority, Helix.Orchestration.Agent.ScientificSetup.UnavailablePolicyApprovalAuthority>();
+     builder.Services.AddScoped<ScientificSetupService>();
+     builder.Services.AddScoped<FrozenSetupService>();
+     builder.Services.AddScoped<FrozenSetupResolver>();
+     builder.Services.AddScoped<ScientificOperationResultService>();
     builder.Services.AddScoped<SampleService>();
     builder.Services.AddSingleton<DesktopSessionService>();
     builder.Services.AddHostedService<SessionBootstrapWorker>();
@@ -336,7 +342,8 @@ public static class AgentApplicationComposition
     app.MapRunspaceEndpoints();
     app.MapDeviceEndpoints();
     app.MapCommandEvidenceEndpoints();
-    app.MapScientificSetupEndpoints();
+     app.MapScientificSetupEndpoints();
+     app.MapFrozenSetupEndpoints();
     app.MapSampleEndpoints();
     app.MapExperimentEndpoints();
 
