@@ -96,10 +96,10 @@ Plans:
 - [x] 02-32-PLAN.md — Wave 7: reusable source-linked derivation and explicit adoption
 
 **Wave 8** *(blocked on Wave 7 completion)*
-- [ ] 02-33-PLAN.md — Wave 8: actual collection and append-only custody domain/SQL
+- [x] 02-33-PLAN.md — Wave 8: actual collection and append-only custody domain/SQL
 
 **Wave 9** *(blocked on Wave 8 completion)*
-- [ ] 02-34-PLAN.md — Wave 9: authenticated collection/custody and classified edge proof
+- [x] 02-34-PLAN.md — Wave 9: authenticated collection/custody and classified edge proof
 
 **Wave 10** *(blocked on Wave 9 completion)*
 - [ ] 02-35-PLAN.md — Wave 10: complete reachable sample/custody UI and exact receipts
@@ -208,7 +208,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Agent Safety Boundary | 14/14 | Complete with user-approved waivers (not fully verified) | 2026-10-30 |
-| 2. Scientific Setup Foundation | 7/23 | In Progress | - |
+| 2. Scientific Setup Foundation | 9/23 | In Progress | - |
 | 3. Approved Manual Campaigns | 0/TBD | Not started | - |
 | 4. Reviewed CSV Evidence | 0/TBD | Not started | - |
 | 5. Policy-Bounded Autonomous Simulation | 0/TBD | Not started | - |
