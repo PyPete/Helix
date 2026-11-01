@@ -1,4 +1,4 @@
-﻿---
+---
 created: 2026-10-30T09:20:57.522Z
 title: Spike canvas-first scientific workspace
 area: ui
@@ -31,7 +31,7 @@ Run an interactive UI design spike using isolated, disposable variants and repre
 
 ### Research references
 
-- **IvoryOS:** [repository UI subtree](https://github.com/ivoryos-ai/IvoryOS/tree/main/ivoryos) Â· [repository README](https://github.com/ivoryos-ai/IvoryOS). Inspect scientific automation interaction patterns for task organization, protocol authoring, and execution observation; record applicable ideas and mismatches with Helix.
+- **IvoryOS:** [repository UI subtree](https://github.com/ivoryos-ai/IvoryOS/tree/main/ivoryos) · [repository README](https://github.com/ivoryos-ai/IvoryOS). Inspect scientific automation interaction patterns for task organization, protocol authoring, and execution observation; record applicable ideas and mismatches with Helix.
 - **IvoryOS-client:** [repository](https://github.com/ivoryos-ai/IvoryOS-client). API-only/no UI; use as an API/integration reference, not as evidence for a visual interaction pattern.
 - **ivoryos-next:** [repository](https://github.com/ivoryos-ai/ivoryos-next). Inspect available UI/workspace approaches and compare them with IvoryOS and the Helix baseline.
 - Record repository URLs, revisions/dates, screenshots where available, and source-grounded findings during the spike. The capture does not claim these references were newly inspected or their features verified.
@@ -62,7 +62,7 @@ These remain evaluation criteria, not claims that the required evidence is compl
 
 Evaluate the three existing disposable comparisons using their shared task guidance; collect human task timings, explanation accuracy, native interaction/accessibility and safety-state evidence. Prototype construction is complete; detailed evaluation and a separately scoped, approved production plan remain pending. Stop at a reviewed spike report rather than treating preferences or automated checks as implementation authorization. No further builds are requested by this documentation update.
 
-## Feedback and preferred direction â€” 2026-10-30
+## Feedback and preferred direction — 2026-10-30
 
 - [001: Canvas workspace comparison](../spikes/001-canvas-workspace-comparison/README.md): user said **"this looks really good"**. Canvas-first direction received positive visual feedback, not a validated head-to-head winner.
 - [002: Protocol representation comparison](../spikes/002-protocol-representation-comparison/README.md): user said **"I like the workflow graph a lot but too be honest, being able to alternative between both would be brilliant"**. Graph preferred as primary; cards remain first-class with an equally preserved toggle. Stable IDs, selection and saved/unsaved edits must survive switching without changing canonical control-flow semantics.
@@ -70,11 +70,11 @@ Evaluate the three existing disposable comparisons using their shared task guida
 
 All three verdicts remain **PENDING**. Source research and limited automated/DOM evidence are attributed in the READMEs, including parent-reported independent 39/39 regression checks and 003 DOM smoke. Human task timings remain uncollected. This authorized documentation update records feedback in the canonical TODO but does not complete it or approve production changes.
 
-## Spike 004 observation — 2026-11-01
+## Spike 004 observation � 2026-11-01
 
 During the randomized held-reconciliation task, the observer reported that **cards were clearer because navigation was clearer**. This shifts the working hypothesis away from graph-first: the next disposable variant should treat cards as the navigational default, with the graph available on demand for relationship and parallel-inspection tasks. This single task-specific observation is evidence, not a final representation decision, a general usability winner, or authorization to modify production UI. The TODO remains **pending** while the study compares that cards-first variant against the existing side-by-side hybrid and gathers further evidence.
 
-## Clean-room Designer boundary — 2026-11-01
+## Clean-room Designer boundary � 2026-11-01
 
 Future Helix Designer work must be a clean-room, MIT-only reimplementation inspired only by observed interaction behavior. It must not copy or adapt IvoryOS source, shared-ui code, styles, exact text or layout, assets, API shapes, name/logo, or branding. The transferable scope is limited to conceptual patterns: three-phase authoring; palette, canvas, and typed inspector; explicit control flow; and draft, preflight, and review stages.
 
@@ -82,9 +82,16 @@ Any separately approved production plan must first document MIT-only clean-room 
 
 ## Tracking
 
-- Interactive evaluation artifact: [Spike 004 — Canvas workspace evaluation](../spikes/004-canvas-workspace-evaluation/README.md) (PENDING; no production authorization).
+- Interactive evaluation artifact: [Spike 004 � Canvas workspace evaluation](../spikes/004-canvas-workspace-evaluation/README.md) (PENDING; no production authorization).
 
 - GSD pending registration: `pending/2026-10-30-spike-canvas-first-scientific-workspace.md`.
 - Registry: `MANIFEST.md`.
 - Duplicate check: no existing todos directory or pending entries at capture time (`init.todos` returned zero).
 - Status remains pending until the interactive spike is actually run and reviewed; this single observation does not complete the study, and research recommendations alone are not completion evidence.
+
+## Spike 004 wrap-up (2026-11-01)
+
+- [x] Spike findings synthesized in `../spikes/004-canvas-workspace-evaluation/WRAP-UP.md`.
+- [x] Prior graph evidence invalidated due to the renderer defect; only repaired-renderer re-review is admissible.
+- [x] Cards-first navigation is retained as bounded evidence from the held-reconciliation observation; production validation remains required.
+- [ ] Plan the dedicated **Proposal-Only Scientific Workflow Designer** production phase; preserve MIT-only clean-room provenance and Agent-only execution authority.

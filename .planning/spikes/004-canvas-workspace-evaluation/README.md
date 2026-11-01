@@ -1,10 +1,10 @@
-Ôªø---
+---
 spike: "004"
 idea: ivoryos-scientific-workspace
 name: canvas-workspace-evaluation
 type: interactive-design-evaluation
-validates: "Given the built 001‚Äì003 simulated workspace comparisons, when a scientist performs the shared tasks and reviews safety states, then Helix can capture comparative evidence without treating preference as execution authorization or a production decision."
-verdict: PENDING
+validates: "Given the built 001ñ003 simulated workspace comparisons, when a scientist performs the shared tasks and reviews safety states, then Helix can capture comparative evidence without treating preference as execution authorization or a production decision."
+verdict: WRAPPED
 related:
   - ../001-canvas-workspace-comparison/README.md
   - ../002-protocol-representation-comparison/README.md
@@ -16,23 +16,23 @@ tags: [ui, evaluation, simulation, safety, human-review]
 
 ## Scope
 
-This is the human-review gate for the existing disposable 001‚Äì003 comparisons. It creates no product code and does not declare a winner. All fixtures remain simulated; UI interactions, drafts, and AI suggestions are proposals only. The local Helix Agent remains the sole authority for physical execution and admission.
+This is the human-review gate for the existing disposable 001ñ003 comparisons. It creates no product code and does not declare a winner. All fixtures remain simulated; UI interactions, drafts, and AI suggestions are proposals only. The local Helix Agent remains the sole authority for physical execution and admission.
 
 ### Current variant: Helix-safe Designer interaction
 
 This disposable revision tests an IvoryOS-inspired typed Designer interaction without adopting its execution model. The palette contains only simulated **Agent-declared logical capabilities** and typed control-flow nodes; it deliberately exposes no raw driver calls, transports, or direct device commands. Accessible palette buttons provide the add-to-canvas equivalent. The typed inspector makes units, bindings, defaults, provenance, and required resources inspectable as local proposal data.
 
-The graph makes control flow explicit: an **If** node has labeled **True** and **False** outputs with an evaluated-evidence placeholder, while explicit **Fork** and **Join** nodes model parallel work and display pending Agent resource/lease diagnostic placeholders. The lifecycle remains visible as Draft ‚Üí client diagnostics ‚Üí Agent preflight ‚Üí approval required ‚Üí execution observed. Submission is proposal-only: it records a simulated request for Agent preflight and never executes, dispatches, leases, approves, or contacts an Agent/API/device.
+The graph makes control flow explicit: an **If** node has labeled **True** and **False** outputs with an evaluated-evidence placeholder, while explicit **Fork** and **Join** nodes model parallel work and display pending Agent resource/lease diagnostic placeholders. The lifecycle remains visible as Draft ? client diagnostics ? Agent preflight ? approval required ? execution observed. Submission is proposal-only: it records a simulated request for Agent preflight and never executes, dispatches, leases, approves, or contacts an Agent/API/device.
 
 Cards-first navigation, the on-demand relationship graph, resolve-first draft guard, status-and-route reconciliation strip, themes, and observer/review panel are intentionally retained.
 
 ### Prior variant: cards-first flow building
 
-The disposable page now tests whether cards can be the scientist's starting point for **authoring** a proposed flow, with an interactive graph workspace available for relationship editing. Scientists can add typed mock steps, select a source and Shift-click a target, create or remove mock edges, mark a branch, mark parallel work, and receive immediate invalid-edge feedback. The inspector edits only the local fixture and retains the resolve-first unsaved-draft guard. ‚ÄúSubmit proposal‚Äù records a mock review event only: it does not call an API, Agent, driver, or device and cannot execute anything.
+The disposable page now tests whether cards can be the scientist's starting point for **authoring** a proposed flow, with an interactive graph workspace available for relationship editing. Scientists can add typed mock steps, select a source and Shift-click a target, create or remove mock edges, mark a branch, mark parallel work, and receive immediate invalid-edge feedback. The inspector edits only the local fixture and retains the resolve-first unsaved-draft guard. ìSubmit proposalî records a mock review event only: it does not call an API, Agent, driver, or device and cannot execute anything.
 
 ## Status
 
-**PENDING ‚Äî interactive review required.** The canonical TODO remains pending: [canvas-first scientific workspace](../../todos/spike-canvas-first-scientific-workspace.md). This artifact reconciles the already-built comparisons with the outstanding evidence rather than rebuilding or redesigning them.
+**WRAPPED ó findings synthesized; production work remains approval-gated.** The canonical TODO is converted to follow-up production planning: [canvas-first scientific workspace](../../todos/spike-canvas-first-scientific-workspace.md). This artifact reconciles the already-built comparisons with the outstanding evidence rather than rebuilding or redesigning them.
 
 ## Evaluation sequence
 
@@ -115,7 +115,7 @@ Theme is local to this disposable page: Light, Dark, and System choices persist 
 
 ## Investigation Trail
 
-- 2026-11-01: Reconciled the canonical pending TODO with built spikes 001‚Äì003. No production source was changed and no human comparative evidence has been recorded in this artifact.
+- 2026-11-01: Reconciled the canonical pending TODO with built spikes 001ñ003. No production source was changed and no human comparative evidence has been recorded in this artifact.
 - 2026-11-01: Revised the disposable fixture for accessible local theme choice and structurally equivalent graph/cards study. The hypothesis remains falsifiable: if randomized participants complete the shared task faster, more accurately, and with less reported confusion in cards (or show no meaningful difference), graph-first preference is not supported.
 - 2026-11-01: One held-reconciliation observation indicates cards were clearer because navigation was clearer. The revised, still-falsifiable hypothesis is that cards should be the navigation default while graph remains on demand for relationship and parallel inspection; compare that variant with the existing side-by-side hybrid before drawing a conclusion.
 - 2026-11-01: The cards-first/on-demand-graph disposable variant was selected for review. It is supported only if reviewers can complete the combined navigation-and-parallelism task without help and retain selected context after returning to cards; otherwise the cards-first hypothesis fails for this task.
@@ -134,4 +134,8 @@ The prior graph review is **invalid**: its SVG connectors and absolutely positio
 
 ### Graph visual re-review (required)
 
-At `http://127.0.0.1:4317/004-canvas-workspace-evaluation/`, open **Inspect relationships & parallelism** at a normal desktop viewport. Confirm Reactor R-12 ‚Üí Prepare S-142 ‚Üí Irradiate runs left-to-right; both labeled parallel paths terminate at Analyze aliquot and Reconcile state, then visibly join; no line floats without an endpoint; and returning to cards preserves the selected inspector context. In DevTools, `.graph-stage` must report `data-renderer-check="pass"`.
+At `http://127.0.0.1:4317/004-canvas-workspace-evaluation/`, open **Inspect relationships & parallelism** at a normal desktop viewport. Confirm Reactor R-12 ? Prepare S-142 ? Irradiate runs left-to-right; both labeled parallel paths terminate at Analyze aliquot and Reconcile state, then visibly join; no line floats without an endpoint; and returning to cards preserves the selected inspector context. In DevTools, `.graph-stage` must report `data-renderer-check="pass"`.
+
+## Wrap-up
+
+**2026-11-01 ó WRAPPED.** Findings, evidence limits, clean-room boundary, and the dedicated production-phase recommendation are recorded in [WRAP-UP.md](./WRAP-UP.md). The renderer defect invalidates prior graph evidence; the single held-reconciliation observation that cards navigation was clearer is retained as bounded comparative evidence. No production UI or Phase 2 implementation changed.
