@@ -848,6 +848,16 @@ mod agent_security {
         assert!(validate_adopt_procedure_request(adopt).is_ok());
         assert!(validate_adopt_procedure_request(r#"{"operationId":"11111111-1111-1111-1111-111111111111","procedureRevisionId":"bad","expectedToken":0}"#).is_err());
     }
+    #[test]
+    fn agent_security_rejects_scientific_json_deeper_than_the_contract_limit() {
+        let mut payload = String::new();
+        for _ in 0..33 { payload.push_str("{\"child\":"); }
+        payload.push_str("null");
+        for _ in 0..33 { payload.push('}'); }
+
+        assert!(validate_json(&payload).is_err());
+    }
+
     /// Live integration is intentionally excluded from ordinary cargo tests. The phase verifier
     /// selects it explicitly after starting its owned Agent/PostgreSQL host.
     #[test]
