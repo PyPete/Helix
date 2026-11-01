@@ -2,18 +2,18 @@
 gsd_state_version: "1.0"
 current_phase: 02
 current_phase_name: Scientific Setup Foundation
-current_plan: 12
+current_plan: 13
 status: complete_with_user_approved_waivers
-stopped_at: Completed 02-37-PLAN.md
-last_updated: "2026-11-01T13:09:54.725Z"
+stopped_at: Completed 02-38-PLAN.md
+last_updated: "2026-11-01T13:16:05.244Z"
 last_activity: 2026-10-31
 last_activity_desc: Completed immutable sample collection and custody foundation.
-state_head: 02bde57d2e914e11a1d63232a7bdc7ee25b14977
+state_head: 6d0613bbedef0593f985506f1d4055d21133e836
 progress:
   total_phases: 7
   completed_phases: 1
   total_plans: 37
-  completed_plans: 26
+  completed_plans: 27
   percent: 14
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-10-29)
 
 ## Current Position
 
-Current Plan: 12
+Current Plan: 13
 Total Plans in Phase: 23
 
 Phase: 02 (Scientific Setup Foundation) — IN PROGRESS
@@ -71,6 +71,7 @@ Progress: [█░░░░░░░░░] 14% (one of six phases closed with wa
 | Phase 02-scientific-setup-foundation P35 | 9min | 3 tasks | 14 files |
 | Phase 02-scientific-setup-foundation P36 | 18min | 2 tasks | 8 files |
 | Phase 02 P37 | 33min | 2 tasks | 9 files |
+| Phase 02 P38 | 9min | 2 tasks | 12 files |
 
 ## Accumulated Context
 
@@ -96,6 +97,8 @@ Decisions are logged in PROJECT.md Key Decisions table. Current roadmap decision
 - [Phase 02-scientific-setup-foundation]: Transformation child identities are transformation-origin samples with immutable parent links, never inferred collection records.
 - [Phase 02-scientific-setup-foundation]: Transformation writes lock scoped parent samples in UUID order and persist activity, children, edges, heads, and operation receipt in one transaction.
 - [Phase 02]: Transformation persistence uses transaction-scoped advisory locks so restricted runtime roles need no UPDATE grant.
+- [Phase 02-scientific-setup-foundation]: Transformation occurrence is supplied as evidence, while actor and recording time are Agent-derived and immutable.
+- [Phase 02-scientific-setup-foundation]: Lineage entries expose activity provenance only from persisted transformation rows, never inferred UI state.
 
 ### Pending Todos
 
@@ -106,6 +109,7 @@ Decisions are logged in PROJECT.md Key Decisions table. Current roadmap decision
 - [Phase 1 acceptance — waived, not fully verified]: `phase01-smoke.ps1 -Scenario All` and final UI/Tauri smoke were waived; distinct-role migration identity check/apply was waived and not run; clean production build gates were waived but not passed. See `.planning/phases/01-agent-safety-boundary/01-08-SUMMARY.md`.
 - [Phase 1 verification]: The separate checker grader was unavailable. Remaining native/UI/database acceptance was not fully verified; user-reported manual SetFlow/SQL evidence and prior focused checks are documented in the phase summary.
 - [Phase 6]: Obtain EHS, vendor, and site qualification evidence before any real-device integration work.
+- 02-38 requires an architectural extension: the current sample transformation API/persistence cannot persist or return transformation occurrence time, actor, or recording time required by the plan’s immutable evidence UI.
 
 ### Roadmap Evolution
 
@@ -120,6 +124,6 @@ Decisions are logged in PROJECT.md Key Decisions table. Current roadmap decision
 
 ## Session Continuity
 
-Last session: 2026-11-01T13:09:54.657Z
-Stopped at: Completed 02-37-PLAN.md
+Last session: 2026-11-01T13:16:05.191Z
+Stopped at: Completed 02-38-PLAN.md
 Resume file: None
