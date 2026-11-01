@@ -72,7 +72,7 @@ All three verdicts remain **PENDING**. Source research and limited automated/DOM
 
 ## Spike 004 observation — 2026-11-01
 
-During the randomized held-reconciliation task, the observer reported that **cards were clearer**. This is task-specific evidence against the graph-first hypothesis, not a final decision, a general representation winner, or authorization to modify production UI. The TODO remains **pending** while the study gathers the reason for the result and additional comparative evidence.
+During the randomized held-reconciliation task, the observer reported that **cards were clearer because navigation was clearer**. This shifts the working hypothesis away from graph-first: the next disposable variant should treat cards as the navigational default, with the graph available on demand for relationship and parallel-inspection tasks. This single task-specific observation is evidence, not a final representation decision, a general usability winner, or authorization to modify production UI. The TODO remains **pending** while the study compares that cards-first variant against the existing side-by-side hybrid and gathers further evidence.
 
 ## Tracking
 

@@ -45,6 +45,10 @@ Changing contextual-inspector selection while the current entity has an unsaved 
 
 The study randomizes its starting representation rather than treating graph-first as evidence. The graph has directional, labeled connectors and a compact legend; cards present the same five nodes as a main path plus an explicitly grouped parallel branch. Switching views never resolves a draft, changes semantics, or grants execution authority.
 
+### 2026-11-01 - Navigation hypothesis revised after held-reconciliation observation
+
+The observer found cards clearer during the randomized held-reconciliation task because navigation was clearer. Graph-first is therefore no longer the working preference. The next disposable variant should evaluate cards as the navigational default and retain the graph on demand for relationship and parallel-inspection tasks. This remains a tentative hypothesis from one observation; it does not settle the representation choice, approve production UI, or replace the existing side-by-side hybrid without comparative evidence.
+
 ### 2026-11-01 - Theme and representation parity
 
 Theme is local to this disposable page: Light, Dark, and System choices persist in browser storage and use local `data-theme` CSS variables. Connector, status, warning, and focus colors retain distinct, high-contrast roles in each mode. The observer panel follows Spike 003's task-observation framing: it randomizes a starting representation and records task outcome, confusion moment, and preference without asserting a winner.
@@ -86,11 +90,12 @@ Theme is local to this disposable page: Light, Dark, and System choices persist 
 
 - 2026-11-01: Reconciled the canonical pending TODO with built spikes 001–003. No production source was changed and no human comparative evidence has been recorded in this artifact.
 - 2026-11-01: Revised the disposable fixture for accessible local theme choice and structurally equivalent graph/cards study. The hypothesis remains falsifiable: if randomized participants complete the shared task faster, more accurately, and with less reported confusion in cards (or show no meaningful difference), graph-first preference is not supported.
+- 2026-11-01: One held-reconciliation observation indicates cards were clearer because navigation was clearer. The revised, still-falsifiable hypothesis is that cards should be the navigation default while graph remains on demand for relationship and parallel inspection; compare that variant with the existing side-by-side hybrid before drawing a conclusion.
 
 ## Results
 
 ### 2026-11-01 - Randomized held-reconciliation task
 
-In the randomized held-reconciliation task, the observer reported that **cards were clearer**. This is a single comparative observation and evidence against the graph-first hypothesis for this task; it is not a final representation decision, a general usability verdict, an execution authorization, or approval for production redesign. Follow-up evidence should identify whether information hierarchy, navigation, parallelism representation, or visual density drove the difference.
+In the randomized held-reconciliation task, the observer reported that **cards were clearer because navigation was clearer**. This is a single comparative observation and evidence against graph-first for this task. It revises the working hypothesis toward cards-first navigation with an on-demand graph for relationship and parallel inspection, while retaining the side-by-side hybrid as the comparison condition. It is not a final representation decision, a general usability verdict, an execution authorization, or approval for production redesign. Follow-up evidence should test the proposed cards-first/on-demand-graph variant against the hybrid and identify whether navigation, information hierarchy, parallelism representation, or visual density drove the difference.
 
 No comparative verdict yet. Existing positive feedback is preserved as preference only; it is not usability validation, an execution authorization, or approval for production redesign.
