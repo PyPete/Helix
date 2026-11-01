@@ -192,8 +192,30 @@ fn scientific_kind_path(kind: &str) -> Result<&'static str, String> {
     match kind {
         "procedure" | "procedures" => Ok("procedures"),
         "plan" | "plans" => Ok("plans"),
+        "policy" | "policies" => Ok("policies"),
+        "assembly" | "assemblies" => Ok("assemblies"),
         _ => Err("Scientific kind is invalid.".to_string()),
     }
+}
+
+fn mutable_scientific_kind_path(kind: &str) -> Result<&'static str, String> {
+    match kind {
+        "procedure" | "procedures" | "plan" | "plans" => scientific_kind_path(kind),
+        _ => Err("Scientific kind cannot be mutated through this command.".to_string()),
+    }
+}
+
+fn validate_assembly_request(request: &str) -> Result<(), String> {
+    if request.len() > 64 * 1024 { return Err("Assembly request exceeds the permitted size.".to_string()); }
+    let value: serde_json::Value = serde_json::from_str(request)
+        .map_err(|_| "Assembly request must be valid JSON.".to_string())?;
+    let object = value.as_object().ok_or_else(|| "Assembly request is invalid.".to_string())?;
+    for field in ["operationId", "apparatusRevisionId", "procedureRevisionId", "planRevisionId", "policyRevisionId"] {
+        let id = object.get(field).and_then(serde_json::Value::as_str)
+            .ok_or_else(|| format!("Assembly {field} is required."))?;
+        validate_command_id(id)?;
+    }
+    Ok(())
 }
 
 #[derive(Deserialize)]
@@ -396,7 +418,7 @@ pub async fn scientific_create_kind(window: WebviewWindow, state: State<'_, Agen
     require_main_window(&window)?;
     if request.len() > 64 * 1024 { return Err("Scientific request exceeds the permitted size.".to_string()); }
     validate_json(&request)?;
-    native_request("POST", &format!("/api/scientific-setup/{}", scientific_kind_path(&kind)?), Some(&request), &require_session(&state)?)
+    native_request("POST", &format!("/api/scientific-setup/{}", mutable_scientific_kind_path(&kind)?), Some(&request), &require_session(&state)?)
 }
 
 /// Creates a source-linked procedure draft through the only allowed derive route.
@@ -414,6 +436,42 @@ pub async fn scientific_adopt_procedure(window: WebviewWindow, state: State<'_, 
     validate_command_id(&plan_id)?;
     validate_adopt_procedure_request(&request)?;
     native_request("POST", &format!("/api/scientific-setup/plans/{plan_id}/adopt-procedure"), Some(&request), &require_session(&state)?)
+}
+
+/// Reads a consistent, Agent-authoritative assembly preview. This command never issues approval.
+#[tauri::command]
+pub async fn scientific_assembly_defaults(window: WebviewWindow, state: State<'_, AgentBrokerState>) -> Result<String, String> {
+    require_main_window(&window)?;
+    native_request("GET", "/api/scientific-setup/assembly-defaults", None, &require_session(&state)?)
+}
+
+/// Submits only an exact immutable-reference assembly proposal to the fixed local Agent endpoint.
+#[tauri::command]
+pub async fn scientific_assemble(window: WebviewWindow, state: State<'_, AgentBrokerState>, request: String) -> Result<String, String> {
+    require_main_window(&window)?;
+    validate_assembly_request(&request)?;
+    native_request("POST", "/api/scientific-setup/assemblies", Some(&request), &require_session(&state)?)
+}
+
+#[tauri::command]
+pub async fn scientific_read_assembly(window: WebviewWindow, state: State<'_, AgentBrokerState>, assembly_id: String) -> Result<String, String> {
+    require_main_window(&window)?;
+    validate_command_id(&assembly_id)?;
+    native_request("GET", &format!("/api/scientific-setup/assemblies/{assembly_id}"), None, &require_session(&state)?)
+}
+
+/// Lists immutable policy content only; approval remains an Agent authority concern.
+#[tauri::command]
+pub async fn scientific_policies(window: WebviewWindow, state: State<'_, AgentBrokerState>) -> Result<String, String> {
+    require_main_window(&window)?;
+    native_request("GET", "/api/scientific-setup/policies", None, &require_session(&state)?)
+}
+
+#[tauri::command]
+pub async fn scientific_read_policy(window: WebviewWindow, state: State<'_, AgentBrokerState>, revision_id: String) -> Result<String, String> {
+    require_main_window(&window)?;
+    validate_command_id(&revision_id)?;
+    native_request("GET", &format!("/api/scientific-setup/policies/{revision_id}"), None, &require_session(&state)?)
 }
 
 /// Lists only the authenticated scientist's sample projections through a fixed local route.
