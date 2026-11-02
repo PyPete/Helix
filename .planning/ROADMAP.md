@@ -166,13 +166,26 @@ Plans:
 **Goal**: Deliver an independently authored, proposal-only scientific workflow workspace, preserving Agent-only execution authority and accepting the redesign only after its installed-Tauri comparative/accessibility UAT and explicit scientist approval gate.
 **Mode:** mvp
 **Depends on**: Phase 02.1
-**Requirements**: TBD
+**Requirements**: UX-01
 **Success Criteria** (what must be TRUE):
   1. The workflow workspace is independently authored under the clean-room provenance boundary and remains proposal-only.
   2. The local Helix Agent remains the sole authority for driver addressing and physical execution.
   3. The final primary-workspace change and promotion occur only after task-based installed-Tauri comparison, keyboard-only and screen-reader evidence, recorded outcomes, and future explicit scientist approval.
-**Plans**: TBD
+**Plans**: 4 plans
 **UI hint**: yes
+
+Plans:
+**Wave 1**
+- [ ] 03-01-PLAN.md — Mount the original proposal board tracer and fail-closed reconciliation policy
+
+**Wave 2** *(blocked on Wave 1 completion)*
+- [ ] 03-02-PLAN.md — Bind six evidence projections and add typed proposal structure
+
+**Wave 3** *(blocked on Wave 2 completion)*
+- [ ] 03-03-PLAN.md — Resolve dirty contexts and close keyboard/accessibility safeguards
+
+**Wave 4** *(blocked on Wave 3 completion)*
+- [ ] 03-04-PLAN.md — Execute installed-Tauri UAT and conditionally promote only after approval
 
 ### Phase 4: Approved Manual Campaigns
 **Goal**: Scientists can approve and durably operate a bounded simulated campaign through the Agent before autonomous selection is enabled.
