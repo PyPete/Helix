@@ -11,7 +11,7 @@ Deliver one local-first, simulated scientific feedback loop in which the Helix A
 - Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
 
 - [x] **Phase 1: Agent Safety Boundary** - Execution closed with user-approved waivers; not fully verified.
-- [x] **Phase 2: Scientific Setup Foundation** - Automated acceptance complete for revisioned apparatus, procedures, samples, and frozen execution bindings; authenticated installed-Tauri human checks remain explicitly unperformed.
+- [x] **Phase 2: Scientific Setup Foundation** - Implementation and automated acceptance complete; manual UI UAT is explicitly deferred to the Phase 2.1 / Phase 7 redesign work, not passed.
 - [ ] **Phase 3: Approved Manual Campaigns** - Run approved, bounded simulated campaigns durably with reconciliation and evidence visibility.
 - [ ] **Phase 4: Reviewed CSV Evidence** - Turn structured CSV imports into reviewed, immutable analytical evidence.
 - [ ] **Phase 5: Policy-Bounded Autonomous Simulation** - Use accepted evidence to select and execute only permitted next simulated experiments.
@@ -209,7 +209,7 @@ Phases execute in numeric order: 1 → 2 → 2.1 → 3 → 4 → 5 → 6 → 7
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Agent Safety Boundary | 14/14 | Complete with user-approved waivers (not fully verified) | 2026-10-30 |
-| 2. Scientific Setup Foundation | 23/23 | Automated acceptance complete; human-native/UI checks remain unperformed | 2026-11-01 |
+| 2. Scientific Setup Foundation | 23/23 | Complete with manual UI UAT deferred to Phase 2.1 / Phase 7 redesign work | 2026-11-02 |
 | 3. Approved Manual Campaigns | 0/TBD | Not started | - |
 | 4. Reviewed CSV Evidence | 0/TBD | Not started | - |
 | 5. Policy-Bounded Autonomous Simulation | 0/TBD | Not started | - |

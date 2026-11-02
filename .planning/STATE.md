@@ -1,20 +1,20 @@
 ---
 gsd_state_version: "1.0"
-current_phase: 02
-current_phase_name: Scientific Setup Foundation
-current_plan: 17
-status: complete_with_human_needed_ui_checks
-stopped_at: "Completed 02-17-PLAN.md automated acceptance; authenticated installed-Tauri human checks remain unperformed"
-last_updated: "2026-11-01T17:00:00Z"
-last_activity: 2026-11-01
-last_activity_desc: Completed 02-17 Acceptance end-to-end: native/SQL integration, native guards, 65 Agent tests, warning-free Agent build, formatting, 155 desktop tests, and production build passed.
+current_phase: "02.1"
+current_phase_name: Scientific Workspace UI Rework
+current_plan: 0
+status: ready_to_plan
+stopped_at: "Phase 2 implementation and automated acceptance complete; three manual UI UAT checks deferred to Phase 2.1 / Phase 7 redesign work"
+last_updated: "2026-11-02T00:00:00Z"
+last_activity: 2026-11-02
+last_activity_desc: Completed Phase 2 UAT session with all three installed-Tauri UI checks deferred pending the planned redesign.
 state_head: 5d8fc5b
 progress:
   total_phases: 8
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 37
-  completed_plans: 36
-  percent: 14
+  completed_plans: 37
+  percent: 25
 ---
 
 # Project State
@@ -24,19 +24,19 @@ progress:
 See: .planning/PROJECT.md (updated 2026-10-29)
 
 **Core value:** Reliably complete a traceable and safe scientific feedback loop from physical apparatus execution through sample collection and reviewed analytical evidence to the next validated experiment.
-**Current focus:** Phase 1 — Agent Safety Boundary
+**Current focus:** Phase 02.1 — Scientific Workspace UI Rework
 
 ## Current Position
 
-Current Plan: 17
-Total Plans in Phase: 23
+Current Plan: 0
+Total Plans in Phase: TBD
 
-Phase: 02 (Scientific Setup Foundation) — AUTOMATED ACCEPTANCE COMPLETE
-Plan: 02-17 complete
-Status: Automated requirements evidence is complete; authenticated installed-Tauri human checks remain unperformed and are not passed.
-Last activity: 2026-11-01 — Completed end-to-end acceptance including desktop Vitest and production build.
+Phase: 02.1 (Scientific Workspace UI Rework) — READY TO PLAN
+Plan: none
+Status: Phase 2 implementation and automated acceptance are complete. Its three manual installed-Tauri UI checks are deferred to the Phase 2.1 / Phase 7 redesign work and are not passed.
+Last activity: 2026-11-02 — Completed Phase 2 UAT session with all manual UI checks deferred.
 
-Progress: [██░░░░░░░░] 29% (Phase 1 closed with waivers; Phase 2 automated acceptance complete with human-native/UI checks pending)
+Progress: [███░░░░░░░] 25% (Phases 1 and 2 complete; Phase 2 UI validation deferred to the redesign work)
 
 ## Performance Metrics
 
@@ -123,6 +123,7 @@ Decisions are logged in PROJECT.md Key Decisions table. Current roadmap decision
 - [Phase 02]: All five scientific entries use stable dock IDs and recreate their current factory content after layout restoration.
 - [Phase 02-scientific-setup-foundation]: Shared ScientificRecordUi evidence controls keep exact identifiers accessible without treating local UI state as scientific authority.
 - [Phase 02-scientific-setup-foundation]: Publication confirmation explicitly states that immutable revision publication does not execute equipment.
+- [Phase 02 UAT]: Manual installed-Tauri checks for scientific setup, sample facts, and accessibility are deferred to the Phase 2.1 / Phase 7 UI redesign; no human UAT result is claimed as passed.
 
 ### Pending Todos
 
@@ -134,7 +135,7 @@ Decisions are logged in PROJECT.md Key Decisions table. Current roadmap decision
 - [Phase 1 verification]: The separate checker grader was unavailable. Remaining native/UI/database acceptance was not fully verified; user-reported manual SetFlow/SQL evidence and prior focused checks are documented in the phase summary.
 - [Phase 6]: Obtain EHS, vendor, and site qualification evidence before any real-device integration work.
 - 02-38 requires an architectural extension: the current sample transformation API/persistence cannot persist or return transformation occurrence time, actor, or recording time required by the plan’s immutable evidence UI.
-- [Phase 2 human-needed] Authenticated installed-Tauri UI/native checklist remains unperformed: five entries/restored tabs; apparatus/procedure/plan pins; immutable history; custody/lineage; unavailable production authority; original-key uncertainty; scaling, dock, focus/keyboard/high-contrast, long IDs, and representative/oversized payloads. Automated acceptance passed; this is not green human evidence.
+- [Phase 2 UAT deferred] Authenticated installed-Tauri UI/native validation is deferred to the Phase 2.1 / Phase 7 redesign: five entries/restored tabs; apparatus/procedure/plan pins; immutable history; custody/lineage; unavailable production authority; original-key uncertainty; scaling, dock, focus/keyboard/high-contrast, long IDs, and representative/oversized payloads. Automated acceptance passed; this is not green human evidence.
 
 ### Roadmap Evolution
 
@@ -150,6 +151,6 @@ Decisions are logged in PROJECT.md Key Decisions table. Current roadmap decision
 
 ## Session Continuity
 
-Last session: 2026-11-01T17:00:00Z
-Stopped at: Completed 02-17-PLAN.md automated acceptance; route to Phase 02.1 planning after recording any optional human-native/UI evidence
+Last session: 2026-11-02T00:00:00Z
+Stopped at: Phase 2 UAT recorded as deferred pending the Phase 02.1 / Phase 7 UI redesign; Phase 02.1 is ready for planning
 Resume file: None
