@@ -71,11 +71,11 @@ No `## Deferred Ideas` section exists in `03-CONTEXT.md`; Phase 3 treats only th
 
 ## Summary
 
-Phase 3 is a desktop-renderer/UI integration phase, not a scientific-domain or execution phase. Implement one original workflow board at the existing `HelixShell` → `WorkspaceLayout` composition seam, backed by Helix-owned Agent/native read models and the six Phase 02.1 evidence projections. Preserve the legacy dock workspace as the UAT comparator until the recorded installed-Tauri gate and future scientist decision are complete. [VERIFIED: .planning/phases/02.1-scientific-workspace-ui-rework/02.1-WORKSPACE-IMPLEMENTATION-DECISION.md:12-22]
+Phase 3 is a desktop-renderer/UI integration phase, not a scientific-domain or execution phase. The live composition seam is `HelixShell` → `WorkspaceLayout`, but its current prop contract carries streams and workflow state only; it does **not** carry health, lifecycle, a retained operation, a reconciled evidence result, or a shared scientific-board record. A Phase 3 board may consume only the documented native reads below; every missing or non-comparable input renders a truthful unavailable/read-only state. [VERIFIED: helix-desktop/src/shell/HelixShell.tsx:153-163; helix-desktop/src/shell/WorkspaceLayout.tsx:30-42]
 
-The board must derive a single conservative interaction policy: editable only when the native health observation is exactly `healthy`; held, reconciling, faulted, uncertain, missing, contradictory, and unknown evidence are read-only. It must expose evidence/recovery navigation rather than physical-command, acknowledgement, or approval controls. [VERIFIED: .planning/phases/02.1-scientific-workspace-ui-rework/02.1-RECONCILIATION-COMPARATOR-DISCOVERY.md:20-27,40-51]
+The only current Agent-backed eligibility observation is the native-broker health read represented by `AgentHealthState.healthy: boolean | null`. The hook converts only the exact response expression `status.trim().toLowerCase() === "healthy"` to `true`; pending is `null` and any non-exact response or read failure is `false`. It is not a reconciliation result, and the live app supplies no Agent-authoritative `reconciling`, `contradictory`, resource/lease, or all-six-view aggregate read model. Those unsupported inputs must produce persistent unavailable/read-only UI rather than locally invented states. [VERIFIED: helix-desktop/src/hooks/useAgentHealth.ts:4-8,15-19,23-40; helix-desktop/src/shell/HelixShell.tsx:153-163]
 
-**Primary recommendation:** Build an independently designed React board projection beside—not in place of—the legacy dock layout, centralize fail-closed reconciliation and draft-context resolution, reuse Phase 2’s exact Agent/native records read-only, and make UAT/promotion a terminal gated workstream rather than an implementation side effect. [VERIFIED: .planning/phases/02.1-scientific-workspace-ui-rework/02.1-PHASE-3-RECOMMENDATION.md:38-54]
+**Primary recommendation:** Mount an independently designed React board beside—not in place of—the legacy dock layout. Thread the existing health observation explicitly from `HelixShell` only if the new board needs it; retain the current `WorkspaceLayout` props and use source-backed native reads for a known immutable ID only. Do not invent a shared reconciliation contract or backend/domain input: unsupported lifecycle comparison, retained-operation correlation, diagnostics, and scientific records remain unavailable and fail closed. Keep UAT/promotion as the defined later human checkpoint. [VERIFIED: helix-desktop/src/shell/HelixShell.tsx:22-23,153-163; helix-desktop/src/shell/WorkspaceLayout.tsx:30-42; .planning/phases/02.1-scientific-workspace-ui-rework/02.1-PROMOTION-UAT.md:9-28]
 
 ## Architectural Responsibility Map
 
@@ -85,6 +85,25 @@ The board must derive a single conservative interaction policy: editable only wh
 | Scientific record identity, immutable revisions, custody, lineage, and evidence reads | API / Backend | Database / Storage | Phase 2 Agent-backed records remain the source of truth; renderer state cannot substitute identities. [VERIFIED: .planning/phases/02.1-scientific-workspace-ui-rework/02.1-WORKSPACE-BOARD-CONTRACT.md:9-16] |
 | Reconciliation disposition | API / Backend | Browser / Client | The board adapts Agent/native observations and must fail closed rather than infer state locally. [VERIFIED: .planning/phases/02.1-scientific-workspace-ui-rework/02.1-RECONCILIATION-COMPARATOR-DISCOVERY.md:31-43] |
 | Capability, safety, lease, resource, budget, and termination admission | API / Backend | — | The local Helix Agent alone validates and executes physical commands; this UI only proposes or observes. [VERIFIED: 03-CONTEXT.md:20-26] |
+
+## Live Desktop Wiring Contract (Plan-Review Resolution)
+
+### Actual `HelixShell` → `WorkspaceLayout` seam
+
+`WorkspaceLayoutProps` currently declares exactly: `baseUrl`, `onSaveLayout`, `onLoadLayout`, `runspaceEvents`, `trendValues`, `safetyEvents`, `experimentEvents`, `activeExperimentId`, `currentWorkflow`, and `onWorkflowExport`. `HelixShell` supplies the required seven data props as `baseUrl`, `runspaceEvents`, `trendValues`, `safetyEvents`, `experimentEvents`, `activeExperimentId={timelineExperimentId}`, `currentWorkflow`, and `onWorkflowExport`. The following required Phase 3 inputs are **not current props**: `health`, `durableLifecycle`, `selectedExecutionId`, `AgentHealthState.lastChecked`, a `ScientificOperationResult`, a `CommandEvidenceHistoryState`, and any six-view board record. [VERIFIED: helix-desktop/src/shell/WorkspaceLayout.tsx:30-42; helix-desktop/src/shell/HelixShell.tsx:153-163]
+
+| Input / exact live fields | Source and type | Agent-authoritative? | Missing/unhealthy behavior required for Phase 3 | Exact caller / adapter seam | Existing test evidence |
+|---|---|---|---|---|---|
+| Health: `healthy: boolean \| null`, `error: string \| null`, `lastChecked: Date \| null` | `useAgentHealth()` returns `AgentHealthState`; it calls `getAgentStatus(): Promise<string>`, which invokes Tauri `agent_status`; the Rust command requires the main window and session, then performs `GET /health`. [VERIFIED: helix-desktop/src/hooks/useAgentHealth.ts:4-8,14-18,23-40; helix-desktop/src/lib/agentClient.ts:178-181; helix-desktop/src-tauri/src/commands/agent.rs:344-348] | The raw status read is Agent-backed through the authenticated native broker. The `boolean` is renderer-derived from the exact string check, so it is a conservative eligibility projection, not a full reconciliation decision. [VERIFIED: helix-desktop/src/hooks/useAgentHealth.ts:10-13,25-31] | `null`, `false`, a non-null `error`, or absent board input => read-only with health-evidence/retry navigation. Only `healthy === true` is source-supported as a positive health observation; it cannot make an unsupported lifecycle/evidence contract available. [VERIFIED: helix-desktop/src/hooks/useAgentHealth.ts:15-19,27-39; .planning/phases/02.1-scientific-workspace-ui-rework/02.1-RECONCILIATION-COMPARATOR-DISCOVERY.md:40-43] | `HelixShell` already calls the hook at line 22 but passes none of its fields to `WorkspaceLayout`; Phase 3 must explicitly pass the existing observation to its new board factory or leave the board read-only. It must not re-fetch through browser networking. [VERIFIED: helix-desktop/src/shell/HelixShell.tsx:20-23,153-163; helix-desktop/src/hooks/useAgentHealth.ts:10-14] | `useAgentHealth.test.ts` proves pending → `null`, exact `"Healthy"` → `true`, and rejection → `false` plus error. `HelixShell.test.tsx` currently mocks only `healthy`/`error`; it does not assert propagation. [VERIFIED: helix-desktop/src/hooks/useAgentHealth.test.ts:13-35; helix-desktop/src/shell/HelixShell.test.tsx:59-62,81-132] |
+| Last selected execution: `selectedExecutionId: string \| null` | Local `HelixShell` state. It updates only from `activeExperimentId`; `timelineExperimentId` is `activeExperimentId ?? selectedExecutionId`. [VERIFIED: helix-desktop/src/shell/HelixShell.tsx:29-30,43-46,65] | No. It is retained renderer selection, not an Agent receipt or a proven execution state. | `null` means no selected execution evidence; never manufacture an ID or select a lifecycle. Board must show unavailable/read-only evidence. [VERIFIED: helix-desktop/src/shell/HelixShell.tsx:43-46,65] | `WorkspaceLayout` receives only the derived `activeExperimentId={timelineExperimentId}` for `ExperimentTimeline`; it does not receive `selectedExecutionId`. [VERIFIED: helix-desktop/src/shell/HelixShell.tsx:153-163; helix-desktop/src/shell/WorkspaceLayout.tsx:234-246] | No test asserts selection retention, propagation, or an Agent receipt. `HelixShell.test.tsx` uses a mocked websocket with `activeExperimentId: null`. [VERIFIED: helix-desktop/src/shell/HelixShell.test.tsx:46-57,81-132] |
+| Lifecycle: `durableLifecycle: string \| null` | Local `HelixShell` state set from a local map: `'runspace-started': 'Running', 'runspace-paused': 'Paused', 'runspace-completed': 'Completed', 'runspace-aborted': 'Aborted', 'runspace-faulted': 'Held'`. [VERIFIED: helix-desktop/src/shell/HelixShell.tsx:29-30,48-60] | No. The map is presentation state derived from received events; `runspace-faulted` is deliberately collapsed to `Held`. [VERIFIED: helix-desktop/src/shell/HelixShell.tsx:51-59] | `null`, any unmapped event, or any lifecycle use without an independently supplied Agent receipt => unavailable/read-only. Do not label a local `Held` as Agent reconciliation or expose a “reconciling” completion action. [VERIFIED: helix-desktop/src/shell/HelixShell.tsx:48-60; .planning/phases/02.1-scientific-workspace-ui-rework/02.1-RECONCILIATION-COMPARATOR-DISCOVERY.md:23-27,40-43] | It is not passed to `WorkspaceLayout`. Do not add it as if it were an authoritative contract; if displayed, label it as local event-derived and deny editing. [VERIFIED: helix-desktop/src/shell/HelixShell.tsx:153-163; helix-desktop/src/shell/WorkspaceLayout.tsx:30-42] | No lifecycle mapping test exists in `HelixShell.test.tsx`; the test only renders the shell with an empty mocked event list. [VERIFIED: helix-desktop/src/shell/HelixShell.test.tsx:46-57,81-132] |
+| Stream state: `runspaceEvents: RunspaceEvent[]`, `connected: boolean`, `loading: boolean`, `error: string \| null`, `partial: boolean` | `useAgentWebSocket()` polls `pollCommittedEvidence`, maps returned `CommandEvidenceRecord` to `RunspaceEvent`, and retains at most 100 entries. Its actual current return fixes `activeExperimentId: null` and `experimentEvents: []`. [VERIFIED: helix-desktop/src/hooks/useAgentWebSocket.ts:5-16,24-34,40-45,63-90,105-116] | Committed evidence records are Agent-backed; connection/partial/loading and the `RunspaceEvent` adapter are renderer state. | `connected === false`, `error !== null`, `partial === true`, no selected execution, or no supplied receipt must not be transformed into reconciliation success. Board remains read-only and identifies evidence as unavailable/partial. [VERIFIED: helix-desktop/src/hooks/useAgentWebSocket.ts:85-90,105-116; .planning/phases/02.1-scientific-workspace-ui-rework/02.1-RECONCILIATION-COMPARATOR-DISCOVERY.md:40-43] | The array is already forwarded to `WorkspaceLayout` and `ExperimentTimeline`; `connected`, `loading`, `error`, and `partial` are discarded by `HelixShell`, so they are unsupported at the board seam unless Phase 3 explicitly threads those existing fields. [VERIFIED: helix-desktop/src/shell/HelixShell.tsx:23,153-163; helix-desktop/src/shell/WorkspaceLayout.tsx:35-39,234-242] | There is no `useAgentWebSocket` unit test in the current source tree; `HelixShell.test.tsx` mocks the returned fields. [VERIFIED: helix-desktop/src/shell/HelixShell.test.tsx:46-57] |
+| Retained scientific operation: `state: "idle" \| "pending" \| "uncertain" \| "committed"`, optional `context`, optional `receipt`, and `reconcile()` | `useScientificOperation(userId)` stores `ScientificOperationContext` in session storage; a restored context begins `"uncertain"`. `reconcile()` reads `readScientificOperation(kind, operationId)` and returns a validated `ScientificReceipt`. [VERIFIED: helix-desktop/src/hooks/useScientificOperation.ts:5-18,20-31,40-55; helix-desktop/src/lib/scientificClient.ts:6-17,51-53] | The retained context and state are caller-local; only the returned receipt is Agent-backed. [VERIFIED: helix-desktop/src/hooks/useScientificOperation.ts:20-21,22-38,46-52] | No context, malformed/restoration failure, `pending`, or `uncertain` => no scientific outcome and read-only. Reconcile only the original `operationId`; do not retry or invent a receipt. [VERIFIED: helix-desktop/src/hooks/useScientificOperation.ts:24-31,45-52; helix-desktop/src/lib/scientificClient.ts:6-17] | This hook has **no caller** in `HelixShell` or `WorkspaceLayout`. It cannot supply their current board props. A board may use it only for a future board-originated proposal operation, not as a global “last operation” read model. [VERIFIED: helix-desktop/src/shell/HelixShell.tsx:1-170; helix-desktop/src/shell/WorkspaceLayout.tsx:1-420; helix-desktop/src/hooks/useScientificOperation.ts:20-55] | `useScientificOperation.test.ts` proves an uncertain original operation is retained and not committed; no test proves shell/layout integration or reconciliation success. [VERIFIED: helix-desktop/src/hooks/useScientificOperation.test.ts:7-17] |
+| Command reconciliation evidence: `CommandEvidenceHistoryState` fields `records`, `loading`, `unavailable`, `error`, `refresh` | `useCommandEvidence(executionId)` reads cursor pages through the native `agent_evidence_cursor` route, merges stable `evidenceId` rows by sequence, and records unavailable history without deleting partial rows. [VERIFIED: helix-desktop/src/hooks/useCommandEvidence.ts:3-19,29-73; helix-desktop/src-tauri/src/commands/agent.rs:617-629] | `records` are Agent-backed committed facts; state flags are renderer fetch state. [VERIFIED: helix-desktop/src/hooks/useCommandEvidence.ts:29-34,53-63] | No known `executionId`, `unavailable === true`, `loading === true`, or an empty record set is unavailable evidence, not a safe lifecycle or an approval. Board remains read-only and may navigate to the timeline. [VERIFIED: helix-desktop/src/hooks/useCommandEvidence.ts:37-63; helix-desktop/src/shell/panels/ExperimentTimeline.tsx:99-104] | `ExperimentTimeline` owns this hook. `WorkspaceLayout` supplies `activeExperimentId`; no `CommandEvidenceHistoryState` crosses into board composition. [VERIFIED: helix-desktop/src/shell/WorkspaceLayout.tsx:234-246; helix-desktop/src/shell/panels/ExperimentTimeline.tsx:80-104] | `useCommandEvidence.test.ts` proves ordered identity merge and preservation of partial records with `unavailable: true`; `ExperimentTimeline.test.tsx` proves held evidence display. [VERIFIED: helix-desktop/src/hooks/useCommandEvidence.test.ts:14-35; helix-desktop/src/shell/panels/ExperimentTimeline.test.tsx:16-38] |
+
+### Unsupported inputs — fixed fail-closed decision
+
+The following inputs are not exposed by the current `HelixShell`/`WorkspaceLayout` seam or a current Agent/native read model available to the board: an Agent-authoritative reconciled lifecycle; an Agent-issued `reconciling` disposition; a comparator that can determine health-versus-lifecycle contradiction; a shell-wide retained/last operation; a shared six-view board record; Agent-provided resource/lease diagnostics; capability binding/default/provenance/quality/review metadata beyond the existing `CapabilityDescriptor`; and a reviewed analytical-result record. The board must render each as `Unavailable` with no mutation affordance and evidence/recovery navigation only. It must not introduce a Phase 2 backend/domain change, create a synthetic ID/status, or infer a scientific fact. [VERIFIED: helix-desktop/src/shell/WorkspaceLayout.tsx:30-42,247-261; helix-desktop/src/types/agent.ts:83-108; helix-desktop/src/types/scientific.ts:1-199; helix-desktop/src/shell/HelixShell.tsx:20-65]
 
 ## Environment Availability
 
@@ -134,7 +153,7 @@ The board must derive a single conservative interaction policy: editable only wh
 - [ ] `helix-desktop/src/hooks/useBoardInteractionPolicy.test.ts` — complete fail-closed state matrix and every interaction entry point.
 - [ ] `helix-desktop/src/hooks/useDraftContextResolver.test.ts` — Save/Discard/Keep editing state and retained context.
 - [ ] `helix-desktop/src/components/ScientificWorkflowBoard/ReconciliationStrip.test.tsx` — persistent accessible status/evidence/recovery only; no execution/approval acknowledgement affordance.
-- [ ] `helix-desktop/src/components/ScientificWorkflowBoard/ScientificWorkflowBoard.a11y.test.tsx` — keyboard command blocking, focus return, dialog names, and status announcements. [ASSUMED: Suggested test-file partitioning; exact component names are a Phase 3 implementation decision.]
+- [ ] `helix-desktop/src/components/ScientificWorkflowBoard/ScientificWorkflowBoard.a11y.test.tsx` — keyboard command blocking, focus return, dialog names, and status announcements. The path and coverage are the accepted Phase 3 plan partition; source-backed policy tests must also cover every unavailable input listed in the Live Desktop Wiring Contract. [VERIFIED: .planning/phases/03-clean-room-scientific-workflow-designer/03-03-PLAN.md:7-14,59-68]
 - [ ] Human UAT records under the Phase 3 directory for all six rows, populated only from actual installed-Tauri sessions. [VERIFIED: .planning/phases/02.1-scientific-workspace-ui-rework/02.1-PROMOTION-UAT.md:13-28]
 
 ## Security Domain
@@ -147,8 +166,8 @@ Security enforcement is enabled because `.planning/config.json` has no explicit 
 | V2 Authentication | yes | Use existing authenticated native broker/Agent read and mutation seams; do not create a renderer-direct driver path. [VERIFIED: helix-desktop/src/hooks/useAgentHealth.ts:10-14; AGENTS.md:15-16] |
 | V3 Session Management | yes | Do not treat local layout/draft/session storage as Agent authority or scientific evidence. [VERIFIED: helix-desktop/src/hooks/useScientificOperation.ts:20-38] |
 | V4 Access Control | yes | The board remains proposal/read-only; physical execution stays Agent-only. [VERIFIED: 03-CONTEXT.md:20-26] |
-| V5 Input Validation | yes | Validate typed UI values before proposal serialization; preserve Agent-side validation as the authority. [ASSUMED: Phase 3 must add typed client validation without changing the locked backend/domain contract.] |
-| V6 Cryptography | no new Phase 3 cryptographic function | Do not add custom cryptography. [ASSUMED] |
+| V5 Input Validation | yes | Use only existing typed client contracts where a source exists (for example, `CapabilityDescriptor`, `ProcedureDraft`, and `PlanDraft`); an unsupported field is unavailable/read-only, while the Agent remains the authority. [VERIFIED: helix-desktop/src/types/agent.ts:83-108; helix-desktop/src/types/scientific.ts:14-31] |
+| V6 Cryptography | no Phase 3 credential or crypto seam is in the live board composition | Keep the current native broker boundary; Phase 3 must not add a credential, secret, or custom cryptographic path. [VERIFIED: helix-desktop/src/shell/HelixShell.tsx:18-23,153-163; helix-desktop/src-tauri/src/commands/agent.rs:344-348] |
 
 ### Known Threat Patterns for the desktop board
 | Pattern | STRIDE | Standard Mitigation |
@@ -161,24 +180,17 @@ Security enforcement is enabled because `.planning/config.json` has no explicit 
 
 ## Assumptions Log
 
-| # | Claim | Section | Risk if Wrong |
-|---|---|---|---|
-| A1 | Existing `@xyflow/react` can serve as the final board renderer after adding an original, keyboard-accessible control layer. | Standard Stack / Don’t Hand-Roll | A replacement or accessibility adapter may be required. |
-| A2 | Proposed `ScientificWorkflowBoard` / policy / resolver test file names are appropriate. | Validation Architecture | Planner must align file names with final component decomposition. |
-| A3 | Phase 3 can add typed client-side proposal validation without a Phase 2 backend/domain change. | Security Domain | Must confirm no contract extension is needed; otherwise stop at a planned UI-only validation boundary. |
-| A4 | No new cryptography is needed for this UI-only redesign. | Security Domain | Reassess if Phase 3 introduces persistence or credentials outside existing native/Agent paths. |
+None. Former assumptions are now resolved as source-backed implementation limits: use React/TypeScript and already installed packages only; do not treat `@xyflow/react` as a scientific/read-model contract; use only the exact client types in the Live Desktop Wiring Contract; and create no crypto or backend/domain seam. [VERIFIED: helix-desktop/package.json:13-36; helix-desktop/src/types/agent.ts:83-108; helix-desktop/src/types/scientific.ts:1-199]
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **What exact Agent/native read-model contract supplies every Phase 3 board capability, typed inspector field, lease/resource diagnostic, and reconciliation state?**
-   - What we know: Phase 02.1 identifies `useAgentHealth`, retained operation receipts, and six evidence projections, and requires no renderer-local state inference. [VERIFIED: .planning/phases/02.1-scientific-workspace-ui-rework/02.1-RECONCILIATION-COMPARATOR-DISCOVERY.md:29-51]
-   - What's unclear: Existing desktop sources do not expose a complete reconciled board state or all requested designer diagnostics. [VERIFIED: .planning/phases/02.1-scientific-workspace-ui-rework/02.1-RECONCILIATION-COMPARATOR-DISCOVERY.md:11-16]
-   - Recommendation: Begin with an interface/adapter inventory task; only consume existing Agent/native read models and fail closed for each unavailable input. Do not authorize a Phase 2 backend/domain change. [VERIFIED: 03-CONTEXT.md:43-47]
+1. **Exact Phase 3 inputs and reconciliation contract — resolved.**
+   - **Decision:** The implementation input boundary is the live inventory above. Health may be explicitly threaded from `HelixShell`; known-ID scientific receipts/evidence may be read through their existing native routes. No current source supplies a reconciled lifecycle, a contradiction comparator, shell-wide retained operation, resource/lease diagnostics, capability quality/review metadata, a shared six-view record, or a reviewed result. Each is intentionally represented as unavailable/read-only, not deferred for a backend/domain change. [VERIFIED: helix-desktop/src/shell/HelixShell.tsx:20-65,153-163; helix-desktop/src/shell/WorkspaceLayout.tsx:30-42; helix-desktop/src/hooks/useScientificOperation.ts:20-55; helix-desktop/src/hooks/useCommandEvidence.ts:29-73]
+   - **Implementation consequence:** A local event, session-storage context, selection, or board label cannot supply missing authority. The board shows the evidence/recovery destination only and blocks every mutation channel. [VERIFIED: 03-CONTEXT.md:43-47; .planning/phases/02.1-scientific-workspace-ui-rework/02.1-RECONCILIATION-COMPARATOR-DISCOVERY.md:40-51]
 
-2. **When can primary-workspace promotion occur?**
-   - What we know: Its controlling status is `PHASE_3_EXECUTION_REQUIRED`; Phase 02.1 explicitly decided `NO_FINAL_PROMOTION_IN_PHASE_02_1`. [VERIFIED: .planning/phases/02.1-scientific-workspace-ui-rework/02.1-PROMOTION-UAT.md:3-11; .planning/phases/02.1-scientific-workspace-ui-rework/02.1-PROMOTION-DECISION.md:1-21]
-   - What's unclear: Actual six-session installed-Tauri results and future scientist decision are not yet recorded. [VERIFIED: .planning/phases/02.1-scientific-workspace-ui-rework/02.1-PHASE-3-RECOMMENDATION.md:38-44]
-   - Recommendation: Make promotion a plan checkpoint after—not alongside—the mandatory UAT evidence work; preserve comparator until it passes. [VERIFIED: 03-CONTEXT.md:51-59]
+2. **Primary-workspace approval/promotion disposition — resolved as a future human checkpoint, not an implementation unknown.**
+   - **Decision:** Keep the legacy workspace comparator and do not select a final approval, rejection, or primary-workspace disposition during implementation. The disposition becomes available only after the installed-Tauri comparison covers setup, experiment, plan, run, results, and samples/analysis; each row has keyboard-only, screen-reader, outcome, and evidence-location records; and a scientist explicitly decides. [VERIFIED: 03-CONTEXT.md:51-59]
+   - **Implementation consequence:** Automated tests, prototype evidence, or a visual preference cannot promote the board. Until the checkpoint produces a recorded human decision, the only valid state is pending with legacy comparator access retained. [VERIFIED: .planning/phases/03-clean-room-scientific-workflow-designer/03-04-PLAN.md:50-71]
 
 ## Sources
 
@@ -194,7 +206,7 @@ Security enforcement is enabled because `.planning/config.json` has no explicit 
 - `.planning/spikes/004-canvas-workspace-evaluation/WRAP-UP.md` and `CLEAN-ROOM-DECISION.md` — background behavioral research only; superseded implementation direction is not adopted.
 
 ### Tertiary (LOW confidence)
-- None beyond assumptions A1–A4.
+- None.
 
 ## Metadata
 
@@ -213,7 +225,7 @@ Security enforcement is enabled because `.planning/config.json` has no explicit 
 | Scientific identity/revision/custody/lineage store | Browser state, local board JSON, or labels as canonical record | Existing Agent-backed scientific records and exact identifiers | Local renderer state cannot replace immutable record provenance. [VERIFIED: .planning/phases/02.1-scientific-workspace-ui-rework/02.1-RECONCILIATION-COMPARATOR-DISCOVERY.md:44-51] |
 | Uncertain operation recovery | A retry button that sends a new mutation | `useScientificOperation.reconcile` / existing receipt read paths | The hook retains the original operation identity and reads a receipt before committing UI state. [VERIFIED: helix-desktop/src/hooks/useScientificOperation.ts:20-55] |
 | Dock layout persistence | A second layout persistence mechanism | `useWorkspaceLayouts` / `WorkspaceLayout` only for legacy comparator retention | Existing dock content requires `updateTab` for live prop refresh and serializes tab IDs, not React content. [VERIFIED: helix-desktop/src/shell/WorkspaceLayout.tsx:277-292,324-375] |
-| Full canvas renderer | A new graph runtime | Existing `@xyflow/react` seam, but with original board components and explicit keyboard alternatives | A new package does not solve the safety or UAT constraints and would increase unvalidated surface. [ASSUMED] |
+| Unsupported board/reconciliation data contract | A renderer-local aggregate, guessed lifecycle, or new backend/domain endpoint | Existing authenticated native reads for known IDs, otherwise visible unavailable/read-only state | The current seam has no aggregate contract; local data cannot become Agent evidence. [VERIFIED: helix-desktop/src/shell/HelixShell.tsx:20-65,153-163; helix-desktop/src/shell/WorkspaceLayout.tsx:30-42] |
 
 **Key insight:** Phase 3’s value is a safety-truthful, independently authored projection over existing records; it must not recreate Agent policy, persistence, or execution semantics in the renderer. [VERIFIED: .planning/phases/02.1-scientific-workspace-ui-rework/02.1-PHASE-3-RECOMMENDATION.md:34-36]
 
@@ -224,7 +236,7 @@ Security enforcement is enabled because `.planning/config.json` has no explicit 
 
 **Why it happens:** Current health and lifecycle arrive on separate inputs, and the tracer explicitly says there is no complete reconciled board state on that path. [VERIFIED: .planning/phases/02.1-scientific-workspace-ui-rework/02.1-RECONCILIATION-COMPARATOR-DISCOVERY.md:11-16]
 
-**How to avoid:** Centralize the fail-closed adapter; only the supported healthy evidence can allow proposal editing. Quote from the source of truth: `status.trim().toLowerCase() === "healthy"`; initial health is `healthy: null`. [VERIFIED: helix-desktop/src/hooks/useAgentHealth.ts:14-19,23-40]
+**How to avoid:** Treat the source expression `status.trim().toLowerCase() === "healthy"` and initial `healthy: null` as the health projection only. It is necessary but not sufficient when the requested lifecycle/evidence input has no source; unsupported or missing evidence remains read-only. [VERIFIED: helix-desktop/src/hooks/useAgentHealth.ts:14-19,23-40; helix-desktop/src/shell/WorkspaceLayout.tsx:30-42]
 
 **Warning signs:** A board action is enabled while the strip reads missing, contradictory, uncertain, held, faulted, or reconciling evidence. [VERIFIED: 03-CONTEXT.md:43-46]
 
@@ -254,33 +266,7 @@ Security enforcement is enabled because `.planning/config.json` has no explicit 
 
 ## Code Examples
 
-### Fail-closed policy consumed by all mutation paths
-```tsx
-// Source: Helix-established fail-closed adapter contract
-// .planning/phases/02.1-scientific-workspace-ui-rework/
-// 02.1-RECONCILIATION-COMPARATOR-DISCOVERY.md:31-51
-const policy = deriveBoardInteractionPolicy(evidence);
-
-function requestBoardMutation(action: () => void) {
-  if (!policy.canEdit) {
-    navigateTo(policy.recoveryRoute);
-    return;
-  }
-
-  action();
-}
-```
-
-### Preserve scientific identity instead of creating local authority
-```tsx
-// Source: existing exact-reference evidence presentation
-// helix-desktop/src/components/ScientificSetup/FrozenAssembly.tsx:64-88
-function ReferenceEvidence({ reference }: { reference: Readonly<Record<string, string>> }) {
-  return <code title={reference.id}>{reference.id}</code>;
-}
-```
-
-The second pattern is presentational only; `reference.id` must be passed from the Helix-owned Agent/native record and never generated by the board. [VERIFIED: .planning/phases/02.1-scientific-workspace-ui-rework/02.1-WORKSPACE-BOARD-CONTRACT.md:9-16]
+No board-aggregation skeleton is supplied: a `deriveBoardInteractionPolicy(evidence)` API, a board `evidence` object, and a generic `reference.id` record are not live contracts and would invent the exact inputs this correction prohibits. Use the explicit native hook/client return types in the Live Desktop Wiring Contract. Any new board-only policy type must have source-backed variants only; an unavailable input maps directly to read-only UI. [VERIFIED: helix-desktop/src/hooks/useAgentHealth.ts:4-8; helix-desktop/src/hooks/useScientificOperation.ts:5-18; helix-desktop/src/hooks/useCommandEvidence.ts:29-34]
 
 ## State of the Art
 
@@ -307,7 +293,7 @@ The second pattern is presentational only; `reference.id` must be passed from th
 |---|---:|---|---|
 | React | `^18.3.0` | Desktop renderer component/state composition | Already the renderer framework. [VERIFIED: helix-desktop/package.json:20-21] |
 | TypeScript | `^5.5.0` | Typed UI contracts and build checking | Already compiled by the desktop `build` script. [VERIFIED: helix-desktop/package.json:6-11,34-36] |
-| `@xyflow/react` | `^12.11.0` | Existing flow/canvas rendering | Reuse only as a rendering implementation seam; do not inherit its old interaction model or local authority. [VERIFIED: helix-desktop/package.json:17-22; helix-desktop/src/components/WorkflowBuilder/WorkflowBuilder.tsx:1-19] |
+| `@xyflow/react` | `^12.11.0` | Legacy `WorkflowBuilder` dependency | It is installed and used by the legacy builder, but it is not a Phase 3 scientific/read-model contract and this research does not prescribe it for the new board. [VERIFIED: helix-desktop/package.json:17-22; helix-desktop/src/components/WorkflowBuilder/WorkflowBuilder.tsx:1-19] |
 | `rc-dock` | `3.3.2` | Legacy comparator workspace mount | The existing `WorkspaceLayout` owns the dock registry and restoration seam. [VERIFIED: helix-desktop/package.json:19-22; helix-desktop/src/shell/WorkspaceLayout.tsx:158-292] |
 
 ### Supporting
@@ -320,7 +306,7 @@ The second pattern is presentational only; `reference.id` must be passed from th
 ### Alternatives Considered
 | Instead of | Could Use | Tradeoff |
 |---|---|---|
-| Existing ReactFlow renderer seam | A new graph/canvas package | Do not install one: the required change is an original board behavior and safety policy, not a renderer replacement. [ASSUMED] |
+| Existing React/installed dependencies | Any new package | Do not install packages in Phase 3; current plans and this research require lockfile-backed dependencies only. [VERIFIED: .planning/phases/03-clean-room-scientific-workflow-designer/03-01-PLAN.md:104-106; .planning/phases/03-clean-room-scientific-workflow-designer/03-02-PLAN.md:88-90; helix-desktop/package.json:13-36] |
 | Existing dock comparator | Replacing `WorkspaceLayout` immediately | Contradicts the required legacy comparator retention until installed-Tauri UAT and approval complete. [VERIFIED: 03-CONTEXT.md:51-59] |
 
 **Installation:** No Phase 3 package installation is recommended. Reuse the lockfile-backed desktop dependencies above. [VERIFIED: helix-desktop/package.json:13-36]
@@ -334,14 +320,15 @@ Scientist keyboard / pointer / screen reader
                  |
                  v
 Original workflow board (renderer proposal + read-model projection)
-   |                    |                     |
-   |                    |                     +--> Legacy dock workspace (UAT comparator only)
-   |                    +--> Draft resolver (Save / Discard / Keep editing)
-   v
-Reconciliation policy adapter <--- native health + retained operation receipt + Agent evidence
-   |                 |                |
-   | editable only with exact evidence | otherwise read-only strip -> evidence/recovery view
-   v
+    |                    |                     |
+    |                    |                     +--> Legacy dock workspace (UAT comparator only)
+    |                    +--> Draft resolver (Save / Discard / Keep editing)
+    v
+Fail-closed board policy <--- explicitly threaded native health observation
+    |                         known-ID receipt/evidence reads when a source ID exists
+    |                         unsupported lifecycle/diagnostic/view input -> Unavailable
+    | editable only for source-backed policy inputs; otherwise read-only strip -> evidence/recovery view
+    v
 Helix-owned client/native broker --> Local Helix Agent --> deterministic admission / scientific records
                                                    |
                                                    +--> physical driver commands (Agent only)
@@ -357,12 +344,12 @@ helix-desktop/src/
 └── components/Samples/                  # existing sample, custody, lineage projections
 ```
 
-### Pattern 1: Explicit board policy adapter
-**What:** Create one pure, exhaustively tested adapter that accepts Agent/native evidence and returns an interaction disposition plus cited evidence/recovery destination. It must be the sole source of `disabled`, command interception, inspector editability, and route-change gating.
+### Pattern 1: Source-bounded fail-closed board policy
+**What:** Create one pure, exhaustively tested policy only over source-backed inputs from the Live Desktop Wiring Contract. It must return read-only/unavailable for absent, local-only, malformed, partial, or unsupported inputs; it is the sole source of `disabled`, command interception, inspector editability, and route-change gating.
 
 **When to use:** Every board action and navigation path, including pointer actions, keyboard actions, shortcuts, palette addition, inspector edits, and selection/route changes.
 
-**Evidence:** The existing Phase 02.1 tracer requires exact-supported healthy observation for editability and all other known/unknown conditions to fail closed. [VERIFIED: .planning/phases/02.1-scientific-workspace-ui-rework/02.1-RECONCILIATION-COMPARATOR-DISCOVERY.md:40-47]
+**Evidence:** The existing Phase 02.1 tracer requires the exact-supported healthy observation for editability and all other known/unknown conditions to fail closed. The live desktop correction further establishes that health is not currently forwarded to `WorkspaceLayout`, while lifecycle, contradiction, and reconciliation inputs lack a shared authoritative source. [VERIFIED: .planning/phases/02.1-scientific-workspace-ui-rework/02.1-RECONCILIATION-COMPARATOR-DISCOVERY.md:40-47; helix-desktop/src/shell/HelixShell.tsx:20-65,153-163; helix-desktop/src/shell/WorkspaceLayout.tsx:30-42]
 
 **Verbatim state evidence:** `HelixShell` currently maps runspace events through:
 `'runspace-started': 'Running', 'runspace-paused': 'Paused', 'runspace-completed': 'Completed', 'runspace-aborted': 'Aborted', 'runspace-faulted': 'Held'`. [VERIFIED: helix-desktop/src/shell/HelixShell.tsx:48-60]
@@ -374,10 +361,10 @@ helix-desktop/src/
 
 **Why:** The inherited procedure/plan UI has individual mutation state but no general dirty-context resolver; Phase 3 needs the centralized guard rather than a silent change. [VERIFIED: helix-desktop/src/components/ScientificSetup/ProcedurePlans.tsx:20-30,32-58; .planning/phases/02.1-scientific-workspace-ui-rework/02.1-WORKSPACE-BOARD-CONTRACT.md:20-23]
 
-### Pattern 3: Projection, not replacement
-**What:** Board cards/nodes render exact server/Agent identities, revisions, frozen references, custody/history, provenance, and evidence status supplied by existing records. Local selection and layout are presentational; they never become the scientific record or execution state.
+### Pattern 3: Projection where a source exists; unavailable where it does not
+**What:** Board cards/nodes render exact server/Agent identities, revisions, frozen references, custody/history, provenance, and evidence status only when a current native read returns them. Local selection and layout are presentational; they never become the scientific record or execution state. The current shared layout does not supply a six-view board record, so each unsupported view/field is explicitly unavailable rather than synthesized.
 
-**When to use:** Each of setup, experiment, plan, run, results, and samples-analysis projections.
+**When to use:** Each of setup, experiment, plan, run, results, and samples-analysis projections; source-backed values pass through unchanged, while no-source values stay unavailable/read-only.
 
 **Example:** `FrozenAssembly` constructs a list from exact apparatus, plan, plan-pinned procedure, policy revision, and preview-token values and states that later publications do not update the assembly or start a campaign. [VERIFIED: helix-desktop/src/components/ScientificSetup/FrozenAssembly.tsx:36-45,64-88]
 
