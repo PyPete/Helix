@@ -42,7 +42,7 @@ Requirements for the initial Mark II release. Each maps to exactly one roadmap p
 
 - [ ] **AUTO-01**: The Agent selects a next simulated experiment only from accepted evidence and within the approved campaign policy.
 - [ ] **AUTO-02**: An autonomous loop enforces bounded iterations, quality and escalation rules, and holds on uncertainty.
-- [ ] **UX-01**: A scientist can use setup, experiment, plan, run, results, and samples/analysis views to understand current status and provenance.
+- [x] **UX-01**: A scientist can use setup, experiment, plan, run, results, and samples/analysis views to understand current status and provenance.
 - [ ] **EVID-01**: A scientist can export a self-contained campaign evidence bundle and reconstruct its history.
 
 ## v2 Requirements
@@ -93,7 +93,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CAMP-04 | Phase 5 | Pending |
 | AUTO-01 | Phase 5 | Pending |
 | AUTO-02 | Phase 5 | Pending |
-| UX-01 | Phase 6 | Pending |
+| UX-01 | Phase 02.1 | Complete |
 | EVID-01 | Phase 6 | Pending |
 
 **Coverage:**

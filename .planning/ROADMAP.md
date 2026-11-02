@@ -144,13 +144,23 @@ Plans:
 
 ### Phase 02.1: Scientific Workspace UI Rework — validate and establish an accessible, safety-truthful workspace UI for revisioned scientific setup and execution status; promote pending canvas-first, graph/cards, and inspector preferences only after evidence and explicit approval. (INSERTED)
 
-**Goal:** [Urgent work - to be planned]
-**Requirements**: TBD
+**Goal:** Scientists have an evidence-backed, accessible, safety-truthful scientific-workspace direction for inspecting revisioned setup and execution status, and downstream implementation may rely on it only after explicit scientist approval.
+**Requirements**: UX-01
 **Depends on:** Phase 2
-**Plans:** 0 plans
+**Plans:** 4/4 plans complete
 
 Plans:
-- [ ] TBD (run /gsd-plan-phase 02.1 to break down)
+**Wave 1**
+- [x] 02.1-01-PLAN.md — Resolve authoritative reconciliation state and comparator/mount decision
+
+**Wave 2** *(blocked on Wave 1 completion)*
+- [x] 02.1-02-PLAN.md — Six-view workspace contract, clean-room record, and UAT materials
+
+**Wave 3** *(blocked on Wave 2 completion)*
+- [x] 02.1-03-PLAN.md — Mounted Agent-read-only board tracer and interaction evidence
+
+**Wave 4** *(blocked on Wave 3 completion)*
+- [x] 02.1-04-PLAN.md — Installed comparative UAT and explicit scientist promotion decision
 
 ### Phase 3: Approved Manual Campaigns
 **Goal**: Scientists can approve and durably operate a bounded simulated campaign through the Agent before autonomous selection is enabled.
@@ -193,7 +203,7 @@ Plans:
 **Goal**: Scientists can reconstruct the simulated campaign record locally and see that any real-hardware rollout is blocked behind explicit qualification rather than execution.
 **Mode:** mvp
 **Depends on**: Phase 5
-**Requirements**: UX-01, EVID-01
+**Requirements**: EVID-01
 **Success Criteria** (what must be TRUE):
   1. A scientist can use coherent setup, experiment, plan, run, results, and samples/analysis views to understand the campaign's status and provenance.
   2. A scientist can export a self-contained campaign evidence bundle and reconstruct the campaign history from it.
