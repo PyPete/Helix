@@ -168,24 +168,31 @@ Plans:
 **Depends on**: Phase 02.1
 **Requirements**: UX-01
 **Success Criteria** (what must be TRUE):
-  1. The workflow workspace is independently authored under the clean-room provenance boundary and remains proposal-only.
-  2. The local Helix Agent remains the sole authority for driver addressing and physical execution.
-  3. The final primary-workspace change and promotion occur only after task-based installed-Tauri comparison, keyboard-only and screen-reader evidence, recorded outcomes, and future explicit scientist approval.
-**Plans**: 4 plans
+  1. One independently authored clean-room workflow board is reachable beside the retained legacy comparator; no cards-first or graph alternate primary workspace is introduced.
+  2. Setup, experiment, plan, run, results, and samples/analysis display exact immutable IDs/revisions/frozen references and provenance/status when source-backed, otherwise named unavailable/read-only evidence.
+  3. Only supported HelixShell→WorkspaceLayout health, stream, selected-run, lifecycle, original-operation, and known-ID command-evidence seams are used; local state never becomes reconciliation or scientific authority.
+  4. Missing, unhealthy, partial, contradictory, or unsupported evidence deterministically blocks pointer, keyboard, shortcut, inspector, palette, and route mutation paths while exposing evidence/recovery navigation.
+  5. Logical capability palette, typed inspector, and If/Else/Fork/Join proposal structure preserve Agent-only validation, scientist approval, and physical execution authority.
+  6. Dirty drafts require acknowledged Save, Discard, or Keep editing before context changes, and keyboard/screen-reader users receive equivalent protections.
+  7. Installed-Tauri UAT records actual six-view comparison, keyboard-only, and screen-reader evidence; final promotion remains pending until a future explicit scientist disposition after complete evidence, with no premature primary-selection change.
+**Plans**: 5 plans
 **UI hint**: yes
 
 Plans:
 **Wave 1**
-- [ ] 03-01-PLAN.md — Mount the original proposal board tracer and fail-closed reconciliation policy
+- [ ] 03-01-PLAN.md — Mount the original board through the live health seam and fail closed on unsupported evidence
 
 **Wave 2** *(blocked on Wave 1 completion)*
-- [ ] 03-02-PLAN.md — Bind six evidence projections and add typed proposal structure
+- [ ] 03-02-PLAN.md — Adapt supported health, stream, operation, and command evidence into truthful six views
 
 **Wave 3** *(blocked on Wave 2 completion)*
-- [ ] 03-03-PLAN.md — Resolve dirty contexts and close keyboard/accessibility safeguards
+- [ ] 03-03-PLAN.md — Add source-bounded capability palette, typed inspector, and proposal structure
 
 **Wave 4** *(blocked on Wave 3 completion)*
-- [ ] 03-04-PLAN.md — Execute installed-Tauri UAT and conditionally promote only after approval
+- [ ] 03-04-PLAN.md — Resolve dirty proposal contexts and prove keyboard/screen-reader fail-closed parity
+
+**Wave 5** *(blocked on Wave 4 completion)*
+- [ ] 03-05-PLAN.md — Record installed-Tauri UAT and hold promotion at a future explicit scientist checkpoint
 
 ### Phase 4: Approved Manual Campaigns
 **Goal**: Scientists can approve and durably operate a bounded simulated campaign through the Agent before autonomous selection is enabled.
