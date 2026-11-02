@@ -11,33 +11,38 @@
     {
       "number": "2",
       "name": "Scientific Setup Foundation",
-      "status": "in_progress"
+      "status": "complete"
     },
     {
       "number": "3",
-      "name": "Approved Manual Campaigns",
+      "name": "Clean-room Scientific Workflow Designer",
       "status": "pending"
     },
     {
       "number": "4",
-      "name": "Reviewed CSV Evidence",
+      "name": "Approved Manual Campaigns",
       "status": "pending"
     },
     {
       "number": "5",
-      "name": "Policy-Bounded Autonomous Simulation",
+      "name": "Reviewed CSV Evidence",
       "status": "pending"
     },
     {
       "number": "6",
+      "name": "Policy-Bounded Autonomous Simulation",
+      "status": "pending"
+    },
+    {
+      "number": "7",
       "name": "Evidence Readiness & Hardware Gate",
       "status": "pending"
     }
   ],
   "next": {
-    "command": "/gsd-progress",
-    "label": "Show progress",
-    "reason": "Unsure of state — showing progress"
+    "command": "run /gsd-plan-phase 3",
+    "label": "Plan Phase 3: Clean-room Scientific Workflow Designer",
+    "reason": "Phase 3 of 7 needs a plan"
   },
-  "updated_at": "2026-11-01T13:27:02.311Z"
+  "updated_at": "2026-11-02T09:37:40.220Z"
 }
