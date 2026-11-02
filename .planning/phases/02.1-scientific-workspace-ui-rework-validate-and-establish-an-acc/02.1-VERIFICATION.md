@@ -1,0 +1,51 @@
+# Phase 02.1 Verification Report
+
+**Verdict:** PASS — bounded evidence/recommendation scope complete; final workspace promotion remains exclusively Phase 7 work.
+
+**Verified:** 2026-11-02
+
+## Goal-backward assessment
+
+Phase 02.1's goal is an evidence-backed, accessible, safety-truthful scientific-workspace direction for revisioned setup and execution-status inspection, with downstream implementation conditional on future explicit scientist approval. The delivered package satisfies that bounded goal through a reproducible six-view evidence harness and future UAT envelope. It does **not** claim that a final workspace, installed-Tauri UAT, or promotion was completed.
+
+| Goal / requirement evidence | Independent evidence | Verdict |
+| --- | --- | --- |
+| UX-01 has a safety-truthful direction | `02.1-RECONCILIATION-COMPARATOR-DISCOVERY.md` contains all seven required evidence states with cited source locations and fail-closed dispositions; the Plan 01 structural gate passed. | PASS |
+| UX-01 covers scientific records | `02.1-WORKSPACE-BOARD-CONTRACT.md`, `02.1-PROMOTION-UAT.md`, and `02.1-PROTOTYPE-EVIDENCE-HARNESS.md` each contain exactly the six required views: setup, experiment, plan, run, results, and samples-analysis. The harness validator passed. | PASS |
+| UX-01 preserves Agent authority, immutable identity, revision/frozen-reference, and provenance constraints | The harness validator passed its authority, identity, revision, provenance, source-citation, and disposition checks. The recorded harness has no command, approval, or execution authority. | PASS |
+| Accessibility and comparative acceptance are not falsely represented as complete | `02.1-PROMOTION-UAT.md` is explicitly `PHASE_7_EXECUTION_REQUIRED`; its six rows retain keyboard-only, screen-reader, comparator, and evidence-location requirements. | PASS |
+
+## Plan success-criteria audit
+
+1. **Plan 01 — falsifiable safety evidence; no final-board decision:** passed. The audited structural gate found every required state row complete, all nonhealthy states read-only, and `PHASE_7_RECOMMENDATION_ONLY` in the implementation decision.
+2. **Plan 02 — six view/provenance/UAT evidence; no promotion:** passed. The audited contract has six unique complete views; the UAT envelope has all required fields and six complete structural rows; the final decision retains `phase_7_owner` and `NO_FINAL_PROMOTION_IN_PHASE_02_1`.
+3. **Plan 03 — executable bounded non-primary tracer:** passed. `node .planning/phases/02.1-scientific-workspace-ui-rework/02.1-validate-evidence.cjs` exited 0 and reported the six-view non-primary recommendation harness complete. Commit history for this phase is documentation-only; no `helix-desktop` path was changed from the first Phase 02.1 commit through `HEAD`.
+4. **Plan 04 — future gate and Phase 7 handoff:** passed. The audited results and recommendation retain `RECOMMEND_TO_PHASE_7`, `PHASE_7_EXECUTION_REQUIRED`, `NO_FINAL_PROMOTION_IN_PHASE_02_1`, and explicit ownership by Phase 7 after future scientist approval.
+
+## Plan 02 case-normalization repair
+
+The Plan 02 Task 1 inline verifier lowercased the provenance document but searched for `API/data-contract` with uppercase `API`; that original expression is unsatisfiable. The documented minimal repair (`api/data-contract`) was independently rerun. It passed against the existing lowercase `api/data-contract` provenance record; all other original checks (six distinct complete views and the remaining provenance keys) were retained. This repair corrects only verifier casing and does not alter evidence artifacts or broaden scope.
+
+## Promotion-authority assessment
+
+Phase 2.1 did **not** improperly claim final workspace promotion:
+
+- The prototype is declared `NON_PRIMARY_PROTOTYPE` and is not a route, layout registration, default mount, or workspace implementation.
+- The promotion decision explicitly says `NO_FINAL_PROMOTION_IN_PHASE_02_1`.
+- The UAT marker is `PHASE_7_EXECUTION_REQUIRED`.
+- `02.1-PHASE-7-RECOMMENDATION.md` assigns final primary-workspace implementation, installed-Tauri comparative/accessibility UAT, and final promotion after future explicit scientist approval to Phase 7.
+
+Therefore this PASS verifies only the deliberately bounded Phase 02.1 evidence package. It does not verify, authorize, or promote a final workspace.
+
+## Validators rerun
+
+```text
+node .planning/phases/02.1-scientific-workspace-ui-rework/02.1-validate-evidence.cjs
+Evidence validation passed: bounded six-view non-primary Phase 7 recommendation harness is complete.
+```
+
+Additionally rerun: Plan 01 structural state-row gate; Plan 02 repaired contract/provenance gate; Plan 02 final-state UAT/ownership gate; and the Plan 03/04 result, scope-fence, no-approved-promotion, and recommendation-content assertions. All passed.
+
+## State / roadmap
+
+No state or roadmap completion marker was changed by this verification. Both files already had unrelated uncommitted edits before verification began, and Phase 02.1 remains a bounded recommendation rather than a final promotion. This report is the authoritative verification record for the completed evidence package; Phase 7 retains final-promotion authority.
