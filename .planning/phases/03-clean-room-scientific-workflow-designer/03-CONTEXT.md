@@ -1,4 +1,4 @@
-# Phase 7 Context — Clean-room Scientific Workflow Designer
+# Phase 3 Context — Clean-room Scientific Workflow Designer
 
 ## Provenance
 

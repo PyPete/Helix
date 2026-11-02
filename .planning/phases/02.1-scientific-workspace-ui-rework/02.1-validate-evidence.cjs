@@ -110,5 +110,5 @@ if (errors.length) {
   for (const error of errors) console.error(`- ${error}`);
   process.exitCode = 1;
 } else {
-  console.log('Evidence validation passed: bounded six-view non-primary Phase 7 recommendation harness is complete.');
+  console.log('Evidence validation passed: bounded six-view non-primary Phase 3 recommendation harness is complete.');
 }

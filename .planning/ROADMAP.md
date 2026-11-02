@@ -11,12 +11,12 @@ Deliver one local-first, simulated scientific feedback loop in which the Helix A
 - Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
 
 - [x] **Phase 1: Agent Safety Boundary** - Execution closed with user-approved waivers; not fully verified.
-- [x] **Phase 2: Scientific Setup Foundation** - Implementation and automated acceptance complete; manual UI UAT is explicitly deferred to the Phase 2.1 / Phase 7 redesign work, not passed.
-- [ ] **Phase 3: Approved Manual Campaigns** - Run approved, bounded simulated campaigns durably with reconciliation and evidence visibility.
-- [ ] **Phase 4: Reviewed CSV Evidence** - Turn structured CSV imports into reviewed, immutable analytical evidence.
-- [ ] **Phase 5: Policy-Bounded Autonomous Simulation** - Use accepted evidence to select and execute only permitted next simulated experiments.
-- [ ] **Phase 6: Evidence Readiness & Hardware Gate** - Export reconstructable evidence and make hardware rollout a qualification decision, not execution scope.
-- [ ] **Phase 7: Clean-room Scientific Workflow Designer** - Deliver an original MIT-only, proposal-only scientific workflow authoring workspace from Spike 004 evidence.
+- [x] **Phase 2: Scientific Setup Foundation** - Implementation and automated acceptance complete; manual UI UAT is explicitly deferred to the Phase 2.1 / Phase 3 redesign work, not passed.
+- [ ] **Phase 3: Clean-room Scientific Workflow Designer** - Deliver an original MIT-only, proposal-only scientific workflow authoring workspace from Spike 004 evidence.
+- [ ] **Phase 4: Approved Manual Campaigns** - Run approved, bounded simulated campaigns durably with reconciliation and evidence visibility.
+- [ ] **Phase 5: Reviewed CSV Evidence** - Turn structured CSV imports into reviewed, immutable analytical evidence.
+- [ ] **Phase 6: Policy-Bounded Autonomous Simulation** - Use accepted evidence to select and execute only permitted next simulated experiments.
+- [ ] **Phase 7: Evidence Readiness & Hardware Gate** - Export reconstructable evidence and make hardware rollout a qualification decision, not execution scope.
 
 ## Phase Details
 
@@ -162,10 +162,22 @@ Plans:
 **Wave 4** *(blocked on Wave 3 completion)*
 - [x] 02.1-04-PLAN.md — Installed comparative UAT and explicit scientist promotion decision
 
-### Phase 3: Approved Manual Campaigns
-**Goal**: Scientists can approve and durably operate a bounded simulated campaign through the Agent before autonomous selection is enabled.
+### Phase 3: Clean-room Scientific Workflow Designer
+**Goal**: Deliver an independently authored, proposal-only scientific workflow workspace, preserving Agent-only execution authority and accepting the redesign only after its installed-Tauri comparative/accessibility UAT and explicit scientist approval gate.
 **Mode:** mvp
 **Depends on**: Phase 02.1
+**Requirements**: TBD
+**Success Criteria** (what must be TRUE):
+  1. The workflow workspace is independently authored under the clean-room provenance boundary and remains proposal-only.
+  2. The local Helix Agent remains the sole authority for driver addressing and physical execution.
+  3. The final primary-workspace change and promotion occur only after task-based installed-Tauri comparison, keyboard-only and screen-reader evidence, recorded outcomes, and future explicit scientist approval.
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 4: Approved Manual Campaigns
+**Goal**: Scientists can approve and durably operate a bounded simulated campaign through the Agent before autonomous selection is enabled.
+**Mode:** mvp
+**Depends on**: Phase 3
 **Requirements**: CAMP-01, CAMP-02, CAMP-03
 **Success Criteria** (what must be TRUE):
   1. A scientist can create and approve a campaign policy with explicit allowed operations, parameter limits, budgets, stop rules, and expiry.
@@ -174,10 +186,10 @@ Plans:
 **Plans**: TBD
 **UI hint**: yes
 
-### Phase 4: Reviewed CSV Evidence
+### Phase 5: Reviewed CSV Evidence
 **Goal**: Scientists can convert controlled CSV analytical data into reviewed, provenance-rich evidence that is safe to consider for a campaign.
 **Mode:** mvp
-**Depends on**: Phase 3
+**Depends on**: Phase 4
 **Requirements**: ANLY-01, ANLY-02, ANLY-03, ANLY-04, ANLY-05
 **Success Criteria** (what must be TRUE):
   1. A scientist can create an analytical test request linked to a collected sample and a method revision.
@@ -188,10 +200,10 @@ Plans:
 **Plans**: TBD
 **UI hint**: yes
 
-### Phase 5: Policy-Bounded Autonomous Simulation
+### Phase 6: Policy-Bounded Autonomous Simulation
 **Goal**: Scientists can observe a bounded autonomous simulated campaign select the next valid experiment solely from accepted evidence and an approved policy.
 **Mode:** mvp
-**Depends on**: Phase 4
+**Depends on**: Phase 5
 **Requirements**: CAMP-04, AUTO-01, AUTO-02
 **Success Criteria** (what must be TRUE):
   1. The initial end-to-end campaign proof completes with simulated devices: approved setup and policy, execution, confirmed sample, reviewed CSV evidence, and a subsequent simulated experiment.
@@ -199,10 +211,10 @@ Plans:
   3. The autonomous loop enforces its iteration bounds, quality and escalation rules, and places the campaign on hold when evidence or execution is uncertain.
 **Plans**: TBD
 
-### Phase 6: Evidence Readiness & Hardware Gate
+### Phase 7: Evidence Readiness & Hardware Gate
 **Goal**: Scientists can reconstruct the simulated campaign record locally and see that any real-hardware rollout is blocked behind explicit qualification rather than execution.
 **Mode:** mvp
-**Depends on**: Phase 5
+**Depends on**: Phase 6
 **Requirements**: EVID-01
 **Success Criteria** (what must be TRUE):
   1. A scientist can use coherent setup, experiment, plan, run, results, and samples/analysis views to understand the campaign's status and provenance.
@@ -214,24 +226,16 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 2.1 → 3 → 4 → 5 → 6 → 7
+Phases execute in numeric order: 1 → 2 → 2.1 → 3 (Clean-room Designer) → 4 (Manual Campaigns) → 5 (CSV Evidence) → 6 (Autonomy) → 7 (Evidence & Hardware Gate)
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Agent Safety Boundary | 14/14 | Complete with user-approved waivers (not fully verified) | 2026-10-30 |
-| 2. Scientific Setup Foundation | 23/23 | Complete with manual UI UAT deferred to Phase 2.1 / Phase 7 redesign work | 2026-11-02 |
-| 3. Approved Manual Campaigns | 0/TBD | Not started | - |
-| 4. Reviewed CSV Evidence | 0/TBD | Not started | - |
-| 5. Policy-Bounded Autonomous Simulation | 0/TBD | Not started | - |
-| 6. Evidence Readiness & Hardware Gate | 0/TBD | Not started | - |
-| 7. Clean-room Scientific Workflow Designer | 0/TBD | Not started | - |
+| 2. Scientific Setup Foundation | 23/23 | Complete with manual UI UAT deferred to Phase 2.1 / Phase 3 redesign work | 2026-11-02 |
+| 3. Clean-room Scientific Workflow Designer | 0/TBD | Not started; Phase 02.1 recommendation handoff is ready | - |
+| 4. Approved Manual Campaigns | 0/TBD | Not started | - |
+| 5. Reviewed CSV Evidence | 0/TBD | Not started | - |
+| 6. Policy-Bounded Autonomous Simulation | 0/TBD | Not started | - |
+| 7. Evidence Readiness & Hardware Gate | 0/TBD | Not started | - |
 
-### Phase 7: Clean-room Scientific Workflow Designer
-
-**Goal:** [To be planned]
-**Requirements**: TBD
-**Depends on:** Phase 6
-**Plans:** 0 plans
-
-Plans:
-- [ ] TBD (run /gsd-plan-phase 7 to break down)
+**Next command:** `run /gsd-plan-phase 3` to plan the Clean-room Scientific Workflow Designer.

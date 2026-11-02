@@ -1,13 +1,13 @@
 ---
 gsd_state_version: "1.0"
 current_phase: 3
-current_phase_name: Approved Manual Campaigns
+current_phase_name: Clean-room Scientific Workflow Designer
 current_plan: Not started
 status: planning
-stopped_at: Phase 02.1 complete, ready to plan Phase 3
+stopped_at: Phase 02.1 complete, ready to plan Phase 3 Clean-room Scientific Workflow Designer
 last_updated: "2026-11-02T09:37:40.102Z"
 last_activity: 2026-11-02
-last_activity_desc: Phase 02.1 complete, transitioned to Phase 3
+last_activity_desc: Approved roadmap resequencing: Phase 3 is the Clean-room Scientific Workflow Designer after Phase 02.1
 state_head: bee6b886b32aafaeaaed64bd077ffc7dbcd8a04d
 progress:
   total_phases: 8
@@ -24,17 +24,17 @@ progress:
 See: .planning/PROJECT.md (updated 2026-10-29)
 
 **Core value:** Reliably complete a traceable and safe scientific feedback loop from physical apparatus execution through sample collection and reviewed analytical evidence to the next validated experiment.
-**Current focus:** Phase 02.1 — Scientific Workspace UI Rework
+**Current focus:** Phase 3 — Clean-room Scientific Workflow Designer
 
 ## Current Position
 
 Current Plan: Not started
 Total Plans in Phase: TBD
 
-Phase: 3 — Approved Manual Campaigns
+Phase: 3 — Clean-room Scientific Workflow Designer
 Plan: none
 Status: Ready to plan
-Last activity: 2026-11-02 — Phase 02.1 complete, transitioned to Phase 3
+Last activity: 2026-11-02 — Approved roadmap resequencing; Phase 02.1 complete and Phase 3 designer is ready to plan
 
 Progress: [███░░░░░░░] 25% (Phases 1 and 2 complete; Phase 2 UI validation deferred to the redesign work)
 
@@ -91,7 +91,7 @@ Decisions are logged in PROJECT.md Key Decisions table. Current roadmap decision
 
 - [Phase 1]: Agent-only dispatch is non-bypassable; simulated devices are the initial execution target.
 - [Phases 2–5]: Campaign decisions use frozen revisions and reviewed CSV evidence under an approved bounded policy.
-- [Phase 6]: Real hardware is qualification-gated and is not executed in this MVP.
+- [Phase 7]: Real hardware is qualification-gated and is not executed in this MVP.
 - [Phase 02]: Scientist approved the exact Phase 2 scientific contract, including catalog, canonical vectors, provenance semantics, and candidate bounds.
 - [Phase 02]: A plan-pinned older procedure remains authoritative until explicit adoption; topology-size bounds require tracer evidence or explicit adjustment.
 - [Phase 02]: Apparatus mutations use actor-scoped idempotent receipts; owned tracer hosts prove restart readback and zero device dispatch.
@@ -124,7 +124,7 @@ Decisions are logged in PROJECT.md Key Decisions table. Current roadmap decision
 - [Phase 02]: All five scientific entries use stable dock IDs and recreate their current factory content after layout restoration.
 - [Phase 02-scientific-setup-foundation]: Shared ScientificRecordUi evidence controls keep exact identifiers accessible without treating local UI state as scientific authority.
 - [Phase 02-scientific-setup-foundation]: Publication confirmation explicitly states that immutable revision publication does not execute equipment.
-- [Phase 02 UAT]: Manual installed-Tauri checks for scientific setup, sample facts, and accessibility are deferred to the Phase 2.1 / Phase 7 UI redesign; no human UAT result is claimed as passed.
+- [Phase 02 UAT]: Manual installed-Tauri checks for scientific setup, sample facts, and accessibility are deferred to the Phase 2.1 / Phase 3 UI redesign; no human UAT result is claimed as passed.
 
 ### Pending Todos
 
@@ -134,15 +134,16 @@ Decisions are logged in PROJECT.md Key Decisions table. Current roadmap decision
 
 - [Phase 1 acceptance — waived, not fully verified]: `phase01-smoke.ps1 -Scenario All` and final UI/Tauri smoke were waived; distinct-role migration identity check/apply was waived and not run; clean production build gates were waived but not passed. See `.planning/phases/01-agent-safety-boundary/01-08-SUMMARY.md`.
 - [Phase 1 verification]: The separate checker grader was unavailable. Remaining native/UI/database acceptance was not fully verified; user-reported manual SetFlow/SQL evidence and prior focused checks are documented in the phase summary.
-- [Phase 6]: Obtain EHS, vendor, and site qualification evidence before any real-device integration work.
+- [Phase 7]: Obtain EHS, vendor, and site qualification evidence before any real-device integration work.
 - 02-38 requires an architectural extension: the current sample transformation API/persistence cannot persist or return transformation occurrence time, actor, or recording time required by the plan’s immutable evidence UI.
-- [Phase 2 UAT deferred] Authenticated installed-Tauri UI/native validation is deferred to the Phase 2.1 / Phase 7 redesign: five entries/restored tabs; apparatus/procedure/plan pins; immutable history; custody/lineage; unavailable production authority; original-key uncertainty; scaling, dock, focus/keyboard/high-contrast, long IDs, and representative/oversized payloads. Automated acceptance passed; this is not green human evidence.
+- [Phase 2 UAT deferred] Authenticated installed-Tauri UI/native validation is deferred to the Phase 2.1 / Phase 3 redesign: five entries/restored tabs; apparatus/procedure/plan pins; immutable history; custody/lineage; unavailable production authority; original-key uncertainty; scaling, dock, focus/keyboard/high-contrast, long IDs, and representative/oversized payloads. Automated acceptance passed; this is not green human evidence.
 
 ### Roadmap Evolution
 
 - Phase 02.1 inserted after Phase 2: Scientific Workspace UI Rework — validate and establish an accessible, safety-truthful workspace UI for revisioned scientific setup and execution status; promote pending canvas-first, graph/cards, and inspector preferences only after evidence and explicit approval. (URGENT)
-- Phase 3 edited: depends_on updated to Phase 02.1, making the urgent UI rework a prerequisite for Phase 3 campaign work
-- Phase 7 added: Clean-room Scientific Workflow Designer — dedicated MIT-only clean-room, cards-first, proposal-only Designer scope traced to Spike 004; no Phase 2 implementation changes.
+- Historical prior numbering: Phase 3 was edited to depend on Phase 02.1 for campaign work.
+- Historical prior numbering: Phase 7 was added as the Clean-room Scientific Workflow Designer — dedicated MIT-only clean-room, cards-first, proposal-only Designer scope traced to Spike 004; no Phase 2 implementation changes.
+- 2026-11-02: Approved resequencing — former Phase 7 Clean-room Scientific Workflow Designer is Phase 3 and depends on completed Phase 02.1; former Phases 3–6 are now Phases 4–7 respectively. Phase 02.1's recommendation remains non-dispositive, and installed-Tauri comparative/accessibility UAT plus future explicit scientist approval remain mandatory before primary-workspace promotion.
 
 ## Deferred Items
 
@@ -153,5 +154,5 @@ Decisions are logged in PROJECT.md Key Decisions table. Current roadmap decision
 ## Session Continuity
 
 Last session: 2026-11-02T00:00:00Z
-Stopped at: Phase 02.1 complete, ready to plan Phase 3
+Stopped at: Phase 02.1 complete, ready to plan Phase 3 Clean-room Scientific Workflow Designer
 Resume file: None
