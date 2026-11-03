@@ -2,6 +2,21 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import HelixShell from './HelixShell';
+import { useAgentHealth } from '../hooks/useAgentHealth';
+
+vi.mock('./WorkspaceLayout', async () => {
+  const React = await import('react');
+  return {
+    WorkspaceLayout: React.forwardRef((_props: { health?: { healthy: boolean | null; error: string | null; lastChecked: Date | null } }, _ref) => (
+      <div
+        data-testid="workspace-health"
+        data-healthy={String(_props.health?.healthy)}
+        data-error={_props.health?.error ?? ''}
+        data-last-checked={_props.health?.lastChecked?.toISOString() ?? ''}
+      />
+    )),
+  };
+});
 
 // --- Mock rc-dock (class component — use forwardRef-compatible function mock) ---
 // DockLayout is a class component; React invokes it via `new` in class mode.
@@ -115,6 +130,18 @@ describe('HelixShell', () => {
     // Verify the shell container and workspace section render correctly.
     expect(screen.getByTestId('helix-shell')).toBeInTheDocument();
     expect(screen.getByTestId('activity-bar')).toBeInTheDocument();
+  });
+
+  it('passes the existing native health observation through to the workspace', () => {
+    const health = { healthy: true, error: null, lastChecked: new Date('2026-11-03T12:00:00Z') };
+    vi.mocked(useAgentHealth).mockReturnValue(health);
+
+    render(<HelixShell />);
+
+    const workspaceHealth = screen.getByTestId('workspace-health');
+    expect(workspaceHealth.getAttribute('data-healthy') === 'true').toBe(true);
+    expect(workspaceHealth.getAttribute('data-error')).toBe('');
+    expect(workspaceHealth.getAttribute('data-last-checked')).toBe(health.lastChecked.toISOString());
   });
 
   it('exposes all five reachable scientific entry points', () => {
