@@ -16,7 +16,7 @@
     {
       "number": "3",
       "name": "Clean-room Scientific Workflow Designer",
-      "status": "pending"
+      "status": "in_progress"
     },
     {
       "number": "4",
@@ -40,9 +40,9 @@
     }
   ],
   "next": {
-    "command": "run /gsd-plan-phase 3",
-    "label": "Plan Phase 3: Clean-room Scientific Workflow Designer",
-    "reason": "Phase 3 of 7 needs a plan"
+    "command": "/gsd-progress --next",
+    "label": "Advance to the next step",
+    "reason": "Phase 4 of 8 · 25% · executing"
   },
-  "updated_at": "2026-11-02T09:37:40.220Z"
+  "updated_at": "2026-11-03T09:17:28.853Z"
 }
