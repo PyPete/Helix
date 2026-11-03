@@ -3,16 +3,28 @@ import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import HelixShell from './HelixShell';
 import { useAgentHealth } from '../hooks/useAgentHealth';
+import { useAgentWebSocket } from '../hooks/useAgentWebSocket';
+import type { RunspaceEvent } from '../types/agent';
 
 vi.mock('./WorkspaceLayout', async () => {
   const React = await import('react');
   return {
-    WorkspaceLayout: React.forwardRef((_props: { health?: { healthy: boolean | null; error: string | null; lastChecked: Date | null } }, _ref) => (
+    WorkspaceLayout: React.forwardRef((_props: {
+      health?: { healthy: boolean | null; error: string | null; lastChecked: Date | null };
+      runspaceEvents?: RunspaceEvent[];
+      streamState?: { source: string; connected: boolean; loading: boolean; error: string | null; partial: boolean };
+      selectedExecution?: { source: string; executionId: string | null };
+      durableLifecycle?: { source: string; value: string | null };
+    }, _ref) => (
       <div
         data-testid="workspace-health"
         data-healthy={String(_props.health?.healthy)}
         data-error={_props.health?.error ?? ''}
         data-last-checked={_props.health?.lastChecked?.toISOString() ?? ''}
+        data-runspace-events={JSON.stringify(_props.runspaceEvents ?? [])}
+        data-stream-state={JSON.stringify(_props.streamState)}
+        data-selected-execution={JSON.stringify(_props.selectedExecution)}
+        data-durable-lifecycle={JSON.stringify(_props.durableLifecycle)}
       />
     )),
   };
@@ -142,6 +154,47 @@ describe('HelixShell', () => {
     expect(workspaceHealth.getAttribute('data-healthy') === 'true').toBe(true);
     expect(workspaceHealth.getAttribute('data-error')).toBe('');
     expect(workspaceHealth.getAttribute('data-last-checked')).toBe(health.lastChecked.toISOString());
+  });
+
+  it('passes stream status, committed events, and local selection/lifecycle with explicit provenance', () => {
+    const event: RunspaceEvent = {
+      type: 'runspace-started',
+      runspaceId: 'run-123',
+      timestamp: '2026-11-03T12:00:00Z',
+      experimentId: 'execution-123',
+    };
+    vi.mocked(useAgentWebSocket).mockReturnValue({
+      runspaceEvents: [event],
+      trendValues: [],
+      safetyEvents: [],
+      deviceStatusEvents: [],
+      experimentEvents: [],
+      activeExperimentId: 'execution-123',
+      connected: false,
+      loading: true,
+      error: 'stream interrupted',
+      partial: true,
+    });
+
+    render(<HelixShell />);
+
+    const workspace = screen.getByTestId('workspace-health');
+    expect(JSON.parse(workspace.getAttribute('data-runspace-events') ?? '[]')).toEqual([event]);
+    expect(JSON.parse(workspace.getAttribute('data-stream-state') ?? 'null')).toEqual({
+      source: 'renderer-stream-state',
+      connected: false,
+      loading: true,
+      error: 'stream interrupted',
+      partial: true,
+    });
+    expect(JSON.parse(workspace.getAttribute('data-selected-execution') ?? 'null')).toEqual({
+      source: 'local-selection',
+      executionId: 'execution-123',
+    });
+    expect(JSON.parse(workspace.getAttribute('data-durable-lifecycle') ?? 'null')).toEqual({
+      source: 'local-event-derived',
+      value: 'Running',
+    });
   });
 
   it('exposes all five reachable scientific entry points', () => {
