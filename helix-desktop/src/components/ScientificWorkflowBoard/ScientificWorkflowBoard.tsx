@@ -1,17 +1,13 @@
 import type { AgentHealthState } from '../../hooks/useAgentHealth';
+import { useBoardInteractionPolicy } from '../../hooks/useBoardInteractionPolicy';
 
 export interface ScientificWorkflowBoardProps {
   health: AgentHealthState;
 }
 
-function getHealthObservation(health: AgentHealthState): string {
-  if (health.error) return `Unavailable — ${health.error}`;
-  if (health.healthy === true) return 'Healthy — eligibility observation only';
-  if (health.healthy === false) return 'Unavailable';
-  return 'Pending';
-}
-
 export function ScientificWorkflowBoard({ health }: ScientificWorkflowBoardProps) {
+  const disposition = useBoardInteractionPolicy(health);
+
   return (
     <main aria-labelledby="scientific-workflow-board-title" data-testid="scientific-workflow-board">
       <header>
@@ -21,12 +17,12 @@ export function ScientificWorkflowBoard({ health }: ScientificWorkflowBoardProps
       </header>
       <section aria-label="Agent eligibility observation" aria-live="polite">
         <h2>Agent health</h2>
-        <p>{getHealthObservation(health)}</p>
+        <p>{disposition.healthObservation}</p>
         <p>Health is not reconciliation authority. Scientific lifecycle and evidence are unavailable.</p>
       </section>
       <section aria-label="Reconciliation status">
-        <h2>Read-only</h2>
-        <p>No Agent-authoritative reconciliation evidence is available to enable proposal changes.</p>
+        <h2>{disposition.label}</h2>
+        <p>{disposition.message}</p>
       </section>
     </main>
   );
