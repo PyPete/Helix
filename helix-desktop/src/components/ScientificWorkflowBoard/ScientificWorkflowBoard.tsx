@@ -1,10 +1,33 @@
 import type { AgentHealthState } from '../../hooks/useAgentHealth';
 import { useBoardInteractionPolicy } from '../../hooks/useBoardInteractionPolicy';
+import type { RunspaceEvent } from '../../types/agent';
 import { ReconciliationStrip } from './ReconciliationStrip';
 import './scientificWorkflowBoard.css';
 
+export interface BoardStreamState {
+  source: 'renderer-stream-state';
+  connected: boolean;
+  loading: boolean;
+  error: string | null;
+  partial: boolean;
+}
+
+export interface BoardLocalSelection {
+  source: 'local-selection';
+  executionId: string | null;
+}
+
+export interface BoardLocalLifecycle {
+  source: 'local-event-derived';
+  value: string | null;
+}
+
 export interface ScientificWorkflowBoardProps {
   health: AgentHealthState;
+  runspaceEvents: RunspaceEvent[];
+  streamState: BoardStreamState;
+  selectedExecution: BoardLocalSelection;
+  durableLifecycle: BoardLocalLifecycle;
   onShowEvidence: () => void;
 }
 

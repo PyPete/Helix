@@ -20,7 +20,7 @@ export default function HelixShell() {
   const [connection, setConnection] = useState<AgentConnection>(DEFAULT_CONNECTION);
   const baseUrl = `${connection.protocol}://${connection.host}:${connection.port}`;
   const health = useAgentHealth(baseUrl);
-  const { runspaceEvents, trendValues, safetyEvents, experimentEvents, activeExperimentId, connected } = useAgentWebSocket(baseUrl);
+  const { runspaceEvents, trendValues, safetyEvents, experimentEvents, activeExperimentId, connected, loading, error, partial } = useAgentWebSocket(baseUrl);
   const [currentWorkflow, setCurrentWorkflow] = useState<WslDocument | null>(null);
   const [activeRibbonTab, setActiveRibbonTab] = useState<RibbonTab>('Home');
   const [activePanel, setActivePanel] = useState<string | null>(null);
@@ -154,6 +154,9 @@ export default function HelixShell() {
           ref={workspaceRef}
           baseUrl={baseUrl}
           health={health}
+          streamState={{ source: 'renderer-stream-state', connected, loading, error, partial }}
+          selectedExecution={{ source: 'local-selection', executionId: selectedExecutionId }}
+          durableLifecycle={{ source: 'local-event-derived', value: durableLifecycle }}
           runspaceEvents={runspaceEvents}
           trendValues={trendValues}
           safetyEvents={safetyEvents}

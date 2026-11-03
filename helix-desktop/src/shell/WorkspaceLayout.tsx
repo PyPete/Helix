@@ -5,6 +5,7 @@ import DockLayout from 'rc-dock';
 import type { LayoutBase, LayoutData, TabData, TabBase, TabGroup } from 'rc-dock';
 import type { RunspaceEvent, TrendValue, SafetyEvent, WslDocument, ExperimentEvent } from '../types/agent';
 import type { AgentHealthState } from '../hooks/useAgentHealth';
+import type { BoardLocalLifecycle, BoardLocalSelection, BoardStreamState } from '../components/ScientificWorkflowBoard/ScientificWorkflowBoard';
 import { useTrendRegistry } from '../hooks/useTrendRegistry';
 
 // Panel components
@@ -32,6 +33,9 @@ import { ScientificWorkflowBoard } from '../components/ScientificWorkflowBoard/S
 export interface WorkspaceLayoutProps {
   baseUrl: string;
   health: AgentHealthState;
+  streamState: BoardStreamState;
+  selectedExecution: BoardLocalSelection;
+  durableLifecycle: BoardLocalLifecycle;
   onSaveLayout?: (name: string) => Promise<void>;
   onLoadLayout?: (name: string) => Promise<void>;
   // passed to panels:
@@ -42,6 +46,18 @@ export interface WorkspaceLayoutProps {
   activeExperimentId: string | null;
   currentWorkflow: WslDocument | null;
   onWorkflowExport: (doc: WslDocument) => void;
+}
+
+export type BoardEvidenceInputs = Pick<WorkspaceLayoutProps, 'health' | 'runspaceEvents' | 'streamState' | 'selectedExecution' | 'durableLifecycle'>;
+
+export function createBoardEvidenceInputs(inputs: BoardEvidenceInputs): BoardEvidenceInputs {
+  return {
+    health: inputs.health,
+    runspaceEvents: inputs.runspaceEvents,
+    streamState: inputs.streamState,
+    selectedExecution: inputs.selectedExecution,
+    durableLifecycle: inputs.durableLifecycle,
+  };
 }
 
 export interface WorkspaceLayoutHandle {
@@ -162,18 +178,21 @@ export const WorkspaceLayout = React.forwardRef<WorkspaceLayoutHandle, Workspace
     // Rebuilds when any prop that affects panel content changes.
     const tabRegistry = useMemo(
       () => ({
-        'scientific-workflow-board': (): TabData => ({
-          id: 'scientific-workflow-board',
-          title: 'Workflow Board',
-          content: (
-            <ScientificWorkflowBoard
-              health={props.health}
-              onShowEvidence={() => dockRef.current?.updateTab('experiment-timeline', null, true)}
-            />
-          ),
-          group: 'main',
-          closable: false,
-        }),
+        'scientific-workflow-board': (): TabData => {
+          const boardInputs = createBoardEvidenceInputs(props);
+          return {
+            id: 'scientific-workflow-board',
+            title: 'Workflow Board',
+            content: (
+              <ScientificWorkflowBoard
+                {...boardInputs}
+                onShowEvidence={() => dockRef.current?.updateTab('experiment-timeline', null, true)}
+              />
+            ),
+            group: 'main',
+            closable: false,
+          };
+        },
         'device-explorer': (): TabData => ({
           id: 'device-explorer',
           title: 'Devices',
