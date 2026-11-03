@@ -8,6 +8,7 @@ import { createBoardReadModels, type BoardReadModel } from './BoardReadModel';
 import { CapabilityPalette } from './CapabilityPalette';
 import { ReconciliationStrip } from './ReconciliationStrip';
 import { TypedInspector } from './TypedInspector';
+import { WorkflowStructure } from './WorkflowStructure';
 import './scientificWorkflowBoard.css';
 
 export interface BoardStreamState {
@@ -77,6 +78,10 @@ export function ScientificWorkflowBoard({
       </section>
       <CapabilityPalette onInspect={setInspectedCapability} />
       <TypedInspector capability={inspectedCapability} canEdit={disposition.canEdit} />
+      <WorkflowStructure
+        canEdit={disposition.canEdit}
+        resourceLeaseDiagnostics={commandEvidence.records.flatMap((record) => record.checks)}
+      />
       <section aria-label="Operation evidence" data-source={operationEvidence.source} data-status={operationEvidence.status}>
         <h2>Operation evidence</h2>
         <p>No board-originated scientific operation is available.</p>
