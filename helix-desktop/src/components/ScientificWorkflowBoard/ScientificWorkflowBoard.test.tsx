@@ -13,6 +13,29 @@ beforeEach(() => {
 });
 
 describe('ScientificWorkflowBoard reconciliation status', () => {
+  it('shows exact If/Else ports and Fork/Join branches without inventing admission diagnostics', () => {
+    render(
+      <ScientificWorkflowBoard
+        health={{ healthy: true, error: null, lastChecked: null }}
+        runspaceEvents={[]}
+        streamState={{ source: 'renderer-stream-state', connected: true, loading: false, error: null, partial: false }}
+        selectedExecution={{ source: 'local-selection', executionId: null }}
+        durableLifecycle={{ source: 'local-event-derived', value: null }}
+        onShowEvidence={vi.fn()}
+      />
+    );
+
+    expect(screen.getByRole('region', { name: 'If/Else proposal structure' })).toHaveTextContent('Condition evidence: unavailable');
+    expect(screen.getByRole('group', { name: 'If/Else proposal ports' })).toHaveTextContent('True port');
+    expect(screen.getByRole('group', { name: 'If/Else proposal ports' })).toHaveTextContent('False port');
+    expect(screen.getByRole('region', { name: 'Fork/Join proposal structure' })).toHaveTextContent('Branch 1');
+    expect(screen.getByRole('region', { name: 'Fork/Join proposal structure' })).toHaveTextContent('Branch 2');
+    expect(screen.getByText('Agent resource and lease diagnostics: unavailable')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Modify If/Else proposal structure' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Modify Fork/Join proposal structure' })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: /execute|dispatch|approve|acknowledge|confirm/i })).toBeNull();
+  });
+
   it('shows source-bounded capability metadata and read-only typed proposal fields', async () => {
     render(
       <ScientificWorkflowBoard
