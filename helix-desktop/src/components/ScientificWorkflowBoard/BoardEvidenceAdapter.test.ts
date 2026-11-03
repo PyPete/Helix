@@ -96,7 +96,7 @@ describe('adaptCommandEvidence', () => {
     const adapted = adaptCommandEvidence(null, history({ records: [staleRecord] }));
 
     expect(adapted.status).toBe('unavailable');
-    expect(adapted.reason).toBe('execution-id-unavailable');
+    expect('reason' in adapted ? adapted.reason : null).toBe('execution-id-unavailable');
     expect(adapted.records).toEqual([]);
   });
 
