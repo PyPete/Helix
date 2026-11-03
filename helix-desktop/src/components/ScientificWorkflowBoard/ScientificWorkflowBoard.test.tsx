@@ -13,6 +13,28 @@ beforeEach(() => {
 });
 
 describe('ScientificWorkflowBoard reconciliation status', () => {
+  it('shows source-bounded capability metadata and read-only typed proposal fields', () => {
+    render(
+      <ScientificWorkflowBoard
+        health={{ healthy: true, error: null, lastChecked: null }}
+        runspaceEvents={[]}
+        streamState={{ source: 'renderer-stream-state', connected: true, loading: false, error: null, partial: false }}
+        selectedExecution={{ source: 'local-selection', executionId: null }}
+        durableLifecycle={{ source: 'local-event-derived', value: null }}
+        onShowEvidence={vi.fn()}
+      />
+    );
+
+    expect(screen.getByRole('region', { name: 'Agent capability palette' })).toHaveTextContent('Capability declarations are unavailable');
+    expect(screen.getByRole('region', { name: 'Typed proposal inspector' })).toHaveTextContent('Select an Agent-declared capability to inspect its typed fields.');
+    expect(screen.getByText('Binding: unavailable')).toBeInTheDocument();
+    expect(screen.getByText('Provenance: unavailable')).toBeInTheDocument();
+    expect(screen.getByText('Quality and review state: unavailable')).toBeInTheDocument();
+    expect(screen.getByText('Resources and leases: unavailable')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /add .* to proposal/i })).toBeNull();
+    expect(screen.queryByRole('button', { name: /execute|dispatch|approve|acknowledge|confirm/i })).toBeNull();
+  });
+
   it('keeps positive health read-only and offers only evidence navigation', () => {
     const onShowEvidence = vi.fn();
     render(
