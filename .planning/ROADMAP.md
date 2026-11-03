@@ -175,7 +175,7 @@ Plans:
   5. Logical capability palette, typed inspector, and If/Else/Fork/Join proposal structure preserve Agent-only validation, scientist approval, and physical execution authority.
   6. Dirty drafts require acknowledged Save, Discard, or Keep editing before context changes, and keyboard/screen-reader users receive equivalent protections.
   7. Installed-Tauri UAT records actual six-view comparison, keyboard-only, and screen-reader evidence; final promotion remains pending until a future explicit scientist disposition after complete evidence, with no premature primary-selection change.
-**Plans**: 3/5 plans executed
+**Plans**: 4/5 plans executed
 **UI hint**: yes
 
 Plans:
@@ -189,7 +189,7 @@ Plans:
 - [x] 03-03-PLAN.md — Add source-bounded capability palette, typed inspector, and proposal structure
 
 **Wave 4** *(blocked on Wave 3 completion)*
-- [ ] 03-04-PLAN.md — Resolve dirty proposal contexts and prove keyboard/screen-reader fail-closed parity
+- [x] 03-04-PLAN.md — Resolve dirty proposal contexts and prove keyboard/screen-reader fail-closed parity
 
 **Wave 5** *(blocked on Wave 4 completion)*
 - [ ] 03-05-PLAN.md — Record installed-Tauri UAT and hold promotion at a future explicit scientist checkpoint
@@ -252,7 +252,7 @@ Phases execute in numeric order: 1 → 2 → 2.1 → 3 (Clean-room Designer) →
 |-------|----------------|--------|-----------|
 | 1. Agent Safety Boundary | 14/14 | Complete with user-approved waivers (not fully verified) | 2026-10-30 |
 | 2. Scientific Setup Foundation | 23/23 | Complete with manual UI UAT deferred to Phase 2.1 / Phase 3 redesign work | 2026-11-02 |
-| 3. Clean-room Scientific Workflow Designer | 3/5 | In Progress; Phase 02.1 recommendation handoff is ready | - |
+| 3. Clean-room Scientific Workflow Designer | 4/5 | In Progress; Phase 02.1 recommendation handoff is ready | - |
 | 4. Approved Manual Campaigns | 0/TBD | Not started | - |
 | 5. Reviewed CSV Evidence | 0/TBD | Not started | - |
 | 6. Policy-Bounded Autonomous Simulation | 0/TBD | Not started | - |
