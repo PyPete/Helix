@@ -1,6 +1,6 @@
 import { act, renderHook } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import type { ProposalAcknowledgement } from '../lib/scientificWorkflowProposalStore';
+import type { ProposalAcknowledgement, ScientificWorkflowProposal } from '../lib/scientificWorkflowProposalStore';
 import { useProposalEditability } from './useProposalEditability';
 
 describe('useProposalEditability', () => {
@@ -53,5 +53,33 @@ describe('useProposalEditability', () => {
 
     expect(result.current.proposal?.contentRevision).toBe(submitted.contentRevision + 1);
     expect(result.current.isDirty).toBe(true);
+  });
+
+  it('rejects an acknowledgement whose document differs from the acknowledged snapshot', async () => {
+    const saveProposal = vi.fn(async (submitted: ScientificWorkflowProposal) => ({
+      proposalId: submitted.proposalId,
+      schemaVersion: submitted.schemaVersion,
+      contentRevision: submitted.contentRevision,
+      content: submitted.content,
+      document: { ...submitted, content: { ...submitted.content, title: 'Different persisted content' } },
+      idempotent: false,
+    }));
+    const store = {
+      saveProposal,
+      loadProposal: vi.fn(),
+      discardProposal: vi.fn(),
+      listProposals: vi.fn(async () => ({ proposals: [], issues: [] })),
+    };
+    const { result } = renderHook(() => useProposalEditability(store));
+    act(() => result.current.beginCreate());
+    act(() => result.current.updateContent((content) => ({ ...content, title: 'Submitted content' })));
+
+    let acknowledgement!: Promise<unknown>;
+    act(() => { acknowledgement = result.current.saveProposal(); });
+    await act(async () => { await acknowledgement; });
+
+    expect(result.current.isDirty).toBe(true);
+    expect(result.current.error).toContain('acknowledgement did not match');
+    expect(result.current.isEditing).toBe(true);
   });
 });

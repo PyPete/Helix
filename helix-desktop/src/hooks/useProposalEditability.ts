@@ -81,7 +81,11 @@ export function useProposalEditability(store: ProposalStorePort = scientificWork
       const acknowledgement = await store.saveProposal(submitted);
       if (acknowledgement.proposalId !== submitted.proposalId || acknowledgement.schemaVersion !== submitted.schemaVersion ||
         acknowledgement.contentRevision !== submitted.contentRevision ||
-        canonicalProposalContent(acknowledgement.content) !== canonicalProposalContent(submitted.content)) {
+        canonicalProposalContent(acknowledgement.content) !== canonicalProposalContent(submitted.content) ||
+        acknowledgement.document.proposalId !== submitted.proposalId ||
+        acknowledgement.document.schemaVersion !== submitted.schemaVersion ||
+        acknowledgement.document.contentRevision !== submitted.contentRevision ||
+        canonicalProposalContent(acknowledgement.document.content) !== canonicalProposalContent(submitted.content)) {
         throw new Error('Local proposal save acknowledgement did not match the submitted content.');
       }
       const saved = cloneProposal(acknowledgement.document);
