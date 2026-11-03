@@ -93,6 +93,21 @@ describe('ScientificWorkflowBoard reconciliation status', () => {
     expect(save).not.toHaveBeenCalled();
   });
 
+  it('offers an explicitly typed context request instead of coupling ordinary presentation navigation to draft resolution', () => {
+    render(
+      <ScientificWorkflowBoard
+        health={{ healthy: false, error: null, lastChecked: null }}
+        runspaceEvents={[]}
+        streamState={{ source: 'renderer-stream-state', connected: false, loading: false, error: null, partial: false }}
+        selectedExecution={{ source: 'local-selection', executionId: null }}
+        durableLifecycle={{ source: 'local-event-derived', value: null }}
+        onShowEvidence={vi.fn()}
+      />
+    );
+
+    expect(screen.queryByRole('button', { name: 'Request context change' })).not.toBeNull();
+  });
+
   it('shows exact If/Else ports and Fork/Join branches without inventing admission diagnostics', () => {
     render(
       <ScientificWorkflowBoard
