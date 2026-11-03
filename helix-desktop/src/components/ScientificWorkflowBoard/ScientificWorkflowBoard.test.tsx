@@ -13,6 +13,22 @@ beforeEach(() => {
 });
 
 describe('ScientificWorkflowBoard reconciliation status', () => {
+  it('offers an explicit local Create Proposal action before proposal mutation is enabled', () => {
+    render(
+      <ScientificWorkflowBoard
+        health={{ healthy: true, error: null, lastChecked: null }}
+        runspaceEvents={[]}
+        streamState={{ source: 'renderer-stream-state', connected: true, loading: false, error: null, partial: false }}
+        selectedExecution={{ source: 'local-selection', executionId: null }}
+        durableLifecycle={{ source: 'local-event-derived', value: null }}
+        onShowEvidence={vi.fn()}
+      />
+    );
+
+    expect(screen.queryByRole('button', { name: 'Create Proposal' })).not.toBeNull();
+    expect(screen.getByRole('button', { name: 'Modify If/Else proposal structure' })).toBeDisabled();
+  });
+
   it('shows exact If/Else ports and Fork/Join branches without inventing admission diagnostics', () => {
     render(
       <ScientificWorkflowBoard
