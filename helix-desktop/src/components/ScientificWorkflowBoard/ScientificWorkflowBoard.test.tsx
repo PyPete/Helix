@@ -13,7 +13,7 @@ beforeEach(() => {
 });
 
 describe('ScientificWorkflowBoard reconciliation status', () => {
-  it('shows source-bounded capability metadata and read-only typed proposal fields', () => {
+  it('shows source-bounded capability metadata and read-only typed proposal fields', async () => {
     render(
       <ScientificWorkflowBoard
         health={{ healthy: true, error: null, lastChecked: null }}
@@ -25,7 +25,7 @@ describe('ScientificWorkflowBoard reconciliation status', () => {
       />
     );
 
-    expect(screen.getByRole('region', { name: 'Agent capability palette' })).toHaveTextContent('Capability declarations are unavailable');
+    expect(await screen.findByText('Capability declarations are unavailable from the Agent.')).toBeInTheDocument();
     expect(screen.getByRole('region', { name: 'Typed proposal inspector' })).toHaveTextContent('Select an Agent-declared capability to inspect its typed fields.');
     expect(screen.getByText('Binding: unavailable')).toBeInTheDocument();
     expect(screen.getByText('Provenance: unavailable')).toBeInTheDocument();

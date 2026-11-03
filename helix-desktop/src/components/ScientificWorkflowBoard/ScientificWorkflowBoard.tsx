@@ -1,10 +1,13 @@
+import { useState } from 'react';
 import type { AgentHealthState } from '../../hooks/useAgentHealth';
 import { useBoardInteractionPolicy } from '../../hooks/useBoardInteractionPolicy';
 import { useCommandEvidence } from '../../hooks/useCommandEvidence';
-import type { RunspaceEvent } from '../../types/agent';
+import type { CapabilityDescriptor, RunspaceEvent } from '../../types/agent';
 import { adaptCommandEvidence, adaptOperationEvidence } from './BoardEvidenceAdapter';
 import { createBoardReadModels, type BoardReadModel } from './BoardReadModel';
+import { CapabilityPalette } from './CapabilityPalette';
 import { ReconciliationStrip } from './ReconciliationStrip';
+import { TypedInspector } from './TypedInspector';
 import './scientificWorkflowBoard.css';
 
 export interface BoardStreamState {
@@ -43,6 +46,7 @@ export function ScientificWorkflowBoard({
   onShowEvidence,
 }: ScientificWorkflowBoardProps) {
   const disposition = useBoardInteractionPolicy(health);
+  const [inspectedCapability, setInspectedCapability] = useState<CapabilityDescriptor | null>(null);
   const operationEvidence = adaptOperationEvidence(null);
   const commandEvidenceState = useCommandEvidence(selectedExecution.executionId);
   const commandEvidence = adaptCommandEvidence(selectedExecution.executionId, commandEvidenceState);
@@ -71,6 +75,8 @@ export function ScientificWorkflowBoard({
         </p>
         <p>Received runspace events: {runspaceEvents.length}; event presentation does not establish reconciliation.</p>
       </section>
+      <CapabilityPalette onInspect={setInspectedCapability} />
+      <TypedInspector capability={inspectedCapability} canEdit={disposition.canEdit} />
       <section aria-label="Operation evidence" data-source={operationEvidence.source} data-status={operationEvidence.status}>
         <h2>Operation evidence</h2>
         <p>No board-originated scientific operation is available.</p>
