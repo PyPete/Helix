@@ -165,7 +165,12 @@ export const WorkspaceLayout = React.forwardRef<WorkspaceLayoutHandle, Workspace
         'scientific-workflow-board': (): TabData => ({
           id: 'scientific-workflow-board',
           title: 'Workflow Board',
-          content: <ScientificWorkflowBoard health={props.health} />,
+          content: (
+            <ScientificWorkflowBoard
+              health={props.health}
+              onShowEvidence={() => dockRef.current?.updateTab('experiment-timeline', null, true)}
+            />
+          ),
           group: 'main',
           closable: false,
         }),

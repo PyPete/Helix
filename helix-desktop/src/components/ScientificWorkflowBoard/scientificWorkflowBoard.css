@@ -1,0 +1,110 @@
+.scientific-workflow-board {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 100%;
+  overflow: auto;
+  background: #101b24;
+  color: #edf4f7;
+  font-family: "Segoe UI", sans-serif;
+}
+
+.scientific-workflow-board__reconciliation {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid #bc8b55;
+  background: #33291f;
+  color: #fff4df;
+}
+
+.scientific-workflow-board__reconciliation-copy {
+  min-width: 0;
+}
+
+.scientific-workflow-board__reconciliation h2,
+.scientific-workflow-board__reconciliation p {
+  margin: 0;
+}
+
+.scientific-workflow-board__reconciliation h2 {
+  margin-top: 0.2rem;
+  font-size: 1rem;
+}
+
+.scientific-workflow-board__reconciliation p:last-child {
+  margin-top: 0.25rem;
+  line-height: 1.45;
+}
+
+.scientific-workflow-board__eyebrow {
+  color: #f4c88c;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.scientific-workflow-board__reconciliation button {
+  flex: 0 0 auto;
+  min-height: 2.75rem;
+  padding: 0.55rem 0.9rem;
+  border: 1px solid #e2bd88;
+  border-radius: 0.3rem;
+  background: #493a2a;
+  color: #fff4df;
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.scientific-workflow-board__reconciliation button:hover {
+  background: #5b4732;
+}
+
+.scientific-workflow-board__reconciliation button:focus-visible {
+  outline: 3px solid #8bd3da;
+  outline-offset: 3px;
+}
+
+.scientific-workflow-board__header,
+.scientific-workflow-board__health {
+  padding: 1.25rem 1.5rem;
+}
+
+.scientific-workflow-board__header {
+  border-bottom: 1px solid #2a414e;
+}
+
+.scientific-workflow-board__header h1,
+.scientific-workflow-board__header p,
+.scientific-workflow-board__health h2,
+.scientific-workflow-board__health p {
+  margin: 0;
+}
+
+.scientific-workflow-board__header h1 {
+  margin: 0.25rem 0 0.5rem;
+  font-size: 1.6rem;
+}
+
+.scientific-workflow-board__health {
+  color: #d8e5eb;
+}
+
+.scientific-workflow-board__health h2 {
+  margin-bottom: 0.4rem;
+  font-size: 1rem;
+}
+
+@media (max-width: 42rem) {
+  .scientific-workflow-board__reconciliation {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
