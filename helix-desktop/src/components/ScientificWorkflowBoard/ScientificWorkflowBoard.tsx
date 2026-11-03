@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { AgentHealthState } from '../../hooks/useAgentHealth';
 import { useBoardInteractionPolicy } from '../../hooks/useBoardInteractionPolicy';
 import { useCommandEvidence } from '../../hooks/useCommandEvidence';
+import { useDraftContextResolver, type ContextChangeTarget } from '../../hooks/useDraftContextResolver';
 import { useProposalEditability } from '../../hooks/useProposalEditability';
 import {
   scientificWorkflowProposalStore,
@@ -12,6 +13,7 @@ import type { CapabilityDescriptor, RunspaceEvent } from '../../types/agent';
 import { adaptCommandEvidence, adaptOperationEvidence } from './BoardEvidenceAdapter';
 import { createBoardReadModels, type BoardReadModel } from './BoardReadModel';
 import { CapabilityPalette } from './CapabilityPalette';
+import { DraftContextDialog } from './DraftContextDialog';
 import { ReconciliationStrip } from './ReconciliationStrip';
 import { TypedInspector } from './TypedInspector';
 import { WorkflowStructure } from './WorkflowStructure';
@@ -61,6 +63,10 @@ export function ScientificWorkflowBoard({
   const commandEvidence = adaptCommandEvidence(selectedExecution.executionId, commandEvidenceState);
   const readModels = createBoardReadModels({ run: commandEvidence });
   const proposal = useProposalEditability(proposalStore);
+  const draftContext = useDraftContextResolver();
+  const contextRequestButton = useRef<HTMLButtonElement>(null);
+  const [requestedKind, setRequestedKind] = useState<ContextChangeTarget['kind']>('revision');
+  const [requestedValue, setRequestedValue] = useState('');
   const [inventory, setInventory] = useState<ProposalInventory>({ proposals: [], issues: [] });
   const [inventoryError, setInventoryError] = useState<string | null>(null);
 
@@ -77,12 +83,38 @@ export function ScientificWorkflowBoard({
     return () => { mounted = false; };
   }, [proposalStore]);
 
-  async function saveProposal() {
-    const acknowledgement = await proposal.saveProposal();
+  async function saveProposal(requireCurrentSnapshot = false) {
+    const acknowledgement = await proposal.saveProposal(requireCurrentSnapshot);
     if (acknowledgement) {
       try {
         setInventory(await proposalStore.listProposals());
         setInventoryError(null);
+      } catch (cause) {
+        setInventoryError(cause instanceof Error ? cause.message : 'Saved local proposal inventory could not be refreshed.');
+      }
+    }
+    return acknowledgement;
+  }
+
+  function requestContextChange() {
+    const value = requestedValue.trim();
+    if (!value) return;
+    draftContext.requestDraftContextChange(
+      { kind: requestedKind, value } as ContextChangeTarget,
+      proposal.isDirty,
+      contextRequestButton.current,
+    );
+  }
+
+  async function saveAndSwitchContext() {
+    await draftContext.saveAndApply(() => saveProposal(true));
+  }
+
+  async function discardAndSwitchContext() {
+    const discarded = await draftContext.discardAndApply(proposal.discardProposal);
+    if (discarded) {
+      try {
+        setInventory(await proposalStore.listProposals());
       } catch (cause) {
         setInventoryError(cause instanceof Error ? cause.message : 'Saved local proposal inventory could not be refreshed.');
       }
@@ -116,6 +148,11 @@ export function ScientificWorkflowBoard({
         )}
         {proposal.proposal && !proposal.isEditing && <p>{proposal.proposal.content.title}</p>}
         {proposal.proposal && <p>Local proposal revision {proposal.proposal.contentRevision}</p>}
+        {proposal.isDirty && (
+          <p role="status" aria-live="polite">
+            Unsaved proposal changes are held in memory and may be lost if Helix closes. Save to keep this proposal across restarts.
+          </p>
+        )}
         {proposal.status && <p role="status" aria-live="polite">{proposal.status}</p>}
         {proposal.error && <p role="alert">{proposal.error}</p>}
         {inventoryError && <p role="alert">{inventoryError}</p>}
@@ -125,6 +162,25 @@ export function ScientificWorkflowBoard({
             Resume Proposal: {item.content.title}
           </button>
         ))}
+        <fieldset aria-label="Typed proposal context request">
+          <legend>Request a typed context change</legend>
+          <label>
+            Context type
+            <select aria-label="Context type" value={requestedKind} onChange={(event) => setRequestedKind(event.currentTarget.value as ContextChangeTarget['kind'])}>
+              <option value="revision">Revision</option>
+              <option value="route">Route</option>
+              <option value="procedure">Procedure</option>
+            </select>
+          </label>
+          <label>
+            Context value
+            <input aria-label="Context value" value={requestedValue} onChange={(event) => setRequestedValue(event.currentTarget.value)} />
+          </label>
+          <button ref={contextRequestButton} type="button" onClick={requestContextChange}>Request context change</button>
+        </fieldset>
+        <p aria-label="Current typed context">Current context: {draftContext.context.kind} {draftContext.context.value}</p>
+        {draftContext.status && <p role="status" aria-live="polite">{draftContext.status}</p>}
+        {draftContext.error && !draftContext.pendingTarget && <p role="alert">{draftContext.error}</p>}
       </section>
       <section aria-label="Source-labelled presentation context" data-testid="board-presentation-context">
         <h2>Presentation context</h2>
@@ -143,10 +199,12 @@ export function ScientificWorkflowBoard({
       </section>
       <CapabilityPalette onInspect={setInspectedCapability} />
       <TypedInspector capability={inspectedCapability} canEdit={disposition.canEdit} />
-      <WorkflowStructure
-        canEdit={disposition.canEdit}
-        resourceLeaseDiagnostics={commandEvidence.records.flatMap((record) => record.checks)}
-      />
+        <WorkflowStructure
+          canEdit={proposal.isEditing}
+          content={proposal.proposal?.content ?? null}
+          onContentChange={proposal.updateContent}
+          resourceLeaseDiagnostics={commandEvidence.records.flatMap((record) => record.checks)}
+        />
       <section aria-label="Operation evidence" data-source={operationEvidence.source} data-status={operationEvidence.status}>
         <h2>Operation evidence</h2>
         <p>No board-originated scientific operation is available.</p>
@@ -173,6 +231,16 @@ export function ScientificWorkflowBoard({
         )}
       </section>
       {readModels.map((model) => renderReadModel(model))}
+      {draftContext.pendingTarget && (
+        <DraftContextDialog
+          target={draftContext.pendingTarget}
+          status={draftContext.status}
+          error={draftContext.error}
+          onSave={() => { void saveAndSwitchContext(); }}
+          onDiscard={() => { void discardAndSwitchContext(); }}
+          onKeepEditing={draftContext.keepEditing}
+        />
+      )}
       <section className="scientific-workflow-board__health" aria-label="Agent eligibility observation" aria-live="polite">
         <h2>Agent health</h2>
         <p>{disposition.healthObservation}</p>

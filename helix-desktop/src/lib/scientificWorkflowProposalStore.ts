@@ -120,13 +120,31 @@ function proposalPath(proposalId: string): string {
 }
 
 function isContent(value: unknown): value is ProposalContent {
-  if (!value || typeof value !== 'object') return false;
+  if (!isPlainObject(value) || !hasExactKeys(value, ['title', 'nodes', 'edges'])) return false;
   const content = value as Partial<ProposalContent>;
   return typeof content.title === 'string' && Array.isArray(content.nodes) && content.nodes.every((node) =>
-    Boolean(node) && typeof node.id === 'string' && typeof node.label === 'string' && ['step', 'condition', 'parallel'].includes(node.kind)
+    isPlainObject(node) && hasExactKeys(node, ['id', 'label', 'kind']) && typeof node.id === 'string' &&
+    typeof node.label === 'string' && ['step', 'condition', 'parallel'].includes(node.kind)
   ) && Array.isArray(content.edges) && content.edges.every((edge) =>
-    Boolean(edge) && typeof edge.id === 'string' && typeof edge.source === 'string' && typeof edge.target === 'string'
+    isPlainObject(edge) && hasExactKeys(edge, ['id', 'source', 'target']) && typeof edge.id === 'string' &&
+    typeof edge.source === 'string' && typeof edge.target === 'string'
   );
+}
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
+function hasExactKeys(value: Record<string, unknown>, allowed: readonly string[], required = allowed): boolean {
+  const keys = Object.keys(value);
+  return keys.every((key) => allowed.includes(key)) && required.every((key) => Object.hasOwn(value, key));
+}
+
+function hasValidSourceReferences(value: unknown): boolean {
+  return value === undefined || (Array.isArray(value) && value.every((reference) =>
+    isPlainObject(reference) && hasExactKeys(reference, ['kind', 'value']) &&
+    ['revision', 'route', 'procedure'].includes(String(reference.kind)) && typeof reference.value === 'string'
+  ));
 }
 
 function parseProposal(text: string, expectedId?: string): ScientificWorkflowProposal {
@@ -137,16 +155,18 @@ function parseProposal(text: string, expectedId?: string): ScientificWorkflowPro
     throw new ProposalStoreError('malformed', 'This proposal file is malformed and was preserved for manual recovery.', { cause: error });
   }
 
-  if (!parsed || typeof parsed !== 'object') {
+  if (!isPlainObject(parsed)) {
     throw new ProposalStoreError('malformed', 'This proposal file is malformed and was preserved for manual recovery.');
   }
   const candidate = parsed as Partial<ScientificWorkflowProposal>;
   if (candidate.schemaVersion !== PROPOSAL_SCHEMA_VERSION) {
     throw new ProposalStoreError('unsupported-schema', 'This proposal uses an unsupported schema version and was preserved for manual recovery.');
   }
-  if (typeof candidate.proposalId !== 'string' || (expectedId && candidate.proposalId !== expectedId) ||
+  if (!hasExactKeys(parsed, ['proposalId', 'schemaVersion', 'contentRevision', 'content', 'sourceReferences', 'updatedAt'],
+    ['proposalId', 'schemaVersion', 'contentRevision', 'content', 'updatedAt']) ||
+    typeof candidate.proposalId !== 'string' || (expectedId && candidate.proposalId !== expectedId) ||
     !Number.isInteger(candidate.contentRevision) || candidate.contentRevision! < 1 || !isContent(candidate.content) ||
-    typeof candidate.updatedAt !== 'string') {
+    typeof candidate.updatedAt !== 'string' || !hasValidSourceReferences(candidate.sourceReferences)) {
     throw new ProposalStoreError('malformed', 'This proposal file is malformed and was preserved for manual recovery.');
   }
   return candidate as ScientificWorkflowProposal;
@@ -172,14 +192,12 @@ function createAcknowledgement(document: ScientificWorkflowProposal, idempotent:
 }
 
 export function createScientificWorkflowProposalStore(adapter: ProposalAppDataAdapter) {
-  const writeQueues = new Map<string, Promise<unknown>>();
-
   function serialize<T>(proposalId: string, operation: () => Promise<T>): Promise<T> {
-    const prior = writeQueues.get(proposalId) ?? Promise.resolve();
+    const prior = proposalWriteQueues.get(proposalId) ?? Promise.resolve();
     const current = prior.catch(() => undefined).then(operation);
-    writeQueues.set(proposalId, current);
+    proposalWriteQueues.set(proposalId, current);
     return current.finally(() => {
-      if (writeQueues.get(proposalId) === current) writeQueues.delete(proposalId);
+      if (proposalWriteQueues.get(proposalId) === current) proposalWriteQueues.delete(proposalId);
     });
   }
 
@@ -220,6 +238,7 @@ export function createScientificWorkflowProposalStore(adapter: ProposalAppDataAd
     async saveProposal(submitted: ScientificWorkflowProposal): Promise<ProposalAcknowledgement> {
       const proposal = cloneProposal(submitted);
       const path = proposalPath(proposal.proposalId);
+      parseProposal(JSON.stringify(proposal), proposal.proposalId);
       return serialize(proposal.proposalId, async () => {
         try {
           await adapter.ensureDirectory(PROPOSAL_DIRECTORY);
@@ -265,6 +284,9 @@ export function createScientificWorkflowProposalStore(adapter: ProposalAppDataAd
     },
   };
 }
+
+// All store sessions in this renderer share one serialized queue per local proposal identity.
+const proposalWriteQueues = new Map<string, Promise<unknown>>();
 
 /** The renderer's single runtime writer/queue for current-user AppData proposals. */
 export const scientificWorkflowProposalStore = createScientificWorkflowProposalStore(tauriAppDataAdapter);

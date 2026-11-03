@@ -1,13 +1,15 @@
 import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 import type { CommandEvidenceHistoryRecord } from '../../types/agent';
+import { createEmptyProposal } from '../../lib/scientificWorkflowProposalStore';
 import { WorkflowStructure } from './WorkflowStructure';
 
 afterEach(cleanup);
+const proposalContent = createEmptyProposal().content;
 
 describe('WorkflowStructure', () => {
   it('renders distinct true and false ports plus explicit fork branches and join', () => {
-    render(<WorkflowStructure canEdit={false} resourceLeaseDiagnostics={[]} />);
+    render(<WorkflowStructure canEdit={false} content={proposalContent} onContentChange={() => undefined} resourceLeaseDiagnostics={[]} />);
 
     expect(screen.getByRole('region', { name: 'True port' })).toHaveTextContent('Proposal path when the condition is true.');
     expect(screen.getByRole('region', { name: 'False port' })).toHaveTextContent('Proposal path when the condition is false.');
@@ -26,7 +28,7 @@ describe('WorkflowStructure', () => {
       { check: 'lease-owner', status: 'Unknown', code: 'lease_unavailable' },
       { check: 'capability', status: 'Passed', code: 'registered' },
     ];
-    render(<WorkflowStructure canEdit={false} resourceLeaseDiagnostics={evidence} />);
+    render(<WorkflowStructure canEdit={false} content={proposalContent} onContentChange={() => undefined} resourceLeaseDiagnostics={evidence} />);
 
     expect(screen.getByRole('region', { name: 'Agent resource and lease diagnostics' })).toHaveTextContent(
       'resource-budget: Failed; code resource_limit; Exact Agent reason.'

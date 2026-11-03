@@ -1,13 +1,48 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useCommandEvidence } from '../../hooks/useCommandEvidence';
-import { scientificWorkflowProposalStore } from '../../lib/scientificWorkflowProposalStore';
+import {
+  createScientificWorkflowProposalStore,
+  scientificWorkflowProposalStore,
+  type ProposalAppDataAdapter,
+  type ProposalStorePort,
+} from '../../lib/scientificWorkflowProposalStore';
 import type { CommandEvidenceHistoryState } from '../../types/agent';
 import { ScientificWorkflowBoard } from './ScientificWorkflowBoard';
 
 vi.mock('../../hooks/useCommandEvidence', () => ({ useCommandEvidence: vi.fn() }));
 
 const commandEvidenceState: CommandEvidenceHistoryState = { records: [], loading: false, unavailable: false, error: null, refresh: vi.fn() };
+
+function createBoardStore(files = new Map<string, string>()) {
+  const adapter: ProposalAppDataAdapter = {
+    read: async (path) => {
+      const value = files.get(path);
+      if (value === undefined) throw new Error('file not found');
+      return value;
+    },
+    write: async (path, contents) => { files.set(path, contents); },
+    list: async (path) => [...files.keys()].filter((key) => key.startsWith(`${path}/`)).map((key) => ({ name: key.slice(path.length + 1) })),
+    ensureDirectory: async () => undefined,
+    remove: async (path) => { files.delete(path); },
+    exists: async (path) => files.has(path),
+  };
+  return createScientificWorkflowProposalStore(adapter);
+}
+
+function renderBoard(proposalStore?: ProposalStorePort) {
+  return render(
+    <ScientificWorkflowBoard
+      health={{ healthy: true, error: null, lastChecked: null }}
+      runspaceEvents={[]}
+      streamState={{ source: 'renderer-stream-state', connected: true, loading: false, error: null, partial: false }}
+      selectedExecution={{ source: 'local-selection', executionId: null }}
+      durableLifecycle={{ source: 'local-event-derived', value: null }}
+      onShowEvidence={vi.fn()}
+      proposalStore={proposalStore}
+    />
+  );
+}
 
 beforeEach(() => {
   vi.mocked(useCommandEvidence).mockReturnValue(commandEvidenceState);
@@ -106,6 +141,116 @@ describe('ScientificWorkflowBoard reconciliation status', () => {
     );
 
     expect(screen.queryByRole('button', { name: 'Request context change' })).not.toBeNull();
+  });
+
+  it('opens a dirty-target dialog without writing, then saves exactly once before applying its typed target', async () => {
+    const store = createBoardStore();
+    const save = vi.spyOn(store, 'saveProposal');
+    renderBoard(store);
+    fireEvent.click(screen.getByRole('button', { name: 'Create Proposal' }));
+    fireEvent.change(screen.getByRole('textbox', { name: 'Proposal title' }), { target: { value: 'Context-safe draft' } });
+    fireEvent.change(screen.getByRole('combobox', { name: 'Context type' }), { target: { value: 'procedure' } });
+    fireEvent.change(screen.getByRole('textbox', { name: 'Context value' }), { target: { value: 'procedure-target' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Request context change' }));
+
+    expect(save).not.toHaveBeenCalled();
+    expect(screen.getByRole('dialog')).toHaveTextContent('procedure: procedure-target');
+    expect(screen.getByLabelText('Current typed context')).toHaveTextContent('revision current');
+    fireEvent.click(screen.getByRole('button', { name: 'Save proposal and switch' }));
+
+    await waitFor(() => expect(screen.getByLabelText('Current typed context')).toHaveTextContent('procedure procedure-target'));
+    expect(save).toHaveBeenCalledOnce();
+    expect(save.mock.calls[0][0]).toMatchObject({
+      schemaVersion: 1,
+      contentRevision: 2,
+      content: { title: 'Context-safe draft', nodes: [], edges: [] },
+    });
+  });
+
+  it('does not apply a context target when an older Save acknowledgement arrives after another edit', async () => {
+    const store = createBoardStore();
+    let acknowledge!: (result: Awaited<ReturnType<ProposalStorePort['saveProposal']>>) => void;
+    const save = vi.spyOn(store, 'saveProposal').mockImplementation((submitted) => new Promise((resolve) => {
+      acknowledge = resolve;
+    }));
+    renderBoard(store);
+    fireEvent.click(screen.getByRole('button', { name: 'Create Proposal' }));
+    const title = screen.getByRole('textbox', { name: 'Proposal title' });
+    fireEvent.change(title, { target: { value: 'Submitted revision' } });
+    fireEvent.change(screen.getByRole('textbox', { name: 'Context value' }), { target: { value: 'route-target' } });
+    fireEvent.change(screen.getByRole('combobox', { name: 'Context type' }), { target: { value: 'route' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Request context change' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Save proposal and switch' }));
+    const submitted = save.mock.calls[0][0];
+
+    fireEvent.change(title, { target: { value: 'Newer unsaved revision' } });
+    acknowledge({
+      proposalId: submitted.proposalId,
+      schemaVersion: submitted.schemaVersion,
+      contentRevision: submitted.contentRevision,
+      content: submitted.content,
+      document: submitted,
+      idempotent: false,
+    });
+
+    await waitFor(() => expect(screen.getByRole('dialog')).toHaveTextContent('The proposal was not acknowledged as saved'));
+    expect(screen.getByLabelText('Current typed context')).toHaveTextContent('revision current');
+    expect(screen.getByRole('textbox', { name: 'Proposal title' })).toHaveValue('Newer unsaved revision');
+    expect(screen.getByText(/Unsaved proposal changes are held in memory/)).toBeInTheDocument();
+    expect(save).toHaveBeenCalledOnce();
+  });
+
+  it('loads a saved proposal after a fresh board/store session only after explicit Resume Proposal', async () => {
+    const files = new Map<string, string>();
+    const firstStore = createBoardStore(files);
+    renderBoard(firstStore);
+    fireEvent.click(screen.getByRole('button', { name: 'Create Proposal' }));
+    fireEvent.change(screen.getByRole('textbox', { name: 'Proposal title' }), { target: { value: 'Restart proposal' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save Proposal' }));
+    await screen.findByText('Local proposal saved and read back exactly.');
+    cleanup();
+
+    const secondStore = createBoardStore(files);
+    renderBoard(secondStore);
+    const resume = await screen.findByRole('button', { name: 'Resume Proposal: Restart proposal' });
+    expect(screen.queryByRole('textbox', { name: 'Proposal title' })).toBeNull();
+    fireEvent.click(resume);
+
+    await screen.findByText('Restart proposal');
+    expect(screen.getByText('Local proposal revision 2')).toBeInTheDocument();
+    expect(screen.queryByRole('textbox', { name: 'Proposal title' })).toBeNull();
+    expect(useCommandEvidence).toHaveBeenCalled();
+  });
+
+  it('clears the memory-loss disclosure only after an acknowledged Save and leaves ordinary evidence navigation outside the resolver', async () => {
+    const onShowEvidence = vi.fn();
+    vi.spyOn(scientificWorkflowProposalStore, 'saveProposal').mockImplementation(async (submitted) => ({
+      proposalId: submitted.proposalId,
+      schemaVersion: submitted.schemaVersion,
+      contentRevision: submitted.contentRevision,
+      content: submitted.content,
+      document: submitted,
+      idempotent: false,
+    }));
+    render(
+      <ScientificWorkflowBoard
+        health={{ healthy: true, error: null, lastChecked: null }}
+        runspaceEvents={[]}
+        streamState={{ source: 'renderer-stream-state', connected: true, loading: false, error: null, partial: false }}
+        selectedExecution={{ source: 'local-selection', executionId: null }}
+        durableLifecycle={{ source: 'local-event-derived', value: null }}
+        onShowEvidence={onShowEvidence}
+      />
+    );
+    await screen.findByText('Capability declarations are unavailable from the Agent.');
+    fireEvent.click(screen.getByRole('button', { name: 'Create Proposal' }));
+    fireEvent.change(screen.getByRole('textbox', { name: 'Proposal title' }), { target: { value: 'Dirty draft' } });
+    expect(screen.getByText('Unsaved proposal changes are held in memory and may be lost if Helix closes. Save to keep this proposal across restarts.')).toHaveAttribute('role', 'status');
+    fireEvent.click(screen.getByRole('button', { name: 'Review Agent evidence' }));
+    expect(onShowEvidence).toHaveBeenCalledOnce();
+    expect(screen.queryByRole('dialog')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Save Proposal' }));
+    await waitFor(() => expect(screen.queryByText(/Unsaved proposal changes are held in memory/)).toBeNull());
   });
 
   it('shows exact If/Else ports and Fork/Join branches without inventing admission diagnostics', () => {

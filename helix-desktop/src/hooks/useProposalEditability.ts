@@ -73,7 +73,7 @@ export function useProposalEditability(store: ProposalStorePort = scientificWork
     setStatus('Proposal changes are held in memory.');
   }, [isEditing, proposal]);
 
-  const saveProposal = useCallback(async () => {
+  const saveProposal = useCallback(async (requireCurrentSnapshot = false) => {
     if (!proposal) return null;
     const submitted = cloneProposal(proposal);
     setError(null);
@@ -91,6 +91,7 @@ export function useProposalEditability(store: ProposalStorePort = scientificWork
       const stillAtSubmittedSnapshot = sameBaseline(latest, submitted);
       if (stillAtSubmittedSnapshot) setIsEditing(false);
       setStatus(stillAtSubmittedSnapshot ? 'Local proposal saved and read back exactly.' : 'Earlier revision saved; newer in-memory edits remain unsaved.');
+      if (requireCurrentSnapshot && !stillAtSubmittedSnapshot) return null;
       return acknowledgement;
     } catch (cause) {
       const message = cause instanceof Error ? cause.message : 'Local proposal could not be saved.';

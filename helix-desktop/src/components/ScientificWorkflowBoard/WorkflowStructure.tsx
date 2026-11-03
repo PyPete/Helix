@@ -1,12 +1,39 @@
 import type { CommandEvidenceHistoryRecord } from '../../types/agent';
+import type { ProposalContent, ProposalNode } from '../../lib/scientificWorkflowProposalStore';
 
 interface WorkflowStructureProps {
   canEdit: boolean;
+  content: ProposalContent | null;
+  onContentChange: (update: (content: ProposalContent) => ProposalContent) => void;
   resourceLeaseDiagnostics: readonly CommandEvidenceHistoryRecord['checks'][number][];
 }
 
-export function WorkflowStructure({ canEdit, resourceLeaseDiagnostics }: WorkflowStructureProps) {
+export function WorkflowStructure({ canEdit, content, onContentChange, resourceLeaseDiagnostics }: WorkflowStructureProps) {
   const relevantDiagnostics = resourceLeaseDiagnostics.filter((diagnostic) => /resource|lease/i.test(diagnostic.check));
+
+  function addNode(kind: ProposalNode['kind'], label: string) {
+    onContentChange((current) => ({
+      ...current,
+      nodes: [...current.nodes, { id: crypto.randomUUID(), label, kind }],
+    }));
+  }
+
+  function updateNodeLabel(nodeId: string, label: string) {
+    onContentChange((current) => ({
+      ...current,
+      nodes: current.nodes.map((node) => node.id === nodeId ? { ...node, label } : node),
+    }));
+  }
+
+  function addEdge() {
+    if (!content || content.nodes.length < 2) return;
+    const [first, ...rest] = content.nodes;
+    const last = rest[rest.length - 1];
+    onContentChange((current) => ({
+      ...current,
+      edges: [...current.edges, { id: crypto.randomUUID(), source: first.id, target: last.id }],
+    }));
+  }
 
   return (
     <section aria-label="Workflow proposal structure">
@@ -24,7 +51,7 @@ export function WorkflowStructure({ canEdit, resourceLeaseDiagnostics }: Workflo
             <p>Proposal path when the condition is false.</p>
           </section>
         </div>
-        <button type="button" disabled={!canEdit}>Modify If/Else proposal structure</button>
+        <button type="button" disabled={!canEdit} onClick={() => addNode('condition', 'If/Else condition')}>Modify If/Else proposal structure</button>
       </section>
 
       <section aria-label="Fork/Join proposal structure" data-editable={canEdit}>
@@ -51,7 +78,26 @@ export function WorkflowStructure({ canEdit, resourceLeaseDiagnostics }: Workflo
           </section>
         )}
         <p>Diagnostic evidence is display-only; it does not perform Agent admission checks.</p>
-        <button type="button" disabled={!canEdit}>Modify Fork/Join proposal structure</button>
+        <button type="button" disabled={!canEdit} onClick={() => addNode('parallel', 'Fork/Join branches')}>Modify Fork/Join proposal structure</button>
+      </section>
+      <section aria-label="Local proposal nodes">
+        <h3>Proposal nodes</h3>
+        {!content || content.nodes.length === 0 ? <p>No proposal nodes.</p> : content.nodes.map((node) => (
+          <label key={node.id}>
+            {node.kind} node
+            <input
+              aria-label={`${node.kind} node label`}
+              value={node.label}
+              disabled={!canEdit}
+              onChange={(event) => updateNodeLabel(node.id, event.currentTarget.value)}
+            />
+          </label>
+        ))}
+        <button type="button" disabled={!canEdit} onClick={() => addNode('step', 'New proposal step')}>Add proposal node</button>
+        <button type="button" disabled={!canEdit || !content || content.nodes.length < 2} onClick={addEdge}>Add proposal edge</button>
+        <ul aria-label="Proposal edges">
+          {content?.edges.map((edge) => <li key={edge.id}>Local proposal edge {edge.source} to {edge.target}</li>)}
+        </ul>
       </section>
     </section>
   );

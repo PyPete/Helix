@@ -85,6 +85,68 @@ describe('scientificWorkflowProposalStore', () => {
     expect(write).toHaveBeenCalledOnce();
   });
 
+  it('compares object keys canonically while preserving proposal array order', async () => {
+    const { adapter, files } = createMemoryAdapter();
+    const store = createScientificWorkflowProposalStore(adapter);
+    const proposal = createEmptyProposal();
+    proposal.content.nodes = [
+      { id: 'node-a', label: 'A', kind: 'step' },
+      { id: 'node-b', label: 'B', kind: 'condition' },
+    ];
+    await store.saveProposal(proposal);
+    const reorderedKeys = JSON.parse(JSON.stringify(proposal)) as ScientificWorkflowProposal;
+    reorderedKeys.content = {
+      edges: [],
+      nodes: [
+        { kind: 'step', label: 'A', id: 'node-a' },
+        { kind: 'condition', label: 'B', id: 'node-b' },
+      ],
+      title: 'Untitled proposal',
+    };
+
+    expect((await store.saveProposal(reorderedKeys)).idempotent).toBe(true);
+    const path = `scientific-workflow-proposals/${proposal.proposalId}.json`;
+    const bytes = files.get(path);
+    reorderedKeys.content.nodes.reverse();
+    await expect(store.saveProposal(reorderedKeys)).rejects.toMatchObject({ code: 'conflict' });
+    expect(files.get(path)).toBe(bytes);
+  });
+
+  it('rejects authority-like input fields before writing any proposal bytes', async () => {
+    const { adapter, files } = createMemoryAdapter();
+    const store = createScientificWorkflowProposalStore(adapter);
+    const proposal = { ...createEmptyProposal(), approvalStatus: 'approved' } as ScientificWorkflowProposal;
+
+    await expect(store.saveProposal(proposal)).rejects.toMatchObject({ code: 'malformed' });
+    expect(files.size).toBe(0);
+  });
+
+  it('preserves bytes and reports write and read-back acknowledgement failures', async () => {
+    const { adapter, files } = createMemoryAdapter();
+    const store = createScientificWorkflowProposalStore(adapter);
+    const proposal = createEmptyProposal();
+    vi.spyOn(adapter, 'write').mockRejectedValueOnce(new Error('disk unavailable'));
+    await expect(store.saveProposal(proposal)).rejects.toMatchObject({ code: 'write-failed' });
+    expect(files.size).toBe(0);
+
+    vi.spyOn(adapter, 'write').mockImplementationOnce(async (path, contents) => {
+      files.set(path, contents.replace('Untitled proposal', 'changed on disk'));
+    });
+    await expect(store.saveProposal(proposal)).rejects.toMatchObject({ code: 'acknowledgement-mismatch' });
+    expect(files.get(`scientific-workflow-proposals/${proposal.proposalId}.json`)).toContain('changed on disk');
+  });
+
+  it('keeps proposals isolated between independent current-user AppData locations', async () => {
+    const first = createScientificWorkflowProposalStore(createMemoryAdapter().adapter);
+    const second = createScientificWorkflowProposalStore(createMemoryAdapter().adapter);
+    const proposal = createEmptyProposal();
+
+    await first.saveProposal(proposal);
+
+    expect((await first.listProposals()).proposals).toHaveLength(1);
+    expect((await second.listProposals()).proposals).toHaveLength(0);
+  });
+
   it('preserves malformed and unsupported proposal files and surfaces them for manual recovery', async () => {
     const { adapter, files } = createMemoryAdapter();
     const store = createScientificWorkflowProposalStore(adapter);
@@ -131,5 +193,16 @@ describe('scientificWorkflowProposalStore', () => {
 
     expect(files.has(`scientific-workflow-proposals/${proposal.proposalId}.json`)).toBe(false);
     expect(files.has(`scientific-workflow-proposals/${other.proposalId}.json`)).toBe(true);
+  });
+
+  it('fails deletion unless scoped absence is confirmed', async () => {
+    const { adapter, files } = createMemoryAdapter();
+    const store = createScientificWorkflowProposalStore(adapter);
+    const proposal = createEmptyProposal();
+    await store.saveProposal(proposal);
+    vi.spyOn(adapter, 'remove').mockResolvedValueOnce(undefined);
+
+    await expect(store.discardProposal(proposal.proposalId)).rejects.toMatchObject({ code: 'delete-failed' });
+    expect(files.has(`scientific-workflow-proposals/${proposal.proposalId}.json`)).toBe(true);
   });
 });
