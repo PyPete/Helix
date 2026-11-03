@@ -12,6 +12,7 @@ function describeTarget(target: ContextChangeTarget): string {
 export function useDraftContextResolver() {
   const [context, setContext] = useState<ContextChangeTarget>({ kind: 'revision', value: 'current' });
   const [pendingTarget, setPendingTarget] = useState<ContextChangeTarget | null>(null);
+  const [isResolving, setIsResolving] = useState(false);
   const [status, setStatus] = useState('');
   const [error, setError] = useState<string | null>(null);
   const opener = useRef<HTMLElement | null>(null);
@@ -48,45 +49,63 @@ export function useDraftContextResolver() {
   }, [pendingTarget]);
 
   const saveAndApply = useCallback(async (save: () => Promise<unknown | null>) => {
-    if (!pendingTarget) return false;
+    if (!pendingTarget || isResolving) return false;
     setError(null);
+    setIsResolving(true);
     setStatus('Saving the exact local proposal before changing context.');
-    const acknowledgement = await save();
-    if (!acknowledgement) {
+    try {
+      const acknowledgement = await save();
+      if (!acknowledgement) {
+        setError('The proposal was not acknowledged as saved. The original context and pending target were retained.');
+        setStatus('Save failed; the proposal remains in memory.');
+        return false;
+      }
+      const target = pendingTarget;
+      setContext(target);
+      setPendingTarget(null);
+      setStatus(`Proposal saved. Context changed to ${describeTarget(target)}.`);
+      return true;
+    } catch {
       setError('The proposal was not acknowledged as saved. The original context and pending target were retained.');
       setStatus('Save failed; the proposal remains in memory.');
       return false;
+    } finally {
+      setIsResolving(false);
     }
-    const target = pendingTarget;
-    setContext(target);
-    setPendingTarget(null);
-    setStatus(`Proposal saved. Context changed to ${describeTarget(target)}.`);
-    return true;
-  }, [pendingTarget]);
+  }, [isResolving, pendingTarget]);
 
   const discardAndApply = useCallback(async (discard: () => Promise<boolean>) => {
-    if (!pendingTarget) return false;
+    if (!pendingTarget || isResolving) return false;
     setError(null);
+    setIsResolving(true);
     setStatus('Confirming deletion of this local proposal before changing context.');
-    const confirmed = await discard();
-    if (!confirmed) {
+    try {
+      const confirmed = await discard();
+      if (!confirmed) {
+        setError('Proposal deletion was not confirmed. The original context and proposal data were retained.');
+        setStatus('Discard failed; the proposal remains in memory.');
+        return false;
+      }
+      const target = pendingTarget;
+      setContext(target);
+      setPendingTarget(null);
+      setStatus(`Proposal deletion confirmed. Context changed to ${describeTarget(target)}.`);
+      return true;
+    } catch {
       setError('Proposal deletion was not confirmed. The original context and proposal data were retained.');
       setStatus('Discard failed; the proposal remains in memory.');
       return false;
+    } finally {
+      setIsResolving(false);
     }
-    const target = pendingTarget;
-    setContext(target);
-    setPendingTarget(null);
-    setStatus(`Proposal deletion confirmed. Context changed to ${describeTarget(target)}.`);
-    return true;
-  }, [pendingTarget]);
+  }, [isResolving, pendingTarget]);
 
   const keepEditing = useCallback(() => {
-    if (!pendingTarget) return;
+    if (!pendingTarget || isResolving) return;
     setPendingTarget(null);
     setError(null);
     setStatus('Kept editing the proposal in its original context.');
-  }, [pendingTarget]);
+  }, [isResolving, pendingTarget]);
 
-  return { context, pendingTarget, status, error, requestDraftContextChange, saveAndApply, discardAndApply, keepEditing };
+  return { context, pendingTarget, status, error, isResolving, requestDraftContextChange, saveAndApply, discardAndApply, keepEditing };
 }

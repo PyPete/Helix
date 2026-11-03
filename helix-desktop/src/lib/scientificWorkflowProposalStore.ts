@@ -59,9 +59,10 @@ export interface ProposalStorePort {
 export type ProposalStoreErrorCode = 'invalid-id' | 'read-failed' | 'malformed' | 'unsupported-schema' | 'conflict' | 'write-failed' | 'acknowledgement-mismatch' | 'delete-failed';
 
 export class ProposalStoreError extends Error {
-  constructor(readonly code: ProposalStoreErrorCode, message: string, options?: ErrorOptions) {
-    super(message, options);
+  constructor(readonly code: ProposalStoreErrorCode, message: string, cause?: unknown) {
+    super(message);
     this.name = 'ProposalStoreError';
+    if (cause !== undefined) Object.defineProperty(this, 'cause', { value: cause });
   }
 }
 
@@ -137,7 +138,7 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
 
 function hasExactKeys(value: Record<string, unknown>, allowed: readonly string[], required = allowed): boolean {
   const keys = Object.keys(value);
-  return keys.every((key) => allowed.includes(key)) && required.every((key) => Object.hasOwn(value, key));
+  return keys.every((key) => allowed.includes(key)) && required.every((key) => Object.prototype.hasOwnProperty.call(value, key));
 }
 
 function hasValidSourceReferences(value: unknown): boolean {
@@ -152,7 +153,7 @@ function parseProposal(text: string, expectedId?: string): ScientificWorkflowPro
   try {
     parsed = JSON.parse(text);
   } catch (error) {
-    throw new ProposalStoreError('malformed', 'This proposal file is malformed and was preserved for manual recovery.', { cause: error });
+    throw new ProposalStoreError('malformed', 'This proposal file is malformed and was preserved for manual recovery.', error);
   }
 
   if (!isPlainObject(parsed)) {
@@ -220,7 +221,7 @@ export function createScientificWorkflowProposalStore(adapter: ProposalAppDataAd
         }
         return { proposals, issues };
       } catch (error) {
-        throw new ProposalStoreError('read-failed', 'Saved proposal inventory could not be read.', { cause: error });
+        throw new ProposalStoreError('read-failed', 'Saved proposal inventory could not be read.', error);
       }
     },
 
@@ -230,7 +231,7 @@ export function createScientificWorkflowProposalStore(adapter: ProposalAppDataAd
       try {
         text = await adapter.read(path);
       } catch (error) {
-        throw new ProposalStoreError('read-failed', 'The selected local proposal could not be read.', { cause: error });
+        throw new ProposalStoreError('read-failed', 'The selected local proposal could not be read.', error);
       }
       return parseProposal(text, proposalId);
     },
@@ -263,7 +264,7 @@ export function createScientificWorkflowProposalStore(adapter: ProposalAppDataAd
           return createAcknowledgement(readBack, false);
         } catch (error) {
           if (error instanceof ProposalStoreError) throw error;
-          throw new ProposalStoreError('write-failed', 'Local proposal could not be saved and acknowledged.', { cause: error });
+          throw new ProposalStoreError('write-failed', 'Local proposal could not be saved and acknowledged.', error);
         }
       });
     },
@@ -278,7 +279,7 @@ export function createScientificWorkflowProposalStore(adapter: ProposalAppDataAd
           }
         } catch (error) {
           if (error instanceof ProposalStoreError) throw error;
-          throw new ProposalStoreError('delete-failed', 'Proposal deletion could not be confirmed; the proposal was retained in memory.', { cause: error });
+          throw new ProposalStoreError('delete-failed', 'Proposal deletion could not be confirmed; the proposal was retained in memory.', error);
         }
       });
     },

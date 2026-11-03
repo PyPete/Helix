@@ -96,7 +96,19 @@ export function WorkflowStructure({ canEdit, content, onContentChange, resourceL
         <button type="button" disabled={!canEdit} onClick={() => addNode('step', 'New proposal step')}>Add proposal node</button>
         <button type="button" disabled={!canEdit || !content || content.nodes.length < 2} onClick={addEdge}>Add proposal edge</button>
         <ul aria-label="Proposal edges">
-          {content?.edges.map((edge) => <li key={edge.id}>Local proposal edge {edge.source} to {edge.target}</li>)}
+          {content?.edges.map((edge) => (
+            <li key={edge.id}>
+              Local proposal edge {edge.source} to {edge.target}
+              <button
+                type="button"
+                aria-label="Remove proposal edge"
+                disabled={!canEdit}
+                onClick={() => onContentChange((current) => ({ ...current, edges: current.edges.filter((item) => item.id !== edge.id) }))}
+              >
+                Remove edge
+              </button>
+            </li>
+          ))}
         </ul>
       </section>
     </section>

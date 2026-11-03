@@ -170,7 +170,7 @@ describe('ScientificWorkflowBoard reconciliation status', () => {
   it('does not apply a context target when an older Save acknowledgement arrives after another edit', async () => {
     const store = createBoardStore();
     let acknowledge!: (result: Awaited<ReturnType<ProposalStorePort['saveProposal']>>) => void;
-    const save = vi.spyOn(store, 'saveProposal').mockImplementation((submitted) => new Promise((resolve) => {
+    const save = vi.spyOn(store, 'saveProposal').mockImplementation(() => new Promise((resolve) => {
       acknowledge = resolve;
     }));
     renderBoard(store);

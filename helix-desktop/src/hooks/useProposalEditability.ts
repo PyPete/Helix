@@ -4,7 +4,6 @@ import {
   cloneProposal,
   createEmptyProposal,
   scientificWorkflowProposalStore,
-  type ProposalAcknowledgement,
   type ProposalContent,
   type ScientificWorkflowProposal,
   type ProposalStorePort,

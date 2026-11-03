@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import type { AgentHealthState } from '../../hooks/useAgentHealth';
 import { useBoardInteractionPolicy } from '../../hooks/useBoardInteractionPolicy';
 import { useCommandEvidence } from '../../hooks/useCommandEvidence';
@@ -121,8 +121,28 @@ export function ScientificWorkflowBoard({
     }
   }
 
+  function handleBoardKeyDown(event: KeyboardEvent<HTMLElement>) {
+    const command = event.ctrlKey || event.metaKey;
+    if (command && event.shiftKey && event.key.toLowerCase() === 'n') {
+      event.preventDefault();
+      if (proposal.proposal) proposal.beginEdit();
+      else proposal.beginCreate();
+      return;
+    }
+    if (command && event.key.toLowerCase() === 's') {
+      event.preventDefault();
+      if (draftContext.pendingTarget) void saveAndSwitchContext();
+      else if (proposal.isEditing) void saveProposal();
+      return;
+    }
+    if (event.altKey && event.shiftKey && event.key === 'ArrowRight') {
+      event.preventDefault();
+      requestContextChange();
+    }
+  }
+
   return (
-    <main className="scientific-workflow-board" aria-labelledby="scientific-workflow-board-title" data-testid="scientific-workflow-board">
+    <main className="scientific-workflow-board" aria-labelledby="scientific-workflow-board-title" data-testid="scientific-workflow-board" onKeyDown={handleBoardKeyDown}>
       <ReconciliationStrip disposition={disposition} onShowEvidence={onShowEvidence} />
       <header className="scientific-workflow-board__header">
         <p>Helix scientific workspace</p>
@@ -236,6 +256,7 @@ export function ScientificWorkflowBoard({
           target={draftContext.pendingTarget}
           status={draftContext.status}
           error={draftContext.error}
+          busy={draftContext.isResolving}
           onSave={() => { void saveAndSwitchContext(); }}
           onDiscard={() => { void discardAndSwitchContext(); }}
           onKeepEditing={draftContext.keepEditing}

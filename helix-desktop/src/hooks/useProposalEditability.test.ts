@@ -32,13 +32,14 @@ describe('useProposalEditability', () => {
       saveProposal: vi.fn(() => new Promise<ProposalAcknowledgement>((resolve) => { finishSave = resolve; })),
       loadProposal: vi.fn(),
       discardProposal: vi.fn(),
+      listProposals: vi.fn(async () => ({ proposals: [], issues: [] })),
     };
     const { result } = renderHook(() => useProposalEditability(store));
     act(() => result.current.beginCreate());
     act(() => result.current.updateContent((content) => ({ ...content, title: 'Revision two' })));
     const submitted = result.current.proposal!;
     let pending!: Promise<unknown>;
-    act(() => { pending = result.current.saveProposal(); });
+    act(() => { pending = result.current.saveProposal(true); });
     act(() => result.current.updateContent((content) => ({ ...content, title: 'Revision three' })));
     finishSave({
       proposalId: submitted.proposalId,
@@ -48,7 +49,7 @@ describe('useProposalEditability', () => {
       document: submitted,
       idempotent: false,
     });
-    await act(async () => { await pending; });
+    await act(async () => { expect(await pending).toBeNull(); });
 
     expect(result.current.proposal?.contentRevision).toBe(submitted.contentRevision + 1);
     expect(result.current.isDirty).toBe(true);
