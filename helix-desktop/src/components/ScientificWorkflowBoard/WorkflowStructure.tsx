@@ -31,8 +31,8 @@ export function WorkflowStructure({ canEdit, resourceLeaseDiagnostics }: Workflo
         <h3>Fork/Join</h3>
         <p>Fork creates parallel proposal branches; Join waits for each branch to complete.</p>
         <ol aria-label="Fork branches">
-          <li><h4>Branch 1</h4><p>Proposal branch placeholder.</p></li>
-          <li><h4>Branch 2</h4><p>Proposal branch placeholder.</p></li>
+          <li><h4>Branch 1</h4><p>No proposal steps have been supplied for this branch.</p></li>
+          <li><h4>Branch 2</h4><p>No proposal steps have been supplied for this branch.</p></li>
         </ol>
         <p>Join: all proposal branches rejoin here.</p>
         {relevantDiagnostics.length === 0 ? (
