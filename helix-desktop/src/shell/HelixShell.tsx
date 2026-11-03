@@ -153,6 +153,7 @@ export default function HelixShell() {
         <WorkspaceLayout
           ref={workspaceRef}
           baseUrl={baseUrl}
+          health={health}
           runspaceEvents={runspaceEvents}
           trendValues={trendValues}
           safetyEvents={safetyEvents}

@@ -4,6 +4,7 @@ import React, { useRef, useImperativeHandle, useMemo, useCallback, useEffect } f
 import DockLayout from 'rc-dock';
 import type { LayoutBase, LayoutData, TabData, TabBase, TabGroup } from 'rc-dock';
 import type { RunspaceEvent, TrendValue, SafetyEvent, WslDocument, ExperimentEvent } from '../types/agent';
+import type { AgentHealthState } from '../hooks/useAgentHealth';
 import { useTrendRegistry } from '../hooks/useTrendRegistry';
 
 // Panel components
@@ -22,6 +23,7 @@ import { ProcedurePlans } from '../components/ScientificSetup/ProcedurePlans';
 import { FrozenAssembly } from '../components/ScientificSetup/FrozenAssembly';
 import { Samples } from '../components/Samples/Samples';
 import { ScientificRecordUi } from '../components/ScientificSetup/ScientificRecordUi';
+import { ScientificWorkflowBoard } from '../components/ScientificWorkflowBoard/ScientificWorkflowBoard';
 
 // ---------------------------------------------------------------------------
 // Props + Handle
@@ -29,6 +31,7 @@ import { ScientificRecordUi } from '../components/ScientificSetup/ScientificReco
 
 export interface WorkspaceLayoutProps {
   baseUrl: string;
+  health: AgentHealthState;
   onSaveLayout?: (name: string) => Promise<void>;
   onLoadLayout?: (name: string) => Promise<void>;
   // passed to panels:
@@ -79,7 +82,7 @@ export const DEFAULT_LAYOUT: LayoutBase = {
         children: [
           {
             id: 'panel-main',
-            tabs: [{ id: 'workflow-editor' }, { id: 'execution-panel' }, { id: 'experiment-timeline' }, { id: 'scientific-apparatus' }, { id: 'scientific-procedures' }, { id: 'scientific-plans' }, { id: 'scientific-assembly' }, { id: 'scientific-samples' }],
+            tabs: [{ id: 'scientific-workflow-board' }, { id: 'workflow-editor' }, { id: 'execution-panel' }, { id: 'experiment-timeline' }, { id: 'scientific-apparatus' }, { id: 'scientific-procedures' }, { id: 'scientific-plans' }, { id: 'scientific-assembly' }, { id: 'scientific-samples' }],
             activeId: 'workflow-editor',
           },
           {
@@ -159,6 +162,13 @@ export const WorkspaceLayout = React.forwardRef<WorkspaceLayoutHandle, Workspace
     // Rebuilds when any prop that affects panel content changes.
     const tabRegistry = useMemo(
       () => ({
+        'scientific-workflow-board': (): TabData => ({
+          id: 'scientific-workflow-board',
+          title: 'Workflow Board',
+          content: <ScientificWorkflowBoard health={props.health} />,
+          group: 'main',
+          closable: false,
+        }),
         'device-explorer': (): TabData => ({
           id: 'device-explorer',
           title: 'Devices',
@@ -262,6 +272,7 @@ export const WorkspaceLayout = React.forwardRef<WorkspaceLayoutHandle, Workspace
       }),
       [
         props.baseUrl,
+        props.health,
         props.currentWorkflow,
         props.runspaceEvents,
         props.safetyEvents,
@@ -284,6 +295,7 @@ export const WorkspaceLayout = React.forwardRef<WorkspaceLayoutHandle, Workspace
       dockRef.current.updateTab('execution-panel', tabRegistry['execution-panel'](), false);
       dockRef.current.updateTab('chart-0', tabRegistry['chart-0'](), false);
       dockRef.current.updateTab('experiment-timeline', tabRegistry['experiment-timeline'](), false);
+      dockRef.current.updateTab('scientific-workflow-board', tabRegistry['scientific-workflow-board'](), false);
       dockRef.current.updateTab('scientific-apparatus', tabRegistry['scientific-apparatus'](), false);
       dockRef.current.updateTab('scientific-procedures', tabRegistry['scientific-procedures'](), false);
       dockRef.current.updateTab('scientific-plans', tabRegistry['scientific-plans'](), false);
