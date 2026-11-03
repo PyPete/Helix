@@ -1,7 +1,13 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { AgentHealthState } from '../../hooks/useAgentHealth';
 import { useBoardInteractionPolicy } from '../../hooks/useBoardInteractionPolicy';
 import { useCommandEvidence } from '../../hooks/useCommandEvidence';
+import { useProposalEditability } from '../../hooks/useProposalEditability';
+import {
+  scientificWorkflowProposalStore,
+  type ProposalInventory,
+  type ProposalStorePort,
+} from '../../lib/scientificWorkflowProposalStore';
 import type { CapabilityDescriptor, RunspaceEvent } from '../../types/agent';
 import { adaptCommandEvidence, adaptOperationEvidence } from './BoardEvidenceAdapter';
 import { createBoardReadModels, type BoardReadModel } from './BoardReadModel';
@@ -36,6 +42,7 @@ export interface ScientificWorkflowBoardProps {
   selectedExecution: BoardLocalSelection;
   durableLifecycle: BoardLocalLifecycle;
   onShowEvidence: () => void;
+  proposalStore?: ProposalStorePort & { listProposals: () => Promise<ProposalInventory> };
 }
 
 export function ScientificWorkflowBoard({
@@ -45,6 +52,7 @@ export function ScientificWorkflowBoard({
   selectedExecution,
   durableLifecycle,
   onShowEvidence,
+  proposalStore = scientificWorkflowProposalStore,
 }: ScientificWorkflowBoardProps) {
   const disposition = useBoardInteractionPolicy(health);
   const [inspectedCapability, setInspectedCapability] = useState<CapabilityDescriptor | null>(null);
@@ -52,6 +60,34 @@ export function ScientificWorkflowBoard({
   const commandEvidenceState = useCommandEvidence(selectedExecution.executionId);
   const commandEvidence = adaptCommandEvidence(selectedExecution.executionId, commandEvidenceState);
   const readModels = createBoardReadModels({ run: commandEvidence });
+  const proposal = useProposalEditability(proposalStore);
+  const [inventory, setInventory] = useState<ProposalInventory>({ proposals: [], issues: [] });
+  const [inventoryError, setInventoryError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+    void proposalStore.listProposals().then((value) => {
+      if (mounted) {
+        setInventory(value);
+        setInventoryError(null);
+      }
+    }).catch((cause: unknown) => {
+      if (mounted) setInventoryError(cause instanceof Error ? cause.message : 'Saved local proposals are unavailable.');
+    });
+    return () => { mounted = false; };
+  }, [proposalStore]);
+
+  async function saveProposal() {
+    const acknowledgement = await proposal.saveProposal();
+    if (acknowledgement) {
+      try {
+        setInventory(await proposalStore.listProposals());
+        setInventoryError(null);
+      } catch (cause) {
+        setInventoryError(cause instanceof Error ? cause.message : 'Saved local proposal inventory could not be refreshed.');
+      }
+    }
+  }
 
   return (
     <main className="scientific-workflow-board" aria-labelledby="scientific-workflow-board-title" data-testid="scientific-workflow-board">
@@ -61,6 +97,35 @@ export function ScientificWorkflowBoard({
         <h1 id="scientific-workflow-board-title">Workflow Board</h1>
         <p>Proposal-only view. The local Helix Agent retains authority for validation and physical execution.</p>
       </header>
+      <section aria-label="Local proposal workspace" data-testid="local-proposal-workspace">
+        <h2>Local proposal</h2>
+        {!proposal.proposal && <button type="button" onClick={proposal.beginCreate}>Create Proposal</button>}
+        {proposal.proposal && !proposal.isEditing && <button type="button" onClick={proposal.beginEdit}>Edit Proposal</button>}
+        {proposal.isEditing && proposal.proposal && (
+          <>
+            <label>
+              Proposal title
+              <input
+                aria-label="Proposal title"
+                value={proposal.proposal.content.title}
+                onChange={(event) => proposal.updateContent((content) => ({ ...content, title: event.currentTarget.value }))}
+              />
+            </label>
+            <button type="button" onClick={() => { void saveProposal(); }}>Save Proposal</button>
+          </>
+        )}
+        {proposal.proposal && !proposal.isEditing && <p>{proposal.proposal.content.title}</p>}
+        {proposal.proposal && <p>Local proposal revision {proposal.proposal.contentRevision}</p>}
+        {proposal.status && <p role="status" aria-live="polite">{proposal.status}</p>}
+        {proposal.error && <p role="alert">{proposal.error}</p>}
+        {inventoryError && <p role="alert">{inventoryError}</p>}
+        {inventory.issues.map((issue) => <p role="alert" key={issue.fileName}>{issue.fileName}: {issue.message}</p>)}
+        {!proposal.proposal && inventory.proposals.map((item) => (
+          <button type="button" key={item.proposalId} onClick={() => { void proposal.resumeProposal(item.proposalId); }}>
+            Resume Proposal: {item.content.title}
+          </button>
+        ))}
+      </section>
       <section aria-label="Source-labelled presentation context" data-testid="board-presentation-context">
         <h2>Presentation context</h2>
         <p data-source={streamState.source}>

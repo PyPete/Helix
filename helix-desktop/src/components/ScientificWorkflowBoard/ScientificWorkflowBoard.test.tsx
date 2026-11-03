@@ -1,6 +1,7 @@
-import { fireEvent, render, screen } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useCommandEvidence } from '../../hooks/useCommandEvidence';
+import { scientificWorkflowProposalStore } from '../../lib/scientificWorkflowProposalStore';
 import type { CommandEvidenceHistoryState } from '../../types/agent';
 import { ScientificWorkflowBoard } from './ScientificWorkflowBoard';
 
@@ -10,6 +11,13 @@ const commandEvidenceState: CommandEvidenceHistoryState = { records: [], loading
 
 beforeEach(() => {
   vi.mocked(useCommandEvidence).mockReturnValue(commandEvidenceState);
+  vi.spyOn(scientificWorkflowProposalStore, 'listProposals').mockResolvedValue({ proposals: [], issues: [] });
+});
+
+afterEach(() => {
+  cleanup();
+  vi.restoreAllMocks();
+  vi.useRealTimers();
 });
 
 describe('ScientificWorkflowBoard reconciliation status', () => {
@@ -27,6 +35,62 @@ describe('ScientificWorkflowBoard reconciliation status', () => {
 
     expect(screen.queryByRole('button', { name: 'Create Proposal' })).not.toBeNull();
     expect(screen.getByRole('button', { name: 'Modify If/Else proposal structure' })).toBeDisabled();
+  });
+
+  it('keeps edits and elapsed time write-free until the user explicitly saves one exact snapshot', async () => {
+    const save = vi.spyOn(scientificWorkflowProposalStore, 'saveProposal').mockImplementation(async (submitted) => ({
+      proposalId: submitted.proposalId,
+      schemaVersion: submitted.schemaVersion,
+      contentRevision: submitted.contentRevision,
+      content: submitted.content,
+      document: submitted,
+      idempotent: false,
+    }));
+    vi.useFakeTimers();
+    render(
+      <ScientificWorkflowBoard
+        health={{ healthy: true, error: null, lastChecked: null }}
+        runspaceEvents={[]}
+        streamState={{ source: 'renderer-stream-state', connected: true, loading: false, error: null, partial: false }}
+        selectedExecution={{ source: 'local-selection', executionId: null }}
+        durableLifecycle={{ source: 'local-event-derived', value: null }}
+        onShowEvidence={vi.fn()}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Create Proposal' }));
+    const title = screen.getByRole('textbox', { name: 'Proposal title' });
+    fireEvent.change(title, { target: { value: 'Explicit local proposal' } });
+    vi.advanceTimersByTime(10_000);
+    fireEvent.blur(title);
+    expect(save).not.toHaveBeenCalled();
+
+    vi.useRealTimers();
+    fireEvent.click(screen.getByRole('button', { name: 'Save Proposal' }));
+    expect(save).toHaveBeenCalledOnce();
+    const submitted = save.mock.calls[0][0];
+    expect(submitted).toMatchObject({
+      schemaVersion: 1,
+      contentRevision: 2,
+      content: { title: 'Explicit local proposal', nodes: [], edges: [] },
+    });
+  });
+
+  it('does not write when an unsaved local proposal board unmounts', () => {
+    const save = vi.spyOn(scientificWorkflowProposalStore, 'saveProposal');
+    const { unmount } = render(
+      <ScientificWorkflowBoard
+        health={{ healthy: null, error: null, lastChecked: null }}
+        runspaceEvents={[]}
+        streamState={{ source: 'renderer-stream-state', connected: false, loading: true, error: null, partial: false }}
+        selectedExecution={{ source: 'local-selection', executionId: null }}
+        durableLifecycle={{ source: 'local-event-derived', value: null }}
+        onShowEvidence={vi.fn()}
+      />
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Create Proposal' }));
+    unmount();
+    expect(save).not.toHaveBeenCalled();
   });
 
   it('shows exact If/Else ports and Fork/Join branches without inventing admission diagnostics', () => {
